@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { LayoutDashboard, Users, CreditCard, Settings, Bot } from 'lucide-react'
 
@@ -23,7 +24,8 @@ export default function Navbar() {
         <div className="max-w-4xl mx-auto px-4">
           <div className="flex items-center justify-between h-14">
             <Link href="/dashboard" className="flex items-center gap-2">
-              <span className="text-lg font-bold text-[#c8c5be]">💰 원비관리</span>
+              <Image src="/icons/icon-192x192.png" alt="원비관리" width={32} height={32} className="rounded-md" />
+              <span className="text-lg font-bold text-[#c8c5be]">원비관리</span>
             </Link>
             <div className="hidden sm:flex gap-1">
               {navItems.map(({ href, label, icon: Icon }) => (
