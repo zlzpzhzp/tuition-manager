@@ -39,6 +39,7 @@ export default function PaymentsPage() {
   const [inlineDate, setInlineDate] = useState(today)
   const [inlineMethod, setInlineMethod] = useState<PaymentMethod>('remote')
   const [inlineSuccess, setInlineSuccess] = useState<string | null>(null)
+  const [showMethodPicker, setShowMethodPicker] = useState(false)
 
   // 모달 (고급 옵션 / 납부 상세보기)
   const [showPaymentModal, setShowPaymentModal] = useState(false)
@@ -95,6 +96,7 @@ export default function PaymentsPage() {
     setExpandedStudentId(studentId)
     setInlineDate(today)
     setInlineMethod('remote')
+    setShowMethodPicker(false)
   }
 
   // 인라인 납부 제출
@@ -243,21 +245,31 @@ export default function PaymentsPage() {
                                   className="px-2 py-1.5 border rounded-lg text-xs bg-white focus:outline-none focus:ring-1 focus:ring-[#1e2d6f] min-w-0 flex-shrink"
                                   style={{ width: '120px' }}
                                 />
-                                <div className="flex gap-0.5 flex-shrink-0">
-                                  {INLINE_METHODS.map(([val, label]) => (
-                                    <button
-                                      key={val}
-                                      type="button"
-                                      onClick={() => setInlineMethod(val)}
-                                      className={`px-1.5 sm:px-2 py-1.5 rounded text-[11px] font-medium transition-colors ${
-                                        inlineMethod === val
-                                          ? 'bg-[#1e2d6f] text-white'
-                                          : 'bg-white text-gray-500 border border-gray-200'
-                                      }`}
-                                    >
-                                      {label}
-                                    </button>
-                                  ))}
+                                <div className="relative flex-shrink-0">
+                                  <button
+                                    type="button"
+                                    onClick={() => setShowMethodPicker(!showMethodPicker)}
+                                    className="px-2.5 py-1.5 rounded-lg text-xs font-medium bg-[#1e2d6f] text-white flex items-center gap-1"
+                                  >
+                                    {INLINE_METHODS.find(([v]) => v === inlineMethod)?.[1]}
+                                    <span className="text-[10px] opacity-70">▼</span>
+                                  </button>
+                                  {showMethodPicker && (
+                                    <div className="absolute top-full left-0 mt-1 bg-white border rounded-lg shadow-lg z-10 overflow-hidden">
+                                      {INLINE_METHODS.map(([val, label]) => (
+                                        <button
+                                          key={val}
+                                          type="button"
+                                          onClick={() => { setInlineMethod(val); setShowMethodPicker(false) }}
+                                          className={`block w-full text-left px-3 py-2 text-xs font-medium hover:bg-gray-50 ${
+                                            inlineMethod === val ? 'text-[#1e2d6f] bg-blue-50' : 'text-gray-600'
+                                          }`}
+                                        >
+                                          {label}
+                                        </button>
+                                      ))}
+                                    </div>
+                                  )}
                                 </div>
                                 <button
                                   onClick={() => handleInlineSubmit(student.id, fee)}
