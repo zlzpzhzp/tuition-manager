@@ -22,6 +22,19 @@ function getPrevMonth(month: string) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
 }
 
+/** 결제일이 아직 안 지났으면 true (예정), 지났으면 false (미납) */
+function isPaymentScheduled(student: Student, selectedMonth: string): boolean {
+  const paymentDay = new Date(student.enrollment_date).getDate()
+  const [y, m] = selectedMonth.split('-').map(Number)
+  const today = new Date()
+  // 선택 월이 현재 월이 아니면 과거/미래 판단
+  const currentMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`
+  if (selectedMonth < currentMonth) return false // 과거 달은 미납
+  if (selectedMonth > currentMonth) return true  // 미래 달은 예정
+  // 현재 달: 결제일 비교
+  return today.getDate() < paymentDay
+}
+
 export default function PaymentsPage() {
   const today = new Date().toISOString().split('T')[0]
 
@@ -153,10 +166,12 @@ export default function PaymentsPage() {
   ))
   const totalFee = allStudents.reduce((sum, s) => sum + getStudentFee(s, s.class), 0)
   const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0)
-  const unpaidCount = allStudents.filter(s => {
+  const unpaidStudents = allStudents.filter(s => {
     const paid = getStudentPayments(s.id).reduce((sum, p) => sum + p.amount, 0)
     return getPaymentStatus(paid, getStudentFee(s, s.class)) === 'unpaid'
-  }).length
+  })
+  const unpaidCount = unpaidStudents.filter(s => !isPaymentScheduled(s, selectedMonth)).length
+  const scheduledCount = unpaidStudents.filter(s => isPaymentScheduled(s, selectedMonth)).length
 
   if (loading) return <div className="text-center py-12 text-gray-400">로딩 중...</div>
 
@@ -174,7 +189,7 @@ export default function PaymentsPage() {
       </div>
 
       {/* 요약 */}
-      <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-6">
+      <div className="grid grid-cols-4 gap-2 sm:gap-3 mb-6">
         <div className="bg-white rounded-xl border p-3 sm:p-4 text-center">
           <p className="text-[10px] sm:text-xs text-gray-400">총 원비</p>
           <p className="text-base sm:text-lg font-bold mt-1">{totalFee.toLocaleString()}<span className="text-[10px] sm:text-xs text-gray-400">원</span></p>
@@ -186,6 +201,10 @@ export default function PaymentsPage() {
         <div className="bg-white rounded-xl border p-3 sm:p-4 text-center">
           <p className="text-[10px] sm:text-xs text-gray-400">미납</p>
           <p className="text-base sm:text-lg font-bold mt-1 text-red-700">{unpaidCount}<span className="text-[10px] sm:text-xs text-gray-400">명</span></p>
+        </div>
+        <div className="bg-white rounded-xl border p-3 sm:p-4 text-center">
+          <p className="text-[10px] sm:text-xs text-gray-400">예정</p>
+          <p className="text-base sm:text-lg font-bold mt-1 text-amber-600">{scheduledCount}<span className="text-[10px] sm:text-xs text-gray-400">명</span></p>
         </div>
       </div>
 
@@ -215,7 +234,11 @@ export default function PaymentsPage() {
                       const studentPayments = getStudentPayments(student.id)
                       const paid = studentPayments.reduce((s, p) => s + p.amount, 0)
                       const status = getPaymentStatus(paid, fee)
-                      const statusColors = PAYMENT_STATUS_COLORS[status]
+                      const scheduled = status === 'unpaid' && isPaymentScheduled(student, selectedMonth)
+                      const displayColors = scheduled
+                        ? { bg: '#FEF3C7', text: '#92400E' }
+                        : PAYMENT_STATUS_COLORS[status]
+                      const displayLabel = scheduled ? '예정' : PAYMENT_STATUS_LABELS[status]
                       const prevMemo = getPrevMemo(student.id)
                       const currentMemo = studentPayments[0]?.memo
                       const isExpanded = expandedStudentId === student.id && status === 'unpaid'
@@ -302,16 +325,16 @@ export default function PaymentsPage() {
                                   <button
                                     onClick={(e) => { e.stopPropagation(); handleOpenModal(student.id, fee) }}
                                     className="px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap cursor-pointer hover:opacity-80 transition-opacity"
-                                    style={{ backgroundColor: statusColors.bg, color: statusColors.text }}
+                                    style={{ backgroundColor: displayColors.bg, color: displayColors.text }}
                                   >
-                                    {paid > 0 ? `${paid.toLocaleString()}원` : PAYMENT_STATUS_LABELS[status]}
+                                    {paid > 0 ? `${paid.toLocaleString()}원` : displayLabel}
                                   </button>
                                 ) : (
                                   <span
                                     className="px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap"
-                                    style={{ backgroundColor: statusColors.bg, color: statusColors.text }}
+                                    style={{ backgroundColor: displayColors.bg, color: displayColors.text }}
                                   >
-                                    {PAYMENT_STATUS_LABELS[status]}
+                                    {displayLabel}
                                   </span>
                                 )}
                               </>
