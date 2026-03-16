@@ -2,12 +2,19 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import { ChevronLeft, ChevronRight, CreditCard, MessageSquareWarning } from 'lucide-react'
-import type { Grade, Class, Student, Payment } from '@/types'
+import { ChevronLeft, ChevronRight, Check, MoreHorizontal } from 'lucide-react'
+import type { Grade, Class, Student, Payment, PaymentMethod } from '@/types'
 import { getStudentFee, getPaymentStatus, PAYMENT_STATUS_LABELS, PAYMENT_STATUS_COLORS, PAYMENT_METHOD_LABELS } from '@/types'
 import PaymentModal from '@/components/PaymentModal'
 
 type GradeWithClasses = Grade & { classes: (Class & { students: Student[] })[] }
+
+const INLINE_METHODS: [PaymentMethod, string][] = [
+  ['remote', '결제선생'],
+  ['card', '카드'],
+  ['transfer', '이체'],
+  ['cash', '현금'],
+]
 
 function getPrevMonth(month: string) {
   const [y, m] = month.split('-').map(Number)
@@ -16,6 +23,8 @@ function getPrevMonth(month: string) {
 }
 
 export default function PaymentsPage() {
+  const today = new Date().toISOString().split('T')[0]
+
   const [grades, setGrades] = useState<GradeWithClasses[]>([])
   const [payments, setPayments] = useState<Payment[]>([])
   const [prevPayments, setPrevPayments] = useState<Payment[]>([])
@@ -24,6 +33,14 @@ export default function PaymentsPage() {
     const now = new Date()
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
   })
+
+  // 인라인 납부 폼
+  const [expandedStudentId, setExpandedStudentId] = useState<string | null>(null)
+  const [inlineDate, setInlineDate] = useState(today)
+  const [inlineMethod, setInlineMethod] = useState<PaymentMethod>('remote')
+  const [inlineSuccess, setInlineSuccess] = useState<string | null>(null)
+
+  // 모달 (고급 옵션 / 납부 상세보기)
   const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null)
   const [selectedStudentFee, setSelectedStudentFee] = useState(0)
@@ -69,7 +86,41 @@ export default function PaymentsPage() {
     return prev?.memo || null
   }
 
-  const handleAddPayment = (studentId: string, fee: number) => {
+  // 미납 학생 인라인 확장
+  const handleExpand = (studentId: string) => {
+    if (expandedStudentId === studentId) {
+      setExpandedStudentId(null)
+      return
+    }
+    setExpandedStudentId(studentId)
+    setInlineDate(today)
+    setInlineMethod('remote')
+  }
+
+  // 인라인 납부 제출
+  const handleInlineSubmit = async (studentId: string, fee: number) => {
+    if (inlineSuccess) return
+    await fetch('/api/payments', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        student_id: studentId,
+        amount: fee,
+        method: inlineMethod,
+        payment_date: inlineDate,
+        billing_month: selectedMonth,
+      }),
+    })
+    setInlineSuccess(studentId)
+    setTimeout(() => {
+      setInlineSuccess(null)
+      setExpandedStudentId(null)
+      fetchData()
+    }, 1000)
+  }
+
+  // 모달 열기 (납부 상세보기 또는 고급 옵션)
+  const handleOpenModal = (studentId: string, fee: number) => {
     const existing = payments.find(p => p.student_id === studentId)
     setSelectedStudentId(studentId)
     setSelectedStudentFee(fee)
@@ -84,7 +135,6 @@ export default function PaymentsPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     })
-    // 모달 닫기는 PaymentModal 내부에서 애니메이션 후 onClose로 처리
     fetchData()
   }
 
@@ -166,46 +216,121 @@ export default function PaymentsPage() {
                       const statusColors = PAYMENT_STATUS_COLORS[status]
                       const prevMemo = getPrevMemo(student.id)
                       const currentMemo = studentPayments[0]?.memo
+                      const isExpanded = expandedStudentId === student.id && status === 'unpaid'
+                      const isSuccess = inlineSuccess === student.id
 
                       return (
-                        <div key={student.id} className="flex items-center gap-2 px-4 py-3 border-b last:border-b-0">
-                          <Link href={`/students/${student.id}`} className="flex-1 min-w-0 flex items-center gap-1.5">
-                            <span className="text-sm font-medium">{student.name}</span>
-                            {prevMemo && (
-                              <span className="text-amber-500" title={`지난달: ${prevMemo}`}>
-                                <MessageSquareWarning className="w-3.5 h-3.5" />
-                              </span>
-                            )}
-                            {currentMemo && (
-                              <span className="text-blue-400" title={currentMemo}>
-                                <MessageSquareWarning className="w-3.5 h-3.5" />
-                              </span>
-                            )}
-                          </Link>
+                        <div key={student.id}>
+                          {isExpanded ? (
+                            /* 인라인 납부 폼 (미납 확장) */
+                            <div className="border-b last:border-b-0 bg-blue-50/30">
+                              <div className="flex items-center justify-between px-4 pt-3 pb-1">
+                                <Link href={`/students/${student.id}`} className="text-sm font-medium">
+                                  {student.name}
+                                </Link>
+                                <button
+                                  onClick={() => setExpandedStudentId(null)}
+                                  className="text-xs text-gray-400 hover:text-gray-600"
+                                >
+                                  접기
+                                </button>
+                              </div>
+                              <div className="flex items-center gap-1.5 px-4 pb-3">
+                                <input
+                                  type="date"
+                                  value={inlineDate}
+                                  onChange={e => setInlineDate(e.target.value)}
+                                  className="px-2 py-1.5 border rounded-lg text-xs bg-white focus:outline-none focus:ring-1 focus:ring-[#1e2d6f] min-w-0 flex-shrink"
+                                  style={{ width: '120px' }}
+                                />
+                                <div className="flex gap-0.5 flex-shrink-0">
+                                  {INLINE_METHODS.map(([val, label]) => (
+                                    <button
+                                      key={val}
+                                      type="button"
+                                      onClick={() => setInlineMethod(val)}
+                                      className={`px-1.5 sm:px-2 py-1.5 rounded text-[11px] font-medium transition-colors ${
+                                        inlineMethod === val
+                                          ? 'bg-[#1e2d6f] text-white'
+                                          : 'bg-white text-gray-500 border border-gray-200'
+                                      }`}
+                                    >
+                                      {label}
+                                    </button>
+                                  ))}
+                                </div>
+                                <button
+                                  onClick={() => handleInlineSubmit(student.id, fee)}
+                                  disabled={!!inlineSuccess}
+                                  className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1 ${
+                                    isSuccess
+                                      ? 'bg-green-500 text-white scale-105'
+                                      : 'bg-[#1e2d6f] text-white hover:opacity-90'
+                                  }`}
+                                >
+                                  {isSuccess ? (
+                                    <Check className="w-4 h-4" strokeWidth={3} />
+                                  ) : '납부'}
+                                </button>
+                                <button
+                                  onClick={() => handleOpenModal(student.id, fee)}
+                                  className="flex-shrink-0 p-1.5 text-gray-400 hover:text-gray-600"
+                                >
+                                  <MoreHorizontal className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            /* 기본 행 (접힌 상태) */
+                            <div
+                              className={`flex items-center gap-2 px-4 py-3 border-b last:border-b-0 ${
+                                status === 'unpaid' ? 'cursor-pointer active:bg-gray-50' : ''
+                              }`}
+                              onClick={status === 'unpaid' ? () => handleExpand(student.id) : undefined}
+                            >
+                              <Link
+                                href={`/students/${student.id}`}
+                                className="flex-1 min-w-0"
+                                onClick={e => e.stopPropagation()}
+                              >
+                                <span className="text-sm font-medium">{student.name}</span>
+                              </Link>
 
-                          {studentPayments.length > 0 && (
-                            <div className="text-xs text-gray-400 hidden sm:block">
-                              {studentPayments.map(p => PAYMENT_METHOD_LABELS[p.method as keyof typeof PAYMENT_METHOD_LABELS]).join(', ')}
+                              {studentPayments.length > 0 && (
+                                <div className="text-xs text-gray-400 hidden sm:block">
+                                  {studentPayments.map(p => PAYMENT_METHOD_LABELS[p.method as keyof typeof PAYMENT_METHOD_LABELS]).join(', ')}
+                                </div>
+                              )}
+
+                              <span
+                                className="px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap"
+                                style={{ backgroundColor: statusColors.bg, color: statusColors.text }}
+                              >
+                                {paid > 0 ? `${paid.toLocaleString()}원` : PAYMENT_STATUS_LABELS[status]}
+                              </span>
+
+                              {status !== 'unpaid' && (
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); handleOpenModal(student.id, fee) }}
+                                  className="p-1.5 transition-colors text-green-500 hover:text-green-700"
+                                >
+                                  <MoreHorizontal className="w-4 h-4" />
+                                </button>
+                              )}
                             </div>
                           )}
 
-                          <span
-                            className="px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap"
-                            style={{ backgroundColor: statusColors.bg, color: statusColors.text }}
-                          >
-                            {paid > 0 ? `${paid.toLocaleString()}원` : PAYMENT_STATUS_LABELS[status]}
-                          </span>
-
-                          <button
-                            onClick={() => handleAddPayment(student.id, fee)}
-                            className={`p-1.5 transition-colors ${
-                              status === 'paid'
-                                ? 'text-green-500 hover:text-green-700'
-                                : 'text-gray-300 hover:text-[#1e2d6f]'
-                            }`}
-                          >
-                            <CreditCard className="w-4 h-4" />
-                          </button>
+                          {/* 비고 서브행 */}
+                          {!isExpanded && (prevMemo || currentMemo) && (
+                            <div className="flex flex-col gap-0.5 px-4 py-1.5 border-b last:border-b-0 bg-gray-50/50">
+                              {prevMemo && (
+                                <p className="text-[11px] text-amber-600">지난달: {prevMemo}</p>
+                              )}
+                              {currentMemo && (
+                                <p className="text-[11px] text-blue-500">{currentMemo}</p>
+                              )}
+                            </div>
+                          )}
                         </div>
                       )
                     })}
@@ -230,7 +355,7 @@ export default function PaymentsPage() {
           prevMemo={selectedPrevMemo}
           onSave={handleSavePayment}
           onDelete={handleDeletePayment}
-          onClose={() => { setShowPaymentModal(false); setSelectedPayment(null) }}
+          onClose={() => { setShowPaymentModal(false); setSelectedPayment(null); setExpandedStudentId(null) }}
         />
       )}
     </div>
