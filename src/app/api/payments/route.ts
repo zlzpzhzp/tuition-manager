@@ -18,6 +18,32 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const body = await request.json()
 
+  // 같은 학생+월에 이미 납부 기록이 있으면 업데이트
+  const { data: existing } = await supabase
+    .from('tuition_payments')
+    .select('id')
+    .eq('student_id', body.student_id)
+    .eq('billing_month', body.billing_month)
+    .maybeSingle()
+
+  if (existing) {
+    const { data, error } = await supabase
+      .from('tuition_payments')
+      .update({
+        amount: body.amount,
+        method: body.method,
+        payment_date: body.payment_date,
+        cash_receipt: body.cash_receipt ?? null,
+        memo: body.memo || null,
+      })
+      .eq('id', existing.id)
+      .select('*, student:tuition_students(*)')
+      .single()
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json(data)
+  }
+
   const { data, error } = await supabase
     .from('tuition_payments')
     .insert({
@@ -26,6 +52,7 @@ export async function POST(request: Request) {
       method: body.method,
       payment_date: body.payment_date,
       billing_month: body.billing_month,
+      cash_receipt: body.cash_receipt ?? null,
       memo: body.memo || null,
     })
     .select('*, student:tuition_students(*)')

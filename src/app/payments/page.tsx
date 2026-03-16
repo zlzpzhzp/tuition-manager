@@ -20,6 +20,7 @@ export default function PaymentsPage() {
   const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null)
   const [selectedStudentFee, setSelectedStudentFee] = useState(0)
+  const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null)
 
   const fetchData = useCallback(async () => {
     const [gradesRes, paymentsRes] = await Promise.all([
@@ -52,8 +53,10 @@ export default function PaymentsPage() {
     payments.filter(p => p.student_id === studentId)
 
   const handleAddPayment = (studentId: string, fee: number) => {
+    const existing = payments.find(p => p.student_id === studentId)
     setSelectedStudentId(studentId)
     setSelectedStudentFee(fee)
+    setSelectedPayment(existing || null)
     setShowPaymentModal(true)
   }
 
@@ -64,6 +67,14 @@ export default function PaymentsPage() {
       body: JSON.stringify(data),
     })
     setShowPaymentModal(false)
+    setSelectedPayment(null)
+    fetchData()
+  }
+
+  const handleDeletePayment = async (paymentId: string) => {
+    await fetch(`/api/payments/${paymentId}`, { method: 'DELETE' })
+    setShowPaymentModal(false)
+    setSelectedPayment(null)
     fetchData()
   }
 
@@ -158,7 +169,11 @@ export default function PaymentsPage() {
 
                           <button
                             onClick={() => handleAddPayment(student.id, fee)}
-                            className="p-1.5 text-gray-300 hover:text-[#1e2d6f] transition-colors"
+                            className={`p-1.5 transition-colors ${
+                              status === 'paid'
+                                ? 'text-green-500 hover:text-green-700'
+                                : 'text-gray-300 hover:text-[#1e2d6f]'
+                            }`}
                           >
                             <CreditCard className="w-4 h-4" />
                           </button>
@@ -179,11 +194,13 @@ export default function PaymentsPage() {
 
       {showPaymentModal && selectedStudentId && (
         <PaymentModal
+          payment={selectedPayment}
           studentId={selectedStudentId}
           defaultBillingMonth={selectedMonth}
           defaultAmount={selectedStudentFee}
           onSave={handleSavePayment}
-          onClose={() => setShowPaymentModal(false)}
+          onDelete={handleDeletePayment}
+          onClose={() => { setShowPaymentModal(false); setSelectedPayment(null) }}
         />
       )}
     </div>
