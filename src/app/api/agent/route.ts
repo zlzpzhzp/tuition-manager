@@ -161,6 +161,22 @@ async function createPaymentsForClass(args: Record<string, string>) {
     const studentFee = (s.custom_fee as number | null) ?? defaultFee
     const payAmount = overrideAmount ?? studentFee
 
+    // 중복 체크: 같은 학생+월에 이미 납부 기록이 있으면 스킵
+    const { data: existing } = await supabase
+      .from('tuition_payments')
+      .select('id')
+      .eq('student_id', s.id)
+      .eq('billing_month', args.billing_month)
+      .maybeSingle()
+
+    const METHOD_KR: Record<string, string> = { remote: '결제선생', card: '카드결제', transfer: '계좌이체', cash: '현금' }
+    const methodLabel = METHOD_KR[args.method] ?? args.method
+
+    if (existing) {
+      results.push(`${s.name}: 이미 납부 완료 (스킵)`)
+      continue
+    }
+
     const cashReceipt = (args.method === 'transfer' || args.method === 'cash') ? (args.cash_receipt || 'pending') : null
     const { error } = await supabase.from('tuition_payments').insert({
       student_id: s.id,
@@ -171,8 +187,6 @@ async function createPaymentsForClass(args: Record<string, string>) {
       cash_receipt: cashReceipt,
     })
 
-    const METHOD_KR: Record<string, string> = { remote: '결제선생', card: '카드결제', transfer: '계좌이체', cash: '현금' }
-    const methodLabel = METHOD_KR[args.method] ?? args.method
     results.push(error ? `${s.name}: 오류 - ${error.message}` : `${s.name}: ${payAmount.toLocaleString()}원 ${methodLabel}`)
   }
 
@@ -194,6 +208,18 @@ async function createPaymentForStudent(args: Record<string, string>) {
   const student = students[0]
   const fee = (student.custom_fee as number | null) ?? (student.tuition_classes as Record<string, unknown>)?.monthly_fee ?? 0
   const payAmount = args.amount ? parseInt(args.amount) : fee
+
+  // 중복 체크
+  const { data: existing } = await supabase
+    .from('tuition_payments')
+    .select('id')
+    .eq('student_id', student.id)
+    .eq('billing_month', args.billing_month)
+    .maybeSingle()
+
+  if (existing) {
+    return { message: `${student.name}: 이번달(${args.billing_month}) 이미 납부 완료되어 있습니다` }
+  }
 
   const cashReceipt = (args.method === 'transfer' || args.method === 'cash') ? (args.cash_receipt || 'pending') : null
   const { error } = await supabase.from('tuition_payments').insert({
