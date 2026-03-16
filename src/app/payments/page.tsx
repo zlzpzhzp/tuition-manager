@@ -22,17 +22,27 @@ function getPrevMonth(month: string) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
 }
 
+/** 학생의 결제 예정일 (등록일 기준 매월 같은 날) */
+function getPaymentDueDay(student: Student): number {
+  return new Date(student.enrollment_date).getDate()
+}
+
 /** 결제일이 아직 안 지났으면 true (예정), 지났으면 false (미납) */
 function isPaymentScheduled(student: Student, selectedMonth: string): boolean {
-  const paymentDay = new Date(student.enrollment_date).getDate()
-  const [y, m] = selectedMonth.split('-').map(Number)
+  const paymentDay = getPaymentDueDay(student)
   const today = new Date()
-  // 선택 월이 현재 월이 아니면 과거/미래 판단
   const currentMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`
-  if (selectedMonth < currentMonth) return false // 과거 달은 미납
-  if (selectedMonth > currentMonth) return true  // 미래 달은 예정
-  // 현재 달: 결제일 비교
+  if (selectedMonth < currentMonth) return false
+  if (selectedMonth > currentMonth) return true
   return today.getDate() < paymentDay
+}
+
+/** "3/23 예정" 또는 "3/5 미납" 형식 라벨 */
+function getUnpaidLabel(student: Student, selectedMonth: string): string {
+  const day = getPaymentDueDay(student)
+  const month = parseInt(selectedMonth.split('-')[1])
+  const scheduled = isPaymentScheduled(student, selectedMonth)
+  return `${month}/${day} ${scheduled ? '예정' : '미납'}`
 }
 
 export default function PaymentsPage() {
@@ -238,7 +248,9 @@ export default function PaymentsPage() {
                       const displayColors = scheduled
                         ? { bg: '#FEF3C7', text: '#92400E' }
                         : PAYMENT_STATUS_COLORS[status]
-                      const displayLabel = scheduled ? '예정' : PAYMENT_STATUS_LABELS[status]
+                      const displayLabel = status === 'unpaid'
+                        ? getUnpaidLabel(student, selectedMonth)
+                        : PAYMENT_STATUS_LABELS[status]
                       const prevMemo = getPrevMemo(student.id)
                       const currentMemo = studentPayments[0]?.memo
                       const isExpanded = expandedStudentId === student.id && status === 'unpaid'
