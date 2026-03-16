@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import { ChevronLeft, ChevronRight, Check, MoreHorizontal } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Check, MoreVertical } from 'lucide-react'
 import type { Grade, Class, Student, Payment, PaymentMethod } from '@/types'
 import { getStudentFee, getPaymentStatus, PAYMENT_STATUS_LABELS, PAYMENT_STATUS_COLORS, PAYMENT_METHOD_LABELS } from '@/types'
 import PaymentModal from '@/components/PaymentModal'
@@ -287,7 +287,7 @@ export default function PaymentsPage() {
                                   onClick={() => handleOpenModal(student.id, fee)}
                                   className="p-1 text-gray-400 hover:text-gray-600"
                                 >
-                                  <MoreHorizontal className="w-3.5 h-3.5" />
+                                  <MoreVertical className="w-3.5 h-3.5" />
                                 </button>
                               </div>
                             ) : (
@@ -309,7 +309,7 @@ export default function PaymentsPage() {
                                     onClick={(e) => { e.stopPropagation(); handleOpenModal(student.id, fee) }}
                                     className="p-1.5 transition-colors text-green-500 hover:text-green-700"
                                   >
-                                    <MoreHorizontal className="w-4 h-4" />
+                                    <MoreVertical className="w-4 h-4" />
                                   </button>
                                 )}
                               </>
