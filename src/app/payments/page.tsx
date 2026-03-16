@@ -84,8 +84,7 @@ export default function PaymentsPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     })
-    setShowPaymentModal(false)
-    setSelectedPayment(null)
+    // 모달 닫기는 PaymentModal 내부에서 애니메이션 후 onClose로 처리
     fetchData()
   }
 

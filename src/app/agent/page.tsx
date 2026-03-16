@@ -18,17 +18,15 @@ interface Message {
 
 const TOOL_LABELS: Record<string, string> = {
   list_grades_and_classes: '📋 학년/반 조회',
-  create_payments_for_class: '💳 반 일괄 납부',
-  create_payment_for_student: '💳 개별 납부',
   get_unpaid_students: '🔍 미납 조회',
   get_payment_status: '📊 납부 현황',
 }
 
 const EXAMPLES = [
-  '중1 수학H반 전원 카드로 납부했어',
   '이번달 미납 학생 알려줘',
-  '김채민 학생 이체로 납부',
   '고1 납부현황 보여줘',
+  '중1 수학H반 학생 누구야?',
+  '3월 전체 납부율 어때?',
 ]
 
 export default function AgentPage() {

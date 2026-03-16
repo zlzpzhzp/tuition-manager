@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { X, Trash2, AlertTriangle } from 'lucide-react'
+import { useState, useEffect, useCallback } from 'react'
+import { X, Trash2, AlertTriangle, Check } from 'lucide-react'
 import type { Payment, PaymentMethod } from '@/types'
 import { PAYMENT_METHOD_LABELS } from '@/types'
 
@@ -11,7 +11,7 @@ interface Props {
   defaultBillingMonth?: string
   defaultAmount?: number
   prevMemo?: string | null
-  onSave: (data: Partial<Payment>) => void
+  onSave: (data: Partial<Payment>) => Promise<void> | void
   onDelete?: (paymentId: string) => void
   onClose: () => void
 }
@@ -34,6 +34,7 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
   const [memo, setMemo] = useState(payment?.memo ?? '')
   const [cashReceipt, setCashReceipt] = useState<'issued' | 'pending' | null>(payment?.cash_receipt ?? null)
   const [showConfirmDelete, setShowConfirmDelete] = useState(false)
+  const [showSuccess, setShowSuccess] = useState(false)
 
   const needsCashReceipt = method === 'transfer' || method === 'cash'
 
@@ -51,10 +52,12 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [onClose])
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!amount || parseInt(amount) <= 0) return
-    onSave({
+    if (!amount || parseInt(amount) <= 0 || showSuccess) return
+
+    // 1. API에 먼저 저장
+    await onSave({
       student_id: studentId,
       amount: parseInt(amount),
       method,
@@ -63,7 +66,15 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
       cash_receipt: needsCashReceipt ? cashReceipt : null,
       memo,
     })
-  }
+
+    // 2. 저장 완료 후 체크 애니메이션 표시
+    setShowSuccess(true)
+
+    // 3. 애니메이션 보여준 후 모달 닫기
+    setTimeout(() => {
+      onClose()
+    }, 1000)
+  }, [amount, showSuccess, studentId, method, paymentDate, billingMonth, needsCashReceipt, cashReceipt, memo, onSave, onClose])
 
   const handleDelete = () => {
     if (payment?.id && onDelete) {
@@ -75,7 +86,7 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
     <div className="fixed inset-0 bg-black/40 z-50 flex items-end sm:items-center justify-center" onClick={onClose}>
       <div className="bg-white w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between px-5 py-4 border-b">
-          <h2 className="text-lg font-bold">{payment ? '납부 정보' : '납부 기록'}</h2>
+          <h2 className="text-lg font-bold">{payment ? '납부 정보' : '납부'}</h2>
           <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
         </div>
 
@@ -246,9 +257,19 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
 
             <button
               type="submit"
-              className="w-full py-2.5 bg-[#1e2d6f] text-white rounded-lg font-medium text-sm hover:opacity-90"
+              disabled={showSuccess}
+              className={`w-full py-3 rounded-lg font-medium text-sm transition-all duration-500 flex items-center justify-center gap-2 ${
+                showSuccess
+                  ? 'bg-green-500 text-white scale-105'
+                  : 'bg-[#1e2d6f] text-white hover:opacity-90'
+              }`}
             >
-              기록
+              {showSuccess ? (
+                <span className="flex items-center gap-2 animate-[checkBounce_0.5s_ease-out]">
+                  <Check className="w-6 h-6" strokeWidth={3} />
+                  <span className="text-base font-bold">완료!</span>
+                </span>
+              ) : '납부'}
             </button>
           </form>
         )}

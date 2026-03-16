@@ -21,39 +21,6 @@ const toolDefinitions: ToolDef[] = [
     parameters: { type: 'OBJECT', properties: {}, required: [] },
   },
   {
-    name: 'create_payments_for_class',
-    description: '특정 반의 재원생 전원에 대해 납부 기록을 일괄 생성합니다.',
-    parameters: {
-      type: 'OBJECT',
-      properties: {
-        grade_name: { type: 'STRING', description: '학년 이름 (예: 중1, 고2)' },
-        class_name: { type: 'STRING', description: '반 이름 (예: 수학H, 영어A)' },
-        method: { type: 'STRING', description: '납부 방법: remote(결제선생), card(카드결제), transfer(계좌이체), cash(현금)', enum: ['remote', 'card', 'transfer', 'cash'] },
-        billing_month: { type: 'STRING', description: '납부 대상월 (YYYY-MM 형식)' },
-        amount: { type: 'STRING', description: '납부 금액 (숫자 문자열). 생략하면 기본 원비 사용' },
-        payment_date: { type: 'STRING', description: '실제 결제일 (YYYY-MM-DD 형식). 사용자가 결제일을 알려주면 반드시 그 날짜를 사용. 생략하면 오늘 날짜' },
-        cash_receipt: { type: 'STRING', description: '현금영수증 발행여부. 계좌이체/현금일 때만: issued(발행완료), pending(미발행)' },
-      },
-      required: ['grade_name', 'class_name', 'method', 'billing_month'],
-    },
-  },
-  {
-    name: 'create_payment_for_student',
-    description: '특정 학생에 대해 납부 기록을 생성합니다.',
-    parameters: {
-      type: 'OBJECT',
-      properties: {
-        student_name: { type: 'STRING', description: '학생 이름' },
-        method: { type: 'STRING', description: '납부 방법', enum: ['remote', 'card', 'transfer', 'cash'] },
-        billing_month: { type: 'STRING', description: '납부 대상월 (YYYY-MM)' },
-        amount: { type: 'STRING', description: '납부 금액 (숫자 문자열)' },
-        payment_date: { type: 'STRING', description: '실제 결제일 (YYYY-MM-DD 형식). 사용자가 결제일을 알려주면 반드시 그 날짜를 사용. 생략하면 오늘 날짜' },
-        cash_receipt: { type: 'STRING', description: '현금영수증 발행여부: issued(발행완료), pending(미발행)' },
-      },
-      required: ['student_name', 'method', 'billing_month'],
-    },
-  },
-  {
     name: 'get_unpaid_students',
     description: '특정 월의 미납 학생 목록을 조회합니다.',
     parameters: {
@@ -123,122 +90,6 @@ async function listGradesAndClasses() {
         })),
     })),
   }))
-}
-
-async function createPaymentsForClass(args: Record<string, string>) {
-  const { data: grades } = await supabase
-    .from('tuition_grades')
-    .select('*, tuition_classes(*, tuition_students(*))')
-    .order('order_index')
-
-  if (!grades) return { error: '데이터 조회 실패' }
-
-  let targetClass: Record<string, unknown> | null = null
-  let gradeName = ''
-
-  for (const g of grades) {
-    if (!g.name.includes(args.grade_name.replace(/\s/g, ''))) continue
-    for (const c of (g.tuition_classes ?? [])) {
-      if (c.name === args.class_name || c.name.includes(args.class_name.replace(/\s/g, ''))) {
-        targetClass = c
-        gradeName = g.name
-        break
-      }
-    }
-    if (targetClass) break
-  }
-
-  if (!targetClass) return { error: `${args.grade_name} ${args.class_name} 반을 찾을 수 없습니다` }
-
-  const students = ((targetClass.tuition_students as Record<string, unknown>[]) ?? [])
-    .filter((s: Record<string, unknown>) => !s.withdrawal_date)
-
-  if (students.length === 0) return { error: '해당 반에 재원생이 없습니다' }
-
-  const defaultFee = targetClass.monthly_fee as number
-  const overrideAmount = args.amount ? parseInt(args.amount) : undefined
-  const results: string[] = []
-
-  for (const s of students) {
-    const studentFee = (s.custom_fee as number | null) ?? defaultFee
-    const payAmount = overrideAmount ?? studentFee
-
-    // 중복 체크: 같은 학생+월에 이미 납부 기록이 있으면 스킵
-    const { data: existingList } = await supabase
-      .from('tuition_payments')
-      .select('id')
-      .eq('student_id', s.id)
-      .eq('billing_month', args.billing_month)
-      .limit(1)
-
-    const METHOD_KR: Record<string, string> = { remote: '결제선생', card: '카드결제', transfer: '계좌이체', cash: '현금' }
-    const methodLabel = METHOD_KR[args.method] ?? args.method
-
-    if (existingList && existingList.length > 0) {
-      results.push(`${s.name}: 이미 납부 완료 (스킵)`)
-      continue
-    }
-
-    const cashReceipt = (args.method === 'transfer' || args.method === 'cash') ? (args.cash_receipt || 'pending') : null
-    const paymentDate = args.payment_date || new Date().toISOString().split('T')[0]
-    const { error } = await supabase.from('tuition_payments').upsert({
-      student_id: s.id,
-      amount: payAmount,
-      method: args.method,
-      payment_date: paymentDate,
-      billing_month: args.billing_month,
-      cash_receipt: cashReceipt,
-    }, { onConflict: 'student_id,billing_month' })
-
-    results.push(error ? `${s.name}: 오류 - ${error.message}` : `${s.name}: ${payAmount.toLocaleString()}원 ${methodLabel} (${paymentDate})`)
-  }
-
-  return { message: `${gradeName} ${targetClass.name} 반 ${students.length}명 납부 기록 완료`, details: results }
-}
-
-async function createPaymentForStudent(args: Record<string, string>) {
-  const { data: students } = await supabase
-    .from('tuition_students')
-    .select('*, tuition_classes(monthly_fee)')
-    .ilike('name', `%${args.student_name}%`)
-    .is('withdrawal_date', null)
-
-  if (!students || students.length === 0) return { error: `"${args.student_name}" 학생을 찾을 수 없습니다` }
-  if (students.length > 1) {
-    return { error: `"${args.student_name}"에 해당하는 학생이 ${students.length}명: ${students.map((s: Record<string, unknown>) => s.name).join(', ')}` }
-  }
-
-  const student = students[0]
-  const fee = (student.custom_fee as number | null) ?? (student.tuition_classes as Record<string, unknown>)?.monthly_fee ?? 0
-  const payAmount = args.amount ? parseInt(args.amount) : fee
-
-  // 중복 체크
-  const { data: existingList } = await supabase
-    .from('tuition_payments')
-    .select('id')
-    .eq('student_id', student.id)
-    .eq('billing_month', args.billing_month)
-    .limit(1)
-
-  if (existingList && existingList.length > 0) {
-    return { message: `${student.name}: 이번달(${args.billing_month}) 이미 납부 완료되어 있습니다` }
-  }
-
-  const cashReceipt = (args.method === 'transfer' || args.method === 'cash') ? (args.cash_receipt || 'pending') : null
-  const paymentDate = args.payment_date || new Date().toISOString().split('T')[0]
-  const { error } = await supabase.from('tuition_payments').upsert({
-    student_id: student.id,
-    amount: payAmount,
-    method: args.method,
-    payment_date: paymentDate,
-    billing_month: args.billing_month,
-    cash_receipt: cashReceipt,
-  }, { onConflict: 'student_id,billing_month' })
-
-  if (error) return { error: error.message }
-  const METHOD_KR: Record<string, string> = { remote: '결제선생', card: '카드결제', transfer: '계좌이체', cash: '현금' }
-  const methodLabel = METHOD_KR[args.method] ?? args.method
-  return { message: `${student.name}: ${payAmount.toLocaleString()}원 ${methodLabel} 납부 완료 (${args.billing_month})` }
 }
 
 async function getUnpaidStudents(args: Record<string, string>) {
@@ -323,8 +174,6 @@ async function getPaymentStatusByMonth(args: Record<string, string>) {
 async function executeTool(name: string, args: Record<string, string>): Promise<unknown> {
   switch (name) {
     case 'list_grades_and_classes': return listGradesAndClasses()
-    case 'create_payments_for_class': return createPaymentsForClass(args)
-    case 'create_payment_for_student': return createPaymentForStudent(args)
     case 'get_unpaid_students': return getUnpaidStudents(args)
     case 'get_payment_status': return getPaymentStatusByMonth(args)
     default: return { error: `알 수 없는 도구: ${name}` }
@@ -334,23 +183,21 @@ async function executeTool(name: string, args: Record<string, string>): Promise<
 // ── System prompt ──
 
 const SYSTEM_PROMPT = `당신은 학원 원비관리 시스템의 AI 어시스턴트입니다.
-사용자의 자연어 명령을 해석해서 적절한 도구를 호출하여 작업을 수행합니다.
+사용자의 질문에 데이터를 조회해서 정확하게 답변하는 것이 당신의 역할입니다.
+
+**⚠️ 최우선 규칙: 조회 전용 - 데이터 변경 절대 금지**
+당신은 데이터를 조회하고 질문에 답변하는 것만 할 수 있습니다.
+납부 입력, 수정, 삭제 등 데이터를 변경하는 작업은 절대 할 수 없습니다.
+사용자가 납부 입력/등록/기록을 요청하면 "납부 입력은 납부 메뉴에서 직접 해주세요."라고 안내하세요.
 
 규칙:
 - 오늘 날짜: {current_date}
 - 이번달: {current_month}
 - 사용자가 "이번달"이라고 하면 {current_month}을 사용
-- 납부 방법: "결제선생"/"원격결제"→remote, "카드"/"카드결제"→card, "이체"/"계좌이체"→transfer, "현금"→cash
-- 현금영수증: 계좌이체/현금 결제 시 cash_receipt를 issued(발행완료) 또는 pending(미발행)으로 설정. 사용자가 언급하지 않으면 pending으로 기본 설정
 - 반 이름 매칭: "H반"→"수학H" 또는 "영어H", "중1H" → grade:"중1", class:"수학H"
 - 사용자가 과목을 명시하지 않으면 수학을 기본으로 가정
-- 작업 전에 먼저 list_grades_and_classes로 데이터를 확인해서 정확한 이름을 파악하세요
-- 결과를 한국어로 간결하게 요약해서 답변하세요
-- 납부 기록 생성 시 금액을 명시하지 않으면 해당 반/학생의 기본 원비를 사용합니다
-- **⚠️ 최우선 규칙 - 결제일/결제방법 필수 확인**: 사용자가 납부/결제 기록을 요청할 때, 아래 두 가지를 반드시 확인한 후에만 도구를 호출하세요. 하나라도 빠지면 절대 바로 기록하지 마세요.
-  1. **결제일**: 날짜를 명시하지 않았다면 "결제일이 언제인가요?"라고 물어보세요.
-  2. **결제방법(루트)**: 결제선생/카드/계좌이체/현금 중 어떤 방법인지 명시하지 않았다면 "결제 방법이 어떻게 되나요? (결제선생/카드/계좌이체/현금)"라고 물어보세요.
-  두 가지 모두 확인된 후에만 납부 기록을 생성하세요. 이 규칙은 어떤 상황에서도 생략할 수 없습니다.`
+- 질문에 답하기 전에 먼저 list_grades_and_classes로 데이터를 확인해서 정확한 이름을 파악하세요
+- 결과를 한국어로 간결하게 요약해서 답변하세요`
 
 // ── Main handler ──
 
