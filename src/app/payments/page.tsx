@@ -114,10 +114,10 @@ export default function PaymentsPage() {
       }),
     })
     setInlineSuccess(studentId)
-    setTimeout(() => {
+    setTimeout(async () => {
+      await fetchData()
       setInlineSuccess(null)
       setExpandedStudentId(null)
-      fetchData()
     }, 1000)
   }
 
