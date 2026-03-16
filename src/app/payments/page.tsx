@@ -298,19 +298,21 @@ export default function PaymentsPage() {
                                     {studentPayments.map(p => PAYMENT_METHOD_LABELS[p.method as keyof typeof PAYMENT_METHOD_LABELS]).join(', ')}
                                   </div>
                                 )}
-                                <span
-                                  className="px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap"
-                                  style={{ backgroundColor: statusColors.bg, color: statusColors.text }}
-                                >
-                                  {paid > 0 ? `${paid.toLocaleString()}원` : PAYMENT_STATUS_LABELS[status]}
-                                </span>
-                                {status !== 'unpaid' && (
+                                {status !== 'unpaid' ? (
                                   <button
                                     onClick={(e) => { e.stopPropagation(); handleOpenModal(student.id, fee) }}
-                                    className="p-1.5 transition-colors text-green-500 hover:text-green-700"
+                                    className="px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap cursor-pointer hover:opacity-80 transition-opacity"
+                                    style={{ backgroundColor: statusColors.bg, color: statusColors.text }}
                                   >
-                                    <MoreVertical className="w-4 h-4" />
+                                    {paid > 0 ? `${paid.toLocaleString()}원` : PAYMENT_STATUS_LABELS[status]}
                                   </button>
+                                ) : (
+                                  <span
+                                    className="px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap"
+                                    style={{ backgroundColor: statusColors.bg, color: statusColors.text }}
+                                  >
+                                    {PAYMENT_STATUS_LABELS[status]}
+                                  </span>
                                 )}
                               </>
                             )}

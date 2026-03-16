@@ -35,8 +35,6 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
   const [cashReceipt, setCashReceipt] = useState<'issued' | 'pending' | null>(payment?.cash_receipt ?? null)
   const [showConfirmDelete, setShowConfirmDelete] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
-  const [editingMemo, setEditingMemo] = useState(false)
-  const [editMemo, setEditMemo] = useState(payment?.memo ?? '')
 
   const needsCashReceipt = method === 'transfer' || method === 'cash'
 
@@ -82,21 +80,6 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
     if (payment?.id && onDelete) {
       onDelete(payment.id)
     }
-  }
-
-  const handleSaveMemo = async () => {
-    if (!payment) return
-    await onSave({
-      student_id: studentId,
-      amount: payment.amount,
-      method: payment.method,
-      payment_date: payment.payment_date,
-      billing_month: payment.billing_month,
-      cash_receipt: payment.cash_receipt,
-      memo: editMemo,
-    })
-    setEditingMemo(false)
-    onClose()
   }
 
   return (
@@ -146,39 +129,12 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
               )}
             </div>
 
-            {/* 비고 편집 */}
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">비고</label>
-              {editingMemo ? (
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={editMemo}
-                    onChange={e => setEditMemo(e.target.value)}
-                    className="flex-1 px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1e2d6f]"
-                    placeholder="특이사항이 있으면 입력하세요"
-                    autoFocus
-                  />
-                  <button
-                    onClick={handleSaveMemo}
-                    className="px-3 py-2 bg-[#1e2d6f] text-white rounded-lg text-sm font-medium hover:opacity-90"
-                  >
-                    저장
-                  </button>
-                </div>
-              ) : (
-                <button
-                  onClick={() => setEditingMemo(true)}
-                  className="w-full px-3 py-2 border border-dashed border-gray-300 rounded-lg text-sm text-left hover:bg-gray-50"
-                >
-                  {payment.memo ? (
-                    <span className="text-gray-700">{payment.memo}</span>
-                  ) : (
-                    <span className="text-gray-400">특이사항 입력하기...</span>
-                  )}
-                </button>
-              )}
-            </div>
+            {payment.memo && (
+              <div className="flex justify-between py-2">
+                <span className="text-sm text-gray-400">비고</span>
+                <span className="text-sm font-medium text-right max-w-[60%]">{payment.memo}</span>
+              </div>
+            )}
 
             <button
               onClick={() => setShowConfirmDelete(true)}
