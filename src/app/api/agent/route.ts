@@ -164,31 +164,31 @@ async function createPaymentsForClass(args: Record<string, string>) {
     const payAmount = overrideAmount ?? studentFee
 
     // 중복 체크: 같은 학생+월에 이미 납부 기록이 있으면 스킵
-    const { data: existing } = await supabase
+    const { data: existingList } = await supabase
       .from('tuition_payments')
       .select('id')
       .eq('student_id', s.id)
       .eq('billing_month', args.billing_month)
-      .maybeSingle()
+      .limit(1)
 
     const METHOD_KR: Record<string, string> = { remote: '결제선생', card: '카드결제', transfer: '계좌이체', cash: '현금' }
     const methodLabel = METHOD_KR[args.method] ?? args.method
 
-    if (existing) {
+    if (existingList && existingList.length > 0) {
       results.push(`${s.name}: 이미 납부 완료 (스킵)`)
       continue
     }
 
     const cashReceipt = (args.method === 'transfer' || args.method === 'cash') ? (args.cash_receipt || 'pending') : null
     const paymentDate = args.payment_date || new Date().toISOString().split('T')[0]
-    const { error } = await supabase.from('tuition_payments').insert({
+    const { error } = await supabase.from('tuition_payments').upsert({
       student_id: s.id,
       amount: payAmount,
       method: args.method,
       payment_date: paymentDate,
       billing_month: args.billing_month,
       cash_receipt: cashReceipt,
-    })
+    }, { onConflict: 'student_id,billing_month' })
 
     results.push(error ? `${s.name}: 오류 - ${error.message}` : `${s.name}: ${payAmount.toLocaleString()}원 ${methodLabel} (${paymentDate})`)
   }
@@ -213,27 +213,27 @@ async function createPaymentForStudent(args: Record<string, string>) {
   const payAmount = args.amount ? parseInt(args.amount) : fee
 
   // 중복 체크
-  const { data: existing } = await supabase
+  const { data: existingList } = await supabase
     .from('tuition_payments')
     .select('id')
     .eq('student_id', student.id)
     .eq('billing_month', args.billing_month)
-    .maybeSingle()
+    .limit(1)
 
-  if (existing) {
+  if (existingList && existingList.length > 0) {
     return { message: `${student.name}: 이번달(${args.billing_month}) 이미 납부 완료되어 있습니다` }
   }
 
   const cashReceipt = (args.method === 'transfer' || args.method === 'cash') ? (args.cash_receipt || 'pending') : null
   const paymentDate = args.payment_date || new Date().toISOString().split('T')[0]
-  const { error } = await supabase.from('tuition_payments').insert({
+  const { error } = await supabase.from('tuition_payments').upsert({
     student_id: student.id,
     amount: payAmount,
     method: args.method,
     payment_date: paymentDate,
     billing_month: args.billing_month,
     cash_receipt: cashReceipt,
-  })
+  }, { onConflict: 'student_id,billing_month' })
 
   if (error) return { error: error.message }
   const METHOD_KR: Record<string, string> = { remote: '결제선생', card: '카드결제', transfer: '계좌이체', cash: '현금' }
