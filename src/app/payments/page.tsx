@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import { ChevronLeft, ChevronRight, Check, MoreVertical } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Check, BarChart3 } from 'lucide-react'
 import type { Grade, Class, Student, Payment, PaymentMethod } from '@/types'
 import { getStudentFee, getPaymentStatus, PAYMENT_STATUS_LABELS, PAYMENT_STATUS_COLORS, PAYMENT_METHOD_LABELS } from '@/types'
 import PaymentModal from '@/components/PaymentModal'
@@ -320,9 +320,9 @@ export default function PaymentsPage() {
                                 </button>
                                 <button
                                   onClick={() => handleOpenModal(student.id, fee)}
-                                  className="fan-item p-1 text-gray-400 hover:text-gray-600"
+                                  className="fan-item p-1 text-[#1e2d6f] hover:opacity-70"
                                 >
-                                  <MoreVertical className="w-3.5 h-3.5" />
+                                  <BarChart3 className="w-3.5 h-3.5" />
                                 </button>
                               </div>
                             ) : (
