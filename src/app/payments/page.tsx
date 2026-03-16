@@ -2,16 +2,23 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import { ChevronLeft, ChevronRight, CreditCard } from 'lucide-react'
+import { ChevronLeft, ChevronRight, CreditCard, MessageSquareWarning } from 'lucide-react'
 import type { Grade, Class, Student, Payment } from '@/types'
 import { getStudentFee, getPaymentStatus, PAYMENT_STATUS_LABELS, PAYMENT_STATUS_COLORS, PAYMENT_METHOD_LABELS } from '@/types'
 import PaymentModal from '@/components/PaymentModal'
 
 type GradeWithClasses = Grade & { classes: (Class & { students: Student[] })[] }
 
+function getPrevMonth(month: string) {
+  const [y, m] = month.split('-').map(Number)
+  const d = new Date(y, m - 2, 1)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+}
+
 export default function PaymentsPage() {
   const [grades, setGrades] = useState<GradeWithClasses[]>([])
   const [payments, setPayments] = useState<Payment[]>([])
+  const [prevPayments, setPrevPayments] = useState<Payment[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const now = new Date()
@@ -21,18 +28,23 @@ export default function PaymentsPage() {
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null)
   const [selectedStudentFee, setSelectedStudentFee] = useState(0)
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null)
+  const [selectedPrevMemo, setSelectedPrevMemo] = useState<string | null>(null)
 
   const fetchData = useCallback(async () => {
-    const [gradesRes, paymentsRes] = await Promise.all([
+    const prevMonth = getPrevMonth(selectedMonth)
+    const [gradesRes, paymentsRes, prevPaymentsRes] = await Promise.all([
       fetch('/api/grades'),
       fetch(`/api/payments?billing_month=${selectedMonth}`),
+      fetch(`/api/payments?billing_month=${prevMonth}`),
     ])
-    const [gradesData, paymentsData] = await Promise.all([
+    const [gradesData, paymentsData, prevPaymentsData] = await Promise.all([
       gradesRes.json(),
       paymentsRes.json(),
+      prevPaymentsRes.json(),
     ])
     setGrades(gradesData)
     setPayments(paymentsData)
+    setPrevPayments(prevPaymentsData)
     setLoading(false)
   }, [selectedMonth])
 
@@ -52,11 +64,17 @@ export default function PaymentsPage() {
   const getStudentPayments = (studentId: string) =>
     payments.filter(p => p.student_id === studentId)
 
+  const getPrevMemo = (studentId: string): string | null => {
+    const prev = prevPayments.find(p => p.student_id === studentId)
+    return prev?.memo || null
+  }
+
   const handleAddPayment = (studentId: string, fee: number) => {
     const existing = payments.find(p => p.student_id === studentId)
     setSelectedStudentId(studentId)
     setSelectedStudentFee(fee)
     setSelectedPayment(existing || null)
+    setSelectedPrevMemo(getPrevMemo(studentId))
     setShowPaymentModal(true)
   }
 
@@ -147,15 +165,27 @@ export default function PaymentsPage() {
                       const paid = studentPayments.reduce((s, p) => s + p.amount, 0)
                       const status = getPaymentStatus(paid, fee)
                       const statusColors = PAYMENT_STATUS_COLORS[status]
+                      const prevMemo = getPrevMemo(student.id)
+                      const currentMemo = studentPayments[0]?.memo
 
                       return (
-                        <div key={student.id} className="flex items-center gap-3 px-4 py-3 border-b last:border-b-0">
-                          <Link href={`/students/${student.id}`} className="flex-1 min-w-0">
+                        <div key={student.id} className="flex items-center gap-2 px-4 py-3 border-b last:border-b-0">
+                          <Link href={`/students/${student.id}`} className="flex-1 min-w-0 flex items-center gap-1.5">
                             <span className="text-sm font-medium">{student.name}</span>
+                            {prevMemo && (
+                              <span className="text-amber-500" title={`지난달: ${prevMemo}`}>
+                                <MessageSquareWarning className="w-3.5 h-3.5" />
+                              </span>
+                            )}
+                            {currentMemo && (
+                              <span className="text-blue-400" title={currentMemo}>
+                                <MessageSquareWarning className="w-3.5 h-3.5" />
+                              </span>
+                            )}
                           </Link>
 
                           {studentPayments.length > 0 && (
-                            <div className="text-xs text-gray-400">
+                            <div className="text-xs text-gray-400 hidden sm:block">
                               {studentPayments.map(p => PAYMENT_METHOD_LABELS[p.method as keyof typeof PAYMENT_METHOD_LABELS]).join(', ')}
                             </div>
                           )}
@@ -198,6 +228,7 @@ export default function PaymentsPage() {
           studentId={selectedStudentId}
           defaultBillingMonth={selectedMonth}
           defaultAmount={selectedStudentFee}
+          prevMemo={selectedPrevMemo}
           onSave={handleSavePayment}
           onDelete={handleDeletePayment}
           onClose={() => { setShowPaymentModal(false); setSelectedPayment(null) }}

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { X, Trash2 } from 'lucide-react'
+import { X, Trash2, AlertTriangle } from 'lucide-react'
 import type { Payment, PaymentMethod } from '@/types'
 import { PAYMENT_METHOD_LABELS } from '@/types'
 
@@ -10,6 +10,7 @@ interface Props {
   studentId: string
   defaultBillingMonth?: string
   defaultAmount?: number
+  prevMemo?: string | null
   onSave: (data: Partial<Payment>) => void
   onDelete?: (paymentId: string) => void
   onClose: () => void
@@ -22,7 +23,7 @@ const METHOD_OPTIONS: [PaymentMethod, string][] = [
   ['cash', '현금'],
 ]
 
-export default function PaymentModal({ payment, studentId, defaultBillingMonth, defaultAmount, onSave, onDelete, onClose }: Props) {
+export default function PaymentModal({ payment, studentId, defaultBillingMonth, defaultAmount, prevMemo, onSave, onDelete, onClose }: Props) {
   const today = new Date().toISOString().split('T')[0]
   const currentMonth = today.slice(0, 7)
 
@@ -72,11 +73,22 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
 
   return (
     <div className="fixed inset-0 bg-black/40 z-50 flex items-end sm:items-center justify-center" onClick={onClose}>
-      <div className="bg-white w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl" onClick={e => e.stopPropagation()}>
+      <div className="bg-white w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between px-5 py-4 border-b">
           <h2 className="text-lg font-bold">{payment ? '납부 정보' : '납부 기록'}</h2>
           <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
         </div>
+
+        {/* 이전달 비고 알림 */}
+        {prevMemo && (
+          <div className="mx-5 mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg flex gap-2">
+            <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-xs font-medium text-amber-800">지난달 비고</p>
+              <p className="text-xs text-amber-700 mt-0.5">{prevMemo}</p>
+            </div>
+          </div>
+        )}
 
         {/* 기존 납부 정보 확인 모드 */}
         {payment && !showConfirmDelete ? (
@@ -106,8 +118,8 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
               )}
               {payment.memo && (
                 <div className="flex justify-between py-2 border-b">
-                  <span className="text-gray-400">메모</span>
-                  <span className="font-medium">{payment.memo}</span>
+                  <span className="text-gray-400">비고</span>
+                  <span className="font-medium text-right max-w-[60%]">{payment.memo}</span>
                 </div>
               )}
             </div>
@@ -222,13 +234,13 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">메모</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">비고</label>
               <input
                 type="text"
                 value={memo}
                 onChange={e => setMemo(e.target.value)}
                 className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1e2d6f]"
-                placeholder="선택사항"
+                placeholder="특이사항이 있으면 입력하세요"
               />
             </div>
 
