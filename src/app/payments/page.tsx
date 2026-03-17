@@ -492,12 +492,12 @@ export default function PaymentsPage() {
                       const isSwipeOpen = swipeOpenId === student.id
 
                       return (
-                        <div key={student.id} className="relative overflow-hidden border-b last:border-b-0">
+                        <div key={student.id} className="relative overflow-hidden">
                           {/* 왼쪽 스와이프 액션 (상담 토글) */}
                           <div className={`absolute inset-y-0 left-0 w-24 flex items-center justify-center ${
-                            hasDiscuss ? 'bg-gray-400' : 'bg-amber-400'
+                            hasDiscuss ? 'bg-gray-400' : 'bg-red-500'
                           }`}>
-                            <span className="text-white font-bold text-xs">{hasDiscuss ? '해제' : '상담'}</span>
+                            <span className="text-white font-bold text-xs">{hasDiscuss ? '해제' : 'DISCUSS'}</span>
                           </div>
 
                           {/* 오른쪽 수정 패널 */}
@@ -550,7 +550,7 @@ export default function PaymentsPage() {
                             >
                               {/* 상담 라벨 */}
                               {hasDiscuss && (
-                                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 font-bold shrink-0">상담</span>
+                                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-red-100 text-red-600 font-bold shrink-0">DISCUSS</span>
                               )}
 
                               <Link
