@@ -11,10 +11,15 @@ interface Props {
   loading: boolean
 }
 
-interface Trail {
+interface Particle {
   x: number
   y: number
-  opacity: number
+  vx: number
+  vy: number
+  life: number
+  maxLife: number
+  size: number
+  hue: number
   id: number
 }
 
@@ -25,13 +30,14 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
 
   // 물리 상태
   const [pos, setPos] = useState({ x: 0, y: 0 })
-  const [trails, setTrails] = useState<Trail[]>([])
+  const [particles, setParticles] = useState<Particle[]>([])
   const velRef = useRef({ x: 0, y: 0 })
   const dragging = useRef(false)
   const lastTouch = useRef({ x: 0, y: 0, t: 0 })
   const prevTouch = useRef({ x: 0, y: 0, t: 0 })
+  const posRef = useRef({ x: 0, y: 0 })
   const animFrame = useRef<number>(0)
-  const trailId = useRef(0)
+  const particleId = useRef(0)
   const btnRef = useRef<HTMLDivElement>(null)
   const initialized = useRef(false)
 
@@ -42,6 +48,29 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
     const w = window.innerWidth
     const h = window.innerHeight
     setPos({ x: w - 60, y: h * 0.38 })
+  }, [])
+
+  // 스타더스트 파티클 생성
+  const spawnParticles = useCallback((cx: number, cy: number, speed: number) => {
+    const count = Math.min(Math.floor(speed / 3), 5)
+    const newParticles: Particle[] = []
+    for (let i = 0; i < count; i++) {
+      const angle = Math.random() * Math.PI * 2
+      const spread = 1 + Math.random() * 2.5
+      const life = 40 + Math.random() * 50
+      newParticles.push({
+        x: cx + 24 + (Math.random() - 0.5) * 16,
+        y: cy + 24 + (Math.random() - 0.5) * 16,
+        vx: Math.cos(angle) * spread - velRef.current.x * 0.05,
+        vy: Math.sin(angle) * spread - velRef.current.y * 0.05,
+        life,
+        maxLife: life,
+        size: 2 + Math.random() * 4,
+        hue: 220 + Math.random() * 40,
+        id: particleId.current++,
+      })
+    }
+    return newParticles
   }, [])
 
   // 물리 시뮬레이션 (관성 + 벽 탄성)
@@ -55,41 +84,48 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
     velRef.current.x *= friction
     velRef.current.y *= friction
 
-    setPos(prev => {
-      let nx = prev.x + velRef.current.x
-      let ny = prev.y + velRef.current.y
-      const maxX = window.innerWidth - size
-      const maxY = window.innerHeight - size
+    let nx = posRef.current.x + velRef.current.x
+    let ny = posRef.current.y + velRef.current.y
+    const maxX = window.innerWidth - size
+    const maxY = window.innerHeight - size
 
-      // 벽 충돌 → 탄성
-      if (nx < 0) { nx = 0; velRef.current.x = Math.abs(velRef.current.x) * bounce }
-      if (nx > maxX) { nx = maxX; velRef.current.x = -Math.abs(velRef.current.x) * bounce }
-      if (ny < 0) { ny = 0; velRef.current.y = Math.abs(velRef.current.y) * bounce }
-      if (ny > maxY) { ny = maxY; velRef.current.y = -Math.abs(velRef.current.y) * bounce }
+    if (nx < 0) { nx = 0; velRef.current.x = Math.abs(velRef.current.x) * bounce }
+    if (nx > maxX) { nx = maxX; velRef.current.x = -Math.abs(velRef.current.x) * bounce }
+    if (ny < 0) { ny = 0; velRef.current.y = Math.abs(velRef.current.y) * bounce }
+    if (ny > maxY) { ny = maxY; velRef.current.y = -Math.abs(velRef.current.y) * bounce }
 
-      return { x: nx, y: ny }
-    })
+    posRef.current = { x: nx, y: ny }
+    setPos({ x: nx, y: ny })
 
     const speed = Math.sqrt(velRef.current.x ** 2 + velRef.current.y ** 2)
 
-    // 유성 꼬리 — 빠를 때만
-    if (speed > 3) {
-      setTrails(prev => {
-        const next = [...prev, { x: 0, y: 0, opacity: Math.min(speed / 20, 1), id: trailId.current++ }]
-        return next.slice(-12)
-      })
+    // 스타더스트 파티클 방출
+    if (speed > 2) {
+      const spawned = spawnParticles(nx, ny, speed)
+      setParticles(prev => [...prev, ...spawned].slice(-60))
     }
 
-    // 꼬리 페이드 아웃
-    setTrails(prev => prev.map(t => ({ ...t, opacity: t.opacity * 0.88 })).filter(t => t.opacity > 0.02))
+    // 파티클 물리 업데이트
+    setParticles(prev =>
+      prev
+        .map(p => ({
+          ...p,
+          x: p.x + p.vx,
+          y: p.y + p.vy,
+          vx: p.vx * 0.97,
+          vy: p.vy * 0.97 + 0.02,
+          life: p.life - 1,
+        }))
+        .filter(p => p.life > 0)
+    )
 
-    if (speed > 0.3) {
+    if (speed > 0.3 || particles.length > 0) {
       animFrame.current = requestAnimationFrame(simulate)
     } else {
       velRef.current = { x: 0, y: 0 }
-      setTrails([])
     }
-  }, [])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [spawnParticles])
 
   // 터치/마우스 핸들러
   const getXY = (e: React.TouchEvent | React.MouseEvent) => {
@@ -110,7 +146,6 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
     const now = performance.now()
     lastTouch.current = { x, y, t: now }
     prevTouch.current = { x, y, t: now }
-    setTrails([])
   }
 
   const handleMove = useCallback((e: TouchEvent | MouseEvent) => {
@@ -127,18 +162,48 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
     const size = 48
     const nx = Math.max(0, Math.min(window.innerWidth - size, x - size / 2))
     const ny = Math.max(0, Math.min(window.innerHeight - size, y - size / 2))
+    posRef.current = { x: nx, y: ny }
     setPos({ x: nx, y: ny })
 
-    // 드래그 중 꼬리
+    // 드래그 중 스타더스트
     const dx = x - prevTouch.current.x
     const dy = y - prevTouch.current.y
     const speed = Math.sqrt(dx * dx + dy * dy)
-    if (speed > 2) {
-      setTrails(prev => {
-        const next = [...prev, { x: nx, y: ny, opacity: Math.min(speed / 15, 1), id: trailId.current++ }]
-        return next.slice(-12)
-      })
+    if (speed > 1.5) {
+      const count = Math.min(Math.floor(speed / 4) + 1, 4)
+      const newP: Particle[] = []
+      for (let i = 0; i < count; i++) {
+        const angle = Math.random() * Math.PI * 2
+        const spread = 0.5 + Math.random() * 2
+        const life = 30 + Math.random() * 45
+        newP.push({
+          x: nx + 24 + (Math.random() - 0.5) * 20,
+          y: ny + 24 + (Math.random() - 0.5) * 20,
+          vx: Math.cos(angle) * spread,
+          vy: Math.sin(angle) * spread,
+          life,
+          maxLife: life,
+          size: 2 + Math.random() * 4,
+          hue: 220 + Math.random() * 40,
+          id: particleId.current++,
+        })
+      }
+      setParticles(prev => [...prev, ...newP].slice(-60))
     }
+
+    // 파티클 물리 업데이트 (드래그 중에도)
+    setParticles(prev =>
+      prev
+        .map(p => ({
+          ...p,
+          x: p.x + p.vx,
+          y: p.y + p.vy,
+          vx: p.vx * 0.97,
+          vy: p.vy * 0.97 + 0.02,
+          life: p.life - 1,
+        }))
+        .filter(p => p.life > 0)
+    )
   }, [])
 
   const handleEnd = useCallback(() => {
@@ -179,12 +244,6 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
       cancelAnimationFrame(animFrame.current)
     }
   }, [handleMove, handleEnd])
-
-  // 꼬리 위치 업데이트 (현재 pos 기준)
-  useEffect(() => {
-    setTrails(prev => prev.map(t => t.opacity > 0.5 ? { ...t, x: pos.x, y: pos.y } : t))
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
 
   const handleFilter = async () => {
     if (!query.trim() || loading) return
@@ -249,23 +308,28 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
 
   return (
     <>
-      {/* 유성 꼬리 */}
-      {trails.map(t => (
-        <div
-          key={t.id}
-          className="fixed pointer-events-none z-20 rounded-full"
-          style={{
-            left: t.x + 12,
-            top: t.y + 12,
-            width: 24,
-            height: 24,
-            opacity: t.opacity * 0.7,
-            background: `radial-gradient(circle, rgba(30,45,111,${t.opacity * 0.5}) 0%, rgba(100,130,255,${t.opacity * 0.3}) 50%, transparent 70%)`,
-            filter: `blur(${3 + (1 - t.opacity) * 6}px)`,
-            transform: 'translate(-50%, -50%)',
-          }}
-        />
-      ))}
+      {/* 스타더스트 파티클 */}
+      {particles.map(p => {
+        const progress = p.life / p.maxLife
+        const opacity = progress < 0.3 ? progress / 0.3 : progress
+        return (
+          <div
+            key={p.id}
+            className="fixed pointer-events-none z-20"
+            style={{
+              left: p.x,
+              top: p.y,
+              width: p.size,
+              height: p.size,
+              opacity: opacity * 0.9,
+              borderRadius: '50%',
+              background: `radial-gradient(circle, hsla(${p.hue},80%,75%,1) 0%, hsla(${p.hue},70%,60%,0.6) 40%, transparent 70%)`,
+              boxShadow: `0 0 ${p.size * 2}px hsla(${p.hue},80%,70%,${opacity * 0.6})`,
+              transform: `translate(-50%, -50%) scale(${0.5 + progress * 0.5})`,
+            }}
+          />
+        )
+      })}
 
       {/* 메인 버튼 */}
       <div
