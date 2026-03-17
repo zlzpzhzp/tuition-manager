@@ -67,7 +67,9 @@ export default function PaymentsPage() {
   const [inlineOtherMemo, setInlineOtherMemo] = useState('')
   const [showDatePicker, setShowDatePicker] = useState(false)
   const [datePickerPos, setDatePickerPos] = useState({ top: 0, left: 0 })
+  const [methodPickerPos, setMethodPickerPos] = useState({ top: 0, right: 0 })
   const dateButtonRef = useRef<HTMLButtonElement>(null)
+  const methodButtonRef = useRef<HTMLButtonElement>(null)
 
   // 모달 (고급 옵션 / 납부 상세보기)
   const [showPaymentModal, setShowPaymentModal] = useState(false)
@@ -360,32 +362,22 @@ export default function PaymentsPage() {
                                     {(() => { const d = new Date(inlineDate); return `${d.getMonth()+1}/${d.getDate()}` })()}
                                     <span className="text-[9px] opacity-50 ml-0.5">▼</span>
                                   </button>
-                                  <div className="relative fan-item">
-                                    <button
-                                      type="button"
-                                      onClick={() => { setShowMethodPicker(!showMethodPicker); setShowDatePicker(false) }}
-                                      className="px-2 py-0.5 rounded-full text-xs font-medium bg-[#E0E7FF] text-[#3730A3] flex items-center gap-0.5 whitespace-nowrap"
-                                    >
-                                      {INLINE_METHODS.find(([v]) => v === inlineMethod)?.[1]}
-                                      <span className="text-[9px] opacity-50">▼</span>
-                                    </button>
-                                    {showMethodPicker && (
-                                      <div className="absolute top-full right-0 mt-1 bg-white border rounded-lg shadow-lg z-10 overflow-hidden min-w-[90px]">
-                                        {INLINE_METHODS.map(([val, label]) => (
-                                          <button
-                                            key={val}
-                                            type="button"
-                                            onClick={() => { setInlineMethod(val); setShowMethodPicker(false) }}
-                                            className={`block w-full text-left px-3 py-2 text-xs font-medium hover:bg-gray-50 whitespace-nowrap ${
-                                              inlineMethod === val ? 'text-[#3730A3] bg-indigo-50' : 'text-gray-600'
-                                            }`}
-                                          >
-                                            {label}
-                                          </button>
-                                        ))}
-                                      </div>
-                                    )}
-                                  </div>
+                                  <button
+                                    ref={methodButtonRef}
+                                    type="button"
+                                    onClick={() => {
+                                      if (!showMethodPicker && methodButtonRef.current) {
+                                        const rect = methodButtonRef.current.getBoundingClientRect()
+                                        setMethodPickerPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right })
+                                      }
+                                      setShowMethodPicker(!showMethodPicker)
+                                      setShowDatePicker(false)
+                                    }}
+                                    className="fan-item px-2 py-0.5 rounded-full text-xs font-medium bg-[#E0E7FF] text-[#3730A3] flex items-center gap-0.5 whitespace-nowrap"
+                                  >
+                                    {INLINE_METHODS.find(([v]) => v === inlineMethod)?.[1]}
+                                    <span className="text-[9px] opacity-50">▼</span>
+                                  </button>
                                   <button
                                     onClick={() => handleInlineSubmit(student.id, fee)}
                                     disabled={!!inlineSuccess}
@@ -538,6 +530,30 @@ export default function PaymentsPage() {
           </>
         )
       })()}
+
+      {/* 결제수단 드롭다운 (fixed로 overflow-hidden 무시) */}
+      {showMethodPicker && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setShowMethodPicker(false)} />
+          <div
+            className="fixed z-50 bg-white border rounded-lg shadow-lg overflow-hidden min-w-[90px]"
+            style={{ top: methodPickerPos.top, right: methodPickerPos.right }}
+          >
+            {INLINE_METHODS.map(([val, label]) => (
+              <button
+                key={val}
+                type="button"
+                onClick={() => { setInlineMethod(val); setShowMethodPicker(false) }}
+                className={`block w-full text-left px-3 py-2 text-xs font-medium hover:bg-gray-50 whitespace-nowrap ${
+                  inlineMethod === val ? 'text-[#3730A3] bg-indigo-50' : 'text-gray-600'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   )
 }
