@@ -518,29 +518,29 @@ export default function PaymentsPage() {
                           </div>
 
                           {/* 오른쪽 수정 패널 */}
-                          <div className="absolute inset-y-0 right-0 w-[150px] flex items-center gap-1 px-2 bg-slate-50 border-l" onClick={e => e.stopPropagation()}>
+                          <div className="absolute inset-y-0 right-0 w-[150px] flex items-center gap-1.5 px-2 bg-violet-50" onClick={e => e.stopPropagation()}>
                             <div className="flex flex-col items-center">
-                              <label htmlFor={`dueday-${student.id}`} className="text-[8px] text-gray-400 mb-0.5">결제일</label>
+                              <label htmlFor={`dueday-${student.id}`} className="text-[8px] text-violet-400 mb-0.5 font-medium">결제일</label>
                               <input
                                 id={`dueday-${student.id}`}
                                 type="number"
                                 value={isSwipeOpen ? editDueDayValue : ''}
                                 onChange={e => setEditDueDayValue(e.target.value)}
-                                className="w-10 px-1 py-1 text-xs border rounded text-center"
+                                className="w-10 px-1 py-1 text-xs border border-violet-200 rounded-lg text-center bg-white focus:outline-none focus:ring-1 focus:ring-violet-300"
                                 min={1} max={31}
                               />
                             </div>
                             <div className="flex flex-col items-center">
-                              <label htmlFor={`fee-${student.id}`} className="text-[8px] text-gray-400 mb-0.5">원비(만)</label>
+                              <label htmlFor={`fee-${student.id}`} className="text-[8px] text-violet-400 mb-0.5 font-medium">원비(만)</label>
                               <input
                                 id={`fee-${student.id}`}
                                 type="number"
                                 value={isSwipeOpen ? editFeeValue : ''}
                                 onChange={e => setEditFeeValue(e.target.value)}
-                                className="w-12 px-1 py-1 text-xs border rounded text-center"
+                                className="w-12 px-1 py-1 text-xs border border-violet-200 rounded-lg text-center bg-white focus:outline-none focus:ring-1 focus:ring-violet-300"
                               />
                             </div>
-                            <button onClick={() => handleSaveEdit(student.id)} className="p-1.5 bg-[#1e2d6f] text-white rounded-lg shrink-0" aria-label="저장">
+                            <button onClick={() => handleSaveEdit(student.id)} className="p-1.5 bg-violet-400 hover:bg-violet-500 text-white rounded-full shrink-0 shadow-sm transition-colors" aria-label="저장">
                               <Check className="w-3.5 h-3.5" />
                             </button>
                           </div>
