@@ -28,23 +28,45 @@ export async function POST(request: Request) {
   if (!body.method || !validMethods.includes(body.method)) errors.push(`method must be one of: ${validMethods.join(', ')}`)
   if (errors.length > 0) return NextResponse.json({ error: errors.join('; ') }, { status: 400 })
 
-  // upsert on (student_id, billing_month) to prevent duplicate race conditions
-  const { data, error } = await supabase
+  // Check if payment already exists for this student/month
+  const { data: existing } = await supabase
     .from('tuition_payments')
-    .upsert(
-      {
-        student_id: body.student_id,
-        amount: body.amount,
-        method: body.method,
-        payment_date: body.payment_date,
-        billing_month: body.billing_month,
-        cash_receipt: body.cash_receipt ?? null,
-        memo: body.memo || null,
-      },
-      { onConflict: 'student_id,billing_month' }
-    )
-    .select('*, student:tuition_students(*)')
-    .single()
+    .select('id')
+    .eq('student_id', body.student_id)
+    .eq('billing_month', body.billing_month)
+    .maybeSingle()
+
+  const payload = {
+    student_id: body.student_id,
+    amount: body.amount,
+    method: body.method,
+    payment_date: body.payment_date,
+    billing_month: body.billing_month,
+    cash_receipt: body.cash_receipt ?? null,
+    memo: body.memo || null,
+  }
+
+  let data, error
+  if (existing?.id) {
+    // Update existing payment
+    const result = await supabase
+      .from('tuition_payments')
+      .update(payload)
+      .eq('id', existing.id)
+      .select('*, student:tuition_students(*)')
+      .single()
+    data = result.data
+    error = result.error
+  } else {
+    // Insert new payment
+    const result = await supabase
+      .from('tuition_payments')
+      .insert(payload)
+      .select('*, student:tuition_students(*)')
+      .single()
+    data = result.data
+    error = result.error
+  }
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json(data)

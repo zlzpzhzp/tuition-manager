@@ -139,7 +139,7 @@ export default function PaymentsPage() {
       alert('기타 결제수단 선택 시 내용을 입력해주세요.')
       return
     }
-    await fetch('/api/payments', {
+    const res = await fetch('/api/payments', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -151,6 +151,11 @@ export default function PaymentsPage() {
         ...(inlineMethod === 'other' && inlineOtherMemo.trim() ? { memo: inlineOtherMemo.trim() } : {}),
       }),
     })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      alert(`결제 처리 실패: ${err.error || '알 수 없는 오류'}`)
+      return
+    }
     setInlineSuccess(studentId)
     setTimeout(async () => {
       await fetchData()
@@ -262,19 +267,19 @@ export default function PaymentsPage() {
 
       {/* 요약 */}
       <div className="grid grid-cols-4 gap-2 sm:gap-3 mb-6">
-        <div className="bg-white rounded-xl border p-2 sm:p-4 text-center overflow-hidden">
+        <div className="bg-white rounded-xl border p-2 sm:p-4 text-center">
           <p className="text-[10px] sm:text-xs text-gray-400">총 원비</p>
-          <p className="text-xs sm:text-lg font-bold mt-1 truncate">{totalFee.toLocaleString()}<span className="text-[10px] sm:text-xs text-gray-400">원</span></p>
+          <p className="text-[11px] sm:text-lg font-bold mt-1">{(totalFee / 10000).toFixed(0)}<span className="text-[10px] sm:text-xs text-gray-400">만</span></p>
         </div>
-        <div className="bg-white rounded-xl border p-2 sm:p-4 text-center overflow-hidden">
+        <div className="bg-white rounded-xl border p-2 sm:p-4 text-center">
           <p className="text-[10px] sm:text-xs text-gray-400">납부 완료</p>
-          <p className="text-xs sm:text-lg font-bold mt-1 text-green-700 truncate">{totalPaid.toLocaleString()}<span className="text-[10px] sm:text-xs text-gray-400">원</span></p>
+          <p className="text-[11px] sm:text-lg font-bold mt-1 text-green-700">{(totalPaid / 10000).toFixed(0)}<span className="text-[10px] sm:text-xs text-gray-400">만</span></p>
         </div>
-        <div className="bg-white rounded-xl border p-2 sm:p-4 text-center overflow-hidden">
+        <div className="bg-white rounded-xl border p-2 sm:p-4 text-center">
           <p className="text-[10px] sm:text-xs text-gray-400">미납</p>
           <p className="text-sm sm:text-lg font-bold mt-1 text-red-700">{unpaidCount}<span className="text-[10px] sm:text-xs text-gray-400">명</span></p>
         </div>
-        <div className="bg-white rounded-xl border p-2 sm:p-4 text-center overflow-hidden">
+        <div className="bg-white rounded-xl border p-2 sm:p-4 text-center">
           <p className="text-[10px] sm:text-xs text-gray-400">예정</p>
           <p className="text-sm sm:text-lg font-bold mt-1 text-amber-600">{scheduledCount}<span className="text-[10px] sm:text-xs text-gray-400">명</span></p>
         </div>
