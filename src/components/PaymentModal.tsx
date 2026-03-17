@@ -21,6 +21,7 @@ const METHOD_OPTIONS: [PaymentMethod, string][] = [
   ['card', '카드결제'],
   ['transfer', '계좌이체'],
   ['cash', '현금'],
+  ['other', '기타'],
 ]
 
 export default function PaymentModal({ payment, studentId, defaultBillingMonth, defaultAmount, prevMemo, onSave, onDelete, onClose }: Props) {

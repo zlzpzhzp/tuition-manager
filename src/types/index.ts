@@ -1,4 +1,4 @@
-export type PaymentMethod = 'remote' | 'card' | 'transfer' | 'cash'
+export type PaymentMethod = 'remote' | 'card' | 'transfer' | 'cash' | 'other'
 
 export interface Grade {
   id: string
@@ -55,6 +55,7 @@ export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
   card: '카드결제',
   transfer: '계좌이체',
   cash: '현금',
+  other: '기타',
 }
 
 export const CASH_RECEIPT_LABELS: Record<string, string> = {

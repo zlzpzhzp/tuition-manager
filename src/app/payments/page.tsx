@@ -14,6 +14,7 @@ const INLINE_METHODS: [PaymentMethod, string][] = [
   ['card', '카드'],
   ['transfer', '이체'],
   ['cash', '현금'],
+  ['other', '기타'],
 ]
 
 function getPrevMonth(month: string) {
@@ -63,6 +64,7 @@ export default function PaymentsPage() {
   const [inlineMethod, setInlineMethod] = useState<PaymentMethod>('remote')
   const [inlineSuccess, setInlineSuccess] = useState<string | null>(null)
   const [showMethodPicker, setShowMethodPicker] = useState(false)
+  const [inlineOtherMemo, setInlineOtherMemo] = useState('')
 
   // 모달 (고급 옵션 / 납부 상세보기)
   const [showPaymentModal, setShowPaymentModal] = useState(false)
@@ -121,11 +123,16 @@ export default function PaymentsPage() {
     const prevPayment = prevPayments.find(p => p.student_id === studentId)
     setInlineMethod(prevPayment?.method as PaymentMethod || 'remote')
     setShowMethodPicker(false)
+    setInlineOtherMemo('')
   }
 
   // 인라인 납부 제출
   const handleInlineSubmit = async (studentId: string, fee: number) => {
     if (inlineSuccess) return
+    if (inlineMethod === 'other' && !inlineOtherMemo.trim()) {
+      alert('기타 결제수단 선택 시 내용을 입력해주세요.')
+      return
+    }
     await fetch('/api/payments', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -135,6 +142,7 @@ export default function PaymentsPage() {
         method: inlineMethod,
         payment_date: inlineDate,
         billing_month: selectedMonth,
+        ...(inlineMethod === 'other' && inlineOtherMemo.trim() ? { memo: inlineOtherMemo.trim() } : {}),
       }),
     })
     setInlineSuccess(studentId)
@@ -296,9 +304,16 @@ export default function PaymentsPage() {
                       const displayColors = scheduled
                         ? { bg: '#FEF3C7', text: '#92400E' }
                         : PAYMENT_STATUS_COLORS[status]
-                      const displayLabel = status === 'unpaid'
-                        ? getUnpaidLabel(student, selectedMonth)
-                        : PAYMENT_STATUS_LABELS[status]
+                      // 납부완료 시 실제 납부일 표시, 미납/예정은 기존 라벨
+                      let displayLabel = ''
+                      if (status === 'unpaid') {
+                        displayLabel = getUnpaidLabel(student, selectedMonth)
+                      } else if (studentPayments.length > 0) {
+                        const pDate = new Date(studentPayments[0].payment_date)
+                        displayLabel = `${pDate.getMonth() + 1}/${pDate.getDate()} 납부`
+                      } else {
+                        displayLabel = PAYMENT_STATUS_LABELS[status]
+                      }
                       const prevMemo = getPrevMemo(student.id)
                       const currentMemo = studentPayments[0]?.memo
                       const isExpanded = expandedStudentId === student.id && status === 'unpaid'
@@ -323,57 +338,71 @@ export default function PaymentsPage() {
 
                             {isExpanded ? (
                               /* 인라인 납부: 미납 뱃지 자리에서 왼쪽으로 펼쳐짐 */
-                              <div className="flex items-center gap-1.5" onClick={e => e.stopPropagation()}>
-                                <input
-                                  type="date"
-                                  value={inlineDate}
-                                  onChange={e => setInlineDate(e.target.value)}
-                                  className="fan-item px-2 py-0.5 rounded-full text-xs bg-[#FEF3C7] text-[#92400E] border-0 focus:outline-none focus:ring-1 focus:ring-amber-400"
-                                  style={{ width: '120px' }}
-                                />
-                                <div className="relative fan-item">
+                              <div className="flex flex-col items-end gap-1" onClick={e => e.stopPropagation()}>
+                                <div className="flex items-center gap-1.5">
+                                  <input
+                                    type="date"
+                                    value={inlineDate}
+                                    onChange={e => setInlineDate(e.target.value)}
+                                    className="fan-item px-2 py-0.5 rounded-full text-xs bg-[#FEF3C7] text-[#92400E] border-0 focus:outline-none focus:ring-1 focus:ring-amber-400"
+                                    style={{ width: '120px' }}
+                                  />
+                                  <div className="relative fan-item">
+                                    <button
+                                      type="button"
+                                      onClick={() => setShowMethodPicker(!showMethodPicker)}
+                                      className="px-2 py-0.5 rounded-full text-xs font-medium bg-[#E0E7FF] text-[#3730A3] flex items-center gap-0.5 whitespace-nowrap"
+                                    >
+                                      {INLINE_METHODS.find(([v]) => v === inlineMethod)?.[1]}
+                                      <span className="text-[9px] opacity-50">▼</span>
+                                    </button>
+                                    {showMethodPicker && (
+                                      <div className="absolute top-full right-0 mt-1 bg-white border rounded-lg shadow-lg z-10 overflow-hidden min-w-[90px]">
+                                        {INLINE_METHODS.map(([val, label]) => (
+                                          <button
+                                            key={val}
+                                            type="button"
+                                            onClick={() => { setInlineMethod(val); setShowMethodPicker(false) }}
+                                            className={`block w-full text-left px-3 py-2 text-xs font-medium hover:bg-gray-50 whitespace-nowrap ${
+                                              inlineMethod === val ? 'text-[#3730A3] bg-indigo-50' : 'text-gray-600'
+                                            }`}
+                                          >
+                                            {label}
+                                          </button>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+                                  <span className="fan-item text-[10px] text-gray-400 whitespace-nowrap">
+                                    결제일{parseInt(selectedMonth.split('-')[1])}/{getPaymentDueDay(student)}
+                                  </span>
                                   <button
-                                    type="button"
-                                    onClick={() => setShowMethodPicker(!showMethodPicker)}
-                                    className="px-2 py-0.5 rounded-full text-xs font-medium bg-[#E0E7FF] text-[#3730A3] flex items-center gap-0.5 whitespace-nowrap"
+                                    onClick={() => handleInlineSubmit(student.id, fee)}
+                                    disabled={!!inlineSuccess}
+                                    className={`fan-item px-2.5 py-0.5 rounded-full text-xs font-medium transition-all ${
+                                      isSuccess
+                                        ? 'bg-green-500 text-white scale-105'
+                                        : 'bg-[#DEF7EC] text-[#03543F] hover:opacity-80'
+                                    }`}
                                   >
-                                    {INLINE_METHODS.find(([v]) => v === inlineMethod)?.[1]}
-                                    <span className="text-[9px] opacity-50">▼</span>
+                                    {isSuccess ? <Check className="w-3.5 h-3.5" strokeWidth={3} /> : '납부'}
                                   </button>
-                                  {showMethodPicker && (
-                                    <div className="absolute top-full right-0 mt-1 bg-white border rounded-lg shadow-lg z-10 overflow-hidden min-w-[90px]">
-                                      {INLINE_METHODS.map(([val, label]) => (
-                                        <button
-                                          key={val}
-                                          type="button"
-                                          onClick={() => { setInlineMethod(val); setShowMethodPicker(false) }}
-                                          className={`block w-full text-left px-3 py-2 text-xs font-medium hover:bg-gray-50 whitespace-nowrap ${
-                                            inlineMethod === val ? 'text-[#3730A3] bg-indigo-50' : 'text-gray-600'
-                                          }`}
-                                        >
-                                          {label}
-                                        </button>
-                                      ))}
-                                    </div>
-                                  )}
+                                  <button
+                                    onClick={() => handleOpenModal(student.id, fee)}
+                                    className="fan-item p-1 text-[#1e2d6f] hover:opacity-70"
+                                  >
+                                    <ClipboardList className="w-3.5 h-3.5" />
+                                  </button>
                                 </div>
-                                <button
-                                  onClick={() => handleInlineSubmit(student.id, fee)}
-                                  disabled={!!inlineSuccess}
-                                  className={`fan-item px-2.5 py-0.5 rounded-full text-xs font-medium transition-all ${
-                                    isSuccess
-                                      ? 'bg-green-500 text-white scale-105'
-                                      : 'bg-[#DEF7EC] text-[#03543F] hover:opacity-80'
-                                  }`}
-                                >
-                                  {isSuccess ? <Check className="w-3.5 h-3.5" strokeWidth={3} /> : '납부'}
-                                </button>
-                                <button
-                                  onClick={() => handleOpenModal(student.id, fee)}
-                                  className="fan-item p-1 text-[#1e2d6f] hover:opacity-70"
-                                >
-                                  <ClipboardList className="w-3.5 h-3.5" />
-                                </button>
+                                {inlineMethod === 'other' && (
+                                  <input
+                                    type="text"
+                                    value={inlineOtherMemo}
+                                    onChange={e => setInlineOtherMemo(e.target.value)}
+                                    placeholder="결제수단 입력 (예: 서울페이)"
+                                    className="fan-item w-full px-2.5 py-1 rounded-lg text-xs border border-gray-300 focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                                  />
+                                )}
                               </div>
                             ) : (
                               /* 기본 상태: 뱃지 + 상세 버튼 */
@@ -389,7 +418,7 @@ export default function PaymentsPage() {
                                     className="px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap cursor-pointer hover:opacity-80 transition-opacity"
                                     style={{ backgroundColor: displayColors.bg, color: displayColors.text }}
                                   >
-                                    {paid > 0 ? `${paid.toLocaleString()}원` : displayLabel}
+                                    {displayLabel}
                                   </button>
                                 ) : (
                                   <span

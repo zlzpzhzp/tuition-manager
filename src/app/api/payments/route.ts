@@ -24,7 +24,7 @@ export async function POST(request: Request) {
   if (body.amount === undefined || body.amount === null || Number(body.amount) < 0) errors.push('amount must be >= 0')
   if (!body.payment_date || isNaN(Date.parse(body.payment_date))) errors.push('payment_date must be a valid date (YYYY-MM-DD)')
   if (!body.billing_month || !/^\d{4}-\d{2}$/.test(body.billing_month)) errors.push('billing_month must be in YYYY-MM format')
-  const validMethods = ['remote', 'card', 'transfer', 'cash']
+  const validMethods = ['remote', 'card', 'transfer', 'cash', 'other']
   if (!body.method || !validMethods.includes(body.method)) errors.push(`method must be one of: ${validMethods.join(', ')}`)
   if (errors.length > 0) return NextResponse.json({ error: errors.join('; ') }, { status: 400 })
 
