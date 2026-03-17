@@ -847,20 +847,19 @@ export default function PaymentsPage() {
       )}
 
       {/* AI 필터 플로팅 버튼 */}
-      <div className="fixed left-0 z-30" style={{ top: '38%' }}>
+      <div className="fixed right-3 z-30" style={{ top: '38%' }}>
         {aiFilterIds !== null ? (
           /* 필터 활성 상태 */
-          <div className="flex items-center gap-1 bg-[#1e2d6f] text-white pl-2.5 pr-1.5 py-2 rounded-r-full shadow-lg">
-            <Sparkles className="w-3.5 h-3.5 shrink-0" />
+          <div className="flex items-center gap-1 bg-white text-[#1e2d6f] pl-2.5 pr-1.5 py-2 rounded-full shadow-[0_2px_12px_rgba(0,0,0,0.15)] border border-gray-100">
+            <Sparkles className="w-3.5 h-3.5 shrink-0 text-[#1e2d6f]" />
             <span className="text-[10px] font-medium max-w-[100px] truncate">{aiFilterDesc}</span>
-            <button onClick={clearAiFilter} className="p-0.5 hover:bg-white/20 rounded-full ml-0.5">
-              <X className="w-3.5 h-3.5" />
+            <button onClick={clearAiFilter} className="p-0.5 hover:bg-gray-100 rounded-full ml-0.5">
+              <X className="w-3.5 h-3.5 text-gray-400" />
             </button>
           </div>
         ) : aiFilterOpen ? (
-          /* 입력창 열림 */
-          <div className="flex items-center bg-white shadow-lg border rounded-r-2xl pl-3 pr-1 py-1.5 gap-1.5">
-            <Sparkles className="w-4 h-4 text-[#1e2d6f] shrink-0" />
+          /* 입력창 열림 (왼쪽으로 펼쳐짐) */
+          <div className="flex items-center bg-white shadow-[0_2px_16px_rgba(0,0,0,0.15)] border border-gray-100 rounded-full pl-3 pr-1 py-1.5 gap-1.5">
             <input
               ref={aiInputRef}
               autoFocus
@@ -888,12 +887,12 @@ export default function PaymentsPage() {
             </button>
           </div>
         ) : (
-          /* 기본 버튼 */
+          /* 기본 버튼 - 흰색 원형 + 반짝 애니메이션 */
           <button
             onClick={() => { setAiFilterOpen(true); setTimeout(() => aiInputRef.current?.focus(), 100) }}
-            className="bg-[#1e2d6f] text-white p-2.5 rounded-r-full shadow-lg hover:bg-[#2a3d8f] transition-colors"
+            className="ai-float-btn bg-white p-3 rounded-full shadow-[0_2px_12px_rgba(0,0,0,0.15)] border border-gray-100"
           >
-            <Sparkles className="w-5 h-5" />
+            <Sparkles className="w-5 h-5 text-[#1e2d6f]" />
           </button>
         )}
       </div>
