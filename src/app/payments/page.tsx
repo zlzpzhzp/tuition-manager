@@ -488,22 +488,8 @@ export default function PaymentsPage() {
         </div>
       </div>
 
-      {/* 전체/미납 토글 */}
-      <div className="flex justify-end mb-3">
-        <button
-          onClick={() => setShowUnpaidOnly(prev => !prev)}
-          className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-            showUnpaidOnly
-              ? 'bg-red-100 text-red-700'
-              : 'bg-gray-100 text-gray-500'
-          }`}
-        >
-          {showUnpaidOnly ? '미납만' : '전체'}
-        </button>
-      </div>
-
       {/* 학생별 납부 현황 */}
-      {grades.map(grade => {
+      {grades.map((grade, gradeIndex) => {
         const gradeStudentsAll = grade.classes.flatMap(c =>
           (c.students ?? []).filter(s => !s.withdrawal_date).map(s => ({ ...s, class: c }))
         )
@@ -511,14 +497,31 @@ export default function PaymentsPage() {
         if (showUnpaidOnly) {
           gradeStudents = gradeStudents.filter(s => {
             const paid = (paymentsByStudentId.get(s.id) ?? []).reduce((sum, p) => sum + p.amount, 0)
-            return getPaymentStatus(paid, getStudentFee(s, s.class)) !== 'paid'
+            const status = getPaymentStatus(paid, getStudentFee(s, s.class))
+            if (status === 'paid') return false
+            if (status === 'unpaid' && checkScheduled(s, selectedMonth)) return false
+            return true
           })
         }
         if (gradeStudents.length === 0) return null
 
         return (
           <div key={grade.id} className="mb-4">
-            <h2 className="text-sm font-semibold text-gray-500 mb-2 px-1">{grade.name}</h2>
+            <div className="flex items-center mb-2 px-1">
+              <h2 className="text-sm font-semibold text-gray-500 flex-1">{grade.name}</h2>
+              {gradeIndex === 0 && (
+                <button
+                  onClick={() => setShowUnpaidOnly(prev => !prev)}
+                  className={`px-2.5 py-0.5 rounded-full text-xs font-medium transition-colors ${
+                    showUnpaidOnly
+                      ? 'bg-red-100 text-red-700'
+                      : 'bg-gray-100 text-gray-500'
+                  }`}
+                >
+                  {showUnpaidOnly ? '미납' : '전체'}
+                </button>
+              )}
+            </div>
             <div className="bg-white rounded-xl border overflow-hidden">
               {grade.classes.map(cls => {
                 const allClassStudents = (cls.students ?? []).filter(s => !s.withdrawal_date)
@@ -526,7 +529,10 @@ export default function PaymentsPage() {
                 if (showUnpaidOnly) {
                   students = students.filter(s => {
                     const paid = (paymentsByStudentId.get(s.id) ?? []).reduce((sum, p) => sum + p.amount, 0)
-                    return getPaymentStatus(paid, getStudentFee(s, cls)) !== 'paid'
+                    const status = getPaymentStatus(paid, getStudentFee(s, cls))
+                    if (status === 'paid') return false
+                    if (status === 'unpaid' && checkScheduled(s, selectedMonth)) return false
+                    return true
                   })
                 }
                 if (students.length === 0) return null
