@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { ChevronLeft, ChevronRight, Check, ClipboardList, Download } from 'lucide-react'
 import type { Grade, Class, Student, Payment, PaymentMethod } from '@/types'
@@ -66,6 +66,8 @@ export default function PaymentsPage() {
   const [showMethodPicker, setShowMethodPicker] = useState(false)
   const [inlineOtherMemo, setInlineOtherMemo] = useState('')
   const [showDatePicker, setShowDatePicker] = useState(false)
+  const [datePickerPos, setDatePickerPos] = useState({ top: 0, left: 0 })
+  const dateButtonRef = useRef<HTMLButtonElement>(null)
 
   // 모달 (고급 옵션 / 납부 상세보기)
   const [showPaymentModal, setShowPaymentModal] = useState(false)
@@ -342,66 +344,22 @@ export default function PaymentsPage() {
                               /* 인라인 납부: 미납 뱃지 자리에서 왼쪽으로 펼쳐짐 */
                               <div className="flex flex-col items-end gap-1" onClick={e => e.stopPropagation()}>
                                 <div className="flex items-center gap-1.5">
-                                  <div className="relative fan-item">
-                                    <button
-                                      type="button"
-                                      onClick={() => { setShowDatePicker(!showDatePicker); setShowMethodPicker(false) }}
-                                      className="px-2 py-0.5 rounded-full text-xs font-medium bg-[#FEF3C7] text-[#92400E] whitespace-nowrap"
-                                    >
-                                      {(() => { const d = new Date(inlineDate); return `${d.getMonth()+1}/${d.getDate()}` })()}
-                                      <span className="text-[9px] opacity-50 ml-0.5">▼</span>
-                                    </button>
-                                    {showDatePicker && (() => {
-                                      const selDate = new Date(inlineDate)
-                                      const year = selDate.getFullYear()
-                                      const month = selDate.getMonth()
-                                      const firstDay = new Date(year, month, 1).getDay()
-                                      const daysInMonth = new Date(year, month + 1, 0).getDate()
-                                      const cells: (number | null)[] = []
-                                      for (let i = 0; i < firstDay; i++) cells.push(null)
-                                      for (let d = 1; d <= daysInMonth; d++) cells.push(d)
-                                      return (
-                                        <div className="absolute top-full left-0 mt-1 bg-white border rounded-lg shadow-lg z-20 p-2" style={{ width: '220px' }}>
-                                          <div className="flex items-center justify-between mb-1.5 px-1">
-                                            <button type="button" onClick={() => {
-                                              const nd = new Date(year, month - 1, 1)
-                                              setInlineDate(`${nd.getFullYear()}-${String(nd.getMonth()+1).padStart(2,'0')}-${String(Math.min(selDate.getDate(), new Date(nd.getFullYear(), nd.getMonth()+1, 0).getDate())).padStart(2,'0')}`)
-                                            }} className="text-gray-400 hover:text-gray-600 text-xs p-0.5">◀</button>
-                                            <span className="text-xs font-medium">{year}년 {month+1}월</span>
-                                            <button type="button" onClick={() => {
-                                              const nd = new Date(year, month + 1, 1)
-                                              setInlineDate(`${nd.getFullYear()}-${String(nd.getMonth()+1).padStart(2,'0')}-${String(Math.min(selDate.getDate(), new Date(nd.getFullYear(), nd.getMonth()+1, 0).getDate())).padStart(2,'0')}`)
-                                            }} className="text-gray-400 hover:text-gray-600 text-xs p-0.5">▶</button>
-                                          </div>
-                                          <div className="grid grid-cols-7 gap-0 text-center">
-                                            {['일','월','화','수','목','금','토'].map(d => (
-                                              <span key={d} className="text-[9px] text-gray-400 py-0.5">{d}</span>
-                                            ))}
-                                            {cells.map((day, i) => (
-                                              <button
-                                                key={i}
-                                                type="button"
-                                                disabled={!day}
-                                                onClick={() => {
-                                                  if (day) {
-                                                    setInlineDate(`${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`)
-                                                    setShowDatePicker(false)
-                                                  }
-                                                }}
-                                                className={`text-[11px] py-1 rounded ${
-                                                  !day ? '' :
-                                                  day === selDate.getDate() ? 'bg-[#1e2d6f] text-white font-bold' :
-                                                  'hover:bg-gray-100 text-gray-700'
-                                                }`}
-                                              >
-                                                {day || ''}
-                                              </button>
-                                            ))}
-                                          </div>
-                                        </div>
-                                      )
-                                    })()}
-                                  </div>
+                                  <button
+                                    ref={dateButtonRef}
+                                    type="button"
+                                    onClick={() => {
+                                      if (!showDatePicker && dateButtonRef.current) {
+                                        const rect = dateButtonRef.current.getBoundingClientRect()
+                                        setDatePickerPos({ top: rect.bottom + 4, left: Math.max(8, rect.left) })
+                                      }
+                                      setShowDatePicker(!showDatePicker)
+                                      setShowMethodPicker(false)
+                                    }}
+                                    className="fan-item px-2 py-0.5 rounded-full text-xs font-medium bg-[#FEF3C7] text-[#92400E] whitespace-nowrap"
+                                  >
+                                    {(() => { const d = new Date(inlineDate); return `${d.getMonth()+1}/${d.getDate()}` })()}
+                                    <span className="text-[9px] opacity-50 ml-0.5">▼</span>
+                                  </button>
                                   <div className="relative fan-item">
                                     <button
                                       type="button"
@@ -522,6 +480,64 @@ export default function PaymentsPage() {
           onClose={() => { setShowPaymentModal(false); setSelectedPayment(null); setExpandedStudentId(null) }}
         />
       )}
+
+      {/* 커스텀 날짜선택기 (fixed로 overflow-hidden 무시) */}
+      {showDatePicker && (() => {
+        const selDate = new Date(inlineDate)
+        const year = selDate.getFullYear()
+        const month = selDate.getMonth()
+        const firstDay = new Date(year, month, 1).getDay()
+        const daysInMonth = new Date(year, month + 1, 0).getDate()
+        const cells: (number | null)[] = []
+        for (let i = 0; i < firstDay; i++) cells.push(null)
+        for (let d = 1; d <= daysInMonth; d++) cells.push(d)
+        return (
+          <>
+            <div className="fixed inset-0 z-40" onClick={() => setShowDatePicker(false)} />
+            <div
+              className="fixed z-50 bg-white border rounded-lg shadow-lg p-2"
+              style={{ top: datePickerPos.top, left: datePickerPos.left, width: '220px' }}
+            >
+              <div className="flex items-center justify-between mb-1.5 px-1">
+                <button type="button" onClick={() => {
+                  const nd = new Date(year, month - 1, 1)
+                  setInlineDate(`${nd.getFullYear()}-${String(nd.getMonth()+1).padStart(2,'0')}-${String(Math.min(selDate.getDate(), new Date(nd.getFullYear(), nd.getMonth()+1, 0).getDate())).padStart(2,'0')}`)
+                }} className="text-gray-400 hover:text-gray-600 text-xs p-0.5">◀</button>
+                <span className="text-xs font-medium">{year}년 {month+1}월</span>
+                <button type="button" onClick={() => {
+                  const nd = new Date(year, month + 1, 1)
+                  setInlineDate(`${nd.getFullYear()}-${String(nd.getMonth()+1).padStart(2,'0')}-${String(Math.min(selDate.getDate(), new Date(nd.getFullYear(), nd.getMonth()+1, 0).getDate())).padStart(2,'0')}`)
+                }} className="text-gray-400 hover:text-gray-600 text-xs p-0.5">▶</button>
+              </div>
+              <div className="grid grid-cols-7 gap-0 text-center">
+                {['일','월','화','수','목','금','토'].map(d => (
+                  <span key={d} className="text-[9px] text-gray-400 py-0.5">{d}</span>
+                ))}
+                {cells.map((day, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    disabled={!day}
+                    onClick={() => {
+                      if (day) {
+                        setInlineDate(`${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`)
+                        setShowDatePicker(false)
+                      }
+                    }}
+                    className={`text-[11px] py-1 rounded ${
+                      !day ? '' :
+                      day === selDate.getDate() ? 'bg-[#1e2d6f] text-white font-bold' :
+                      'hover:bg-gray-100 text-gray-700'
+                    }`}
+                  >
+                    {day || ''}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </>
+        )
+      })()}
     </div>
   )
 }
