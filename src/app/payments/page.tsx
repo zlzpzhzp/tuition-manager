@@ -518,32 +518,27 @@ export default function PaymentsPage() {
                           </div>
 
                           {/* 오른쪽 수정 패널 */}
-                          <div className="absolute inset-y-0 right-0 w-[150px] flex items-center gap-1.5 px-2 bg-slate-50 border-l" onClick={e => e.stopPropagation()}>
-                            <div className="flex-1 flex flex-col gap-1.5">
-                              <div className="flex items-center gap-1">
-                                <label htmlFor={`dueday-${student.id}`} className="text-[9px] text-gray-400 w-8 shrink-0">결제일</label>
-                                <input
-                                  id={`dueday-${student.id}`}
-                                  type="number"
-                                  value={isSwipeOpen ? editDueDayValue : ''}
-                                  onChange={e => setEditDueDayValue(e.target.value)}
-                                  className="w-10 px-1 py-0.5 text-xs border rounded text-center"
-                                  min={1} max={31}
-                                />
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <label htmlFor={`fee-${student.id}`} className="text-[9px] text-gray-400 w-8 shrink-0">원비</label>
-                                <div className="flex items-center">
-                                  <input
-                                    id={`fee-${student.id}`}
-                                    type="number"
-                                    value={isSwipeOpen ? editFeeValue : ''}
-                                    onChange={e => setEditFeeValue(e.target.value)}
-                                    className="w-12 px-1 py-0.5 text-xs border rounded text-center"
-                                  />
-                                  <span className="text-[9px] text-gray-400 ml-0.5">만</span>
-                                </div>
-                              </div>
+                          <div className="absolute inset-y-0 right-0 w-[150px] flex items-center gap-1 px-2 bg-slate-50 border-l" onClick={e => e.stopPropagation()}>
+                            <div className="flex flex-col items-center">
+                              <label htmlFor={`dueday-${student.id}`} className="text-[8px] text-gray-400 mb-0.5">결제일</label>
+                              <input
+                                id={`dueday-${student.id}`}
+                                type="number"
+                                value={isSwipeOpen ? editDueDayValue : ''}
+                                onChange={e => setEditDueDayValue(e.target.value)}
+                                className="w-10 px-1 py-1 text-xs border rounded text-center"
+                                min={1} max={31}
+                              />
+                            </div>
+                            <div className="flex flex-col items-center">
+                              <label htmlFor={`fee-${student.id}`} className="text-[8px] text-gray-400 mb-0.5">원비(만)</label>
+                              <input
+                                id={`fee-${student.id}`}
+                                type="number"
+                                value={isSwipeOpen ? editFeeValue : ''}
+                                onChange={e => setEditFeeValue(e.target.value)}
+                                className="w-12 px-1 py-1 text-xs border rounded text-center"
+                              />
                             </div>
                             <button onClick={() => handleSaveEdit(student.id)} className="p-1.5 bg-[#1e2d6f] text-white rounded-lg shrink-0" aria-label="저장">
                               <Check className="w-3.5 h-3.5" />
