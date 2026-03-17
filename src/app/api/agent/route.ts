@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { GoogleGenerativeAI, SchemaType, Content, Part, type Tool } from '@google/generative-ai'
-import { supabase } from '@/lib/supabase'
+import { queryGradesTree, mapGradesTree, queryPaidMap } from '@/lib/queries'
 
 // ── Tool definitions ──
 
@@ -65,23 +65,20 @@ function getGeminiTools(): Tool[] {
   }]
 }
 
-// ── Tool execution ──
+// ── Tool execution (공유 쿼리 사용) ──
 
 async function listGradesAndClasses() {
-  const { data, error } = await supabase
-    .from('tuition_grades')
-    .select('*, tuition_classes(*, tuition_students(*))')
-    .order('order_index')
-
+  const { data, error } = await queryGradesTree()
   if (error) return { error: error.message }
 
-  return (data ?? []).map(g => ({
+  const mapped = mapGradesTree(data ?? [])
+  return mapped.map(g => ({
     grade: g.name,
-    classes: (g.tuition_classes ?? []).map((c: Record<string, unknown>) => ({
+    classes: g.classes.map(c => ({
       name: c.name,
       subject: c.subject,
       monthly_fee: c.monthly_fee,
-      students: ((c.tuition_students as Record<string, unknown>[]) ?? [])
+      students: (c.students ?? [])
         .filter((s: Record<string, unknown>) => !s.withdrawal_date)
         .map((s: Record<string, unknown>) => ({
           name: s.name,
@@ -93,31 +90,21 @@ async function listGradesAndClasses() {
 }
 
 async function getUnpaidStudents(args: Record<string, string>) {
-  const { data: grades } = await supabase
-    .from('tuition_grades')
-    .select('*, tuition_classes(*, tuition_students(*))')
-    .order('order_index')
+  const { data, error } = await queryGradesTree()
+  if (error || !data) return { error: error?.message ?? '데이터 조회 실패' }
 
-  if (!grades) return { error: '데이터 조회 실패' }
-
-  const { data: payments } = await supabase
-    .from('tuition_payments')
-    .select('student_id, amount')
-    .eq('billing_month', args.billing_month)
-
-  const paidMap: Record<string, number> = {}
-  for (const p of (payments ?? [])) {
-    paidMap[p.student_id] = (paidMap[p.student_id] ?? 0) + p.amount
-  }
+  const mapped = mapGradesTree(data)
+  const { paidMap } = await queryPaidMap(args.billing_month)
 
   const unpaid: { grade: string; class_name: string; name: string; fee: number; paid: number }[] = []
-  for (const g of grades) {
-    for (const c of (g.tuition_classes ?? [])) {
-      for (const s of (c.tuition_students ?? [])) {
-        if (s.withdrawal_date) continue
-        const fee = (s.custom_fee as number | null) ?? (c.monthly_fee as number)
-        const paid = paidMap[s.id as string] ?? 0
-        if (paid < fee) unpaid.push({ grade: g.name, class_name: c.name, name: s.name, fee, paid })
+  for (const g of mapped) {
+    for (const c of g.classes) {
+      for (const s of (c.students ?? [])) {
+        const student = s as Record<string, unknown>
+        if (student.withdrawal_date) continue
+        const fee = (student.custom_fee as number | null) ?? c.monthly_fee
+        const paid = paidMap[student.id as string] ?? 0
+        if (paid < fee) unpaid.push({ grade: g.name, class_name: c.name, name: student.name as string, fee, paid })
       }
     }
   }
@@ -126,32 +113,22 @@ async function getUnpaidStudents(args: Record<string, string>) {
 }
 
 async function getPaymentStatusByMonth(args: Record<string, string>) {
-  const { data: grades } = await supabase
-    .from('tuition_grades')
-    .select('*, tuition_classes(*, tuition_students(*))')
-    .order('order_index')
+  const { data, error } = await queryGradesTree()
+  if (error || !data) return { error: error?.message ?? '데이터 조회 실패' }
 
-  if (!grades) return { error: '데이터 조회 실패' }
-
-  const { data: payments } = await supabase
-    .from('tuition_payments')
-    .select('student_id, amount')
-    .eq('billing_month', args.billing_month)
-
-  const paidMap: Record<string, number> = {}
-  for (const p of (payments ?? [])) {
-    paidMap[p.student_id] = (paidMap[p.student_id] ?? 0) + p.amount
-  }
+  const mapped = mapGradesTree(data)
+  const { paidMap } = await queryPaidMap(args.billing_month)
 
   const result = []
-  for (const g of grades) {
-    for (const c of (g.tuition_classes ?? [])) {
-      const activeStudents = (c.tuition_students ?? []).filter((s: Record<string, unknown>) => !s.withdrawal_date)
+  for (const g of mapped) {
+    for (const c of g.classes) {
+      const activeStudents = (c.students ?? []).filter((s: Record<string, unknown>) => !s.withdrawal_date)
       let paidCount = 0, totalFee = 0, totalPaid = 0
 
       for (const s of activeStudents) {
-        const fee = (s.custom_fee as number | null) ?? (c.monthly_fee as number)
-        const paid = paidMap[s.id as string] ?? 0
+        const student = s as Record<string, unknown>
+        const fee = (student.custom_fee as number | null) ?? c.monthly_fee
+        const paid = paidMap[student.id as string] ?? 0
         totalFee += fee
         totalPaid += paid
         if (paid >= fee) paidCount++

@@ -1,6 +1,4 @@
-import type { Student, Payment, PaymentMethod, PaymentStatus } from '@/types'
-import { getStudentFee, getPaymentStatus } from '@/types'
-import type { Class } from '@/types'
+import type { Student } from '@/types'
 
 // ─── Payment Due Day ──────────────────────────────────────────────
 /** 학생의 결제 예정일 (등록일 기준 매월 같은 날) */
@@ -35,17 +33,8 @@ export function getCurrentMonth(): string {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
 }
 
-// ─── Payment Method (DB CHECK workaround) ─────────────────────────
-/** "기타" 결제방법을 DB 저장용으로 인코딩 */
-export function encodePaymentMethod(method: PaymentMethod, memo?: string | null): { dbMethod: string; dbMemo: string | null } {
-  const isOther = method === 'other'
-  return {
-    dbMethod: isOther ? 'cash' : method,
-    dbMemo: isOther ? `[기타:${memo || '기타'}]` : (memo || null),
-  }
-}
-
-/** DB에서 읽어온 메모에서 기타 결제방법 태그를 디코딩 */
+// ─── Payment Memo ─────────────────────────────────────────────────
+/** DB에서 읽어온 메모에서 레거시 기타 결제방법 태그를 디코딩 (하위 호환) */
 export function decodePaymentMemo(memo?: string | null): { cleanMemo: string | null; otherMethod: string | null } {
   if (!memo) return { cleanMemo: null, otherMethod: null }
   const match = memo.match(/^\[기타:(.+?)\]/)
@@ -57,10 +46,8 @@ export function decodePaymentMemo(memo?: string | null): { cleanMemo: string | n
 }
 
 // ─── Student Helpers ──────────────────────────────────────────────
-export type StudentWithClass = Student & { class?: Class }
-
 /** 활성 학생만 필터링 (퇴원하지 않은) */
-export function getActiveStudents(students: Student[]): Student[] {
+export function getActiveStudents<T extends { withdrawal_date?: string | null }>(students: T[]): T[] {
   return students.filter(s => !s.withdrawal_date)
 }
 

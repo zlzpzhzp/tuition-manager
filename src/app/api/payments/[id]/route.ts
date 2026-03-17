@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { validateInput, rules } from '@/lib/validate'
-import { encodePaymentMethod } from '@/lib/utils'
 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -17,15 +16,9 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 
   const updates: Record<string, unknown> = {}
   if (body.amount !== undefined) updates.amount = body.amount
+  if (body.method !== undefined) updates.method = body.method
   if (body.payment_date !== undefined) updates.payment_date = body.payment_date
-
-  if (body.method !== undefined) {
-    const { dbMethod, dbMemo } = encodePaymentMethod(body.method, body.memo)
-    updates.method = dbMethod
-    if (body.memo !== undefined) updates.memo = dbMemo
-  } else if (body.memo !== undefined) {
-    updates.memo = body.memo || null
-  }
+  if (body.memo !== undefined) updates.memo = body.memo || null
 
   const { data, error } = await supabase
     .from('tuition_payments')

@@ -34,6 +34,8 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   if (body.enrollment_date !== undefined) updates.enrollment_date = body.enrollment_date
   if (body.withdrawal_date !== undefined) updates.withdrawal_date = body.withdrawal_date
   if (body.custom_fee !== undefined) updates.custom_fee = body.custom_fee
+  if (body.payment_due_day !== undefined) updates.payment_due_day = body.payment_due_day
+  if (body.has_discuss !== undefined) updates.has_discuss = body.has_discuss
   if (body.memo !== undefined) updates.memo = body.memo || null
 
   const { data, error } = await supabase

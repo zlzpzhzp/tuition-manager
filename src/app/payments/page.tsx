@@ -3,16 +3,14 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import Link from 'next/link'
 import { ChevronLeft, ChevronRight, Check, ClipboardList, Download, Plus } from 'lucide-react'
-import type { Grade, Class, Student, Payment, PaymentMethod } from '@/types'
+import type { Grade, Class, Student, Payment, PaymentMethod, GradeWithClasses } from '@/types'
 import { getStudentFee, getPaymentStatus, PAYMENT_STATUS_LABELS, PAYMENT_STATUS_COLORS, PAYMENT_METHOD_LABELS } from '@/types'
 import PaymentModal from '@/components/PaymentModal'
 import StudentModal from '@/components/StudentModal'
 import DatePickerPopup from '@/components/payments/DatePickerPopup'
 import MethodPickerPopup from '@/components/payments/MethodPickerPopup'
 import AiFilterButton from '@/components/payments/AiFilterButton'
-import { getPrevMonth, formatMonth, getPaymentDueDay, isPaymentScheduled, getUnpaidLabelText, safeFetch, decodePaymentMemo } from '@/lib/utils'
-
-type GradeWithClasses = Grade & { classes: (Class & { students: Student[] })[] }
+import { getPrevMonth, formatMonth, getPaymentDueDay, isPaymentScheduled, getUnpaidLabelText, getActiveStudents, safeFetch, safeMutate, decodePaymentMemo } from '@/lib/utils'
 
 const INLINE_METHODS: [PaymentMethod, string][] = [
   ['remote', '결제선생'],
@@ -56,8 +54,6 @@ export default function PaymentsPage() {
   const [selectedPrevMemo, setSelectedPrevMemo] = useState<string | null>(null)
 
   // 스와이프
-  const [discussSet, setDiscussSet] = useState<Set<string>>(new Set())
-  const [dueDayOverrides, setDueDayOverrides] = useState<Record<string, number>>({})
   const [swipeOpenId, setSwipeOpenId] = useState<string | null>(null)
   const [editFeeValue, setEditFeeValue] = useState('')
   const [editDueDayValue, setEditDueDayValue] = useState('')
@@ -101,19 +97,10 @@ export default function PaymentsPage() {
 
   useEffect(() => { fetchData() }, [fetchData])
 
-  useEffect(() => {
-    try {
-      const d = localStorage.getItem('tuition_discuss')
-      if (d) setDiscussSet(new Set(JSON.parse(d)))
-      const dd = localStorage.getItem('tuition_due_days')
-      if (dd) setDueDayOverrides(JSON.parse(dd))
-    } catch { /* ignore */ }
-  }, [])
-
   // ─── Memoized data ────────────────────────────────────────────
   const allStudents = useMemo(() =>
     grades.flatMap(g => g.classes.flatMap(c =>
-      (c.students ?? []).filter(s => !s.withdrawal_date).map(s => ({ ...s, class: c }))
+      getActiveStudents(c.students ?? []).map(s => ({ ...s, class: c }))
     )), [grades])
 
   const paymentsByStudentId = useMemo(() => {
@@ -136,8 +123,7 @@ export default function PaymentsPage() {
     const unpaidCount = unpaidStudents.filter(s => !checkScheduled(s, selectedMonth)).length
     const scheduledCount = unpaidStudents.filter(s => checkScheduled(s, selectedMonth)).length
     return { totalFee, totalPaid, unpaidCount, scheduledCount }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allStudents, payments, paymentsByStudentId, selectedMonth, dueDayOverrides])
+  }, [allStudents, payments, paymentsByStudentId, selectedMonth])
 
   // ─── Helpers ──────────────────────────────────────────────────
   const navigateMonth = (delta: number) => {
@@ -156,22 +142,19 @@ export default function PaymentsPage() {
   }, [prevPayments])
 
   const getDueDay = useCallback((student: Student): number =>
-    dueDayOverrides[student.id] ?? getPaymentDueDay(student)
-  , [dueDayOverrides])
+    student.payment_due_day ?? getPaymentDueDay(student)
+  , [])
 
   function checkScheduled(student: Student, month: string): boolean {
-    return isPaymentScheduled(student, month, dueDayOverrides[student.id])
+    return isPaymentScheduled(student, month, student.payment_due_day ?? undefined)
   }
 
   // ─── Discuss toggle ───────────────────────────────────────────
-  const toggleDiscuss = (id: string) => {
-    setDiscussSet(prev => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      localStorage.setItem('tuition_discuss', JSON.stringify([...next]))
-      return next
-    })
+  const toggleDiscuss = async (id: string) => {
+    const student = allStudents.find(s => s.id === id)
+    if (!student) return
+    await safeMutate(`/api/students/${id}`, 'PUT', { has_discuss: !student.has_discuss })
+    fetchData()
   }
 
   // ─── Swipe handlers ──────────────────────────────────────────
@@ -254,20 +237,13 @@ export default function PaymentsPage() {
     const feeNum = parseFloat(editFeeValue)
     const dayNum = parseInt(editDueDayValue)
 
-    if (!isNaN(feeNum) && feeNum >= 0) {
-      const res = await fetch(`/api/students/${studentId}`, {
-        method: 'PUT', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ custom_fee: Math.round(feeNum * 10000) }),
-      })
-      if (!res.ok) { alert('원비 수정 실패'); return }
-    }
+    const updates: Record<string, unknown> = {}
+    if (!isNaN(feeNum) && feeNum >= 0) updates.custom_fee = Math.round(feeNum * 10000)
+    if (!isNaN(dayNum) && dayNum >= 1 && dayNum <= 31) updates.payment_due_day = dayNum
 
-    if (!isNaN(dayNum) && dayNum >= 1 && dayNum <= 31) {
-      setDueDayOverrides(prev => {
-        const next = { ...prev, [studentId]: dayNum }
-        localStorage.setItem('tuition_due_days', JSON.stringify(next))
-        return next
-      })
+    if (Object.keys(updates).length > 0) {
+      const { error } = await safeMutate(`/api/students/${studentId}`, 'PUT', updates)
+      if (error) { alert('수정 실패'); return }
     }
 
     closeSwipeEdit()
@@ -294,29 +270,21 @@ export default function PaymentsPage() {
       alert('기타 결제수단 선택 시 내용을 입력해주세요.')
       return
     }
-    try {
-      const res = await fetch('/api/payments', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          student_id: studentId, amount: fee, method: inlineMethod,
-          payment_date: inlineDate, billing_month: selectedMonth,
-          ...(inlineMethod === 'other' && inlineOtherMemo.trim() ? { memo: inlineOtherMemo.trim() } : {}),
-        }),
-      })
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}))
-        alert(`결제 처리 실패: ${err.error || '알 수 없는 오류'}`)
-        return
-      }
-      setInlineSuccess(studentId)
-      setTimeout(async () => {
-        await fetchData()
-        setInlineSuccess(null)
-        setExpandedStudentId(null)
-      }, 1000)
-    } catch {
-      alert('네트워크 오류가 발생했습니다.')
+    const { error } = await safeMutate('/api/payments', 'POST', {
+      student_id: studentId, amount: fee, method: inlineMethod,
+      payment_date: inlineDate, billing_month: selectedMonth,
+      ...(inlineMethod === 'other' && inlineOtherMemo.trim() ? { memo: inlineOtherMemo.trim() } : {}),
+    })
+    if (error) {
+      alert(`결제 처리 실패: ${error}`)
+      return
     }
+    setInlineSuccess(studentId)
+    setTimeout(async () => {
+      await fetchData()
+      setInlineSuccess(null)
+      setExpandedStudentId(null)
+    }, 1000)
   }
 
   // ─── Modal handlers ───────────────────────────────────────────
@@ -331,22 +299,17 @@ export default function PaymentsPage() {
   }
 
   const handleSavePayment = async (data: Partial<Payment>) => {
-    try {
-      await fetch('/api/payments', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      })
-      fetchData()
-    } catch { alert('납부 저장 실패') }
+    const { error } = await safeMutate('/api/payments', 'POST', data)
+    if (error) { alert(`납부 저장 실패: ${error}`); return }
+    fetchData()
   }
 
   const handleDeletePayment = async (paymentId: string) => {
-    try {
-      await fetch(`/api/payments/${paymentId}`, { method: 'DELETE' })
-      setShowPaymentModal(false)
-      setSelectedPayment(null)
-      fetchData()
-    } catch { alert('삭제 실패') }
+    const { error } = await safeMutate(`/api/payments/${paymentId}`, 'DELETE')
+    if (error) { alert(`삭제 실패: ${error}`); return }
+    setShowPaymentModal(false)
+    setSelectedPayment(null)
+    fetchData()
   }
 
   // ─── AI filter ────────────────────────────────────────────────
@@ -362,7 +325,7 @@ export default function PaymentsPage() {
         due_day: getDueDay(s), payment_method: sp[0]?.method || null,
         payment_date: sp[0]?.payment_date || null,
         current_memo: sp[0]?.memo || null, prev_memo: getPrevMemo(s.id),
-        has_discuss: discussSet.has(s.id),
+        has_discuss: s.has_discuss ?? false,
       }
     })
 
@@ -391,16 +354,11 @@ export default function PaymentsPage() {
     setShowStudentModal(true)
   }
 
-  const handleSaveStudent = async (data: Partial<import('@/types').Student>) => {
-    try {
-      const res = await fetch('/api/students', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      })
-      if (!res.ok) { alert('학생 등록 실패'); return }
-      setShowStudentModal(false)
-      fetchData()
-    } catch { alert('네트워크 오류가 발생했습니다.') }
+  const handleSaveStudent = async (data: Partial<Student>) => {
+    const { error } = await safeMutate('/api/students', 'POST', data)
+    if (error) { alert(`학생 등록 실패: ${error}`); return }
+    setShowStudentModal(false)
+    fetchData()
   }
 
   // ─── Render ───────────────────────────────────────────────────
@@ -491,7 +449,7 @@ export default function PaymentsPage() {
       {/* 학생별 납부 현황 */}
       {grades.map((grade, gradeIndex) => {
         const gradeStudentsAll = grade.classes.flatMap(c =>
-          (c.students ?? []).filter(s => !s.withdrawal_date).map(s => ({ ...s, class: c }))
+          getActiveStudents(c.students ?? []).map(s => ({ ...s, class: c }))
         )
         let gradeStudents = aiFilterIds ? gradeStudentsAll.filter(s => aiFilterIds.has(s.id)) : gradeStudentsAll
         if (showUnpaidOnly) {
@@ -524,7 +482,7 @@ export default function PaymentsPage() {
             </div>
             <div className="bg-white rounded-xl border overflow-hidden">
               {grade.classes.map(cls => {
-                const allClassStudents = (cls.students ?? []).filter(s => !s.withdrawal_date)
+                const allClassStudents = getActiveStudents(cls.students ?? [])
                 let students = aiFilterIds ? allClassStudents.filter(s => aiFilterIds.has(s.id)) : allClassStudents
                 if (showUnpaidOnly) {
                   students = students.filter(s => {
@@ -559,7 +517,7 @@ export default function PaymentsPage() {
                       const displayColors = scheduled ? { bg: '#FEF3C7', text: '#92400E' } : PAYMENT_STATUS_COLORS[status]
                       let displayLabel = ''
                       if (status === 'unpaid') {
-                        displayLabel = getUnpaidLabelText(student, selectedMonth, dueDayOverrides[student.id])
+                        displayLabel = getUnpaidLabelText(student, selectedMonth, student.payment_due_day ?? undefined)
                       } else if (studentPayments.length > 0) {
                         const pDate = new Date(studentPayments[0].payment_date)
                         displayLabel = `${pDate.getMonth() + 1}/${pDate.getDate()} 납부`
@@ -572,7 +530,7 @@ export default function PaymentsPage() {
                       const isSuccess = inlineSuccess === student.id
                       const { cleanMemo } = decodePaymentMemo(currentMemo)
                       const hasMemo = !!(prevMemo || cleanMemo)
-                      const hasDiscuss = discussSet.has(student.id)
+                      const hasDiscuss = student.has_discuss ?? false
                       const isSwipeOpen = swipeOpenId === student.id
 
                       return (

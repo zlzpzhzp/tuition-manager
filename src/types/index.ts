@@ -30,10 +30,14 @@ export interface Student {
   enrollment_date: string
   withdrawal_date?: string | null
   custom_fee?: number | null
+  payment_due_day?: number | null
+  has_discuss?: boolean
   memo?: string
   created_at: string
   class?: Class
 }
+
+export type GradeWithClasses = Grade & { classes: (Class & { students: Student[] })[] }
 
 export interface Payment {
   id: string

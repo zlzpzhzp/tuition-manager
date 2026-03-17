@@ -3,11 +3,9 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import Link from 'next/link'
 import { Users, CreditCard, AlertCircle, TrendingUp } from 'lucide-react'
-import type { Grade, Class, Student, Payment } from '@/types'
+import type { Grade, Class, Student, Payment, GradeWithClasses } from '@/types'
 import { getStudentFee, getPaymentStatus, PAYMENT_STATUS_LABELS, PAYMENT_STATUS_COLORS } from '@/types'
-import { getPaymentDueDay, isPaymentScheduled, getCurrentMonth, formatMonth, safeFetch } from '@/lib/utils'
-
-type GradeWithClasses = Grade & { classes: (Class & { students: Student[] })[] }
+import { getPaymentDueDay, isPaymentScheduled, getActiveStudents, getCurrentMonth, formatMonth, safeFetch } from '@/lib/utils'
 
 export default function DashboardPage() {
   const [grades, setGrades] = useState<GradeWithClasses[]>([])
@@ -38,7 +36,7 @@ export default function DashboardPage() {
   const allStudents = useMemo(() =>
     grades.flatMap(g =>
       g.classes.flatMap(c =>
-        (c.students ?? []).filter(s => !s.withdrawal_date).map(s => ({ ...s, class: c }))
+        getActiveStudents(c.students ?? []).map(s => ({ ...s, class: c }))
       )
     ), [grades])
 
@@ -244,7 +242,7 @@ export default function DashboardPage() {
           <div className="space-y-2">
             {grades.map(grade => {
               const gradeStudents = grade.classes.flatMap(c =>
-                (c.students ?? []).filter(s => !s.withdrawal_date).map(s => ({ ...s, class: c }))
+                getActiveStudents(c.students ?? []).map(s => ({ ...s, class: c }))
               )
               const gradeFee = gradeStudents.reduce((sum, s) => sum + getStudentFee(s, s.class), 0)
               const gradePaid = gradeStudents.reduce((sum, s) => sum + getStudentPaid(s.id), 0)

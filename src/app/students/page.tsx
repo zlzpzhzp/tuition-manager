@@ -3,12 +3,10 @@
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { Plus, ChevronDown, ChevronRight, UserCircle } from 'lucide-react'
-import type { Grade, Class, Student } from '@/types'
+import type { Grade, Class, Student, GradeWithClasses } from '@/types'
 import { getStudentFee } from '@/types'
 import StudentModal from '@/components/StudentModal'
-import { safeFetch, safeMutate } from '@/lib/utils'
-
-type GradeWithClasses = Grade & { classes: (Class & { students: Student[] })[] }
+import { getActiveStudents, safeFetch, safeMutate } from '@/lib/utils'
 
 export default function StudentsPage() {
   const [grades, setGrades] = useState<GradeWithClasses[]>([])
@@ -71,7 +69,7 @@ export default function StudentsPage() {
   }
 
   const totalStudents = grades.reduce(
-    (sum, g) => sum + g.classes.reduce((s, c) => s + (c.students?.filter(st => !st.withdrawal_date).length ?? 0), 0),
+    (sum, g) => sum + g.classes.reduce((s, c) => s + getActiveStudents(c.students ?? []).length, 0),
     0
   )
 
@@ -152,14 +150,14 @@ export default function StudentsPage() {
                 {expandedGrades.has(grade.id) ? <ChevronDown className="w-5 h-5 text-gray-400" /> : <ChevronRight className="w-5 h-5 text-gray-400" />}
                 <span className="font-semibold text-sm flex-1">{grade.name}</span>
                 <span className="text-xs text-gray-400">
-                  {grade.classes.reduce((s, c) => s + (c.students?.filter(st => !st.withdrawal_date).length ?? 0), 0)}명
+                  {grade.classes.reduce((s, c) => s + getActiveStudents(c.students ?? []).length, 0)}명
                 </span>
               </button>
 
               {expandedGrades.has(grade.id) && (
                 <div className="border-t">
                   {grade.classes.map(cls => {
-                    const activeStudents = cls.students?.filter(s => !s.withdrawal_date) ?? []
+                    const activeStudents = getActiveStudents(cls.students ?? [])
                     return (
                       <div key={cls.id} className="border-b last:border-b-0">
                         <button

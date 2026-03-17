@@ -22,10 +22,9 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
   const [refundDate, setRefundDate] = useState(new Date().toISOString().split('T')[0])
 
   const fetchData = useCallback(async () => {
-    const [studentResult, paymentsResult, gradesResult] = await Promise.all([
+    const [studentResult, paymentsResult] = await Promise.all([
       safeFetch<Student>(`/api/students/${id}`),
       safeFetch<Payment[]>(`/api/payments?student_id=${id}`),
-      safeFetch<(Grade & { classes: Class[] })[]>('/api/grades'),
     ])
     if (studentResult.error) {
       setLoading(false)
@@ -33,9 +32,14 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
     }
     setStudent(studentResult.data)
     setPayments(paymentsResult.data ?? [])
-    setGrades(gradesResult.data ?? [])
     setLoading(false)
   }, [id])
+
+  const ensureGrades = useCallback(async () => {
+    if (grades.length > 0) return
+    const { data } = await safeFetch<(Grade & { classes: Class[] })[]>('/api/grades')
+    setGrades(data ?? [])
+  }, [grades.length])
 
   useEffect(() => { fetchData() }, [fetchData])
 
@@ -123,8 +127,8 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
 
   return (
     <div>
-      <button onClick={() => router.push('/students')} className="flex items-center gap-1 text-sm text-gray-500 mb-4 hover:text-gray-700" aria-label="학생 목록으로 돌아가기">
-        <ArrowLeft className="w-4 h-4" /> 학생 목록
+      <button onClick={() => router.back()} className="flex items-center gap-1 text-sm text-gray-500 mb-4 hover:text-gray-700" aria-label="돌아가기">
+        <ArrowLeft className="w-4 h-4" /> 돌아가기
       </button>
 
       {/* 학생 정보 카드 */}
@@ -137,7 +141,7 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
             </p>
           </div>
           <div className="flex gap-1">
-            <button onClick={() => setShowEditModal(true)} className="p-2 text-gray-400 hover:text-gray-600" aria-label="학생 정보 수정">
+            <button onClick={async () => { await ensureGrades(); setShowEditModal(true) }} className="p-2 text-gray-400 hover:text-gray-600" aria-label="학생 정보 수정">
               <Pencil className="w-4 h-4" />
             </button>
             <button onClick={handleDeleteStudent} className="p-2 text-gray-400 hover:text-red-500" aria-label="학생 삭제">

@@ -1,46 +1,12 @@
 import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { validateInput, rules } from '@/lib/validate'
-
-interface SupabaseGrade {
-  id: string
-  name: string
-  order_index: number
-  created_at: string
-  tuition_classes?: SupabaseClass[]
-}
-
-interface SupabaseClass {
-  id: string
-  grade_id: string
-  name: string
-  monthly_fee: number
-  subject?: string | null
-  class_days?: string | null
-  order_index: number
-  created_at: string
-  tuition_students?: unknown[]
-}
+import { queryGradesTree, mapGradesTree } from '@/lib/queries'
 
 export async function GET() {
-  const { data, error } = await supabase
-    .from('tuition_grades')
-    .select('*, tuition_classes(*, tuition_students(*))')
-    .order('order_index')
-    .order('order_index', { referencedTable: 'tuition_classes' })
-    .order('name', { referencedTable: 'tuition_classes.tuition_students' })
-
+  const { data, error } = await queryGradesTree()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-
-  const mapped = ((data as SupabaseGrade[]) ?? []).map(g => ({
-    ...g,
-    classes: (g.tuition_classes ?? []).map(c => ({
-      ...c,
-      students: c.tuition_students ?? [],
-    })),
-  }))
-
-  return NextResponse.json(mapped)
+  return NextResponse.json(mapGradesTree(data ?? []))
 }
 
 export async function POST(request: Request) {

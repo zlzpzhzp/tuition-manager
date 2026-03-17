@@ -26,6 +26,8 @@ create table tuition_students (
   enrollment_date date not null,
   withdrawal_date date,
   custom_fee int,
+  payment_due_day int,
+  has_discuss boolean default false,
   memo text,
   created_at timestamptz default now()
 );
@@ -35,7 +37,7 @@ create table tuition_payments (
   id uuid primary key default gen_random_uuid(),
   student_id uuid references tuition_students(id) on delete cascade,
   amount int not null,
-  method text not null check (method in ('cash', 'card', 'transfer')),
+  method text not null check (method in ('cash', 'card', 'transfer', 'remote', 'other')),
   payment_date date not null,
   billing_month text not null,
   memo text,

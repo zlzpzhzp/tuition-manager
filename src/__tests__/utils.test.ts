@@ -5,7 +5,6 @@ import {
   formatMonth,
   getCurrentMonth,
   getUnpaidLabelText,
-  encodePaymentMethod,
   decodePaymentMemo,
 } from '@/lib/utils'
 import type { Student } from '@/types'
@@ -46,33 +45,6 @@ describe('getCurrentMonth', () => {
   it('returns current month in YYYY-MM format', () => {
     const result = getCurrentMonth()
     expect(result).toMatch(/^\d{4}-\d{2}$/)
-  })
-})
-
-describe('encodePaymentMethod', () => {
-  it('passes through normal methods', () => {
-    expect(encodePaymentMethod('card', 'some memo')).toEqual({
-      dbMethod: 'card',
-      dbMemo: 'some memo',
-    })
-    expect(encodePaymentMethod('transfer', null)).toEqual({
-      dbMethod: 'transfer',
-      dbMemo: null,
-    })
-  })
-
-  it('encodes "other" as cash with tagged memo', () => {
-    expect(encodePaymentMethod('other', '서울페이')).toEqual({
-      dbMethod: 'cash',
-      dbMemo: '[기타:서울페이]',
-    })
-  })
-
-  it('uses default when other has no memo', () => {
-    expect(encodePaymentMethod('other', null)).toEqual({
-      dbMethod: 'cash',
-      dbMemo: '[기타:기타]',
-    })
   })
 })
 
