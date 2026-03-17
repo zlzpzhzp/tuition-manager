@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
+import { validateInput, rules } from '@/lib/validate'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -22,12 +23,12 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const body = await request.json()
 
-  // Input validation
-  const errors: string[] = []
-  if (!body.name || typeof body.name !== 'string' || body.name.trim() === '') errors.push('name is required and must be a non-empty string')
-  if (body.monthly_fee !== undefined && body.monthly_fee !== null && Number(body.monthly_fee) < 0) errors.push('monthly_fee must be >= 0')
-  if (!body.grade_id) errors.push('grade_id is required')
-  if (errors.length > 0) return NextResponse.json({ error: errors.join('; ') }, { status: 400 })
+  const validationError = validateInput([
+    rules.requiredString('name', body.name),
+    rules.nonNegativeNumber('monthly_fee', body.monthly_fee),
+    rules.required('grade_id', body.grade_id),
+  ])
+  if (validationError) return validationError
 
   const { count } = await supabase
     .from('tuition_classes')

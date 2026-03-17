@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
+import { validateInput, rules } from '@/lib/validate'
+import { encodePaymentMethod } from '@/lib/utils'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -18,17 +20,16 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const body = await request.json()
 
-  // Input validation
-  const errors: string[] = []
-  if (!body.student_id) errors.push('student_id is required')
-  if (body.amount === undefined || body.amount === null || Number(body.amount) < 0) errors.push('amount must be >= 0')
-  if (!body.payment_date || isNaN(Date.parse(body.payment_date))) errors.push('payment_date must be a valid date (YYYY-MM-DD)')
-  if (!body.billing_month || !/^\d{4}-\d{2}$/.test(body.billing_month)) errors.push('billing_month must be in YYYY-MM format')
   const validMethods = ['remote', 'card', 'transfer', 'cash', 'other']
-  if (!body.method || !validMethods.includes(body.method)) errors.push(`method must be one of: ${validMethods.join(', ')}`)
-  if (errors.length > 0) return NextResponse.json({ error: errors.join('; ') }, { status: 400 })
+  const validationError = validateInput([
+    rules.required('student_id', body.student_id),
+    rules.nonNegativeNumber('amount', body.amount),
+    rules.validDate('payment_date', body.payment_date),
+    rules.billingMonth('billing_month', body.billing_month),
+    rules.oneOf('method', body.method, validMethods),
+  ])
+  if (validationError) return validationError
 
-  // Check if payment already exists for this student/month
   const { data: existing } = await supabase
     .from('tuition_payments')
     .select('id')
@@ -36,12 +37,7 @@ export async function POST(request: Request) {
     .eq('billing_month', body.billing_month)
     .maybeSingle()
 
-  // DB CHECK constraint에 'other'가 없으므로 'cash'로 저장하고 메모에 실제 수단 기록
-  const isOther = body.method === 'other'
-  const dbMethod = isOther ? 'cash' : body.method
-  const dbMemo = isOther
-    ? `[기타:${body.memo || '기타'}]`
-    : (body.memo || null)
+  const { dbMethod, dbMemo } = encodePaymentMethod(body.method, body.memo)
 
   const payload = {
     student_id: body.student_id,
@@ -55,7 +51,6 @@ export async function POST(request: Request) {
 
   let data, error
   if (existing?.id) {
-    // Update existing payment
     const result = await supabase
       .from('tuition_payments')
       .update(payload)
@@ -65,7 +60,6 @@ export async function POST(request: Request) {
     data = result.data
     error = result.error
   } else {
-    // Insert new payment
     const result = await supabase
       .from('tuition_payments')
       .insert(payload)

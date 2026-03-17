@@ -1,14 +1,13 @@
 import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
+import { validateInput, rules } from '@/lib/validate'
 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const body = await request.json()
 
-  // Input validation
-  if (!body.name || typeof body.name !== 'string' || body.name.trim() === '') {
-    return NextResponse.json({ error: 'name is required and must be a non-empty string' }, { status: 400 })
-  }
+  const validationError = validateInput([rules.requiredString('name', body.name)])
+  if (validationError) return validationError
 
   const { data, error } = await supabase
     .from('tuition_grades')

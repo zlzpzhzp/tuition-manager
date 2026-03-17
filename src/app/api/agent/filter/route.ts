@@ -45,6 +45,14 @@ export async function POST(req: Request) {
 
     const { query, context } = await req.json()
 
+    // Input validation
+    if (!query || typeof query !== 'string' || query.trim().length === 0) {
+      return NextResponse.json({ error: '필터 요청을 입력해주세요.' }, { status: 400 })
+    }
+    if (query.length > 200) {
+      return NextResponse.json({ error: '필터 요청은 200자 이내여야 합니다.' }, { status: 400 })
+    }
+
     const now = new Date()
     const currentDate = now.toISOString().split('T')[0]
 
@@ -61,13 +69,17 @@ export async function POST(req: Request) {
     const result = await model.generateContent(prompt)
     const text = result.response.text()
 
-    // JSON 추출
     const jsonMatch = text.match(/\{[\s\S]*\}/)
     if (jsonMatch) {
       const parsed = JSON.parse(jsonMatch[0])
+
+      // Validate returned IDs exist in input context
+      const validIds = new Set((context.students || []).map((s: { id: string }) => s.id))
+      const filteredIds = (parsed.student_ids || []).filter((id: string) => validIds.has(id))
+
       return NextResponse.json({
-        student_ids: parsed.student_ids || [],
-        description: parsed.description || '필터 적용',
+        student_ids: filteredIds,
+        description: typeof parsed.description === 'string' ? parsed.description.slice(0, 30) : '필터 적용',
       })
     }
 

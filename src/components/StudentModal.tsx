@@ -100,6 +100,8 @@ export default function StudentModal({ student, grades, onSave, onClose }: Props
                 value={phone}
                 onChange={e => setPhone(e.target.value)}
                 placeholder="010-0000-0000"
+                pattern="^[\d\-]*$"
+                title="숫자와 하이픈만 입력 가능합니다"
                 className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1e2d6f]"
               />
             </div>
@@ -110,6 +112,8 @@ export default function StudentModal({ student, grades, onSave, onClose }: Props
                 value={parentPhone}
                 onChange={e => setParentPhone(e.target.value)}
                 placeholder="010-0000-0000"
+                pattern="^[\d\-]*$"
+                title="숫자와 하이픈만 입력 가능합니다"
                 className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1e2d6f]"
               />
             </div>

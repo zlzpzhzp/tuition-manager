@@ -1,25 +1,31 @@
 import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
+import { validateInput, rules } from '@/lib/validate'
+import { encodePaymentMethod } from '@/lib/utils'
 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const body = await request.json()
 
-  // Input validation
-  const errors: string[] = []
-  if (body.amount !== undefined && Number(body.amount) < 0) errors.push('amount must be >= 0')
-  if (body.payment_date !== undefined && isNaN(Date.parse(body.payment_date))) errors.push('payment_date must be a valid date (YYYY-MM-DD)')
   const validMethods = ['remote', 'card', 'transfer', 'cash', 'other']
-  if (body.method !== undefined && !validMethods.includes(body.method)) errors.push(`method must be one of: ${validMethods.join(', ')}`)
-  if (errors.length > 0) return NextResponse.json({ error: errors.join('; ') }, { status: 400 })
+  const validationError = validateInput([
+    rules.nonNegativeNumber('amount', body.amount),
+    rules.optionalDate('payment_date', body.payment_date),
+    ...(body.method !== undefined ? [rules.oneOf('method', body.method, validMethods)] : []),
+  ])
+  if (validationError) return validationError
 
-  // DB CHECK constraint에 'other'가 없으므로 'cash'로 저장하고 메모에 실제 수단 기록
-  const isOther = body.method === 'other'
   const updates: Record<string, unknown> = {}
   if (body.amount !== undefined) updates.amount = body.amount
-  if (body.method !== undefined) updates.method = isOther ? 'cash' : body.method
   if (body.payment_date !== undefined) updates.payment_date = body.payment_date
-  if (body.memo !== undefined) updates.memo = isOther ? `[기타:${body.memo || '기타'}]` : (body.memo || null)
+
+  if (body.method !== undefined) {
+    const { dbMethod, dbMemo } = encodePaymentMethod(body.method, body.memo)
+    updates.method = dbMethod
+    if (body.memo !== undefined) updates.memo = dbMemo
+  } else if (body.memo !== undefined) {
+    updates.memo = body.memo || null
+  }
 
   const { data, error } = await supabase
     .from('tuition_payments')

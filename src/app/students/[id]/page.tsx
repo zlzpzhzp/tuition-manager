@@ -7,6 +7,7 @@ import type { Student, Payment, Grade, Class } from '@/types'
 import { getStudentFee, calcRefund, parseClassDays, DAY_LABELS, PAYMENT_METHOD_LABELS, CASH_RECEIPT_LABELS, getPaymentStatus, PAYMENT_STATUS_LABELS, PAYMENT_STATUS_COLORS } from '@/types'
 import StudentModal from '@/components/StudentModal'
 import PaymentModal from '@/components/PaymentModal'
+import { safeFetch, safeMutate } from '@/lib/utils'
 
 export default function StudentDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
@@ -21,37 +22,40 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
   const [refundDate, setRefundDate] = useState(new Date().toISOString().split('T')[0])
 
   const fetchData = useCallback(async () => {
-    const [studentRes, paymentsRes, gradesRes] = await Promise.all([
-      fetch(`/api/students/${id}`),
-      fetch(`/api/payments?student_id=${id}`),
-      fetch('/api/grades'),
+    const [studentResult, paymentsResult, gradesResult] = await Promise.all([
+      safeFetch<Student>(`/api/students/${id}`),
+      safeFetch<Payment[]>(`/api/payments?student_id=${id}`),
+      safeFetch<(Grade & { classes: Class[] })[]>('/api/grades'),
     ])
-    const [studentData, paymentsData, gradesData] = await Promise.all([
-      studentRes.json(),
-      paymentsRes.json(),
-      gradesRes.json(),
-    ])
-    setStudent(studentData)
-    setPayments(paymentsData)
-    setGrades(gradesData)
+    if (studentResult.error) {
+      setLoading(false)
+      return
+    }
+    setStudent(studentResult.data)
+    setPayments(paymentsResult.data ?? [])
+    setGrades(gradesResult.data ?? [])
     setLoading(false)
   }, [id])
 
   useEffect(() => { fetchData() }, [fetchData])
 
   const handleUpdateStudent = async (data: Partial<Student>) => {
-    await fetch(`/api/students/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    })
+    const { error } = await safeMutate(`/api/students/${id}`, 'PUT', data)
+    if (error) {
+      alert(`수정 실패: ${error}`)
+      return
+    }
     setShowEditModal(false)
     fetchData()
   }
 
   const handleDeleteStudent = async () => {
     if (!confirm(`"${student?.name}" 학생을 삭제하시겠습니까?`)) return
-    await fetch(`/api/students/${id}`, { method: 'DELETE' })
+    const { error } = await safeMutate(`/api/students/${id}`, 'DELETE')
+    if (error) {
+      alert(`삭제 실패: ${error}`)
+      return
+    }
     router.push('/students')
   }
 
@@ -59,36 +63,40 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
     if (!student) return
     const date = prompt('퇴원일을 입력하세요 (YYYY-MM-DD)', new Date().toISOString().split('T')[0])
     if (!date) return
-    await fetch(`/api/students/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ withdrawal_date: date }),
-    })
+    const { error } = await safeMutate(`/api/students/${id}`, 'PUT', { withdrawal_date: date })
+    if (error) {
+      alert(`퇴원 처리 실패: ${error}`)
+      return
+    }
     fetchData()
   }
 
   const handleReenroll = async () => {
-    await fetch(`/api/students/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ withdrawal_date: null }),
-    })
+    const { error } = await safeMutate(`/api/students/${id}`, 'PUT', { withdrawal_date: null })
+    if (error) {
+      alert(`재등록 실패: ${error}`)
+      return
+    }
     fetchData()
   }
 
   const handleSavePayment = async (data: Partial<Payment>) => {
-    await fetch('/api/payments', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    })
+    const { error } = await safeMutate('/api/payments', 'POST', data)
+    if (error) {
+      alert(`납부 기록 실패: ${error}`)
+      return
+    }
     setShowPaymentModal(false)
     fetchData()
   }
 
   const handleDeletePayment = async (paymentId: string) => {
     if (!confirm('이 납부 기록을 삭제하시겠습니까?')) return
-    await fetch(`/api/payments/${paymentId}`, { method: 'DELETE' })
+    const { error } = await safeMutate(`/api/payments/${paymentId}`, 'DELETE')
+    if (error) {
+      alert(`삭제 실패: ${error}`)
+      return
+    }
     fetchData()
   }
 
@@ -107,7 +115,6 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
     ? calcRefund(fee, new Date(student.enrollment_date), new Date(refundDate), classDays)
     : null
 
-  // Group payments by month
   const paymentsByMonth = payments.reduce<Record<string, Payment[]>>((acc, p) => {
     if (!acc[p.billing_month]) acc[p.billing_month] = []
     acc[p.billing_month].push(p)
@@ -116,7 +123,7 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
 
   return (
     <div>
-      <button onClick={() => router.push('/students')} className="flex items-center gap-1 text-sm text-gray-500 mb-4 hover:text-gray-700">
+      <button onClick={() => router.push('/students')} className="flex items-center gap-1 text-sm text-gray-500 mb-4 hover:text-gray-700" aria-label="학생 목록으로 돌아가기">
         <ArrowLeft className="w-4 h-4" /> 학생 목록
       </button>
 
@@ -130,10 +137,10 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
             </p>
           </div>
           <div className="flex gap-1">
-            <button onClick={() => setShowEditModal(true)} className="p-2 text-gray-400 hover:text-gray-600">
+            <button onClick={() => setShowEditModal(true)} className="p-2 text-gray-400 hover:text-gray-600" aria-label="학생 정보 수정">
               <Pencil className="w-4 h-4" />
             </button>
-            <button onClick={handleDeleteStudent} className="p-2 text-gray-400 hover:text-red-500">
+            <button onClick={handleDeleteStudent} className="p-2 text-gray-400 hover:text-red-500" aria-label="학생 삭제">
               <Trash2 className="w-4 h-4" />
             </button>
           </div>
@@ -184,6 +191,7 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
           <span
             className="px-2.5 py-0.5 rounded-full text-xs font-medium"
             style={{ backgroundColor: statusColors.bg, color: statusColors.text }}
+            role="status"
           >
             {PAYMENT_STATUS_LABELS[status]}
           </span>
@@ -207,14 +215,16 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
         <button
           onClick={() => setShowRefundCalc(!showRefundCalc)}
           className="flex items-center gap-2 font-bold text-sm w-full text-left"
+          aria-expanded={showRefundCalc}
         >
           <Calculator className="w-4 h-4" /> 환불 계산기
         </button>
         {showRefundCalc && refund && (
           <div className="mt-4 space-y-3">
             <div>
-              <label className="block text-xs text-gray-400 mb-1">퇴원 예정일</label>
+              <label className="block text-xs text-gray-400 mb-1" htmlFor="refund-date">퇴원 예정일</label>
               <input
+                id="refund-date"
                 type="date"
                 value={refundDate}
                 onChange={e => setRefundDate(e.target.value)}
@@ -280,6 +290,7 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
                       <span
                         className="px-2 py-0.5 rounded-full text-xs font-medium"
                         style={{ backgroundColor: monthStatusColors.bg, color: monthStatusColors.text }}
+                        role="status"
                       >
                         {monthTotal.toLocaleString()}원 · {PAYMENT_STATUS_LABELS[monthStatus]}
                       </span>
@@ -300,6 +311,7 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
                         <button
                           onClick={() => handleDeletePayment(p.id)}
                           className="p-1 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                          aria-label="납부 기록 삭제"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>

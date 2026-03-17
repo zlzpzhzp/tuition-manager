@@ -1,96 +1,82 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import Link from 'next/link'
 import { Users, CreditCard, AlertCircle, TrendingUp } from 'lucide-react'
 import type { Grade, Class, Student, Payment } from '@/types'
 import { getStudentFee, getPaymentStatus, PAYMENT_STATUS_LABELS, PAYMENT_STATUS_COLORS } from '@/types'
+import { getPaymentDueDay, isPaymentScheduled, getCurrentMonth, formatMonth, safeFetch } from '@/lib/utils'
 
 type GradeWithClasses = Grade & { classes: (Class & { students: Student[] })[] }
-
-/** 학생의 결제 예정일 (등록일 기준 매월 같은 날) */
-function getPaymentDueDay(student: Student): number {
-  return new Date(student.enrollment_date).getDate()
-}
-
-/** 결제일이 아직 안 지났으면 true (예정), 지났으면 false (미납) */
-function isPaymentScheduled(student: Student, selectedMonth: string): boolean {
-  const paymentDay = getPaymentDueDay(student)
-  const today = new Date()
-  const currentMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`
-  if (selectedMonth < currentMonth) return false
-  if (selectedMonth > currentMonth) return true
-  return today.getDate() < paymentDay
-}
 
 export default function DashboardPage() {
   const [grades, setGrades] = useState<GradeWithClasses[]>([])
   const [payments, setPayments] = useState<Payment[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const currentMonth = new Date().toISOString().slice(0, 7)
-  const formatMonth = (m: string) => {
-    const [y, mo] = m.split('-')
-    return `${y}년 ${parseInt(mo)}월`
-  }
+  const currentMonth = getCurrentMonth()
 
   const fetchData = useCallback(async () => {
-    const [gradesRes, paymentsRes] = await Promise.all([
-      fetch('/api/grades'),
-      fetch(`/api/payments?billing_month=${currentMonth}`),
+    const [gradesResult, paymentsResult] = await Promise.all([
+      safeFetch<GradeWithClasses[]>('/api/grades'),
+      safeFetch<Payment[]>(`/api/payments?billing_month=${currentMonth}`),
     ])
-    const [gradesData, paymentsData] = await Promise.all([
-      gradesRes.json(),
-      paymentsRes.json(),
-    ])
-    setGrades(gradesData)
-    setPayments(paymentsData)
+    if (gradesResult.error || paymentsResult.error) {
+      setError(gradesResult.error || paymentsResult.error)
+      setLoading(false)
+      return
+    }
+    setGrades(gradesResult.data ?? [])
+    setPayments(paymentsResult.data ?? [])
+    setError(null)
     setLoading(false)
   }, [currentMonth])
 
   useEffect(() => { fetchData() }, [fetchData])
 
-  const allStudents = grades.flatMap(g =>
-    g.classes.flatMap(c =>
-      (c.students ?? []).filter(s => !s.withdrawal_date).map(s => ({ ...s, class: c }))
-    )
-  )
+  const allStudents = useMemo(() =>
+    grades.flatMap(g =>
+      g.classes.flatMap(c =>
+        (c.students ?? []).filter(s => !s.withdrawal_date).map(s => ({ ...s, class: c }))
+      )
+    ), [grades])
 
-  const getStudentPaid = (studentId: string) =>
+  const getStudentPaid = useCallback((studentId: string) =>
     payments.filter(p => p.student_id === studentId).reduce((s, p) => s + p.amount, 0)
+  , [payments])
 
-  const totalStudents = allStudents.length
-  const totalFee = allStudents.reduce((sum, s) => sum + getStudentFee(s, s.class), 0)
-  const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0)
-  const totalRemaining = totalFee - totalPaid
+  const stats = useMemo(() => {
+    const totalStudents = allStudents.length
+    const totalFee = allStudents.reduce((sum, s) => sum + getStudentFee(s, s.class), 0)
+    const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0)
+    const unpaidStudents = allStudents.filter(s => {
+      const fee = getStudentFee(s, s.class)
+      const paid = getStudentPaid(s.id)
+      return getPaymentStatus(paid, fee) !== 'paid'
+    })
+    const overdueStudents = unpaidStudents.filter(s => !isPaymentScheduled(s, currentMonth))
+    const scheduledStudents = unpaidStudents.filter(s => isPaymentScheduled(s, currentMonth))
+    const paidCount = totalStudents - unpaidStudents.length
+    const paymentRate = totalStudents > 0 ? Math.round((paidCount / totalStudents) * 100) : 0
+    return { totalStudents, totalFee, totalPaid, unpaidStudents, overdueStudents, scheduledStudents, paidCount, paymentRate }
+  }, [allStudents, payments, currentMonth, getStudentPaid])
 
-  const unpaidStudents = allStudents.filter(s => {
-    const fee = getStudentFee(s, s.class)
-    const paid = getStudentPaid(s.id)
-    return getPaymentStatus(paid, fee) !== 'paid'
-  })
-
-  const overdueStudents = unpaidStudents.filter(s => !isPaymentScheduled(s, currentMonth))
-  const scheduledStudents = unpaidStudents.filter(s => isPaymentScheduled(s, currentMonth))
-  const paidCount = totalStudents - unpaidStudents.length
-  const paymentRate = totalStudents > 0 ? Math.round((paidCount / totalStudents) * 100) : 0
-
-  // 납부 기한 임박 (등원일 기준 3일 이내)
-  const today = new Date()
-  const urgentStudents = unpaidStudents.filter(s => {
-    const enrollDay = new Date(s.enrollment_date).getDate()
-    const dueDate = new Date(today.getFullYear(), today.getMonth(), enrollDay)
-    if (dueDate < today) dueDate.setMonth(dueDate.getMonth() + 1)
-    const daysUntilDue = Math.round((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
-    return daysUntilDue <= 3
-  })
+  const urgentStudents = useMemo(() => {
+    const today = new Date()
+    return stats.unpaidStudents.filter(s => {
+      const enrollDay = new Date(s.enrollment_date).getDate()
+      const dueDate = new Date(today.getFullYear(), today.getMonth(), enrollDay)
+      if (dueDate < today) dueDate.setMonth(dueDate.getMonth() + 1)
+      const daysUntilDue = Math.round((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+      return daysUntilDue <= 3
+    })
+  }, [stats.unpaidStudents])
 
   if (loading) return (
     <div className="animate-pulse">
-      {/* 제목 */}
       <div className="h-6 bg-gray-200 rounded w-40 mb-2"></div>
       <div className="h-4 bg-gray-100 rounded w-56 mb-6"></div>
-      {/* 요약 카드 4개 */}
       <div className="grid grid-cols-2 gap-3 mb-6">
         {[...Array(4)].map((_, i) => (
           <div key={i} className="bg-white rounded-xl border p-4">
@@ -102,7 +88,6 @@ export default function DashboardPage() {
           </div>
         ))}
       </div>
-      {/* 미납 학생 목록 */}
       <div className="bg-white rounded-xl border p-5">
         <div className="h-4 bg-gray-200 rounded w-28 mb-4"></div>
         <div className="space-y-3">
@@ -120,6 +105,13 @@ export default function DashboardPage() {
     </div>
   )
 
+  if (error) return (
+    <div className="text-center py-12">
+      <p className="text-red-500 mb-4">{error}</p>
+      <button onClick={fetchData} className="px-4 py-2 bg-[#1e2d6f] text-white rounded-lg hover:opacity-90">다시 시도</button>
+    </div>
+  )
+
   return (
     <div>
       <h1 className="text-xl font-bold mb-1">{formatMonth(currentMonth)} 대시보드</h1>
@@ -132,22 +124,22 @@ export default function DashboardPage() {
             <Users className="w-4 h-4 text-[#1e2d6f]" />
             <span className="text-xs text-gray-400">재원생</span>
           </div>
-          <p className="text-2xl font-bold">{totalStudents}<span className="text-sm text-gray-400 font-normal">명</span></p>
+          <p className="text-2xl font-bold">{stats.totalStudents}<span className="text-sm text-gray-400 font-normal">명</span></p>
         </div>
         <div className="bg-white rounded-xl border p-4">
           <div className="flex items-center gap-2 mb-2">
             <TrendingUp className="w-4 h-4 text-green-600" />
             <span className="text-xs text-gray-400">납부율</span>
           </div>
-          <p className="text-2xl font-bold">{paymentRate}<span className="text-sm text-gray-400 font-normal">%</span></p>
-          <p className="text-xs text-gray-400">{paidCount}/{totalStudents}명</p>
+          <p className="text-2xl font-bold">{stats.paymentRate}<span className="text-sm text-gray-400 font-normal">%</span></p>
+          <p className="text-xs text-gray-400">{stats.paidCount}/{stats.totalStudents}명</p>
         </div>
         <div className="bg-white rounded-xl border p-4">
           <div className="flex items-center gap-2 mb-2">
             <CreditCard className="w-4 h-4 text-[#1e2d6f]" />
             <span className="text-xs text-gray-400">수납 완료</span>
           </div>
-          <p className="text-xl font-bold">{totalPaid.toLocaleString()}<span className="text-xs text-gray-400 font-normal">원</span></p>
+          <p className="text-xl font-bold">{stats.totalPaid.toLocaleString()}<span className="text-xs text-gray-400 font-normal">원</span></p>
         </div>
         <div className="bg-white rounded-xl border p-4">
           <div className="flex items-center gap-2 mb-2">
@@ -155,9 +147,9 @@ export default function DashboardPage() {
             <span className="text-xs text-gray-400">미납 / 예정</span>
           </div>
           <p className="text-xl font-bold">
-            <span className="text-red-600">{overdueStudents.length}</span>
+            <span className="text-red-600">{stats.overdueStudents.length}</span>
             <span className="text-gray-300 font-normal mx-1">/</span>
-            <span className="text-amber-600">{scheduledStudents.length}</span>
+            <span className="text-amber-600">{stats.scheduledStudents.length}</span>
             <span className="text-sm text-gray-400 font-normal">명</span>
           </p>
         </div>
@@ -198,16 +190,16 @@ export default function DashboardPage() {
       <div className="bg-white rounded-xl border p-5">
         <h2 className="font-bold text-sm mb-3">
           미납 학생
-          {overdueStudents.length > 0 && <span className="text-red-600 ml-1">미납 {overdueStudents.length}</span>}
-          {overdueStudents.length > 0 && scheduledStudents.length > 0 && <span className="text-gray-300 mx-1">·</span>}
-          {scheduledStudents.length > 0 && <span className="text-amber-600">예정 {scheduledStudents.length}</span>}
-          {unpaidStudents.length === 0 && ' (0명)'}
+          {stats.overdueStudents.length > 0 && <span className="text-red-600 ml-1">미납 {stats.overdueStudents.length}</span>}
+          {stats.overdueStudents.length > 0 && stats.scheduledStudents.length > 0 && <span className="text-gray-300 mx-1">·</span>}
+          {stats.scheduledStudents.length > 0 && <span className="text-amber-600">예정 {stats.scheduledStudents.length}</span>}
+          {stats.unpaidStudents.length === 0 && ' (0명)'}
         </h2>
-        {unpaidStudents.length === 0 ? (
+        {stats.unpaidStudents.length === 0 ? (
           <p className="text-sm text-gray-400 py-4 text-center">모든 학생이 납부 완료했습니다 🎉</p>
         ) : (
           <div className="space-y-1">
-            {unpaidStudents.map(s => {
+            {stats.unpaidStudents.map(s => {
               const fee = getStudentFee(s, s.class)
               const paid = getStudentPaid(s.id)
               const status = getPaymentStatus(paid, fee)
@@ -234,6 +226,7 @@ export default function DashboardPage() {
                   <span
                     className="px-2 py-0.5 rounded-full text-xs font-medium"
                     style={{ backgroundColor: displayColors.bg, color: displayColors.text }}
+                    role="status"
                   >
                     {displayLabel}
                   </span>
@@ -272,7 +265,7 @@ export default function DashboardPage() {
             })}
             <div className="flex items-center justify-between pt-2 border-t font-bold">
               <span className="text-sm">합계</span>
-              <span className="text-sm">{totalFee.toLocaleString()}원</span>
+              <span className="text-sm">{stats.totalFee.toLocaleString()}원</span>
             </div>
           </div>
         </div>

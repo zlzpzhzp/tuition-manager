@@ -1,5 +1,26 @@
 import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
+import { validateInput, rules } from '@/lib/validate'
+
+interface SupabaseGrade {
+  id: string
+  name: string
+  order_index: number
+  created_at: string
+  tuition_classes?: SupabaseClass[]
+}
+
+interface SupabaseClass {
+  id: string
+  grade_id: string
+  name: string
+  monthly_fee: number
+  subject?: string | null
+  class_days?: string | null
+  order_index: number
+  created_at: string
+  tuition_students?: unknown[]
+}
 
 export async function GET() {
   const { data, error } = await supabase
@@ -11,10 +32,9 @@ export async function GET() {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  // Rename nested keys for frontend compatibility
-  const mapped = (data ?? []).map((g: Record<string, unknown>) => ({
+  const mapped = ((data as SupabaseGrade[]) ?? []).map(g => ({
     ...g,
-    classes: ((g.tuition_classes as Record<string, unknown>[]) ?? []).map((c: Record<string, unknown>) => ({
+    classes: (g.tuition_classes ?? []).map(c => ({
       ...c,
       students: c.tuition_students ?? [],
     })),
@@ -26,10 +46,8 @@ export async function GET() {
 export async function POST(request: Request) {
   const body = await request.json()
 
-  // Input validation
-  if (!body.name || typeof body.name !== 'string' || body.name.trim() === '') {
-    return NextResponse.json({ error: 'name is required and must be a non-empty string' }, { status: 400 })
-  }
+  const validationError = validateInput([rules.requiredString('name', body.name)])
+  if (validationError) return validationError
 
   const { count } = await supabase.from('tuition_grades').select('*', { count: 'exact', head: true })
   const { data, error } = await supabase

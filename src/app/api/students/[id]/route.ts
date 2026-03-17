@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
+import { validateInput, rules } from '@/lib/validate'
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -18,12 +19,12 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   const { id } = await params
   const body = await request.json()
 
-  // Input validation
-  const errors: string[] = []
-  if (body.name !== undefined && (typeof body.name !== 'string' || body.name.trim() === '')) errors.push('name must be a non-empty string')
-  if (body.enrollment_date !== undefined && isNaN(Date.parse(body.enrollment_date))) errors.push('enrollment_date must be a valid date (YYYY-MM-DD)')
-  if (body.custom_fee !== undefined && body.custom_fee !== null && Number(body.custom_fee) < 0) errors.push('custom_fee must be >= 0')
-  if (errors.length > 0) return NextResponse.json({ error: errors.join('; ') }, { status: 400 })
+  const validationError = validateInput([
+    rules.optionalString('name', body.name),
+    rules.optionalDate('enrollment_date', body.enrollment_date),
+    rules.nonNegativeNumber('custom_fee', body.custom_fee),
+  ])
+  if (validationError) return validationError
 
   const updates: Record<string, unknown> = {}
   if (body.name !== undefined) updates.name = body.name

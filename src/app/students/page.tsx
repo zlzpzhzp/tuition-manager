@@ -6,6 +6,7 @@ import { Plus, ChevronDown, ChevronRight, UserCircle } from 'lucide-react'
 import type { Grade, Class, Student } from '@/types'
 import { getStudentFee } from '@/types'
 import StudentModal from '@/components/StudentModal'
+import { safeFetch, safeMutate } from '@/lib/utils'
 
 type GradeWithClasses = Grade & { classes: (Class & { students: Student[] })[] }
 
@@ -19,11 +20,16 @@ export default function StudentsPage() {
   const [preselectedClassId, setPreselectedClassId] = useState<string | null>(null)
 
   const fetchData = useCallback(async () => {
-    const res = await fetch('/api/grades')
-    const data = await res.json()
-    setGrades(data)
-    if (data.length > 0 && expandedGrades.size === 0) {
-      setExpandedGrades(new Set(data.map((g: Grade) => g.id)))
+    const { data, error } = await safeFetch<GradeWithClasses[]>('/api/grades')
+    if (error) {
+      alert(`데이터 로딩 실패: ${error}`)
+      setLoading(false)
+      return
+    }
+    const grades = data ?? []
+    setGrades(grades)
+    if (grades.length > 0 && expandedGrades.size === 0) {
+      setExpandedGrades(new Set(grades.map((g: Grade) => g.id)))
     }
     setLoading(false)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
@@ -53,18 +59,12 @@ export default function StudentsPage() {
   }
 
   const handleSave = async (data: Partial<Student>) => {
-    if (editingStudent) {
-      await fetch(`/api/students/${editingStudent.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      })
-    } else {
-      await fetch('/api/students', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      })
+    const url = editingStudent ? `/api/students/${editingStudent.id}` : '/api/students'
+    const method = editingStudent ? 'PUT' : 'POST'
+    const { error } = await safeMutate(url, method, data)
+    if (error) {
+      alert(`저장 실패: ${error}`)
+      return
     }
     setShowModal(false)
     fetchData()
@@ -77,7 +77,6 @@ export default function StudentsPage() {
 
   if (loading) return (
     <div className="animate-pulse">
-      {/* 헤더 */}
       <div className="flex items-center justify-between mb-6">
         <div>
           <div className="h-6 bg-gray-200 rounded w-24 mb-2"></div>
@@ -85,7 +84,6 @@ export default function StudentsPage() {
         </div>
         <div className="h-9 bg-gray-200 rounded-lg w-24"></div>
       </div>
-      {/* 학년/반/학생 트리 */}
       <div className="space-y-3">
         {[...Array(3)].map((_, gi) => (
           <div key={gi} className="bg-white rounded-xl border overflow-hidden">
@@ -149,6 +147,7 @@ export default function StudentsPage() {
               <button
                 onClick={() => toggleGrade(grade.id)}
                 className="w-full flex items-center gap-2 px-4 py-3 text-left"
+                aria-expanded={expandedGrades.has(grade.id)}
               >
                 {expandedGrades.has(grade.id) ? <ChevronDown className="w-5 h-5 text-gray-400" /> : <ChevronRight className="w-5 h-5 text-gray-400" />}
                 <span className="font-semibold text-sm flex-1">{grade.name}</span>
@@ -166,6 +165,7 @@ export default function StudentsPage() {
                         <button
                           onClick={() => toggleClass(cls.id)}
                           className="w-full flex items-center gap-2 px-6 py-2.5 text-left bg-gray-50 hover:bg-gray-100"
+                          aria-expanded={expandedClasses.has(cls.id)}
                         >
                           {expandedClasses.has(cls.id) ? <ChevronDown className="w-4 h-4 text-gray-400" /> : <ChevronRight className="w-4 h-4 text-gray-400" />}
                           <span className="text-sm font-medium flex-1">{cls.name}</span>
