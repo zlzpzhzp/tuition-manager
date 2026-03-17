@@ -65,6 +65,7 @@ export default function PaymentsPage() {
   const [inlineSuccess, setInlineSuccess] = useState<string | null>(null)
   const [showMethodPicker, setShowMethodPicker] = useState(false)
   const [inlineOtherMemo, setInlineOtherMemo] = useState('')
+  const [showDatePicker, setShowDatePicker] = useState(false)
 
   // 모달 (고급 옵션 / 납부 상세보기)
   const [showPaymentModal, setShowPaymentModal] = useState(false)
@@ -123,6 +124,7 @@ export default function PaymentsPage() {
     const prevPayment = prevPayments.find(p => p.student_id === studentId)
     setInlineMethod(prevPayment?.method as PaymentMethod || 'remote')
     setShowMethodPicker(false)
+    setShowDatePicker(false)
     setInlineOtherMemo('')
   }
 
@@ -340,17 +342,70 @@ export default function PaymentsPage() {
                               /* 인라인 납부: 미납 뱃지 자리에서 왼쪽으로 펼쳐짐 */
                               <div className="flex flex-col items-end gap-1" onClick={e => e.stopPropagation()}>
                                 <div className="flex items-center gap-1.5">
-                                  <input
-                                    type="date"
-                                    value={inlineDate}
-                                    onChange={e => setInlineDate(e.target.value)}
-                                    className="fan-item px-2 py-0.5 rounded-full text-xs bg-[#FEF3C7] text-[#92400E] border-0 focus:outline-none focus:ring-1 focus:ring-amber-400"
-                                    style={{ width: '120px' }}
-                                  />
                                   <div className="relative fan-item">
                                     <button
                                       type="button"
-                                      onClick={() => setShowMethodPicker(!showMethodPicker)}
+                                      onClick={() => { setShowDatePicker(!showDatePicker); setShowMethodPicker(false) }}
+                                      className="px-2 py-0.5 rounded-full text-xs font-medium bg-[#FEF3C7] text-[#92400E] whitespace-nowrap"
+                                    >
+                                      {(() => { const d = new Date(inlineDate); return `${d.getMonth()+1}/${d.getDate()}` })()}
+                                      <span className="text-[9px] opacity-50 ml-0.5">▼</span>
+                                    </button>
+                                    {showDatePicker && (() => {
+                                      const selDate = new Date(inlineDate)
+                                      const year = selDate.getFullYear()
+                                      const month = selDate.getMonth()
+                                      const firstDay = new Date(year, month, 1).getDay()
+                                      const daysInMonth = new Date(year, month + 1, 0).getDate()
+                                      const cells: (number | null)[] = []
+                                      for (let i = 0; i < firstDay; i++) cells.push(null)
+                                      for (let d = 1; d <= daysInMonth; d++) cells.push(d)
+                                      return (
+                                        <div className="absolute top-full left-0 mt-1 bg-white border rounded-lg shadow-lg z-20 p-2" style={{ width: '220px' }}>
+                                          <div className="flex items-center justify-between mb-1.5 px-1">
+                                            <button type="button" onClick={() => {
+                                              const nd = new Date(year, month - 1, 1)
+                                              setInlineDate(`${nd.getFullYear()}-${String(nd.getMonth()+1).padStart(2,'0')}-${String(Math.min(selDate.getDate(), new Date(nd.getFullYear(), nd.getMonth()+1, 0).getDate())).padStart(2,'0')}`)
+                                            }} className="text-gray-400 hover:text-gray-600 text-xs p-0.5">◀</button>
+                                            <span className="text-xs font-medium">{year}년 {month+1}월</span>
+                                            <button type="button" onClick={() => {
+                                              const nd = new Date(year, month + 1, 1)
+                                              setInlineDate(`${nd.getFullYear()}-${String(nd.getMonth()+1).padStart(2,'0')}-${String(Math.min(selDate.getDate(), new Date(nd.getFullYear(), nd.getMonth()+1, 0).getDate())).padStart(2,'0')}`)
+                                            }} className="text-gray-400 hover:text-gray-600 text-xs p-0.5">▶</button>
+                                          </div>
+                                          <div className="grid grid-cols-7 gap-0 text-center">
+                                            {['일','월','화','수','목','금','토'].map(d => (
+                                              <span key={d} className="text-[9px] text-gray-400 py-0.5">{d}</span>
+                                            ))}
+                                            {cells.map((day, i) => (
+                                              <button
+                                                key={i}
+                                                type="button"
+                                                disabled={!day}
+                                                onClick={() => {
+                                                  if (day) {
+                                                    setInlineDate(`${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`)
+                                                    setShowDatePicker(false)
+                                                  }
+                                                }}
+                                                className={`text-[11px] py-1 rounded ${
+                                                  !day ? '' :
+                                                  day === selDate.getDate() ? 'bg-[#1e2d6f] text-white font-bold' :
+                                                  'hover:bg-gray-100 text-gray-700'
+                                                }`}
+                                              >
+                                                {day || ''}
+                                              </button>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      )
+                                    })()}
+                                  </div>
+                                  <div className="relative fan-item">
+                                    <button
+                                      type="button"
+                                      onClick={() => { setShowMethodPicker(!showMethodPicker); setShowDatePicker(false) }}
                                       className="px-2 py-0.5 rounded-full text-xs font-medium bg-[#E0E7FF] text-[#3730A3] flex items-center gap-0.5 whitespace-nowrap"
                                     >
                                       {INLINE_METHODS.find(([v]) => v === inlineMethod)?.[1]}
@@ -373,9 +428,6 @@ export default function PaymentsPage() {
                                       </div>
                                     )}
                                   </div>
-                                  <span className="fan-item text-[10px] text-gray-400 whitespace-nowrap">
-                                    결제일{parseInt(selectedMonth.split('-')[1])}/{getPaymentDueDay(student)}
-                                  </span>
                                   <button
                                     onClick={() => handleInlineSubmit(student.id, fee)}
                                     disabled={!!inlineSuccess}
@@ -407,10 +459,11 @@ export default function PaymentsPage() {
                             ) : (
                               /* 기본 상태: 뱃지 + 상세 버튼 */
                               <>
-                                {studentPayments.length > 0 && (
-                                  <div className="text-xs text-gray-400 hidden sm:block">
-                                    {studentPayments.map(p => PAYMENT_METHOD_LABELS[p.method as keyof typeof PAYMENT_METHOD_LABELS]).join(', ')}
-                                  </div>
+                                {studentPayments.length > 0 && status !== 'unpaid' && (
+                                  <span className="text-[10px] text-gray-400 whitespace-nowrap">
+                                    {PAYMENT_METHOD_LABELS[studentPayments[0].method as keyof typeof PAYMENT_METHOD_LABELS]}
+                                    {' '}결제일{parseInt(selectedMonth.split('-')[1])}/{getPaymentDueDay(student)}
+                                  </span>
                                 )}
                                 {status !== 'unpaid' ? (
                                   <button
