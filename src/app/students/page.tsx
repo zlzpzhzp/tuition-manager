@@ -75,7 +75,53 @@ export default function StudentsPage() {
     0
   )
 
-  if (loading) return <div className="text-center py-12 text-gray-400">로딩 중...</div>
+  if (loading) return (
+    <div className="animate-pulse">
+      {/* 헤더 */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <div className="h-6 bg-gray-200 rounded w-24 mb-2"></div>
+          <div className="h-4 bg-gray-100 rounded w-20"></div>
+        </div>
+        <div className="h-9 bg-gray-200 rounded-lg w-24"></div>
+      </div>
+      {/* 학년/반/학생 트리 */}
+      <div className="space-y-3">
+        {[...Array(3)].map((_, gi) => (
+          <div key={gi} className="bg-white rounded-xl border overflow-hidden">
+            <div className="flex items-center gap-2 px-4 py-3">
+              <div className="w-5 h-5 bg-gray-200 rounded"></div>
+              <div className="h-4 bg-gray-200 rounded w-24 flex-1"></div>
+              <div className="h-3 bg-gray-100 rounded w-8"></div>
+            </div>
+            <div className="border-t">
+              {[...Array(2)].map((_, ci) => (
+                <div key={ci} className="border-b last:border-b-0">
+                  <div className="flex items-center gap-2 px-6 py-2.5 bg-gray-50">
+                    <div className="w-4 h-4 bg-gray-200 rounded"></div>
+                    <div className="h-3 bg-gray-200 rounded w-20 flex-1"></div>
+                    <div className="h-3 bg-gray-200 rounded w-16"></div>
+                    <div className="h-3 bg-gray-100 rounded w-8"></div>
+                  </div>
+                  <div className="px-6 py-2 space-y-1">
+                    {[...Array(3)].map((_, si) => (
+                      <div key={si} className="flex items-center gap-3 px-3 py-2">
+                        <div className="w-8 h-8 bg-gray-200 rounded-full"></div>
+                        <div className="flex-1">
+                          <div className="h-4 bg-gray-200 rounded w-16 mb-1"></div>
+                          <div className="h-3 bg-gray-100 rounded w-32"></div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
 
   return (
     <div>

@@ -5,6 +5,11 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   const { id } = await params
   const body = await request.json()
 
+  // Input validation
+  if (!body.name || typeof body.name !== 'string' || body.name.trim() === '') {
+    return NextResponse.json({ error: 'name is required and must be a non-empty string' }, { status: 400 })
+  }
+
   const { data, error } = await supabase
     .from('tuition_grades')
     .update({ name: body.name })

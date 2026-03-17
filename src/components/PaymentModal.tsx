@@ -41,10 +41,11 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
   useEffect(() => {
     if (!needsCashReceipt) {
       setCashReceipt(null)
-    } else if (cashReceipt === null) {
-      setCashReceipt('pending')
+    } else {
+      setCashReceipt(prev => prev === null ? 'pending' : prev)
     }
-  }, [method, needsCashReceipt, cashReceipt])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [method])
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }

@@ -5,6 +5,14 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   const { id } = await params
   const body = await request.json()
 
+  // Input validation
+  const errors: string[] = []
+  if (body.amount !== undefined && Number(body.amount) < 0) errors.push('amount must be >= 0')
+  if (body.payment_date !== undefined && isNaN(Date.parse(body.payment_date))) errors.push('payment_date must be a valid date (YYYY-MM-DD)')
+  const validMethods = ['remote', 'card', 'transfer', 'cash']
+  if (body.method !== undefined && !validMethods.includes(body.method)) errors.push(`method must be one of: ${validMethods.join(', ')}`)
+  if (errors.length > 0) return NextResponse.json({ error: errors.join('; ') }, { status: 400 })
+
   const updates: Record<string, unknown> = {}
   if (body.amount !== undefined) updates.amount = body.amount
   if (body.method !== undefined) updates.method = body.method

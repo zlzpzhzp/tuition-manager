@@ -8,6 +8,21 @@ import { getStudentFee, getPaymentStatus, PAYMENT_STATUS_LABELS, PAYMENT_STATUS_
 
 type GradeWithClasses = Grade & { classes: (Class & { students: Student[] })[] }
 
+/** 학생의 결제 예정일 (등록일 기준 매월 같은 날) */
+function getPaymentDueDay(student: Student): number {
+  return new Date(student.enrollment_date).getDate()
+}
+
+/** 결제일이 아직 안 지났으면 true (예정), 지났으면 false (미납) */
+function isPaymentScheduled(student: Student, selectedMonth: string): boolean {
+  const paymentDay = getPaymentDueDay(student)
+  const today = new Date()
+  const currentMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`
+  if (selectedMonth < currentMonth) return false
+  if (selectedMonth > currentMonth) return true
+  return today.getDate() < paymentDay
+}
+
 export default function DashboardPage() {
   const [grades, setGrades] = useState<GradeWithClasses[]>([])
   const [payments, setPayments] = useState<Payment[]>([])
@@ -55,6 +70,8 @@ export default function DashboardPage() {
     return getPaymentStatus(paid, fee) !== 'paid'
   })
 
+  const overdueStudents = unpaidStudents.filter(s => !isPaymentScheduled(s, currentMonth))
+  const scheduledStudents = unpaidStudents.filter(s => isPaymentScheduled(s, currentMonth))
   const paidCount = totalStudents - unpaidStudents.length
   const paymentRate = totalStudents > 0 ? Math.round((paidCount / totalStudents) * 100) : 0
 
@@ -68,7 +85,40 @@ export default function DashboardPage() {
     return daysUntilDue <= 3
   })
 
-  if (loading) return <div className="text-center py-12 text-gray-400">로딩 중...</div>
+  if (loading) return (
+    <div className="animate-pulse">
+      {/* 제목 */}
+      <div className="h-6 bg-gray-200 rounded w-40 mb-2"></div>
+      <div className="h-4 bg-gray-100 rounded w-56 mb-6"></div>
+      {/* 요약 카드 4개 */}
+      <div className="grid grid-cols-2 gap-3 mb-6">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="bg-white rounded-xl border p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-4 h-4 bg-gray-200 rounded"></div>
+              <div className="h-3 bg-gray-200 rounded w-12"></div>
+            </div>
+            <div className="h-7 bg-gray-200 rounded w-20"></div>
+          </div>
+        ))}
+      </div>
+      {/* 미납 학생 목록 */}
+      <div className="bg-white rounded-xl border p-5">
+        <div className="h-4 bg-gray-200 rounded w-28 mb-4"></div>
+        <div className="space-y-3">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="flex items-center gap-3 px-3 py-2">
+              <div className="flex-1">
+                <div className="h-4 bg-gray-200 rounded w-16 mb-1"></div>
+              </div>
+              <div className="h-4 bg-gray-100 rounded w-20"></div>
+              <div className="h-5 bg-gray-200 rounded-full w-12"></div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
 
   return (
     <div>
@@ -102,9 +152,14 @@ export default function DashboardPage() {
         <div className="bg-white rounded-xl border p-4">
           <div className="flex items-center gap-2 mb-2">
             <AlertCircle className="w-4 h-4 text-red-500" />
-            <span className="text-xs text-gray-400">미수금</span>
+            <span className="text-xs text-gray-400">미납 / 예정</span>
           </div>
-          <p className="text-xl font-bold text-red-600">{totalRemaining.toLocaleString()}<span className="text-xs text-gray-400 font-normal">원</span></p>
+          <p className="text-xl font-bold">
+            <span className="text-red-600">{overdueStudents.length}</span>
+            <span className="text-gray-300 font-normal mx-1">/</span>
+            <span className="text-amber-600">{scheduledStudents.length}</span>
+            <span className="text-sm text-gray-400 font-normal">명</span>
+          </p>
         </div>
       </div>
 
@@ -141,7 +196,13 @@ export default function DashboardPage() {
 
       {/* 미납 학생 목록 */}
       <div className="bg-white rounded-xl border p-5">
-        <h2 className="font-bold text-sm mb-3">미납 학생 ({unpaidStudents.length}명)</h2>
+        <h2 className="font-bold text-sm mb-3">
+          미납 학생
+          {overdueStudents.length > 0 && <span className="text-red-600 ml-1">미납 {overdueStudents.length}</span>}
+          {overdueStudents.length > 0 && scheduledStudents.length > 0 && <span className="text-gray-300 mx-1">·</span>}
+          {scheduledStudents.length > 0 && <span className="text-amber-600">예정 {scheduledStudents.length}</span>}
+          {unpaidStudents.length === 0 && ' (0명)'}
+        </h2>
         {unpaidStudents.length === 0 ? (
           <p className="text-sm text-gray-400 py-4 text-center">모든 학생이 납부 완료했습니다 🎉</p>
         ) : (
@@ -150,7 +211,15 @@ export default function DashboardPage() {
               const fee = getStudentFee(s, s.class)
               const paid = getStudentPaid(s.id)
               const status = getPaymentStatus(paid, fee)
-              const statusColors = PAYMENT_STATUS_COLORS[status]
+              const scheduled = status === 'unpaid' && isPaymentScheduled(s, currentMonth)
+              const displayColors = scheduled
+                ? { bg: '#FEF3C7', text: '#92400E' }
+                : PAYMENT_STATUS_COLORS[status]
+              const dueDay = getPaymentDueDay(s)
+              const month = parseInt(currentMonth.split('-')[1])
+              const displayLabel = status === 'unpaid'
+                ? `${month}/${dueDay} ${scheduled ? '예정' : '미납'}`
+                : PAYMENT_STATUS_LABELS[status]
               return (
                 <Link
                   key={s.id}
@@ -164,9 +233,9 @@ export default function DashboardPage() {
                   <span className="text-xs text-gray-400">{(fee - paid).toLocaleString()}원</span>
                   <span
                     className="px-2 py-0.5 rounded-full text-xs font-medium"
-                    style={{ backgroundColor: statusColors.bg, color: statusColors.text }}
+                    style={{ backgroundColor: displayColors.bg, color: displayColors.text }}
                   >
-                    {PAYMENT_STATUS_LABELS[status]}
+                    {displayLabel}
                   </span>
                 </Link>
               )

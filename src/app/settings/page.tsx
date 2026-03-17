@@ -1,9 +1,11 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Plus, Pencil, Trash2, ChevronDown, ChevronRight, X, Check } from 'lucide-react'
 import type { Grade, Class } from '@/types'
 import { DAY_LABELS, parseClassDays } from '@/types'
+
+const SUBJECT_COLORS = ['bg-blue-100 text-blue-700', 'bg-green-100 text-green-700', 'bg-purple-100 text-purple-700', 'bg-orange-100 text-orange-700', 'bg-pink-100 text-pink-700', 'bg-teal-100 text-teal-700', 'bg-yellow-100 text-yellow-700', 'bg-red-100 text-red-700']
 
 export default function SettingsPage() {
   const [grades, setGrades] = useState<(Grade & { classes: Class[] })[]>([])
@@ -26,6 +28,17 @@ export default function SettingsPage() {
   const [editClassFee, setEditClassFee] = useState('')
   const [editClassSubject, setEditClassSubject] = useState('')
   const [editClassDays, setEditClassDays] = useState<number[]>([])
+
+  const existingSubjects = useMemo(() => {
+    const subjects = new Set<string>()
+    grades.forEach(g => g.classes?.forEach(c => { if (c.subject) subjects.add(c.subject) }))
+    return Array.from(subjects).sort()
+  }, [grades])
+
+  const getSubjectColor = useCallback((subject: string) => {
+    const idx = existingSubjects.indexOf(subject)
+    return SUBJECT_COLORS[idx >= 0 ? idx % SUBJECT_COLORS.length : 0]
+  }, [existingSubjects])
 
   const toggleDay = (days: number[], setDays: (d: number[]) => void, day: number) => {
     setDays(days.includes(day) ? days.filter(d => d !== day) : [...days, day].sort())
@@ -140,7 +153,41 @@ export default function SettingsPage() {
 
   const formatFee = (fee: number) => fee.toLocaleString() + '원'
 
-  if (loading) return <div className="text-center py-12 text-gray-400">로딩 중...</div>
+  if (loading) return (
+    <div className="animate-pulse">
+      {/* 제목 */}
+      <div className="h-6 bg-gray-200 rounded w-32 mb-6"></div>
+      {/* 학년 추가 입력 */}
+      <div className="flex gap-2 mb-6">
+        <div className="flex-1 h-10 bg-gray-100 rounded-lg"></div>
+        <div className="h-10 bg-gray-200 rounded-lg w-28"></div>
+      </div>
+      {/* 학년/반 목록 */}
+      <div className="space-y-3">
+        {[...Array(3)].map((_, gi) => (
+          <div key={gi} className="bg-white rounded-xl border overflow-hidden">
+            <div className="flex items-center gap-2 px-4 py-3">
+              <div className="w-5 h-5 bg-gray-200 rounded"></div>
+              <div className="h-4 bg-gray-200 rounded w-28 flex-1"></div>
+              <div className="h-3 bg-gray-100 rounded w-12"></div>
+              <div className="w-6 h-6 bg-gray-100 rounded"></div>
+              <div className="w-6 h-6 bg-gray-100 rounded"></div>
+            </div>
+            <div className="border-t bg-gray-50 px-4 py-3 space-y-2">
+              {[...Array(2)].map((_, ci) => (
+                <div key={ci} className="flex items-center gap-2 bg-white rounded-lg px-3 py-2 border">
+                  <div className="h-5 bg-gray-200 rounded w-10"></div>
+                  <div className="h-4 bg-gray-200 rounded w-24 flex-1"></div>
+                  <div className="h-4 bg-gray-200 rounded w-16"></div>
+                  <div className="h-3 bg-gray-100 rounded w-8"></div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
 
   return (
     <div>
@@ -222,15 +269,14 @@ export default function SettingsPage() {
                           {editingClassId === cls.id ? (
                             <div className="flex-1 space-y-2">
                               <div className="flex items-center gap-2">
-                                <select
+                                <input
+                                  type="text"
+                                  list="subject-list"
                                   value={editClassSubject}
                                   onChange={e => setEditClassSubject(e.target.value)}
+                                  placeholder="과목"
                                   className="w-16 px-1 py-1 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1e2d6f]"
-                                >
-                                  <option value="">-</option>
-                                  <option value="수학">수학</option>
-                                  <option value="영어">영어</option>
-                                </select>
+                                />
                                 <input
                                   type="text"
                                   value={editClassName}
@@ -258,7 +304,7 @@ export default function SettingsPage() {
                           ) : (
                             <>
                               {cls.subject && (
-                                <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${cls.subject === '수학' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>
+                                <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${getSubjectColor(cls.subject)}`}>
                                   {cls.subject}
                                 </span>
                               )}
@@ -293,15 +339,14 @@ export default function SettingsPage() {
                   {addingClassToGrade === grade.id ? (
                     <div className="space-y-2">
                       <div className="flex items-center gap-2">
-                        <select
+                        <input
+                          type="text"
+                          list="subject-list"
                           value={newClassSubject}
                           onChange={e => setNewClassSubject(e.target.value)}
+                          placeholder="과목"
                           className="w-16 px-1 py-1.5 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1e2d6f]"
-                        >
-                          <option value="">-</option>
-                          <option value="수학">수학</option>
-                          <option value="영어">영어</option>
-                        </select>
+                        />
                         <input
                           type="text"
                           value={newClassName}
@@ -340,6 +385,10 @@ export default function SettingsPage() {
           ))}
         </div>
       )}
+
+      <datalist id="subject-list">
+        {existingSubjects.map(s => <option key={s} value={s} />)}
+      </datalist>
     </div>
   )
 }

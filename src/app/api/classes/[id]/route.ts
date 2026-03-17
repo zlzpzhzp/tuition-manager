@@ -5,6 +5,12 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   const { id } = await params
   const body = await request.json()
 
+  // Input validation
+  const errors: string[] = []
+  if (body.name !== undefined && (typeof body.name !== 'string' || body.name.trim() === '')) errors.push('name must be a non-empty string')
+  if (body.monthly_fee !== undefined && Number(body.monthly_fee) < 0) errors.push('monthly_fee must be >= 0')
+  if (errors.length > 0) return NextResponse.json({ error: errors.join('; ') }, { status: 400 })
+
   const updates: Record<string, unknown> = {}
   if (body.name !== undefined) updates.name = body.name
   if (body.monthly_fee !== undefined) updates.monthly_fee = body.monthly_fee

@@ -18,6 +18,13 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   const { id } = await params
   const body = await request.json()
 
+  // Input validation
+  const errors: string[] = []
+  if (body.name !== undefined && (typeof body.name !== 'string' || body.name.trim() === '')) errors.push('name must be a non-empty string')
+  if (body.enrollment_date !== undefined && isNaN(Date.parse(body.enrollment_date))) errors.push('enrollment_date must be a valid date (YYYY-MM-DD)')
+  if (body.custom_fee !== undefined && body.custom_fee !== null && Number(body.custom_fee) < 0) errors.push('custom_fee must be >= 0')
+  if (errors.length > 0) return NextResponse.json({ error: errors.join('; ') }, { status: 400 })
+
   const updates: Record<string, unknown> = {}
   if (body.name !== undefined) updates.name = body.name
   if (body.class_id !== undefined) updates.class_id = body.class_id

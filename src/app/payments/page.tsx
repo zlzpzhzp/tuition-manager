@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import { ChevronLeft, ChevronRight, Check, ClipboardList } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Check, ClipboardList, Download } from 'lucide-react'
 import type { Grade, Class, Student, Payment, PaymentMethod } from '@/types'
 import { getStudentFee, getPaymentStatus, PAYMENT_STATUS_LABELS, PAYMENT_STATUS_COLORS, PAYMENT_METHOD_LABELS } from '@/types'
 import PaymentModal from '@/components/PaymentModal'
@@ -184,7 +184,42 @@ export default function PaymentsPage() {
   const unpaidCount = unpaidStudents.filter(s => !isPaymentScheduled(s, selectedMonth)).length
   const scheduledCount = unpaidStudents.filter(s => isPaymentScheduled(s, selectedMonth)).length
 
-  if (loading) return <div className="text-center py-12 text-gray-400">로딩 중...</div>
+  if (loading) return (
+    <div className="animate-pulse">
+      {/* 월 네비게이션 */}
+      <div className="flex items-center justify-center gap-4 mb-6">
+        <div className="w-9 h-9 bg-gray-200 rounded-lg"></div>
+        <div className="h-6 bg-gray-200 rounded w-32"></div>
+        <div className="w-9 h-9 bg-gray-200 rounded-lg"></div>
+      </div>
+      {/* 요약 4칸 */}
+      <div className="grid grid-cols-4 gap-2 sm:gap-3 mb-6">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="bg-white rounded-xl border p-3 sm:p-4 text-center">
+            <div className="h-3 bg-gray-200 rounded w-10 mx-auto mb-2"></div>
+            <div className="h-5 bg-gray-200 rounded w-16 mx-auto"></div>
+          </div>
+        ))}
+      </div>
+      {/* 학생 목록 */}
+      {[...Array(2)].map((_, gi) => (
+        <div key={gi} className="mb-4">
+          <div className="h-4 bg-gray-200 rounded w-20 mb-2 ml-1"></div>
+          <div className="bg-white rounded-xl border overflow-hidden">
+            <div className="px-4 py-2 bg-gray-50 border-b">
+              <div className="h-3 bg-gray-200 rounded w-24"></div>
+            </div>
+            {[...Array(4)].map((_, si) => (
+              <div key={si} className="flex items-center gap-2 px-4 py-3 border-b last:border-b-0">
+                <div className="h-4 bg-gray-200 rounded w-14 flex-1"></div>
+                <div className="h-5 bg-gray-200 rounded-full w-16"></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
 
   return (
     <div>
@@ -196,6 +231,18 @@ export default function PaymentsPage() {
         <h1 className="text-xl font-bold">{formatMonth(selectedMonth)}</h1>
         <button onClick={() => navigateMonth(1)} className="p-2 hover:bg-gray-100 rounded-lg">
           <ChevronRight className="w-5 h-5" />
+        </button>
+        <button
+          onClick={() => {
+            const a = document.createElement('a')
+            a.href = `/api/payments/export?billing_month=${selectedMonth}`
+            a.download = ''
+            a.click()
+          }}
+          className="p-2 hover:bg-gray-100 rounded-lg text-gray-500 hover:text-gray-700"
+          title="엑셀 다운로드"
+        >
+          <Download className="w-4 h-4" />
         </button>
       </div>
 
@@ -260,8 +307,8 @@ export default function PaymentsPage() {
                       const hasMemo = !!(prevMemo || currentMemo)
 
                       return (
-                        <div key={student.id} className="border-b last:border-b-0">
-                          <div className={`flex items-center gap-2 px-4 ${hasMemo && !isExpanded ? 'pt-3 pb-1' : 'py-3'} ${
+                        <div key={student.id}>
+                          <div className={`flex items-center gap-2 px-4 ${hasMemo && !isExpanded ? 'pt-3 pb-1' : 'py-3'} ${!hasMemo || isExpanded ? 'border-b last:border-b-0' : ''} ${
                             status === 'unpaid' && !isExpanded ? 'cursor-pointer active:bg-gray-50' : ''
                           }`}
                             onClick={status === 'unpaid' && !isExpanded ? () => handleExpand(student.id) : undefined}
@@ -357,7 +404,7 @@ export default function PaymentsPage() {
                           </div>
                           {/* 비고 서브행 */}
                           {!isExpanded && hasMemo && (
-                            <div className="px-4 pb-2">
+                            <div className="px-4 pb-2 border-b last:border-b-0">
                               {currentMemo && (
                                 <p className="text-[11px] text-gray-500 leading-tight">{currentMemo}</p>
                               )}

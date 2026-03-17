@@ -26,6 +26,11 @@ export async function GET() {
 export async function POST(request: Request) {
   const body = await request.json()
 
+  // Input validation
+  if (!body.name || typeof body.name !== 'string' || body.name.trim() === '') {
+    return NextResponse.json({ error: 'name is required and must be a non-empty string' }, { status: 400 })
+  }
+
   const { count } = await supabase.from('tuition_grades').select('*', { count: 'exact', head: true })
   const { data, error } = await supabase
     .from('tuition_grades')
