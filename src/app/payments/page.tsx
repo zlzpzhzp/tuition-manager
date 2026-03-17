@@ -110,7 +110,7 @@ export default function PaymentsPage() {
     return prev?.memo || null
   }
 
-  // 미납 학생 인라인 확장
+  // 미납 학생 인라인 확장 (이전 달 결제방법 자동 유지)
   const handleExpand = (studentId: string) => {
     if (expandedStudentId === studentId) {
       setExpandedStudentId(null)
@@ -118,7 +118,8 @@ export default function PaymentsPage() {
     }
     setExpandedStudentId(studentId)
     setInlineDate(today)
-    setInlineMethod('remote')
+    const prevPayment = prevPayments.find(p => p.student_id === studentId)
+    setInlineMethod(prevPayment?.method as PaymentMethod || 'remote')
     setShowMethodPicker(false)
   }
 
@@ -256,9 +257,11 @@ export default function PaymentsPage() {
                       const isExpanded = expandedStudentId === student.id && status === 'unpaid'
                       const isSuccess = inlineSuccess === student.id
 
+                      const hasMemo = !!(prevMemo || currentMemo)
+
                       return (
-                        <div key={student.id}>
-                          <div className={`flex items-center gap-2 px-4 py-3 border-b last:border-b-0 ${
+                        <div key={student.id} className="border-b last:border-b-0">
+                          <div className={`flex items-center gap-2 px-4 ${hasMemo && !isExpanded ? 'pt-3 pb-1' : 'py-3'} ${
                             status === 'unpaid' && !isExpanded ? 'cursor-pointer active:bg-gray-50' : ''
                           }`}
                             onClick={status === 'unpaid' && !isExpanded ? () => handleExpand(student.id) : undefined}
@@ -352,15 +355,14 @@ export default function PaymentsPage() {
                               </>
                             )}
                           </div>
-
                           {/* 비고 서브행 */}
-                          {!isExpanded && (prevMemo || currentMemo) && (
-                            <div className="flex flex-col gap-0.5 px-4 py-1.5 border-b last:border-b-0 bg-gray-50/50">
-                              {prevMemo && (
-                                <p className="text-[11px] text-amber-600">지난달: {prevMemo}</p>
-                              )}
+                          {!isExpanded && hasMemo && (
+                            <div className="px-4 pb-2">
                               {currentMemo && (
-                                <p className="text-[11px] text-blue-500">{currentMemo}</p>
+                                <p className="text-[11px] text-gray-500 leading-tight">{currentMemo}</p>
+                              )}
+                              {prevMemo && (
+                                <p className="text-[11px] text-gray-400 leading-tight">지난달: {prevMemo}</p>
                               )}
                             </div>
                           )}
