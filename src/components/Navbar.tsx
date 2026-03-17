@@ -3,13 +3,12 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Users, CreditCard, Settings, Bot } from 'lucide-react'
+import { LayoutDashboard, Users, CreditCard, Settings } from 'lucide-react'
 
 const navItems = [
   { href: '/dashboard', label: '대시보드', icon: LayoutDashboard },
   { href: '/students', label: '학생', icon: Users },
   { href: '/payments', label: '납부', icon: CreditCard },
-  { href: '/agent', label: 'AI', icon: Bot },
   { href: '/settings', label: '설정', icon: Settings },
 ]
 

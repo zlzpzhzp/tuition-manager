@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
-import { ChevronLeft, ChevronRight, Check, ClipboardList, Download } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Check, ClipboardList, Download, Sparkles, X, Loader2, ArrowRight } from 'lucide-react'
 import type { Grade, Class, Student, Payment, PaymentMethod } from '@/types'
 import { getStudentFee, getPaymentStatus, PAYMENT_STATUS_LABELS, PAYMENT_STATUS_COLORS, PAYMENT_METHOD_LABELS } from '@/types'
 import PaymentModal from '@/components/PaymentModal'
@@ -72,6 +72,14 @@ export default function PaymentsPage() {
     decided: boolean; isHorizontal: boolean
   } | null>(null)
   const wasSwiped = useRef(false)
+
+  // AI 필터
+  const [aiFilterOpen, setAiFilterOpen] = useState(false)
+  const [aiFilterQuery, setAiFilterQuery] = useState('')
+  const [aiFilterLoading, setAiFilterLoading] = useState(false)
+  const [aiFilterIds, setAiFilterIds] = useState<Set<string> | null>(null)
+  const [aiFilterDesc, setAiFilterDesc] = useState('')
+  const aiInputRef = useRef<HTMLInputElement>(null)
 
   const fetchData = useCallback(async () => {
     const prevMonth = getPrevMonth(selectedMonth)
@@ -352,6 +360,67 @@ export default function PaymentsPage() {
     fetchData()
   }
 
+  // AI 필터 실행
+  const handleAiFilter = async () => {
+    if (!aiFilterQuery.trim() || aiFilterLoading) return
+    setAiFilterLoading(true)
+
+    const allSt = grades.flatMap(g => g.classes.flatMap(c =>
+      (c.students ?? []).filter(s => !s.withdrawal_date).map(s => ({ ...s, class: c, _grade: g }))
+    ))
+
+    const studentContext = allSt.map(s => {
+      const sp = getStudentPayments(s.id)
+      const fee = getStudentFee(s, s.class)
+      const paid = sp.reduce((sum, p) => sum + p.amount, 0)
+      return {
+        id: s.id,
+        name: s.name,
+        grade: s._grade.name,
+        class_name: s.class?.name || '',
+        fee,
+        paid,
+        status: getPaymentStatus(paid, fee),
+        due_day: getDueDay(s),
+        payment_method: sp[0]?.method || null,
+        payment_date: sp[0]?.payment_date || null,
+        current_memo: sp[0]?.memo || null,
+        prev_memo: getPrevMemo(s.id),
+        has_discuss: discussSet.has(s.id),
+      }
+    })
+
+    try {
+      const res = await fetch('/api/agent/filter', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: aiFilterQuery,
+          context: { students: studentContext, billing_month: selectedMonth },
+        }),
+      })
+      const data = await res.json()
+      if (data.student_ids && data.student_ids.length > 0) {
+        setAiFilterIds(new Set(data.student_ids))
+        setAiFilterDesc(data.description || '필터 적용')
+      } else {
+        setAiFilterIds(new Set())
+        setAiFilterDesc(data.description || '결과 없음')
+      }
+    } catch {
+      alert('AI 필터 처리 중 오류가 발생했습니다.')
+    }
+
+    setAiFilterLoading(false)
+    setAiFilterOpen(false)
+  }
+
+  const clearAiFilter = () => {
+    setAiFilterIds(null)
+    setAiFilterDesc('')
+    setAiFilterQuery('')
+  }
+
   // Summary stats
   const allStudents = grades.flatMap(g => g.classes.flatMap(c =>
     (c.students ?? []).filter(s => !s.withdrawal_date).map(s => ({ ...s, class: c }))
@@ -446,9 +515,10 @@ export default function PaymentsPage() {
 
       {/* 학생별 납부 현황 */}
       {grades.map(grade => {
-        const gradeStudents = grade.classes.flatMap(c =>
+        const gradeStudentsAll = grade.classes.flatMap(c =>
           (c.students ?? []).filter(s => !s.withdrawal_date).map(s => ({ ...s, class: c }))
         )
+        const gradeStudents = aiFilterIds ? gradeStudentsAll.filter(s => aiFilterIds.has(s.id)) : gradeStudentsAll
         if (gradeStudents.length === 0) return null
 
         return (
@@ -456,7 +526,8 @@ export default function PaymentsPage() {
             <h2 className="text-sm font-semibold text-gray-500 mb-2 px-1">{grade.name}</h2>
             <div className="bg-white rounded-xl border overflow-hidden">
               {grade.classes.map(cls => {
-                const students = (cls.students ?? []).filter(s => !s.withdrawal_date)
+                const allClassStudents = (cls.students ?? []).filter(s => !s.withdrawal_date)
+                const students = aiFilterIds ? allClassStudents.filter(s => aiFilterIds.has(s.id)) : allClassStudents
                 if (students.length === 0) return null
 
                 return (
@@ -774,6 +845,58 @@ export default function PaymentsPage() {
           </div>
         </>
       )}
+
+      {/* AI 필터 플로팅 버튼 */}
+      <div className="fixed left-0 z-30" style={{ top: '38%' }}>
+        {aiFilterIds !== null ? (
+          /* 필터 활성 상태 */
+          <div className="flex items-center gap-1 bg-[#1e2d6f] text-white pl-2.5 pr-1.5 py-2 rounded-r-full shadow-lg">
+            <Sparkles className="w-3.5 h-3.5 shrink-0" />
+            <span className="text-[10px] font-medium max-w-[100px] truncate">{aiFilterDesc}</span>
+            <button onClick={clearAiFilter} className="p-0.5 hover:bg-white/20 rounded-full ml-0.5">
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        ) : aiFilterOpen ? (
+          /* 입력창 열림 */
+          <div className="flex items-center bg-white shadow-lg border rounded-r-2xl pl-3 pr-1 py-1.5 gap-1.5">
+            <Sparkles className="w-4 h-4 text-[#1e2d6f] shrink-0" />
+            <input
+              ref={aiInputRef}
+              autoFocus
+              value={aiFilterQuery}
+              onChange={e => setAiFilterQuery(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter') handleAiFilter()
+                if (e.key === 'Escape') { setAiFilterOpen(false); setAiFilterQuery('') }
+              }}
+              placeholder="예: 미납학생, 결제일 15일..."
+              className="text-xs w-44 sm:w-56 outline-none bg-transparent"
+            />
+            <button
+              onClick={handleAiFilter}
+              disabled={aiFilterLoading}
+              className="p-1.5 bg-[#1e2d6f] text-white rounded-full shrink-0 disabled:opacity-50"
+            >
+              {aiFilterLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ArrowRight className="w-3.5 h-3.5" />}
+            </button>
+            <button
+              onClick={() => { setAiFilterOpen(false); setAiFilterQuery('') }}
+              className="p-1 text-gray-400 hover:text-gray-600"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        ) : (
+          /* 기본 버튼 */
+          <button
+            onClick={() => { setAiFilterOpen(true); setTimeout(() => aiInputRef.current?.focus(), 100) }}
+            className="bg-[#1e2d6f] text-white p-2.5 rounded-r-full shadow-lg hover:bg-[#2a3d8f] transition-colors"
+          >
+            <Sparkles className="w-5 h-5" />
+          </button>
+        )}
+      </div>
     </div>
   )
 }
