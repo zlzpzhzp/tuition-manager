@@ -2,10 +2,11 @@
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import Link from 'next/link'
-import { ChevronLeft, ChevronRight, Check, ClipboardList, Download } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Check, ClipboardList, Download, Plus } from 'lucide-react'
 import type { Grade, Class, Student, Payment, PaymentMethod } from '@/types'
 import { getStudentFee, getPaymentStatus, PAYMENT_STATUS_LABELS, PAYMENT_STATUS_COLORS, PAYMENT_METHOD_LABELS } from '@/types'
 import PaymentModal from '@/components/PaymentModal'
+import StudentModal from '@/components/StudentModal'
 import DatePickerPopup from '@/components/payments/DatePickerPopup'
 import MethodPickerPopup from '@/components/payments/MethodPickerPopup'
 import AiFilterButton from '@/components/payments/AiFilterButton'
@@ -66,6 +67,10 @@ export default function PaymentsPage() {
     decided: boolean; isHorizontal: boolean
   } | null>(null)
   const wasSwiped = useRef(false)
+
+  // 학생 추가 모달
+  const [showStudentModal, setShowStudentModal] = useState(false)
+  const [addStudentClassId, setAddStudentClassId] = useState<string | null>(null)
 
   // AI 필터
   const [aiFilterIds, setAiFilterIds] = useState<Set<string> | null>(null)
@@ -377,6 +382,24 @@ export default function PaymentsPage() {
 
   const clearAiFilter = () => { setAiFilterIds(null); setAiFilterDesc('') }
 
+  // ─── Student add ────────────────────────────────────────────
+  const handleAddStudent = (classId: string) => {
+    setAddStudentClassId(classId)
+    setShowStudentModal(true)
+  }
+
+  const handleSaveStudent = async (data: Partial<import('@/types').Student>) => {
+    try {
+      const res = await fetch('/api/students', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      })
+      if (!res.ok) { alert('학생 등록 실패'); return }
+      setShowStudentModal(false)
+      fetchData()
+    } catch { alert('네트워크 오류가 발생했습니다.') }
+  }
+
   // ─── Render ───────────────────────────────────────────────────
   if (loading) return (
     <div className="animate-pulse">
@@ -481,9 +504,16 @@ export default function PaymentsPage() {
 
                 return (
                   <div key={cls.id}>
-                    <div className="px-4 py-2 bg-gray-50 border-b">
+                    <div className="px-4 py-2 bg-gray-50 border-b flex items-center">
                       <span className="text-xs font-medium text-gray-500">{cls.name}</span>
-                      <span className="text-xs text-gray-400 ml-2">{cls.monthly_fee.toLocaleString()}원</span>
+                      <span className="text-xs text-gray-400 ml-2 flex-1">{cls.monthly_fee.toLocaleString()}원</span>
+                      <button
+                        onClick={() => handleAddStudent(cls.id)}
+                        className="p-0.5 text-gray-400 hover:text-[#1e2d6f] transition-colors"
+                        aria-label={`${cls.name}에 학생 추가`}
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                      </button>
                     </div>
                     {students.map(student => {
                       const fee = getStudentFee(student, cls)
@@ -719,6 +749,15 @@ export default function PaymentsPage() {
           onMethodChange={setInlineMethod}
           position={methodPickerPos}
           onClose={() => setShowMethodPicker(false)}
+        />
+      )}
+
+      {showStudentModal && (
+        <StudentModal
+          grades={grades}
+          defaultClassId={addStudentClassId}
+          onSave={handleSaveStudent}
+          onClose={() => setShowStudentModal(false)}
         />
       )}
 

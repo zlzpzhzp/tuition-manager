@@ -7,13 +7,14 @@ import type { Student, Grade, Class } from '@/types'
 interface Props {
   student?: Student | null
   grades: (Grade & { classes: Class[] })[]
+  defaultClassId?: string | null
   onSave: (data: Partial<Student>) => void
   onClose: () => void
 }
 
-export default function StudentModal({ student, grades, onSave, onClose }: Props) {
+export default function StudentModal({ student, grades, defaultClassId, onSave, onClose }: Props) {
   const [name, setName] = useState(student?.name ?? '')
-  const [classId, setClassId] = useState(student?.class_id ?? '')
+  const [classId, setClassId] = useState(student?.class_id ?? defaultClassId ?? '')
   const [phone, setPhone] = useState(student?.phone ?? '')
   const [parentPhone, setParentPhone] = useState(student?.parent_phone ?? '')
   const [enrollmentDate, setEnrollmentDate] = useState(student?.enrollment_date ?? new Date().toISOString().split('T')[0])
