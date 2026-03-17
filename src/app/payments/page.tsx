@@ -72,6 +72,9 @@ export default function PaymentsPage() {
   const [showStudentModal, setShowStudentModal] = useState(false)
   const [addStudentClassId, setAddStudentClassId] = useState<string | null>(null)
 
+  // 미납 필터
+  const [showUnpaidOnly, setShowUnpaidOnly] = useState(false)
+
   // AI 필터
   const [aiFilterIds, setAiFilterIds] = useState<Set<string> | null>(null)
   const [aiFilterDesc, setAiFilterDesc] = useState('')
@@ -466,23 +469,37 @@ export default function PaymentsPage() {
       </div>
 
       {/* 요약 */}
-      <div className="grid grid-cols-4 gap-2 sm:gap-3 mb-6">
-        <div className="bg-white rounded-xl border p-2 sm:p-4 text-center">
-          <p className="text-[10px] sm:text-xs text-gray-400">총 원비</p>
-          <p className="text-[11px] sm:text-lg font-bold mt-1">{(summaryStats.totalFee / 10000).toFixed(0)}<span className="text-[10px] sm:text-xs text-gray-400">만</span></p>
+      <div className="grid grid-cols-4 gap-3 sm:gap-4 mb-6">
+        <div className="bg-white rounded-2xl border p-3 sm:p-5 text-center">
+          <p className="text-xs sm:text-sm text-gray-400">총 원비</p>
+          <p className="text-lg sm:text-2xl font-bold mt-1">{(summaryStats.totalFee / 10000).toFixed(0)}<span className="text-xs sm:text-sm text-gray-400 ml-0.5">만</span></p>
         </div>
-        <div className="bg-white rounded-xl border p-2 sm:p-4 text-center">
-          <p className="text-[10px] sm:text-xs text-gray-400">납부 완료</p>
-          <p className="text-[11px] sm:text-lg font-bold mt-1 text-green-700">{(summaryStats.totalPaid / 10000).toFixed(0)}<span className="text-[10px] sm:text-xs text-gray-400">만</span></p>
+        <div className="bg-white rounded-2xl border p-3 sm:p-5 text-center">
+          <p className="text-xs sm:text-sm text-gray-400">납부</p>
+          <p className="text-lg sm:text-2xl font-bold mt-1 text-green-600">{(summaryStats.totalPaid / 10000).toFixed(0)}<span className="text-xs sm:text-sm text-gray-400 ml-0.5">만</span></p>
         </div>
-        <div className="bg-white rounded-xl border p-2 sm:p-4 text-center">
-          <p className="text-[10px] sm:text-xs text-gray-400">미납</p>
-          <p className="text-sm sm:text-lg font-bold mt-1 text-red-700">{summaryStats.unpaidCount}<span className="text-[10px] sm:text-xs text-gray-400">명</span></p>
+        <div className="bg-white rounded-2xl border p-3 sm:p-5 text-center">
+          <p className="text-xs sm:text-sm text-gray-400">미납</p>
+          <p className="text-lg sm:text-2xl font-bold mt-1 text-red-600">{summaryStats.unpaidCount}<span className="text-xs sm:text-sm text-gray-400 ml-0.5">명</span></p>
         </div>
-        <div className="bg-white rounded-xl border p-2 sm:p-4 text-center">
-          <p className="text-[10px] sm:text-xs text-gray-400">예정</p>
-          <p className="text-sm sm:text-lg font-bold mt-1 text-amber-600">{summaryStats.scheduledCount}<span className="text-[10px] sm:text-xs text-gray-400">명</span></p>
+        <div className="bg-white rounded-2xl border p-3 sm:p-5 text-center">
+          <p className="text-xs sm:text-sm text-gray-400">예정</p>
+          <p className="text-lg sm:text-2xl font-bold mt-1 text-amber-600">{summaryStats.scheduledCount}<span className="text-xs sm:text-sm text-gray-400 ml-0.5">명</span></p>
         </div>
+      </div>
+
+      {/* 전체/미납 토글 */}
+      <div className="flex justify-end mb-3">
+        <button
+          onClick={() => setShowUnpaidOnly(prev => !prev)}
+          className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+            showUnpaidOnly
+              ? 'bg-red-100 text-red-700'
+              : 'bg-gray-100 text-gray-500'
+          }`}
+        >
+          {showUnpaidOnly ? '미납만' : '전체'}
+        </button>
       </div>
 
       {/* 학생별 납부 현황 */}
@@ -490,7 +507,13 @@ export default function PaymentsPage() {
         const gradeStudentsAll = grade.classes.flatMap(c =>
           (c.students ?? []).filter(s => !s.withdrawal_date).map(s => ({ ...s, class: c }))
         )
-        const gradeStudents = aiFilterIds ? gradeStudentsAll.filter(s => aiFilterIds.has(s.id)) : gradeStudentsAll
+        let gradeStudents = aiFilterIds ? gradeStudentsAll.filter(s => aiFilterIds.has(s.id)) : gradeStudentsAll
+        if (showUnpaidOnly) {
+          gradeStudents = gradeStudents.filter(s => {
+            const paid = (paymentsByStudentId.get(s.id) ?? []).reduce((sum, p) => sum + p.amount, 0)
+            return getPaymentStatus(paid, getStudentFee(s, s.class)) !== 'paid'
+          })
+        }
         if (gradeStudents.length === 0) return null
 
         return (
@@ -499,7 +522,13 @@ export default function PaymentsPage() {
             <div className="bg-white rounded-xl border overflow-hidden">
               {grade.classes.map(cls => {
                 const allClassStudents = (cls.students ?? []).filter(s => !s.withdrawal_date)
-                const students = aiFilterIds ? allClassStudents.filter(s => aiFilterIds.has(s.id)) : allClassStudents
+                let students = aiFilterIds ? allClassStudents.filter(s => aiFilterIds.has(s.id)) : allClassStudents
+                if (showUnpaidOnly) {
+                  students = students.filter(s => {
+                    const paid = (paymentsByStudentId.get(s.id) ?? []).reduce((sum, p) => sum + p.amount, 0)
+                    return getPaymentStatus(paid, getStudentFee(s, cls)) !== 'paid'
+                  })
+                }
                 if (students.length === 0) return null
 
                 return (
