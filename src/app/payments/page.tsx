@@ -262,21 +262,21 @@ export default function PaymentsPage() {
 
       {/* 요약 */}
       <div className="grid grid-cols-4 gap-2 sm:gap-3 mb-6">
-        <div className="bg-white rounded-xl border p-3 sm:p-4 text-center">
+        <div className="bg-white rounded-xl border p-2 sm:p-4 text-center overflow-hidden">
           <p className="text-[10px] sm:text-xs text-gray-400">총 원비</p>
-          <p className="text-base sm:text-lg font-bold mt-1">{totalFee.toLocaleString()}<span className="text-[10px] sm:text-xs text-gray-400">원</span></p>
+          <p className="text-xs sm:text-lg font-bold mt-1 truncate">{totalFee.toLocaleString()}<span className="text-[10px] sm:text-xs text-gray-400">원</span></p>
         </div>
-        <div className="bg-white rounded-xl border p-3 sm:p-4 text-center">
+        <div className="bg-white rounded-xl border p-2 sm:p-4 text-center overflow-hidden">
           <p className="text-[10px] sm:text-xs text-gray-400">납부 완료</p>
-          <p className="text-base sm:text-lg font-bold mt-1 text-green-700">{totalPaid.toLocaleString()}<span className="text-[10px] sm:text-xs text-gray-400">원</span></p>
+          <p className="text-xs sm:text-lg font-bold mt-1 text-green-700 truncate">{totalPaid.toLocaleString()}<span className="text-[10px] sm:text-xs text-gray-400">원</span></p>
         </div>
-        <div className="bg-white rounded-xl border p-3 sm:p-4 text-center">
+        <div className="bg-white rounded-xl border p-2 sm:p-4 text-center overflow-hidden">
           <p className="text-[10px] sm:text-xs text-gray-400">미납</p>
-          <p className="text-base sm:text-lg font-bold mt-1 text-red-700">{unpaidCount}<span className="text-[10px] sm:text-xs text-gray-400">명</span></p>
+          <p className="text-sm sm:text-lg font-bold mt-1 text-red-700">{unpaidCount}<span className="text-[10px] sm:text-xs text-gray-400">명</span></p>
         </div>
-        <div className="bg-white rounded-xl border p-3 sm:p-4 text-center">
+        <div className="bg-white rounded-xl border p-2 sm:p-4 text-center overflow-hidden">
           <p className="text-[10px] sm:text-xs text-gray-400">예정</p>
-          <p className="text-base sm:text-lg font-bold mt-1 text-amber-600">{scheduledCount}<span className="text-[10px] sm:text-xs text-gray-400">명</span></p>
+          <p className="text-sm sm:text-lg font-bold mt-1 text-amber-600">{scheduledCount}<span className="text-[10px] sm:text-xs text-gray-400">명</span></p>
         </div>
       </div>
 
