@@ -28,24 +28,6 @@ function getPaymentDueDay(student: Student): number {
   return new Date(student.enrollment_date).getDate()
 }
 
-/** 결제일이 아직 안 지났으면 true (예정), 지났으면 false (미납) */
-function isPaymentScheduled(student: Student, selectedMonth: string): boolean {
-  const paymentDay = getPaymentDueDay(student)
-  const today = new Date()
-  const currentMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`
-  if (selectedMonth < currentMonth) return false
-  if (selectedMonth > currentMonth) return true
-  return today.getDate() < paymentDay
-}
-
-/** "3/23 예정" 또는 "3/5 미납" 형식 라벨 */
-function getUnpaidLabel(student: Student, selectedMonth: string): string {
-  const day = getPaymentDueDay(student)
-  const month = parseInt(selectedMonth.split('-')[1])
-  const scheduled = isPaymentScheduled(student, selectedMonth)
-  return `${month}/${day} ${scheduled ? '예정' : '미납'}`
-}
-
 export default function PaymentsPage() {
   const today = new Date().toISOString().split('T')[0]
 
@@ -78,6 +60,19 @@ export default function PaymentsPage() {
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null)
   const [selectedPrevMemo, setSelectedPrevMemo] = useState<string | null>(null)
 
+  // 스와이프: 상담 라벨 + 인라인 수정
+  const [discussSet, setDiscussSet] = useState<Set<string>>(new Set())
+  const [dueDayOverrides, setDueDayOverrides] = useState<Record<string, number>>({})
+  const [swipeOpenId, setSwipeOpenId] = useState<string | null>(null)
+  const [editFeeValue, setEditFeeValue] = useState('')
+  const [editDueDayValue, setEditDueDayValue] = useState('')
+  const touchRef = useRef<{
+    startX: number; startY: number; currentX: number
+    id: string; el: HTMLElement
+    decided: boolean; isHorizontal: boolean
+  } | null>(null)
+  const wasSwiped = useRef(false)
+
   const fetchData = useCallback(async () => {
     const prevMonth = getPrevMonth(selectedMonth)
     const [gradesRes, paymentsRes, prevPaymentsRes] = await Promise.all([
@@ -98,6 +93,16 @@ export default function PaymentsPage() {
 
   useEffect(() => { fetchData() }, [fetchData])
 
+  // localStorage에서 상담/결제일 로드
+  useEffect(() => {
+    try {
+      const d = localStorage.getItem('tuition_discuss')
+      if (d) setDiscussSet(new Set(JSON.parse(d)))
+      const dd = localStorage.getItem('tuition_due_days')
+      if (dd) setDueDayOverrides(JSON.parse(dd))
+    } catch { /* ignore */ }
+  }, [])
+
   const navigateMonth = (delta: number) => {
     const [y, m] = selectedMonth.split('-').map(Number)
     const d = new Date(y, m - 1 + delta, 1)
@@ -117,8 +122,164 @@ export default function PaymentsPage() {
     return prev?.memo || null
   }
 
+  // 결제일 (오버라이드 포함)
+  const getDueDay = useCallback((student: Student): number =>
+    dueDayOverrides[student.id] ?? getPaymentDueDay(student)
+  , [dueDayOverrides])
+
+  // 결제일이 지났는지 확인
+  const checkScheduled = useCallback((student: Student, month: string): boolean => {
+    const paymentDay = getDueDay(student)
+    const t = new Date()
+    const currentMonth = `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}`
+    if (month < currentMonth) return false
+    if (month > currentMonth) return true
+    return t.getDate() < paymentDay
+  }, [getDueDay])
+
+  // 미납/예정 라벨
+  const getUnpaidLabelText = useCallback((student: Student, month: string): string => {
+    const day = getDueDay(student)
+    const m = parseInt(month.split('-')[1])
+    const scheduled = checkScheduled(student, month)
+    return `${m}/${day} ${scheduled ? '예정' : '미납'}`
+  }, [getDueDay, checkScheduled])
+
+  // 상담 라벨 토글
+  const toggleDiscuss = (id: string) => {
+    setDiscussSet(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      localStorage.setItem('tuition_discuss', JSON.stringify([...next]))
+      return next
+    })
+  }
+
+  // 스와이프 터치 핸들러
+  const handleTouchStart = (e: React.TouchEvent, studentId: string) => {
+    if (expandedStudentId) return
+    const touch = e.touches[0]
+    const el = e.currentTarget as HTMLElement
+    touchRef.current = {
+      startX: touch.clientX, startY: touch.clientY, currentX: touch.clientX,
+      id: studentId, el,
+      decided: false, isHorizontal: false,
+    }
+  }
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!touchRef.current) return
+    const touch = e.touches[0]
+    const dx = touch.clientX - touchRef.current.startX
+    const dy = touch.clientY - touchRef.current.startY
+    touchRef.current.currentX = touch.clientX
+
+    if (!touchRef.current.decided) {
+      if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
+        touchRef.current.decided = true
+        touchRef.current.isHorizontal = Math.abs(dx) > Math.abs(dy)
+      }
+      return
+    }
+    if (!touchRef.current.isHorizontal) return
+
+    const clamped = Math.max(-160, Math.min(100, dx))
+    touchRef.current.el.style.transform = `translateX(${clamped}px)`
+    touchRef.current.el.style.transition = 'none'
+  }
+
+  const handleTouchEnd = () => {
+    if (!touchRef.current) return
+    const { el, id, isHorizontal, startX, currentX } = touchRef.current
+    const dx = currentX - startX
+
+    el.style.transition = 'transform 0.3s ease'
+
+    if (isHorizontal && Math.abs(dx) > 10) {
+      wasSwiped.current = true
+      setTimeout(() => { wasSwiped.current = false }, 200)
+    }
+
+    if (isHorizontal) {
+      if (dx > 60) {
+        // 오른쪽 스와이프 → 상담 토글
+        toggleDiscuss(id)
+        el.style.transform = 'translateX(0)'
+        if (swipeOpenId === id) setSwipeOpenId(null)
+      } else if (dx < -60) {
+        // 왼쪽 스와이프 → 수정 패널 열기
+        // 기존에 열린 다른 row 닫기
+        if (swipeOpenId && swipeOpenId !== id) {
+          const prevEl = document.querySelector(`[data-swipe-row="${swipeOpenId}"]`) as HTMLElement | null
+          if (prevEl) {
+            prevEl.style.transition = 'transform 0.3s ease'
+            prevEl.style.transform = 'translateX(0)'
+          }
+        }
+        el.style.transform = 'translateX(-150px)'
+        const allSt = grades.flatMap(g => g.classes.flatMap(c =>
+          (c.students ?? []).filter(s => !s.withdrawal_date).map(s => ({ ...s, class: c }))
+        ))
+        const student = allSt.find(s => s.id === id)
+        if (student) {
+          setSwipeOpenId(id)
+          setEditFeeValue(String(Math.round(getStudentFee(student, student.class) / 10000)))
+          setEditDueDayValue(String(getDueDay(student)))
+        }
+      } else {
+        el.style.transform = swipeOpenId === id ? 'translateX(-150px)' : 'translateX(0)'
+      }
+    } else {
+      el.style.transform = swipeOpenId === id ? 'translateX(-150px)' : 'translateX(0)'
+    }
+
+    touchRef.current = null
+  }
+
+  // 스와이프 수정 패널 닫기
+  const closeSwipeEdit = () => {
+    if (swipeOpenId) {
+      const el = document.querySelector(`[data-swipe-row="${swipeOpenId}"]`) as HTMLElement | null
+      if (el) {
+        el.style.transition = 'transform 0.3s ease'
+        el.style.transform = 'translateX(0)'
+      }
+      setSwipeOpenId(null)
+    }
+  }
+
+  // 인라인 수정 저장 (원비 + 결제일)
+  const handleSaveEdit = async (studentId: string) => {
+    const feeNum = parseFloat(editFeeValue)
+    const dayNum = parseInt(editDueDayValue)
+
+    // 원비 수정 (custom_fee)
+    if (!isNaN(feeNum) && feeNum >= 0) {
+      await fetch(`/api/students/${studentId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ custom_fee: Math.round(feeNum * 10000) }),
+      })
+    }
+
+    // 결제일 수정 (localStorage)
+    if (!isNaN(dayNum) && dayNum >= 1 && dayNum <= 31) {
+      setDueDayOverrides(prev => {
+        const next = { ...prev, [studentId]: dayNum }
+        localStorage.setItem('tuition_due_days', JSON.stringify(next))
+        return next
+      })
+    }
+
+    closeSwipeEdit()
+    await fetchData()
+  }
+
   // 미납 학생 인라인 확장 (이전 달 결제방법 자동 유지)
   const handleExpand = (studentId: string) => {
+    if (wasSwiped.current) return
+    closeSwipeEdit()
     if (expandedStudentId === studentId) {
       setExpandedStudentId(null)
       return
@@ -166,6 +327,7 @@ export default function PaymentsPage() {
 
   // 모달 열기 (납부 상세보기 또는 고급 옵션)
   const handleOpenModal = (studentId: string, fee: number) => {
+    if (wasSwiped.current) return
     const existing = payments.find(p => p.student_id === studentId)
     setSelectedStudentId(studentId)
     setSelectedStudentFee(fee)
@@ -200,18 +362,16 @@ export default function PaymentsPage() {
     const paid = getStudentPayments(s.id).reduce((sum, p) => sum + p.amount, 0)
     return getPaymentStatus(paid, getStudentFee(s, s.class)) === 'unpaid'
   })
-  const unpaidCount = unpaidStudents.filter(s => !isPaymentScheduled(s, selectedMonth)).length
-  const scheduledCount = unpaidStudents.filter(s => isPaymentScheduled(s, selectedMonth)).length
+  const unpaidCount = unpaidStudents.filter(s => !checkScheduled(s, selectedMonth)).length
+  const scheduledCount = unpaidStudents.filter(s => checkScheduled(s, selectedMonth)).length
 
   if (loading) return (
     <div className="animate-pulse">
-      {/* 월 네비게이션 */}
       <div className="flex items-center justify-center gap-4 mb-6">
         <div className="w-9 h-9 bg-gray-200 rounded-lg"></div>
         <div className="h-6 bg-gray-200 rounded w-32"></div>
         <div className="w-9 h-9 bg-gray-200 rounded-lg"></div>
       </div>
-      {/* 요약 4칸 */}
       <div className="grid grid-cols-4 gap-2 sm:gap-3 mb-6">
         {[...Array(4)].map((_, i) => (
           <div key={i} className="bg-white rounded-xl border p-3 sm:p-4 text-center">
@@ -220,7 +380,6 @@ export default function PaymentsPage() {
           </div>
         ))}
       </div>
-      {/* 학생 목록 */}
       {[...Array(2)].map((_, gi) => (
         <div key={gi} className="mb-4">
           <div className="h-4 bg-gray-200 rounded w-20 mb-2 ml-1"></div>
@@ -241,7 +400,7 @@ export default function PaymentsPage() {
   )
 
   return (
-    <div>
+    <div onClick={() => { if (swipeOpenId) closeSwipeEdit() }}>
       {/* 월 네비게이션 */}
       <div className="flex items-center justify-center gap-4 mb-6">
         <button onClick={() => navigateMonth(-1)} className="p-2 hover:bg-gray-100 rounded-lg">
@@ -311,14 +470,13 @@ export default function PaymentsPage() {
                       const studentPayments = getStudentPayments(student.id)
                       const paid = studentPayments.reduce((s, p) => s + p.amount, 0)
                       const status = getPaymentStatus(paid, fee)
-                      const scheduled = status === 'unpaid' && isPaymentScheduled(student, selectedMonth)
+                      const scheduled = status === 'unpaid' && checkScheduled(student, selectedMonth)
                       const displayColors = scheduled
                         ? { bg: '#FEF3C7', text: '#92400E' }
                         : PAYMENT_STATUS_COLORS[status]
-                      // 납부완료 시 실제 납부일 표시, 미납/예정은 기존 라벨
                       let displayLabel = ''
                       if (status === 'unpaid') {
-                        displayLabel = getUnpaidLabel(student, selectedMonth)
+                        displayLabel = getUnpaidLabelText(student, selectedMonth)
                       } else if (studentPayments.length > 0) {
                         const pDate = new Date(studentPayments[0].payment_date)
                         displayLabel = `${pDate.getMonth() + 1}/${pDate.getDate()} 납부`
@@ -329,127 +487,184 @@ export default function PaymentsPage() {
                       const currentMemo = studentPayments[0]?.memo
                       const isExpanded = expandedStudentId === student.id && status === 'unpaid'
                       const isSuccess = inlineSuccess === student.id
-
                       const hasMemo = !!(prevMemo || currentMemo)
+                      const hasDiscuss = discussSet.has(student.id)
+                      const isSwipeOpen = swipeOpenId === student.id
 
                       return (
-                        <div key={student.id}>
-                          <div className={`flex items-center gap-2 px-4 ${hasMemo && !isExpanded ? 'pt-3 pb-1' : 'py-3'} ${!hasMemo || isExpanded ? 'border-b last:border-b-0' : ''} ${
-                            status === 'unpaid' && !isExpanded ? 'cursor-pointer active:bg-gray-50' : ''
-                          }`}
-                            onClick={status === 'unpaid' && !isExpanded ? () => handleExpand(student.id) : undefined}
-                          >
-                            <Link
-                              href={`/students/${student.id}`}
-                              className="flex-1 min-w-0"
-                              onClick={e => e.stopPropagation()}
-                            >
-                              <span className="text-sm font-medium">{student.name}</span>
-                            </Link>
-
-                            {isExpanded ? (
-                              /* 인라인 납부: 미납 뱃지 자리에서 왼쪽으로 펼쳐짐 */
-                              <div className="flex flex-col items-end gap-1" onClick={e => e.stopPropagation()}>
-                                <div className="flex items-center gap-1.5">
-                                  <button
-                                    ref={dateButtonRef}
-                                    type="button"
-                                    onClick={() => {
-                                      if (!showDatePicker && dateButtonRef.current) {
-                                        const rect = dateButtonRef.current.getBoundingClientRect()
-                                        setDatePickerPos({ top: rect.bottom + 4, left: Math.max(8, rect.left) })
-                                      }
-                                      setShowDatePicker(!showDatePicker)
-                                      setShowMethodPicker(false)
-                                    }}
-                                    className="fan-item px-2 py-0.5 rounded-full text-xs font-medium bg-[#FEF3C7] text-[#92400E] whitespace-nowrap"
-                                  >
-                                    {(() => { const d = new Date(inlineDate); return `${d.getMonth()+1}/${d.getDate()}` })()}
-                                    <span className="text-[9px] opacity-50 ml-0.5">▼</span>
-                                  </button>
-                                  <button
-                                    ref={methodButtonRef}
-                                    type="button"
-                                    onClick={() => {
-                                      if (!showMethodPicker && methodButtonRef.current) {
-                                        const rect = methodButtonRef.current.getBoundingClientRect()
-                                        setMethodPickerPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right })
-                                      }
-                                      setShowMethodPicker(!showMethodPicker)
-                                      setShowDatePicker(false)
-                                    }}
-                                    className="fan-item px-2 py-0.5 rounded-full text-xs font-medium bg-[#E0E7FF] text-[#3730A3] flex items-center gap-0.5 whitespace-nowrap"
-                                  >
-                                    {INLINE_METHODS.find(([v]) => v === inlineMethod)?.[1]}
-                                    <span className="text-[9px] opacity-50">▼</span>
-                                  </button>
-                                  <button
-                                    onClick={() => handleInlineSubmit(student.id, fee)}
-                                    disabled={!!inlineSuccess}
-                                    className={`fan-item px-2.5 py-0.5 rounded-full text-xs font-medium transition-all ${
-                                      isSuccess
-                                        ? 'bg-green-500 text-white scale-105'
-                                        : 'bg-[#DEF7EC] text-[#03543F] hover:opacity-80'
-                                    }`}
-                                  >
-                                    {isSuccess ? <Check className="w-3.5 h-3.5" strokeWidth={3} /> : '납부'}
-                                  </button>
-                                  <button
-                                    onClick={() => handleOpenModal(student.id, fee)}
-                                    className="fan-item p-1 text-[#1e2d6f] hover:opacity-70"
-                                  >
-                                    <ClipboardList className="w-3.5 h-3.5" />
-                                  </button>
-                                </div>
-                                {inlineMethod === 'other' && (
-                                  <input
-                                    type="text"
-                                    value={inlineOtherMemo}
-                                    onChange={e => setInlineOtherMemo(e.target.value)}
-                                    placeholder="결제수단 입력 (예: 서울페이)"
-                                    className="fan-item w-full px-2.5 py-1 rounded-lg text-xs border border-gray-300 focus:outline-none focus:ring-1 focus:ring-indigo-400"
-                                  />
-                                )}
-                              </div>
-                            ) : (
-                              /* 기본 상태: 뱃지 + 상세 버튼 */
-                              <>
-                                {studentPayments.length > 0 && status !== 'unpaid' && (
-                                  <span className="text-[10px] text-gray-400 whitespace-nowrap">
-                                    {PAYMENT_METHOD_LABELS[studentPayments[0].method as keyof typeof PAYMENT_METHOD_LABELS]}
-                                    {' '}결제일{parseInt(selectedMonth.split('-')[1])}/{getPaymentDueDay(student)}
-                                  </span>
-                                )}
-                                {status !== 'unpaid' ? (
-                                  <button
-                                    onClick={(e) => { e.stopPropagation(); handleOpenModal(student.id, fee) }}
-                                    className="px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap cursor-pointer hover:opacity-80 transition-opacity"
-                                    style={{ backgroundColor: displayColors.bg, color: displayColors.text }}
-                                  >
-                                    {displayLabel}
-                                  </button>
-                                ) : (
-                                  <span
-                                    className="px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap"
-                                    style={{ backgroundColor: displayColors.bg, color: displayColors.text }}
-                                  >
-                                    {displayLabel}
-                                  </span>
-                                )}
-                              </>
-                            )}
+                        <div key={student.id} className="relative overflow-hidden border-b last:border-b-0">
+                          {/* 왼쪽 스와이프 액션 (상담 토글) */}
+                          <div className={`absolute inset-y-0 left-0 w-24 flex items-center justify-center ${
+                            hasDiscuss ? 'bg-gray-400' : 'bg-amber-400'
+                          }`}>
+                            <span className="text-white font-bold text-xs">{hasDiscuss ? '해제' : '상담'}</span>
                           </div>
-                          {/* 비고 서브행 */}
-                          {!isExpanded && hasMemo && (
-                            <div className="px-4 pb-2 border-b last:border-b-0">
-                              {currentMemo && (
-                                <p className="text-[11px] text-gray-500 leading-tight">{currentMemo}</p>
+
+                          {/* 오른쪽 수정 패널 */}
+                          <div className="absolute inset-y-0 right-0 w-[150px] flex items-center gap-1.5 px-2 bg-slate-50 border-l" onClick={e => e.stopPropagation()}>
+                            <div className="flex-1 flex flex-col gap-1.5">
+                              <div className="flex items-center gap-1">
+                                <span className="text-[9px] text-gray-400 w-8 shrink-0">결제일</span>
+                                <input
+                                  type="number"
+                                  value={isSwipeOpen ? editDueDayValue : ''}
+                                  onChange={e => setEditDueDayValue(e.target.value)}
+                                  className="w-10 px-1 py-0.5 text-xs border rounded text-center"
+                                  min={1} max={31}
+                                />
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <span className="text-[9px] text-gray-400 w-8 shrink-0">원비</span>
+                                <div className="flex items-center">
+                                  <input
+                                    type="number"
+                                    value={isSwipeOpen ? editFeeValue : ''}
+                                    onChange={e => setEditFeeValue(e.target.value)}
+                                    className="w-12 px-1 py-0.5 text-xs border rounded text-center"
+                                  />
+                                  <span className="text-[9px] text-gray-400 ml-0.5">만</span>
+                                </div>
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => handleSaveEdit(student.id)}
+                              className="p-1.5 bg-[#1e2d6f] text-white rounded-lg shrink-0"
+                            >
+                              <Check className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+
+                          {/* 슬라이드 가능한 메인 콘텐츠 */}
+                          <div
+                            data-swipe-row={student.id}
+                            className="relative bg-white z-10"
+                            onTouchStart={e => handleTouchStart(e, student.id)}
+                            onTouchMove={handleTouchMove}
+                            onTouchEnd={handleTouchEnd}
+                            style={isSwipeOpen ? { transform: 'translateX(-150px)', transition: 'transform 0.3s ease' } : undefined}
+                          >
+                            <div className={`flex items-center gap-2 px-4 ${hasMemo && !isExpanded ? 'pt-3 pb-1' : 'py-3'} ${
+                              status === 'unpaid' && !isExpanded ? 'cursor-pointer active:bg-gray-50' : ''
+                            }`}
+                              onClick={status === 'unpaid' && !isExpanded ? () => handleExpand(student.id) : undefined}
+                            >
+                              {/* 상담 라벨 */}
+                              {hasDiscuss && (
+                                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 font-bold shrink-0">상담</span>
                               )}
-                              {prevMemo && (
-                                <p className="text-[11px] text-gray-400 leading-tight">지난달: {prevMemo}</p>
+
+                              <Link
+                                href={`/students/${student.id}`}
+                                className="flex-1 min-w-0"
+                                onClick={e => { if (wasSwiped.current) e.preventDefault(); e.stopPropagation() }}
+                              >
+                                <span className="text-sm font-medium">{student.name}</span>
+                              </Link>
+
+                              {isExpanded ? (
+                                /* 인라인 납부: 미납 뱃지 자리에서 왼쪽으로 펼쳐짐 */
+                                <div className="flex flex-col items-end gap-1" onClick={e => e.stopPropagation()}>
+                                  <div className="flex items-center gap-1.5">
+                                    <button
+                                      ref={dateButtonRef}
+                                      type="button"
+                                      onClick={() => {
+                                        if (!showDatePicker && dateButtonRef.current) {
+                                          const rect = dateButtonRef.current.getBoundingClientRect()
+                                          setDatePickerPos({ top: rect.bottom + 4, left: Math.max(8, rect.left) })
+                                        }
+                                        setShowDatePicker(!showDatePicker)
+                                        setShowMethodPicker(false)
+                                      }}
+                                      className="fan-item px-2 py-0.5 rounded-full text-xs font-medium bg-[#FEF3C7] text-[#92400E] whitespace-nowrap"
+                                    >
+                                      {(() => { const d = new Date(inlineDate); return `${d.getMonth()+1}/${d.getDate()}` })()}
+                                      <span className="text-[9px] opacity-50 ml-0.5">▼</span>
+                                    </button>
+                                    <button
+                                      ref={methodButtonRef}
+                                      type="button"
+                                      onClick={() => {
+                                        if (!showMethodPicker && methodButtonRef.current) {
+                                          const rect = methodButtonRef.current.getBoundingClientRect()
+                                          setMethodPickerPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right })
+                                        }
+                                        setShowMethodPicker(!showMethodPicker)
+                                        setShowDatePicker(false)
+                                      }}
+                                      className="fan-item px-2 py-0.5 rounded-full text-xs font-medium bg-[#E0E7FF] text-[#3730A3] flex items-center gap-0.5 whitespace-nowrap"
+                                    >
+                                      {INLINE_METHODS.find(([v]) => v === inlineMethod)?.[1]}
+                                      <span className="text-[9px] opacity-50">▼</span>
+                                    </button>
+                                    <button
+                                      onClick={() => handleInlineSubmit(student.id, fee)}
+                                      disabled={!!inlineSuccess}
+                                      className={`fan-item px-2.5 py-0.5 rounded-full text-xs font-medium transition-all ${
+                                        isSuccess
+                                          ? 'bg-green-500 text-white scale-105'
+                                          : 'bg-[#DEF7EC] text-[#03543F] hover:opacity-80'
+                                      }`}
+                                    >
+                                      {isSuccess ? <Check className="w-3.5 h-3.5" strokeWidth={3} /> : '납부'}
+                                    </button>
+                                    <button
+                                      onClick={() => handleOpenModal(student.id, fee)}
+                                      className="fan-item p-1 text-[#1e2d6f] hover:opacity-70"
+                                    >
+                                      <ClipboardList className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                  {inlineMethod === 'other' && (
+                                    <input
+                                      type="text"
+                                      value={inlineOtherMemo}
+                                      onChange={e => setInlineOtherMemo(e.target.value)}
+                                      placeholder="결제수단 입력 (예: 서울페이)"
+                                      className="fan-item w-full px-2.5 py-1 rounded-lg text-xs border border-gray-300 focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                                    />
+                                  )}
+                                </div>
+                              ) : (
+                                /* 기본 상태: 뱃지 + 상세 버튼 */
+                                <>
+                                  {studentPayments.length > 0 && status !== 'unpaid' && (
+                                    <span className="text-[10px] text-gray-400 whitespace-nowrap">
+                                      {PAYMENT_METHOD_LABELS[studentPayments[0].method as keyof typeof PAYMENT_METHOD_LABELS]}
+                                      {' '}결제일{parseInt(selectedMonth.split('-')[1])}/{getDueDay(student)}
+                                    </span>
+                                  )}
+                                  {status !== 'unpaid' ? (
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); handleOpenModal(student.id, fee) }}
+                                      className="px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap cursor-pointer hover:opacity-80 transition-opacity"
+                                      style={{ backgroundColor: displayColors.bg, color: displayColors.text }}
+                                    >
+                                      {displayLabel}
+                                    </button>
+                                  ) : (
+                                    <span
+                                      className="px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap"
+                                      style={{ backgroundColor: displayColors.bg, color: displayColors.text }}
+                                    >
+                                      {displayLabel}
+                                    </span>
+                                  )}
+                                </>
                               )}
                             </div>
-                          )}
+                            {/* 비고 서브행 */}
+                            {!isExpanded && hasMemo && (
+                              <div className="px-4 pb-2">
+                                {currentMemo && (
+                                  <p className="text-[11px] text-gray-500 leading-tight">{currentMemo}</p>
+                                )}
+                                {prevMemo && (
+                                  <p className="text-[11px] text-gray-400 leading-tight">지난달: {prevMemo}</p>
+                                )}
+                              </div>
+                            )}
+                          </div>
                         </div>
                       )
                     })}
