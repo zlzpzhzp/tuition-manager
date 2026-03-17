@@ -36,14 +36,21 @@ export async function POST(request: Request) {
     .eq('billing_month', body.billing_month)
     .maybeSingle()
 
+  // DB CHECK constraint에 'other'가 없으므로 'cash'로 저장하고 메모에 실제 수단 기록
+  const isOther = body.method === 'other'
+  const dbMethod = isOther ? 'cash' : body.method
+  const dbMemo = isOther
+    ? `[기타:${body.memo || '기타'}]`
+    : (body.memo || null)
+
   const payload = {
     student_id: body.student_id,
     amount: body.amount,
-    method: body.method,
+    method: dbMethod,
     payment_date: body.payment_date,
     billing_month: body.billing_month,
     cash_receipt: body.cash_receipt ?? null,
-    memo: body.memo || null,
+    memo: dbMemo,
   }
 
   let data, error

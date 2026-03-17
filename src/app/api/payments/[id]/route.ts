@@ -13,11 +13,13 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   if (body.method !== undefined && !validMethods.includes(body.method)) errors.push(`method must be one of: ${validMethods.join(', ')}`)
   if (errors.length > 0) return NextResponse.json({ error: errors.join('; ') }, { status: 400 })
 
+  // DB CHECK constraint에 'other'가 없으므로 'cash'로 저장하고 메모에 실제 수단 기록
+  const isOther = body.method === 'other'
   const updates: Record<string, unknown> = {}
   if (body.amount !== undefined) updates.amount = body.amount
-  if (body.method !== undefined) updates.method = body.method
+  if (body.method !== undefined) updates.method = isOther ? 'cash' : body.method
   if (body.payment_date !== undefined) updates.payment_date = body.payment_date
-  if (body.memo !== undefined) updates.memo = body.memo || null
+  if (body.memo !== undefined) updates.memo = isOther ? `[기타:${body.memo || '기타'}]` : (body.memo || null)
 
   const { data, error } = await supabase
     .from('tuition_payments')

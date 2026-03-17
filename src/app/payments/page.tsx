@@ -558,7 +558,9 @@ export default function PaymentsPage() {
                       const currentMemo = studentPayments[0]?.memo
                       const isExpanded = expandedStudentId === student.id && status === 'unpaid'
                       const isSuccess = inlineSuccess === student.id
-                      const hasMemo = !!(prevMemo || currentMemo)
+                      // [기타:...] 태그 제거한 실제 메모
+                      const cleanMemo = currentMemo?.replace(/^\[기타:.+?\]/, '').trim() || null
+                      const hasMemo = !!(prevMemo || cleanMemo)
                       const hasDiscuss = discussSet.has(student.id)
                       const isSwipeOpen = swipeOpenId === student.id
 
@@ -699,12 +701,16 @@ export default function PaymentsPage() {
                               ) : (
                                 /* 기본 상태: 뱃지 + 상세 버튼 */
                                 <>
-                                  {studentPayments.length > 0 && status !== 'unpaid' && (
-                                    <span className="text-[10px] text-gray-400 whitespace-nowrap">
-                                      {PAYMENT_METHOD_LABELS[studentPayments[0].method as keyof typeof PAYMENT_METHOD_LABELS]}
-                                      {' '}결제일{parseInt(selectedMonth.split('-')[1])}/{getDueDay(student)}
-                                    </span>
-                                  )}
+                                  {studentPayments.length > 0 && status !== 'unpaid' && (() => {
+                                    const p = studentPayments[0]
+                                    const otherMatch = p.memo?.match(/^\[기타:(.+?)\]/)
+                                    const methodLabel = otherMatch ? otherMatch[1] : PAYMENT_METHOD_LABELS[p.method as keyof typeof PAYMENT_METHOD_LABELS]
+                                    return (
+                                      <span className="text-[10px] text-gray-400 whitespace-nowrap">
+                                        {methodLabel} 결제일{parseInt(selectedMonth.split('-')[1])}/{getDueDay(student)}
+                                      </span>
+                                    )
+                                  })()}
                                   {status !== 'unpaid' ? (
                                     <button
                                       onClick={(e) => { e.stopPropagation(); handleOpenModal(student.id, fee) }}
@@ -727,8 +733,8 @@ export default function PaymentsPage() {
                             {/* 비고 서브행 */}
                             {!isExpanded && hasMemo && (
                               <div className="px-4 pb-2">
-                                {currentMemo && (
-                                  <p className="text-[11px] text-gray-500 leading-tight">{currentMemo}</p>
+                                {cleanMemo && (
+                                  <p className="text-[11px] text-gray-500 leading-tight">{cleanMemo}</p>
                                 )}
                                 {prevMemo && (
                                   <p className="text-[11px] text-gray-400 leading-tight">지난달: {prevMemo}</p>
