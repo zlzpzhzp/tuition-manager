@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { Plus, Pencil, Trash2, ChevronDown, ChevronRight, X, Check, ArrowRightLeft } from 'lucide-react'
+import { Plus, Pencil, Trash2, ChevronDown, ChevronRight, X, Check, ArrowRightLeft, ChevronUp } from 'lucide-react'
 import type { Grade, Class, Student } from '@/types'
 import { DAY_LABELS, parseClassDays } from '@/types'
 import { getActiveStudents, safeFetch, safeMutate } from '@/lib/utils'
@@ -214,6 +214,22 @@ export default function SettingsPage() {
     fetchGrades()
   }
 
+  const swapClassOrder = async (gradeId: string, idx: number, dir: -1 | 1) => {
+    const grade = grades.find(g => g.id === gradeId)
+    if (!grade) return
+    const classes = grade.classes
+    const targetIdx = idx + dir
+    if (targetIdx < 0 || targetIdx >= classes.length) return
+    const a = classes[idx]
+    const b = classes[targetIdx]
+    // swap order_index
+    await Promise.all([
+      safeMutate(`/api/classes/${a.id}`, 'PUT', { order_index: b.order_index }),
+      safeMutate(`/api/classes/${b.id}`, 'PUT', { order_index: a.order_index }),
+    ])
+    fetchGrades()
+  }
+
   const formatFee = (fee: number) => fee.toLocaleString() + '원'
 
   if (loading) return (
@@ -298,8 +314,8 @@ export default function SettingsPage() {
                 <div className="border-t bg-gray-50 px-4 py-3">
                   {grade.classes?.length > 0 && (
                     <div className="space-y-2 mb-3">
-                      {grade.classes.map(cls => (
-                        <div key={cls.id} className="flex items-center gap-2 bg-white rounded-lg px-3 py-2 border">
+                      {grade.classes.map((cls, clsIdx) => (
+                        <div key={cls.id} className="flex items-center gap-1.5 sm:gap-2 bg-white rounded-lg px-2 sm:px-3 py-2 border">
                           {editingClassId === cls.id ? (
                             <div className="flex-1 space-y-2">
                               <div className="flex items-center gap-2">
@@ -317,23 +333,42 @@ export default function SettingsPage() {
                             </div>
                           ) : (
                             <>
+                              {/* 순서 변경 버튼 */}
+                              <div className="flex flex-col shrink-0">
+                                <button
+                                  onClick={() => swapClassOrder(grade.id, clsIdx, -1)}
+                                  disabled={clsIdx === 0}
+                                  className="p-0 text-gray-300 hover:text-gray-600 disabled:opacity-20 disabled:hover:text-gray-300"
+                                  aria-label="위로"
+                                >
+                                  <ChevronUp className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  onClick={() => swapClassOrder(grade.id, clsIdx, 1)}
+                                  disabled={clsIdx === grade.classes.length - 1}
+                                  className="p-0 text-gray-300 hover:text-gray-600 disabled:opacity-20 disabled:hover:text-gray-300"
+                                  aria-label="아래로"
+                                >
+                                  <ChevronDown className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
                               {cls.subject && (
-                                <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${getSubjectColor(cls.subject)}`}>{cls.subject}</span>
+                                <span className={`text-[10px] sm:text-xs px-1 sm:px-1.5 py-0.5 rounded font-medium shrink-0 ${getSubjectColor(cls.subject)}`}>{cls.subject}</span>
                               )}
-                              <span className="flex-1 text-sm">{cls.name}</span>
+                              <span className="flex-1 text-xs sm:text-sm truncate min-w-0">{cls.name}</span>
                               {cls.class_days && (
-                                <span className="text-xs text-gray-400">{parseClassDays(cls.class_days)?.map(d => DAY_LABELS[d]).join('/')}</span>
+                                <span className="text-[10px] sm:text-xs text-gray-400 shrink-0 hidden sm:inline">{parseClassDays(cls.class_days)?.map(d => DAY_LABELS[d]).join('/')}</span>
                               )}
-                              <span className="text-sm font-medium text-[#1e2d6f]">{formatFee(cls.monthly_fee)}</span>
-                              <span className="text-xs text-gray-400 ml-1">{getActiveStudents(cls.students ?? []).length}명</span>
-                              <button onClick={() => openTransfer(cls)} className="p-1 text-gray-400 hover:text-[#1e2d6f]" aria-label="학생 반이동" title="학생 반이동">
-                                <ArrowRightLeft className="w-3.5 h-3.5" />
+                              <span className="text-xs sm:text-sm font-medium text-[#1e2d6f] shrink-0">{formatFee(cls.monthly_fee)}</span>
+                              <span className="text-[10px] sm:text-xs text-gray-400 shrink-0">{getActiveStudents(cls.students ?? []).length}명</span>
+                              <button onClick={() => openTransfer(cls)} className="p-0.5 sm:p-1 text-gray-400 hover:text-[#1e2d6f] shrink-0" aria-label="학생 반이동" title="학생 반이동">
+                                <ArrowRightLeft className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                               </button>
-                              <button onClick={() => { setEditingClassId(cls.id); setEditClassName(cls.name); setEditClassFee(String(cls.monthly_fee)); setEditClassSubject(cls.subject || ''); setEditClassDays(parseClassDays(cls.class_days) ?? []) }} className="p-1 text-gray-400 hover:text-gray-600" aria-label="반 수정">
-                                <Pencil className="w-3.5 h-3.5" />
+                              <button onClick={() => { setEditingClassId(cls.id); setEditClassName(cls.name); setEditClassFee(String(cls.monthly_fee)); setEditClassSubject(cls.subject || ''); setEditClassDays(parseClassDays(cls.class_days) ?? []) }} className="p-0.5 sm:p-1 text-gray-400 hover:text-gray-600 shrink-0" aria-label="반 수정">
+                                <Pencil className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                               </button>
-                              <button onClick={() => deleteClass(cls.id, cls.name)} className="p-1 text-gray-400 hover:text-red-500" aria-label="반 삭제">
-                                <Trash2 className="w-3.5 h-3.5" />
+                              <button onClick={() => deleteClass(cls.id, cls.name)} className="p-0.5 sm:p-1 text-gray-400 hover:text-red-500 shrink-0" aria-label="반 삭제">
+                                <Trash2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                               </button>
                             </>
                           )}

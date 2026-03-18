@@ -18,6 +18,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   if (body.grade_id !== undefined) updates.grade_id = body.grade_id
   if (body.subject !== undefined) updates.subject = body.subject || null
   if (body.class_days !== undefined) updates.class_days = body.class_days || null
+  if (body.order_index !== undefined) updates.order_index = body.order_index
 
   const { data, error } = await supabase
     .from('tuition_classes')
