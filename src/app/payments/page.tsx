@@ -402,7 +402,7 @@ export default function PaymentsPage() {
         </button>
         <h1 className="font-extrabold tracking-tight text-center">
           <span className="text-[2.6rem] sm:text-[3.2rem] leading-none">{selectedMonth.split('-')[0]}</span>
-          <span className="text-[1.6rem] sm:text-[1.9rem] text-gray-600">년 </span>
+          <span className="text-[1.8rem] sm:text-[2.2rem] text-gray-600">년 </span>
           <span className="text-5xl sm:text-6xl">{parseInt(selectedMonth.split('-')[1])}</span>
           <span className="text-[1.8rem] sm:text-[2.2rem] text-gray-600">월</span>
         </h1>
