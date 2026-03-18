@@ -96,7 +96,7 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
             x: startX,
             y: startY,
             vx: Math.cos(angle) * (0.15 + Math.random() * 0.35), // 느린 속도
-            vy: Math.sin(angle) * (0.1 + Math.random() * 0.25) + 0.08,
+            vy: Math.sin(angle) * (0.15 + Math.random() * 0.35),
             life,
             maxLife: life,
             size: 1.5 + Math.random() * 2.5,
@@ -119,7 +119,7 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
               ...p,
               x: nx,
               y: ny,
-              vy: p.vy + 0.008, // 약한 중력
+              vy: p.vy * 0.995, // 중력 없이 자연 감속
               vx: p.vx * 0.995,
               life: p.life - 0.6, // 느리게 소멸
               trail,
