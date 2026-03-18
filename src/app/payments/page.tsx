@@ -364,10 +364,13 @@ export default function PaymentsPage() {
   // ─── Render ───────────────────────────────────────────────────
   if (loading) return (
     <div className="animate-pulse">
-      <div className="flex items-center justify-center gap-4 mb-6">
-        <div className="w-9 h-9 bg-gray-200 rounded-lg"></div>
-        <div className="h-6 bg-gray-200 rounded w-32"></div>
-        <div className="w-9 h-9 bg-gray-200 rounded-lg"></div>
+      <div className="flex flex-col items-center mb-6">
+        <div className="flex items-center justify-center gap-5">
+          <div className="w-10 h-10 bg-gray-200 rounded-lg"></div>
+          <div className="h-8 bg-gray-200 rounded w-40 sm:w-48"></div>
+          <div className="w-10 h-10 bg-gray-200 rounded-lg"></div>
+        </div>
+        <div className="h-4 bg-gray-100 rounded w-16 mt-2"></div>
       </div>
       {[...Array(2)].map((_, gi) => (
         <div key={gi} className="mb-4">
@@ -396,14 +399,16 @@ export default function PaymentsPage() {
   return (
     <div onClick={() => { if (swipeOpenId) closeSwipeEdit() }}>
       {/* 월 네비게이션 */}
-      <div className="flex items-center justify-center gap-4 mb-6">
-        <button onClick={() => navigateMonth(-1)} className="p-2 hover:bg-gray-100 rounded-lg" aria-label="이전 달">
-          <ChevronLeft className="w-5 h-5" />
-        </button>
-        <h1 className="text-xl font-bold">{formatMonth(selectedMonth)}</h1>
-        <button onClick={() => navigateMonth(1)} className="p-2 hover:bg-gray-100 rounded-lg" aria-label="다음 달">
-          <ChevronRight className="w-5 h-5" />
-        </button>
+      <div className="flex flex-col items-center mb-6">
+        <div className="flex items-center justify-center gap-5">
+          <button onClick={() => navigateMonth(-1)} className="p-2 hover:bg-gray-100 rounded-lg" aria-label="이전 달">
+            <ChevronLeft className="w-6 h-6" />
+          </button>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight min-w-[160px] sm:min-w-[200px] text-center">{formatMonth(selectedMonth)}</h1>
+          <button onClick={() => navigateMonth(1)} className="p-2 hover:bg-gray-100 rounded-lg" aria-label="다음 달">
+            <ChevronRight className="w-6 h-6" />
+          </button>
+        </div>
         <button
           onClick={() => {
             const a = document.createElement('a')
@@ -411,10 +416,10 @@ export default function PaymentsPage() {
             a.download = ''
             a.click()
           }}
-          className="p-2 hover:bg-gray-100 rounded-lg text-gray-500 hover:text-gray-700"
-          aria-label="엑셀 다운로드"
+          className="mt-2 flex items-center gap-1.5 px-3 py-1 text-xs text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-full transition-colors"
         >
-          <Download className="w-4 h-4" />
+          <Download className="w-3.5 h-3.5" />
+          <span>내보내기</span>
         </button>
       </div>
 
