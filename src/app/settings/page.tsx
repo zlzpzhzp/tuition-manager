@@ -1,19 +1,18 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { Plus, Pencil, Trash2, ChevronDown, ChevronRight, X, Check, ArrowRightLeft, ChevronUp } from 'lucide-react'
 import type { Grade, Class, Student } from '@/types'
 import { DAY_LABELS, parseClassDays } from '@/types'
-import { getActiveStudents, safeFetch, safeMutate } from '@/lib/utils'
+import { getActiveStudents, safeMutate, useGrades, revalidateGrades } from '@/lib/utils'
 
 const SUBJECT_COLORS = ['bg-blue-100 text-blue-700', 'bg-green-100 text-green-700', 'bg-purple-100 text-purple-700', 'bg-orange-100 text-orange-700', 'bg-pink-100 text-pink-700', 'bg-teal-100 text-teal-700', 'bg-yellow-100 text-yellow-700', 'bg-red-100 text-red-700']
 
-type GradeWithClasses = Grade & { classes: (Class & { students?: Student[] })[] }
+type GradeWithClasses = import('@/types').Grade & { classes: (Class & { students?: Student[] })[] }
 
 export default function SettingsPage() {
-  const [grades, setGrades] = useState<GradeWithClasses[]>([])
+  const { data: grades = [], isLoading: loading } = useGrades<GradeWithClasses[]>()
   const [expandedGrades, setExpandedGrades] = useState<Set<string>>(new Set())
-  const [loading, setLoading] = useState(true)
 
   const [newGradeName, setNewGradeName] = useState('')
   const [editingGradeId, setEditingGradeId] = useState<string | null>(null)
@@ -74,18 +73,7 @@ export default function SettingsPage() {
     </div>
   )
 
-  const fetchGrades = useCallback(async () => {
-    const { data, error } = await safeFetch<GradeWithClasses[]>('/api/grades')
-    if (error) {
-      alert(`데이터 로딩 실패: ${error}`)
-      setLoading(false)
-      return
-    }
-    setGrades(data ?? [])
-    setLoading(false)
-  }, [])
-
-  useEffect(() => { fetchGrades() }, [fetchGrades])
+  const fetchGrades = revalidateGrades
 
   const toggleGrade = (id: string) => {
     setExpandedGrades(prev => {

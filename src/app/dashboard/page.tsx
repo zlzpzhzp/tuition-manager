@@ -1,37 +1,19 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 import Link from 'next/link'
 import { Users, CreditCard, AlertCircle, TrendingUp } from 'lucide-react'
-import type { Grade, Class, Student, Payment, GradeWithClasses } from '@/types'
+import type { Payment, GradeWithClasses } from '@/types'
 import { getStudentFee, getPaymentStatus, PAYMENT_STATUS_LABELS, PAYMENT_STATUS_COLORS } from '@/types'
-import { getPaymentDueDay, isPaymentScheduled, getActiveStudents, getCurrentMonth, formatMonth, safeFetch } from '@/lib/utils'
+import { getPaymentDueDay, isPaymentScheduled, getActiveStudents, getCurrentMonth, formatMonth, useGrades, usePayments } from '@/lib/utils'
 
 export default function DashboardPage() {
-  const [grades, setGrades] = useState<GradeWithClasses[]>([])
-  const [payments, setPayments] = useState<Payment[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
   const currentMonth = getCurrentMonth()
+  const { data: grades = [], error: gradesError, isLoading: gradesLoading } = useGrades<GradeWithClasses[]>()
+  const { data: payments = [], error: paymentsError, isLoading: paymentsLoading } = usePayments<Payment[]>(currentMonth)
 
-  const fetchData = useCallback(async () => {
-    const [gradesResult, paymentsResult] = await Promise.all([
-      safeFetch<GradeWithClasses[]>('/api/grades'),
-      safeFetch<Payment[]>(`/api/payments?billing_month=${currentMonth}`),
-    ])
-    if (gradesResult.error || paymentsResult.error) {
-      setError(gradesResult.error || paymentsResult.error)
-      setLoading(false)
-      return
-    }
-    setGrades(gradesResult.data ?? [])
-    setPayments(paymentsResult.data ?? [])
-    setError(null)
-    setLoading(false)
-  }, [currentMonth])
-
-  useEffect(() => { fetchData() }, [fetchData])
+  const loading = gradesLoading || paymentsLoading
+  const error = gradesError || paymentsError
 
   const allStudents = useMemo(() =>
     grades.flatMap(g =>
@@ -113,8 +95,8 @@ export default function DashboardPage() {
 
   if (error) return (
     <div className="text-center py-12">
-      <p className="text-red-500 mb-4">{error}</p>
-      <button onClick={fetchData} className="px-4 py-2 bg-[#1e2d6f] text-white rounded-lg hover:opacity-90">다시 시도</button>
+      <p className="text-red-500 mb-4">{error?.message}</p>
+      <button onClick={() => window.location.reload()} className="px-4 py-2 bg-[#1e2d6f] text-white rounded-lg hover:opacity-90">다시 시도</button>
     </div>
   )
 

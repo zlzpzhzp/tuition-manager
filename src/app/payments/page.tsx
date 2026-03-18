@@ -10,7 +10,7 @@ import StudentModal from '@/components/StudentModal'
 import DatePickerPopup from '@/components/payments/DatePickerPopup'
 import MethodPickerPopup from '@/components/payments/MethodPickerPopup'
 import AiFilterButton from '@/components/payments/AiFilterButton'
-import { getPrevMonth, formatMonth, getPaymentDueDay, isPaymentScheduled, getUnpaidLabelText, getActiveStudents, safeFetch, safeMutate, decodePaymentMemo } from '@/lib/utils'
+import { getPrevMonth, formatMonth, getPaymentDueDay, isPaymentScheduled, getUnpaidLabelText, getActiveStudents, safeMutate, decodePaymentMemo, useGrades, usePayments, revalidateGrades, revalidatePayments } from '@/lib/utils'
 
 const INLINE_METHODS: [PaymentMethod, string][] = [
   ['remote', '결제선생'],
@@ -23,15 +23,18 @@ const INLINE_METHODS: [PaymentMethod, string][] = [
 export default function PaymentsPage() {
   const today = new Date().toISOString().split('T')[0]
 
-  const [grades, setGrades] = useState<GradeWithClasses[]>([])
-  const [payments, setPayments] = useState<Payment[]>([])
-  const [prevPayments, setPrevPayments] = useState<Payment[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const now = new Date()
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
   })
+
+  const prevMonth = getPrevMonth(selectedMonth)
+  const { data: grades = [], error: gradesError, isLoading: gradesLoading } = useGrades<GradeWithClasses[]>()
+  const { data: payments = [], error: paymentsError, isLoading: paymentsLoading } = usePayments<Payment[]>(selectedMonth)
+  const { data: prevPayments = [] } = usePayments<Payment[]>(prevMonth)
+
+  const loading = gradesLoading || paymentsLoading
+  const error = gradesError || paymentsError
 
   // 인라인 납부 폼
   const [expandedStudentId, setExpandedStudentId] = useState<string | null>(null)
@@ -76,26 +79,11 @@ export default function PaymentsPage() {
   const [aiFilterDesc, setAiFilterDesc] = useState('')
   const [aiFilterLoading, setAiFilterLoading] = useState(false)
 
-  const fetchData = useCallback(async () => {
-    const prevMonth = getPrevMonth(selectedMonth)
-    const [gradesResult, paymentsResult, prevPaymentsResult] = await Promise.all([
-      safeFetch<GradeWithClasses[]>('/api/grades'),
-      safeFetch<Payment[]>(`/api/payments?billing_month=${selectedMonth}`),
-      safeFetch<Payment[]>(`/api/payments?billing_month=${prevMonth}`),
-    ])
-    if (gradesResult.error) {
-      setError(gradesResult.error)
-      setLoading(false)
-      return
-    }
-    setGrades(gradesResult.data ?? [])
-    setPayments(paymentsResult.data ?? [])
-    setPrevPayments(prevPaymentsResult.data ?? [])
-    setError(null)
-    setLoading(false)
-  }, [selectedMonth])
-
-  useEffect(() => { fetchData() }, [fetchData])
+  const fetchData = useCallback(() => {
+    revalidateGrades()
+    revalidatePayments(selectedMonth)
+    revalidatePayments(prevMonth)
+  }, [selectedMonth, prevMonth])
 
   // ─── Memoized data ────────────────────────────────────────────
   const allStudents = useMemo(() =>

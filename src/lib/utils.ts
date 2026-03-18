@@ -1,4 +1,41 @@
 import type { Student } from '@/types'
+import useSWR, { mutate as globalMutate } from 'swr'
+
+// ─── SWR Fetcher & Hooks ─────────────────────────────────────────
+const swrFetcher = async (url: string) => {
+  const res = await fetch(url)
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(err.error || `요청 실패 (${res.status})`)
+  }
+  return res.json()
+}
+
+const swrOptions = {
+  revalidateOnFocus: false,
+  dedupingInterval: 5000,
+}
+
+export function useGrades<T = unknown>() {
+  return useSWR<T>('/api/grades', swrFetcher, swrOptions)
+}
+
+export function usePayments<T = unknown>(billingMonth: string | null) {
+  return useSWR<T>(
+    billingMonth ? `/api/payments?billing_month=${billingMonth}` : null,
+    swrFetcher,
+    swrOptions,
+  )
+}
+
+/** 데이터 변경 후 관련 캐시 무효화 */
+export function revalidateGrades() {
+  globalMutate('/api/grades')
+}
+
+export function revalidatePayments(billingMonth: string) {
+  globalMutate(`/api/payments?billing_month=${billingMonth}`)
+}
 
 // ─── Payment Due Day ──────────────────────────────────────────────
 /** 학생의 결제 예정일 (등록일 기준 매월 같은 날) */
