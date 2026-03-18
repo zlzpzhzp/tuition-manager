@@ -3,16 +3,37 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { X, Loader2, ArrowRight } from 'lucide-react'
 
-/** 제미나이 4각별 마크 */
-function GeminiMark({ size = 18, color = 'currentColor' }: { size?: number; color?: string }) {
+/** 나비 SVG */
+function ButterflyIcon({ size = 20, color = 'white' }: { size?: number; color?: string }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <path d="M12 2C12 2 14.5 8.5 12 12C9.5 8.5 12 2 12 2Z" fill={color} opacity="0.9" />
-      <path d="M12 22C12 22 9.5 15.5 12 12C14.5 15.5 12 22 12 22Z" fill={color} opacity="0.9" />
-      <path d="M2 12C2 12 8.5 9.5 12 12C8.5 14.5 2 12 2 12Z" fill={color} opacity="0.9" />
-      <path d="M22 12C22 12 15.5 14.5 12 12C15.5 9.5 22 12 22 12Z" fill={color} opacity="0.9" />
+    <svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
+      {/* 왼쪽 상단 날개 */}
+      <path d="M12 12C12 12 4 3 2.5 6C1 9 5 11 12 12Z" opacity="0.95" />
+      {/* 오른쪽 상단 날개 */}
+      <path d="M12 12C12 12 20 3 21.5 6C23 9 19 11 12 12Z" opacity="0.95" />
+      {/* 왼쪽 하단 날개 */}
+      <path d="M12 12C12 12 5 15 4 18C3 21 7 19 12 12Z" opacity="0.8" />
+      {/* 오른쪽 하단 날개 */}
+      <path d="M12 12C12 12 19 15 20 18C21 21 17 19 12 12Z" opacity="0.8" />
+      {/* 몸통 */}
+      <ellipse cx="12" cy="12" rx="0.6" ry="4" opacity="0.9" />
+      {/* 더듬이 */}
+      <path d="M11.5 8.5Q10 5 8.5 4" fill="none" stroke={color} strokeWidth="0.5" strokeLinecap="round" />
+      <path d="M12.5 8.5Q14 5 15.5 4" fill="none" stroke={color} strokeWidth="0.5" strokeLinecap="round" />
     </svg>
   )
+}
+
+/** 4각 별 모양 좌표 */
+function starPoints(cx: number, cy: number, outer: number, inner: number): string {
+  const pts: string[] = []
+  for (let i = 0; i < 4; i++) {
+    const aOuter = (Math.PI / 2) * i - Math.PI / 2
+    const aInner = aOuter + Math.PI / 4
+    pts.push(`${cx + Math.cos(aOuter) * outer},${cy + Math.sin(aOuter) * outer}`)
+    pts.push(`${cx + Math.cos(aInner) * inner},${cy + Math.sin(aInner) * inner}`)
+  }
+  return pts.join(' ')
 }
 
 interface Props {
@@ -23,18 +44,26 @@ interface Props {
   loading: boolean
 }
 
+interface Particle {
+  x: number; y: number; vx: number; vy: number
+  life: number; maxLife: number; size: number; id: number
+}
+
 export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, onClear, loading }: Props) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
 
   const [pos, setPos] = useState({ x: 0, y: 0 })
+  const [particles, setParticles] = useState<Particle[]>([])
   const velRef = useRef({ x: 0, y: 0 })
   const dragging = useRef(false)
   const lastTouch = useRef({ x: 0, y: 0, t: 0 })
   const prevTouch = useRef({ x: 0, y: 0, t: 0 })
   const posRef = useRef({ x: 0, y: 0 })
   const animFrame = useRef<number>(0)
+  const idleFrame = useRef<number>(0)
+  const particleId = useRef(0)
   const btnRef = useRef<HTMLDivElement>(null)
   const initialized = useRef(false)
 
@@ -49,24 +78,75 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
     setPos({ x, y })
   }, [])
 
+  // 페이지 숨김 시 정지
+  useEffect(() => {
+    const handler = () => { if (document.hidden) cancelAnimationFrame(idleFrame.current) }
+    document.addEventListener('visibilitychange', handler)
+    return () => document.removeEventListener('visibilitychange', handler)
+  }, [])
+
+  // ─── 흰색 스타더스트 (경량) ───
+  useEffect(() => {
+    if (open || aiFilterIds !== null) {
+      cancelAnimationFrame(idleFrame.current)
+      setParticles([])
+      return
+    }
+
+    let frameCount = 0
+    const tick = () => {
+      frameCount++
+      if (frameCount % (5 + Math.floor(Math.random() * 3)) === 0) {
+        const cx = posRef.current.x + 18
+        const cy = posRef.current.y + 18
+        const angle = Math.random() * Math.PI * 2
+        const r = Math.random() * 8
+        const life = 70 + Math.random() * 50
+        const startX = cx + Math.cos(angle) * r
+        const startY = cy + Math.sin(angle) * r
+
+        setParticles(prev => [...prev, {
+          x: startX, y: startY,
+          vx: Math.cos(angle) * (0.1 + Math.random() * 0.25),
+          vy: Math.sin(angle) * (0.1 + Math.random() * 0.25),
+          life, maxLife: life,
+          size: 1.2 + Math.random() * 2,
+          id: particleId.current++,
+        }].slice(-25))
+      }
+
+      setParticles(prev =>
+        prev
+          .map(p => ({
+            ...p,
+            x: p.x + p.vx, y: p.y + p.vy,
+            vx: p.vx * 0.995, vy: p.vy * 0.995,
+            life: p.life - 0.6,
+          }))
+          .filter(p => p.life > 0)
+      )
+
+      idleFrame.current = requestAnimationFrame(tick)
+    }
+    idleFrame.current = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(idleFrame.current)
+  }, [open, aiFilterIds])
+
+  // ─── 물리 시뮬레이션 ───
   const simulate = useCallback(() => {
     if (dragging.current) return
-    const friction = 0.96
-    const bounce = 0.6
-    const size = 48
-
-    velRef.current.x *= friction
-    velRef.current.y *= friction
+    velRef.current.x *= 0.96
+    velRef.current.y *= 0.96
 
     let nx = posRef.current.x + velRef.current.x
     let ny = posRef.current.y + velRef.current.y
-    const maxX = window.innerWidth - size
-    const maxY = window.innerHeight - size - getBottomPad()
+    const maxX = window.innerWidth - 48
+    const maxY = window.innerHeight - 48 - getBottomPad()
 
-    if (nx < 0) { nx = 0; velRef.current.x = Math.abs(velRef.current.x) * bounce }
-    if (nx > maxX) { nx = maxX; velRef.current.x = -Math.abs(velRef.current.x) * bounce }
-    if (ny < 0) { ny = 0; velRef.current.y = Math.abs(velRef.current.y) * bounce }
-    if (ny > maxY) { ny = maxY; velRef.current.y = -Math.abs(velRef.current.y) * bounce }
+    if (nx < 0) { nx = 0; velRef.current.x = Math.abs(velRef.current.x) * 0.6 }
+    if (nx > maxX) { nx = maxX; velRef.current.x = -Math.abs(velRef.current.x) * 0.6 }
+    if (ny < 0) { ny = 0; velRef.current.y = Math.abs(velRef.current.y) * 0.6 }
+    if (ny > maxY) { ny = maxY; velRef.current.y = -Math.abs(velRef.current.y) * 0.6 }
 
     posRef.current = { x: nx, y: ny }
     setPos({ x: nx, y: ny })
@@ -110,9 +190,8 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
     prevTouch.current = { ...lastTouch.current }
     lastTouch.current = { x, y, t: now }
 
-    const size = 48
-    const nx = Math.max(0, Math.min(window.innerWidth - size, x - size / 2))
-    const ny = Math.max(0, Math.min(window.innerHeight - size - getBottomPad(), y - size / 2))
+    const nx = Math.max(0, Math.min(window.innerWidth - 48, x - 24))
+    const ny = Math.max(0, Math.min(window.innerHeight - 48 - getBottomPad(), y - 24))
     posRef.current = { x: nx, y: ny }
     setPos({ x: nx, y: ny })
   }, [])
@@ -163,15 +242,14 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
   }
 
   const speed = Math.sqrt(velRef.current.x ** 2 + velRef.current.y ** 2)
-
   const BTN = 36
 
   // 필터 적용 상태 (배지)
   if (aiFilterIds !== null) {
     return (
       <div className="fixed right-3 z-[60]" style={{ top: '38%' }}>
-        <div className="flex items-center gap-1 bg-white text-[#1e2d6f] pl-2.5 pr-1.5 py-2 rounded-full shadow-[0_2px_12px_rgba(0,0,0,0.15)] border border-gray-100">
-          <GeminiMark size={14} color="#1e2d6f" />
+        <div className="flex items-center gap-1.5 bg-white text-[#1e2d6f] pl-2 pr-1.5 py-1.5 rounded-full shadow-[0_2px_12px_rgba(0,0,0,0.15)] border border-gray-100">
+          <ButterflyIcon size={14} color="#1e2d6f" />
           <span className="text-[10px] font-medium max-w-[100px] truncate">{aiFilterDesc}</span>
           <button onClick={handleClear} className="p-0.5 hover:bg-gray-100 rounded-full ml-0.5" aria-label="필터 해제">
             <X className="w-3.5 h-3.5 text-gray-400" />
@@ -183,21 +261,21 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
 
   return (
     <>
-      {/* 흰색 ✦ 반짝 애니메이션 */}
-      <style>{`
-        @keyframes twinkle1 {
-          0%, 20%, 100% { opacity: 0; transform: scale(0); }
-          10% { opacity: 1; transform: scale(1); }
-        }
-        @keyframes twinkle2 {
-          0%, 40%, 70%, 100% { opacity: 0; transform: scale(0); }
-          55% { opacity: 1; transform: scale(1); }
-        }
-        @keyframes twinkle3 {
-          0%, 65%, 90%, 100% { opacity: 0; transform: scale(0); }
-          78% { opacity: 0.9; transform: scale(1); }
-        }
-      `}</style>
+      {/* 흰색 스타더스트 */}
+      <svg className="fixed inset-0 pointer-events-none z-[55]" width="100%" height="100%">
+        {particles.map(p => {
+          const fadeIn = Math.min(1, (p.maxLife - p.life) / 15)
+          const fadeOut = p.life / p.maxLife
+          const opacity = fadeIn * fadeOut
+          return (
+            <polygon
+              key={p.id}
+              points={starPoints(p.x, p.y, p.size, p.size * 0.4)}
+              fill={`rgba(255,255,255,${opacity * 0.85})`}
+            />
+          )
+        })}
+      </svg>
 
       {/* 메인 버튼 + 검색바 */}
       <div
@@ -272,43 +350,16 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
               }
             }}
             disabled={open && loading}
-            className={`shrink-0 flex items-center justify-center rounded-full disabled:opacity-50 relative ${
+            className={`shrink-0 flex items-center justify-center rounded-full disabled:opacity-50 ${
               open ? 'bg-white/15 text-white' : 'bg-gradient-to-br from-[#1e2d6f] to-[#2d4298] text-white'
             }`}
             style={{ width: BTN, height: BTN }}
             aria-label={open ? 'AI 필터 실행' : 'AI 필터 열기'}
           >
-            {open ? (
-              loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />
-            ) : (
-              <>
-                <GeminiMark size={20} color="white" />
-                {/* 흰색 ✦ 반짝 3개 — 각각 다른 위치/타이밍 */}
-                <svg className="absolute pointer-events-none" style={{ inset: -8, width: 'calc(100% + 16px)', height: 'calc(100% + 16px)' }} viewBox="0 0 52 52" fill="white">
-                  {/* 우상단 큰 ✦ */}
-                  <g style={{ animation: 'twinkle1 4s ease-in-out infinite', transformOrigin: '44px 8px' }}>
-                    <path d="M44 4C44 4 45 7 44 8C43 7 44 4 44 4Z" />
-                    <path d="M44 12C44 12 43 9 44 8C45 9 44 12 44 12Z" />
-                    <path d="M40 8C40 8 43 7 44 8C43 9 40 8 40 8Z" />
-                    <path d="M48 8C48 8 45 9 44 8C45 7 48 8 48 8Z" />
-                  </g>
-                  {/* 좌하단 중간 ✦ */}
-                  <g style={{ animation: 'twinkle2 4s ease-in-out infinite', transformOrigin: '6px 42px' }}>
-                    <path d="M6 39C6 39 6.8 41 6 42C5.2 41 6 39 6 39Z" />
-                    <path d="M6 45C6 45 5.2 43 6 42C6.8 43 6 45 6 45Z" />
-                    <path d="M3 42C3 42 5.2 41 6 42C5.2 43 3 42 3 42Z" />
-                    <path d="M9 42C9 42 6.8 43 6 42C6.8 41 9 42 9 42Z" />
-                  </g>
-                  {/* 우측중앙 작은 ✦ */}
-                  <g style={{ animation: 'twinkle3 4s ease-in-out infinite', transformOrigin: '48px 28px' }}>
-                    <path d="M48 26C48 26 48.5 27.2 48 28C47.5 27.2 48 26 48 26Z" />
-                    <path d="M48 30C48 30 47.5 28.8 48 28C48.5 28.8 48 30 48 30Z" />
-                    <path d="M46 28C46 28 47.5 27.2 48 28C47.5 28.8 46 28 46 28Z" />
-                    <path d="M50 28C50 28 48.5 28.8 48 28C48.5 27.2 50 28 50 28Z" />
-                  </g>
-                </svg>
-              </>
-            )}
+            {open
+              ? (loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />)
+              : <ButterflyIcon size={22} color="white" />
+            }
           </button>
         </div>
       </div>
