@@ -1,8 +1,19 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
-import Image from 'next/image'
 import { X, Loader2, ArrowRight } from 'lucide-react'
+
+/** 제미나이 4각별 마크 */
+function GeminiMark({ size = 18, color = 'currentColor' }: { size?: number; color?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <path d="M12 2C12 2 14.5 8.5 12 12C9.5 8.5 12 2 12 2Z" fill={color} opacity="0.9" />
+      <path d="M12 22C12 22 9.5 15.5 12 12C14.5 15.5 12 22 12 22Z" fill={color} opacity="0.9" />
+      <path d="M2 12C2 12 8.5 9.5 12 12C8.5 14.5 2 12 2 12Z" fill={color} opacity="0.9" />
+      <path d="M22 12C22 12 15.5 14.5 12 12C15.5 9.5 22 12 22 12Z" fill={color} opacity="0.9" />
+    </svg>
+  )
+}
 
 interface Props {
   aiFilterIds: Set<string> | null
@@ -17,7 +28,6 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
   const [query, setQuery] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
 
-  // 물리 상태
   const [pos, setPos] = useState({ x: 0, y: 0 })
   const velRef = useRef({ x: 0, y: 0 })
   const dragging = useRef(false)
@@ -160,8 +170,8 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
   if (aiFilterIds !== null) {
     return (
       <div className="fixed right-3 z-[60]" style={{ top: '38%' }}>
-        <div className="flex items-center gap-1.5 bg-white text-[#1e2d6f] pl-2 pr-1.5 py-1.5 rounded-full shadow-[0_2px_12px_rgba(0,0,0,0.15)] border border-gray-100">
-          <Image src="/icons/icon-192x192.png" alt="" width={18} height={18} className="rounded-sm" />
+        <div className="flex items-center gap-1 bg-white text-[#1e2d6f] pl-2.5 pr-1.5 py-2 rounded-full shadow-[0_2px_12px_rgba(0,0,0,0.15)] border border-gray-100">
+          <GeminiMark size={14} color="#1e2d6f" />
           <span className="text-[10px] font-medium max-w-[100px] truncate">{aiFilterDesc}</span>
           <button onClick={handleClear} className="p-0.5 hover:bg-gray-100 rounded-full ml-0.5" aria-label="필터 해제">
             <X className="w-3.5 h-3.5 text-gray-400" />
@@ -173,24 +183,20 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
 
   return (
     <>
-      {/* 제미나이 스타일 ✦ 글레어 키프레임 */}
+      {/* 흰색 ✦ 반짝 애니메이션 */}
       <style>{`
-        @keyframes sparkle-in-out {
-          0%, 100% { opacity: 0; transform: scale(0.3) rotate(0deg); }
-          50% { opacity: 1; transform: scale(1) rotate(90deg); }
+        @keyframes twinkle1 {
+          0%, 20%, 100% { opacity: 0; transform: scale(0); }
+          10% { opacity: 1; transform: scale(1); }
         }
-        .ai-sparkle-wrap {
-          position: absolute;
-          pointer-events: none;
-          inset: -10px;
+        @keyframes twinkle2 {
+          0%, 40%, 70%, 100% { opacity: 0; transform: scale(0); }
+          55% { opacity: 1; transform: scale(1); }
         }
-        .ai-sparkle {
-          position: absolute;
-          animation: sparkle-in-out ease-in-out infinite;
+        @keyframes twinkle3 {
+          0%, 65%, 90%, 100% { opacity: 0; transform: scale(0); }
+          78% { opacity: 0.9; transform: scale(1); }
         }
-        .ai-sparkle:nth-child(1) { top: -4px; right: -2px; animation-duration: 3s; animation-delay: 0s; }
-        .ai-sparkle:nth-child(2) { bottom: -3px; left: -4px; animation-duration: 3.8s; animation-delay: 1.2s; }
-        .ai-sparkle:nth-child(3) { top: 50%; right: -6px; animation-duration: 4.2s; animation-delay: 2.4s; }
       `}</style>
 
       {/* 메인 버튼 + 검색바 */}
@@ -207,7 +213,7 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
         onMouseDown={open ? undefined : handleStart}
       >
         <div
-          className="flex items-center rounded-full overflow-visible"
+          className="flex items-center rounded-full"
           style={{
             height: BTN,
             transition: 'width 0.35s cubic-bezier(0.4,0,0.2,1), box-shadow 0.35s ease, background-color 0.3s ease',
@@ -216,6 +222,7 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
             boxShadow: open
               ? '0 2px 16px rgba(30,45,111,0.4)'
               : '0 3px 12px rgba(30,45,111,0.25)',
+            overflow: open ? 'hidden' : 'visible',
           }}
         >
           {/* 검색 입력 */}
@@ -266,7 +273,7 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
             }}
             disabled={open && loading}
             className={`shrink-0 flex items-center justify-center rounded-full disabled:opacity-50 relative ${
-              open ? 'bg-white/15 text-white' : ''
+              open ? 'bg-white/15 text-white' : 'bg-gradient-to-br from-[#1e2d6f] to-[#2d4298] text-white'
             }`}
             style={{ width: BTN, height: BTN }}
             aria-label={open ? 'AI 필터 실행' : 'AI 필터 열기'}
@@ -275,18 +282,31 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
               loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />
             ) : (
               <>
-                <Image src="/icons/icon-192x192.png" alt="AI 필터" width={BTN} height={BTN} className="rounded-full" />
-                {/* ✦ 글레어 스파클 */}
-                <span className="ai-sparkle-wrap">
-                  {[8, 6, 7].map((sz, i) => (
-                    <svg key={i} className="ai-sparkle" width={sz} height={sz} viewBox="0 0 24 24" fill="white">
-                      <path d="M12 0C12 0 14 10 12 12C10 10 12 0 12 0Z" />
-                      <path d="M12 24C12 24 10 14 12 12C14 14 12 24 12 24Z" />
-                      <path d="M0 12C0 12 10 10 12 12C10 14 0 12 0 12Z" />
-                      <path d="M24 12C24 12 14 14 12 12C14 10 24 12 24 12Z" />
-                    </svg>
-                  ))}
-                </span>
+                <GeminiMark size={20} color="white" />
+                {/* 흰색 ✦ 반짝 3개 — 각각 다른 위치/타이밍 */}
+                <svg className="absolute pointer-events-none" style={{ inset: -8, width: 'calc(100% + 16px)', height: 'calc(100% + 16px)' }} viewBox="0 0 52 52" fill="white">
+                  {/* 우상단 큰 ✦ */}
+                  <g style={{ animation: 'twinkle1 4s ease-in-out infinite', transformOrigin: '44px 8px' }}>
+                    <path d="M44 4C44 4 45 7 44 8C43 7 44 4 44 4Z" />
+                    <path d="M44 12C44 12 43 9 44 8C45 9 44 12 44 12Z" />
+                    <path d="M40 8C40 8 43 7 44 8C43 9 40 8 40 8Z" />
+                    <path d="M48 8C48 8 45 9 44 8C45 7 48 8 48 8Z" />
+                  </g>
+                  {/* 좌하단 중간 ✦ */}
+                  <g style={{ animation: 'twinkle2 4s ease-in-out infinite', transformOrigin: '6px 42px' }}>
+                    <path d="M6 39C6 39 6.8 41 6 42C5.2 41 6 39 6 39Z" />
+                    <path d="M6 45C6 45 5.2 43 6 42C6.8 43 6 45 6 45Z" />
+                    <path d="M3 42C3 42 5.2 41 6 42C5.2 43 3 42 3 42Z" />
+                    <path d="M9 42C9 42 6.8 43 6 42C6.8 41 9 42 9 42Z" />
+                  </g>
+                  {/* 우측중앙 작은 ✦ */}
+                  <g style={{ animation: 'twinkle3 4s ease-in-out infinite', transformOrigin: '48px 28px' }}>
+                    <path d="M48 26C48 26 48.5 27.2 48 28C47.5 27.2 48 26 48 26Z" />
+                    <path d="M48 30C48 30 47.5 28.8 48 28C48.5 28.8 48 30 48 30Z" />
+                    <path d="M46 28C46 28 47.5 27.2 48 28C47.5 28.8 46 28 46 28Z" />
+                    <path d="M50 28C50 28 48.5 28.8 48 28C48.5 27.2 50 28 50 28Z" />
+                  </g>
+                </svg>
               </>
             )}
           </button>
