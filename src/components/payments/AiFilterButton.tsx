@@ -1,26 +1,8 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
+import Image from 'next/image'
 import { X, Loader2, ArrowRight } from 'lucide-react'
-
-/** 앱 마크 — 네이비 배경 + 실버 W */
-function AppMark({ size = 18 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24">
-      <rect width="24" height="24" rx="5" fill="#1e2d6f" />
-      <text
-        x="12" y="16"
-        textAnchor="middle"
-        fontFamily="system-ui, -apple-system, sans-serif"
-        fontSize="13"
-        fontWeight="700"
-        fill="#c8c5be"
-      >
-        W
-      </text>
-    </svg>
-  )
-}
 
 interface Props {
   aiFilterIds: Set<string> | null
@@ -48,7 +30,6 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
 
   const getBottomPad = () => (window.innerWidth < 640 ? 68 : 0)
 
-  // 초기 위치
   useEffect(() => {
     if (initialized.current) return
     initialized.current = true
@@ -58,10 +39,8 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
     setPos({ x, y })
   }, [])
 
-  // ─── 물리 시뮬레이션 (관성 + 벽 탄성) ───
   const simulate = useCallback(() => {
     if (dragging.current) return
-
     const friction = 0.96
     const bounce = 0.6
     const size = 48
@@ -90,7 +69,6 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
     }
   }, [])
 
-  // ─── 터치/마우스 ───
   const getXY = (e: React.TouchEvent | React.MouseEvent) => {
     if ('touches' in e) {
       const t = e.touches[0] || (e as React.TouchEvent).changedTouches[0]
@@ -176,14 +154,14 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
 
   const speed = Math.sqrt(velRef.current.x ** 2 + velRef.current.y ** 2)
 
-  const BTN = 34
+  const BTN = 36
 
   // 필터 적용 상태 (배지)
   if (aiFilterIds !== null) {
     return (
       <div className="fixed right-3 z-[60]" style={{ top: '38%' }}>
-        <div className="flex items-center gap-1 bg-white text-[#1e2d6f] pl-2.5 pr-1.5 py-2 rounded-full shadow-[0_2px_12px_rgba(0,0,0,0.15)] border border-gray-100">
-          <AppMark size={14} />
+        <div className="flex items-center gap-1.5 bg-white text-[#1e2d6f] pl-2 pr-1.5 py-1.5 rounded-full shadow-[0_2px_12px_rgba(0,0,0,0.15)] border border-gray-100">
+          <Image src="/icons/icon-192x192.png" alt="" width={18} height={18} className="rounded-sm" />
           <span className="text-[10px] font-medium max-w-[100px] truncate">{aiFilterDesc}</span>
           <button onClick={handleClear} className="p-0.5 hover:bg-gray-100 rounded-full ml-0.5" aria-label="필터 해제">
             <X className="w-3.5 h-3.5 text-gray-400" />
@@ -195,34 +173,24 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
 
   return (
     <>
-      {/* 글레어 키프레임 */}
+      {/* 제미나이 스타일 ✦ 글레어 키프레임 */}
       <style>{`
-        @keyframes glare-sweep {
-          0% { transform: translateX(-100%) rotate(25deg); }
-          100% { transform: translateX(200%) rotate(25deg); }
+        @keyframes sparkle-in-out {
+          0%, 100% { opacity: 0; transform: scale(0.3) rotate(0deg); }
+          50% { opacity: 1; transform: scale(1) rotate(90deg); }
         }
-        .ai-glare {
-          position: relative;
-          overflow: hidden;
-        }
-        .ai-glare::after {
-          content: '';
+        .ai-sparkle-wrap {
           position: absolute;
-          top: -50%;
-          left: -50%;
-          width: 40%;
-          height: 200%;
-          background: linear-gradient(
-            90deg,
-            transparent 0%,
-            rgba(255,255,255,0) 30%,
-            rgba(255,255,255,0.45) 50%,
-            rgba(255,255,255,0) 70%,
-            transparent 100%
-          );
-          animation: glare-sweep 3.5s ease-in-out infinite;
           pointer-events: none;
+          inset: -10px;
         }
+        .ai-sparkle {
+          position: absolute;
+          animation: sparkle-in-out ease-in-out infinite;
+        }
+        .ai-sparkle:nth-child(1) { top: -4px; right: -2px; animation-duration: 3s; animation-delay: 0s; }
+        .ai-sparkle:nth-child(2) { bottom: -3px; left: -4px; animation-duration: 3.8s; animation-delay: 1.2s; }
+        .ai-sparkle:nth-child(3) { top: 50%; right: -6px; animation-duration: 4.2s; animation-delay: 2.4s; }
       `}</style>
 
       {/* 메인 버튼 + 검색바 */}
@@ -239,7 +207,7 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
         onMouseDown={open ? undefined : handleStart}
       >
         <div
-          className="flex items-center rounded-full overflow-hidden"
+          className="flex items-center rounded-full overflow-visible"
           style={{
             height: BTN,
             transition: 'width 0.35s cubic-bezier(0.4,0,0.2,1), box-shadow 0.35s ease, background-color 0.3s ease',
@@ -247,7 +215,7 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
             backgroundColor: open ? '#1e2d6f' : undefined,
             boxShadow: open
               ? '0 2px 16px rgba(30,45,111,0.4)'
-              : '0 4px 14px rgba(30,45,111,0.3)',
+              : '0 3px 12px rgba(30,45,111,0.25)',
           }}
         >
           {/* 검색 입력 */}
@@ -297,19 +265,30 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
               }
             }}
             disabled={open && loading}
-            className={`shrink-0 flex items-center justify-center rounded-full disabled:opacity-50 ${
-              open ? 'bg-white/15 text-white' : 'ai-glare'
+            className={`shrink-0 flex items-center justify-center rounded-full disabled:opacity-50 relative ${
+              open ? 'bg-white/15 text-white' : ''
             }`}
-            style={{
-              width: BTN,
-              height: BTN,
-            }}
+            style={{ width: BTN, height: BTN }}
             aria-label={open ? 'AI 필터 실행' : 'AI 필터 열기'}
           >
-            {open
-              ? (loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />)
-              : <AppMark size={BTN} />
-            }
+            {open ? (
+              loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />
+            ) : (
+              <>
+                <Image src="/icons/icon-192x192.png" alt="AI 필터" width={BTN} height={BTN} className="rounded-full" />
+                {/* ✦ 글레어 스파클 */}
+                <span className="ai-sparkle-wrap">
+                  {[8, 6, 7].map((sz, i) => (
+                    <svg key={i} className="ai-sparkle" width={sz} height={sz} viewBox="0 0 24 24" fill="white">
+                      <path d="M12 0C12 0 14 10 12 12C10 10 12 0 12 0Z" />
+                      <path d="M12 24C12 24 10 14 12 12C14 14 12 24 12 24Z" />
+                      <path d="M0 12C0 12 10 10 12 12C10 14 0 12 0 12Z" />
+                      <path d="M24 12C24 12 14 14 12 12C14 10 24 12 24 12Z" />
+                    </svg>
+                  ))}
+                </span>
+              </>
+            )}
           </button>
         </div>
       </div>
