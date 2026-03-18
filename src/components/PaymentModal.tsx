@@ -12,6 +12,7 @@ interface Props {
   defaultAmount?: number
   prevMemo?: string | null
   onSave: (data: Partial<Payment>) => Promise<void> | void
+  onUpdate?: (paymentId: string, data: Partial<Payment>) => Promise<void> | void
   onDelete?: (paymentId: string) => void
   onClose: () => void
 }
@@ -24,7 +25,7 @@ const METHOD_OPTIONS: [PaymentMethod, string][] = [
   ['other', '기타'],
 ]
 
-export default function PaymentModal({ payment, studentId, defaultBillingMonth, defaultAmount, prevMemo, onSave, onDelete, onClose }: Props) {
+export default function PaymentModal({ payment, studentId, defaultBillingMonth, defaultAmount, prevMemo, onSave, onUpdate, onDelete, onClose }: Props) {
   const today = new Date().toISOString().split('T')[0]
   const currentMonth = today.slice(0, 7)
 
@@ -36,6 +37,8 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
   const [cashReceipt, setCashReceipt] = useState<'issued' | 'pending' | null>(payment?.cash_receipt ?? null)
   const [showConfirmDelete, setShowConfirmDelete] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
+  const [editingDate, setEditingDate] = useState(false)
+  const [editDate, setEditDate] = useState(payment?.payment_date ?? today)
 
   const needsCashReceipt = method === 'transfer' || method === 'cash'
 
@@ -115,9 +118,44 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
                 <span className="text-gray-400">납부 방법</span>
                 <span className="font-medium">{PAYMENT_METHOD_LABELS[payment.method as PaymentMethod]}</span>
               </div>
-              <div className="flex justify-between py-2 border-b">
+              <div className="flex justify-between items-center py-2 border-b">
                 <span className="text-gray-400">납부일</span>
-                <span className="font-medium">{payment.payment_date}</span>
+                {editingDate ? (
+                  <div className="flex items-center gap-1.5">
+                    <input
+                      type="date"
+                      value={editDate}
+                      onChange={e => setEditDate(e.target.value)}
+                      className="px-2 py-1 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1e2d6f]"
+                    />
+                    <button
+                      onClick={async () => {
+                        if (onUpdate && payment.id) {
+                          await onUpdate(payment.id, { payment_date: editDate })
+                        }
+                        setEditingDate(false)
+                      }}
+                      className="p-1 text-green-600 hover:text-green-700"
+                      aria-label="저장"
+                    >
+                      <Check className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => { setEditingDate(false); setEditDate(payment.payment_date) }}
+                      className="p-1 text-gray-400 hover:text-gray-600"
+                      aria-label="취소"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setEditingDate(true)}
+                    className="font-medium hover:text-[#1e2d6f] hover:underline transition-colors"
+                  >
+                    {payment.payment_date}
+                  </button>
+                )}
               </div>
               <div className="flex justify-between py-2 border-b">
                 <span className="text-gray-400">해당 월</span>

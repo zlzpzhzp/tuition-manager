@@ -292,6 +292,12 @@ export default function PaymentsPage() {
     fetchData()
   }
 
+  const handleUpdatePayment = async (paymentId: string, data: Partial<Payment>) => {
+    const { error } = await safeMutate(`/api/payments/${paymentId}`, 'PUT', data)
+    if (error) { alert(`수정 실패: ${error}`); return }
+    fetchData()
+  }
+
   const handleDeletePayment = async (paymentId: string) => {
     const { error } = await safeMutate(`/api/payments/${paymentId}`, 'DELETE')
     if (error) { alert(`삭제 실패: ${error}`); return }
@@ -692,6 +698,7 @@ export default function PaymentsPage() {
           defaultAmount={selectedStudentFee}
           prevMemo={selectedPrevMemo}
           onSave={handleSavePayment}
+          onUpdate={handleUpdatePayment}
           onDelete={handleDeletePayment}
           onClose={() => { setShowPaymentModal(false); setSelectedPayment(null); setExpandedStudentId(null) }}
         />
