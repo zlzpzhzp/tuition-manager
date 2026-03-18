@@ -411,6 +411,32 @@ export default function PaymentsPage() {
         </button>
       </div>
 
+      {/* 내보내기 + 전체/미납 필터 */}
+      <div className="flex items-center justify-center gap-2 mb-3">
+        <button
+          onClick={() => {
+            const a = document.createElement('a')
+            a.href = `/api/payments/export?billing_month=${selectedMonth}`
+            a.download = ''
+            a.click()
+          }}
+          className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors"
+        >
+          <Download className="w-3 h-3" />
+          <span>내보내기</span>
+        </button>
+        <button
+          onClick={() => setShowUnpaidOnly(prev => !prev)}
+          className={`px-2.5 py-0.5 rounded-full text-xs font-medium transition-colors ${
+            showUnpaidOnly
+              ? 'bg-red-100 text-red-700'
+              : 'bg-gray-100 text-gray-500'
+          }`}
+        >
+          {showUnpaidOnly ? '미납' : '전체'}
+        </button>
+      </div>
+
       {/* 학생별 납부 현황 */}
       {grades.map((grade, gradeIndex) => {
         const gradeStudentsAll = grade.classes.flatMap(c =>
@@ -432,20 +458,6 @@ export default function PaymentsPage() {
           <div key={grade.id} className="mb-4">
             <div className="flex items-center mb-2 px-1">
               <h2 className="text-sm font-semibold text-gray-500 flex-1">{grade.name}</h2>
-              {gradeIndex === 0 && (
-                <>
-                  <button
-                    onClick={() => setShowUnpaidOnly(prev => !prev)}
-                    className={`px-2.5 py-0.5 rounded-full text-xs font-medium transition-colors ${
-                      showUnpaidOnly
-                        ? 'bg-red-100 text-red-700'
-                        : 'bg-gray-100 text-gray-500'
-                    }`}
-                  >
-                    {showUnpaidOnly ? '미납' : '전체'}
-                  </button>
-                </>
-              )}
             </div>
             <div className="bg-white rounded-xl border overflow-hidden">
               {grade.classes.map(cls => {
@@ -676,23 +688,6 @@ export default function PaymentsPage() {
           </div>
         )
       })}
-
-      {allStudents.length > 0 && (
-        <div className="flex justify-center mt-4 mb-2">
-          <button
-            onClick={() => {
-              const a = document.createElement('a')
-              a.href = `/api/payments/export?billing_month=${selectedMonth}`
-              a.download = ''
-              a.click()
-            }}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors"
-          >
-            <Download className="w-3 h-3" />
-            <span>내보내기</span>
-          </button>
-        </div>
-      )}
 
       {allStudents.length === 0 && (
         <div className="text-center py-12 text-gray-400">등록된 학생이 없습니다</div>
