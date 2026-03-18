@@ -62,6 +62,9 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
   const btnRef = useRef<HTMLDivElement>(null)
   const initialized = useRef(false)
 
+  // 모바일 하단 탭바 높이 (sm 미만에서만)
+  const getBottomPad = () => (window.innerWidth < 640 ? 68 : 0)
+
   // 초기 위치
   useEffect(() => {
     if (initialized.current) return
@@ -166,7 +169,7 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
     let nx = posRef.current.x + velRef.current.x
     let ny = posRef.current.y + velRef.current.y
     const maxX = window.innerWidth - size
-    const maxY = window.innerHeight - size
+    const maxY = window.innerHeight - size - getBottomPad()
 
     if (nx < 0) { nx = 0; velRef.current.x = Math.abs(velRef.current.x) * bounce }
     if (nx > maxX) { nx = maxX; velRef.current.x = -Math.abs(velRef.current.x) * bounce }
@@ -237,7 +240,7 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
 
     const size = 48
     const nx = Math.max(0, Math.min(window.innerWidth - size, x - size / 2))
-    const ny = Math.max(0, Math.min(window.innerHeight - size, y - size / 2))
+    const ny = Math.max(0, Math.min(window.innerHeight - size - getBottomPad(), y - size / 2))
     posRef.current = { x: nx, y: ny }
     setPos({ x: nx, y: ny })
 
@@ -317,7 +320,7 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
   // 열린/필터 상태
   if (open || aiFilterIds !== null) {
     return (
-      <div className="fixed right-3 z-30" style={{ top: '38%' }}>
+      <div className="fixed right-3 z-[60]" style={{ top: '38%' }}>
         {aiFilterIds !== null ? (
           <div className="flex items-center gap-1 bg-white text-[#1e2d6f] pl-2.5 pr-1.5 py-2 rounded-full shadow-[0_2px_12px_rgba(0,0,0,0.15)] border border-gray-100">
             <GeminiIcon className="w-3.5 h-3.5 shrink-0" />
@@ -374,7 +377,7 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
         return (
           <div
             key={p.id}
-            className="fixed pointer-events-none z-20"
+            className="fixed pointer-events-none z-[55]"
             style={{
               left: p.x,
               top: p.y,
@@ -393,7 +396,7 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
       {/* 메인 버튼 — 제미나이 별 아이콘 */}
       <div
         ref={btnRef}
-        className="fixed z-30 select-none touch-none"
+        className="fixed z-[60] select-none touch-none"
         style={{
           left: pos.x,
           top: pos.y,
