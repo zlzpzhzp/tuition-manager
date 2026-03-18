@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { X, Loader2, ArrowRight } from 'lucide-react'
+import { X, Loader2, ArrowRight, Sparkles } from 'lucide-react'
 
 interface Props {
   aiFilterIds: Set<string> | null
@@ -21,35 +21,20 @@ interface Particle {
   size: number
   hue: number
   id: number
+  /** 꼬리 궤적 */
+  trail: { x: number; y: number }[]
 }
 
-/** 제미나이 4색 별 아이콘 (3D 느낌, 삐죽한 별만) */
-function GeminiIcon({ size = 36 }: { size?: number }) {
-  return (
-    <svg viewBox="0 0 28 28" fill="none" width={size} height={size} style={{ filter: 'drop-shadow(0 2px 6px rgba(66,133,244,0.45)) drop-shadow(0 1px 2px rgba(155,114,203,0.3))' }}>
-      <path
-        d="M14 0C14 7.732 7.732 14 0 14c7.732 0 14 6.268 14 14 0-7.732 6.268-14 14-14C20.268 14 14 7.732 14 0Z"
-        fill="url(#gemini-grad)"
-      />
-      <path
-        d="M14 1.5C14.2 8 8 14.2 1.5 14c6.5.2 12.7 6.2 12.5 12.5C13.8 20 20 13.8 26.5 14 20 14.2 13.8 8 14 1.5Z"
-        fill="url(#gemini-highlight)"
-        opacity="0.35"
-      />
-      <defs>
-        <linearGradient id="gemini-grad" x1="0" y1="0" x2="28" y2="28" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#4285F4" />
-          <stop offset=".33" stopColor="#9B72CB" />
-          <stop offset=".66" stopColor="#D96570" />
-          <stop offset="1" stopColor="#D96570" />
-        </linearGradient>
-        <linearGradient id="gemini-highlight" x1="4" y1="4" x2="24" y2="24" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#ffffff" />
-          <stop offset="1" stopColor="#ffffff" stopOpacity="0" />
-        </linearGradient>
-      </defs>
-    </svg>
-  )
+/** 4각 별 모양 좌표 생성 */
+function starPoints(cx: number, cy: number, outer: number, inner: number): string {
+  const pts: string[] = []
+  for (let i = 0; i < 4; i++) {
+    const aOuter = (Math.PI / 2) * i - Math.PI / 2
+    const aInner = aOuter + Math.PI / 4
+    pts.push(`${cx + Math.cos(aOuter) * outer},${cy + Math.sin(aOuter) * outer}`)
+    pts.push(`${cx + Math.cos(aInner) * inner},${cy + Math.sin(aInner) * inner}`)
+  }
+  return pts.join(' ')
 }
 
 export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, onClear, loading }: Props) {
@@ -84,11 +69,11 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
     setPos({ x, y })
   }, [])
 
-  // ─── 항상 나오는 아이들 파티클 (중앙에서 밖으로 → 아래로 떨어지며 페이드) ───
+  // ─── 항상 나오는 아이들 파티클 (느리고 풍성하게, 꼬리 포함) ───
   useEffect(() => {
     if (open || aiFilterIds !== null) {
       cancelAnimationFrame(idleFrame.current)
-      setParticles(prev => prev.filter(p => p.maxLife < 80)) // 이동 파티클만 유지
+      setParticles(prev => prev.filter(p => p.maxLife < 120))
       return
     }
 
@@ -96,41 +81,50 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
     const tick = () => {
       frameCount++
 
-      // 3~5프레임마다 1개 생성
-      if (frameCount % (3 + Math.floor(Math.random() * 3)) === 0) {
+      // 2~3프레임마다 1개 생성 (더 풍성)
+      if (frameCount % (2 + Math.floor(Math.random() * 2)) === 0) {
         const cx = posRef.current.x + 24
         const cy = posRef.current.y + 24
         const angle = Math.random() * Math.PI * 2
-        const r = Math.random() * 4
-        const life = 50 + Math.random() * 40
+        const r = Math.random() * 6
+        const life = 90 + Math.random() * 70 // 더 오래 살기
 
         setParticles(prev => {
+          const startX = cx + Math.cos(angle) * r
+          const startY = cy + Math.sin(angle) * r
           const next = [...prev, {
-            x: cx + Math.cos(angle) * r,
-            y: cy + Math.sin(angle) * r,
-            vx: Math.cos(angle) * (0.3 + Math.random() * 0.6),
-            vy: Math.sin(angle) * (0.2 + Math.random() * 0.4) + 0.15,
+            x: startX,
+            y: startY,
+            vx: Math.cos(angle) * (0.15 + Math.random() * 0.35), // 느린 속도
+            vy: Math.sin(angle) * (0.1 + Math.random() * 0.25) + 0.08,
             life,
             maxLife: life,
-            size: 1.5 + Math.random() * 3,
+            size: 1.5 + Math.random() * 2.5,
             hue: 210 + Math.random() * 50,
             id: particleId.current++,
+            trail: [{ x: startX, y: startY }],
           }]
-          return next.slice(-40)
+          return next.slice(-60)
         })
       }
 
       // 물리 업데이트
       setParticles(prev =>
         prev
-          .map(p => ({
-            ...p,
-            x: p.x + p.vx,
-            y: p.y + p.vy,
-            vy: p.vy + 0.015, // 중력
-            vx: p.vx * 0.99,
-            life: p.life - 1,
-          }))
+          .map(p => {
+            const nx = p.x + p.vx
+            const ny = p.y + p.vy
+            const trail = [...p.trail, { x: nx, y: ny }].slice(-8) // 꼬리 8프레임
+            return {
+              ...p,
+              x: nx,
+              y: ny,
+              vy: p.vy + 0.008, // 약한 중력
+              vx: p.vx * 0.995,
+              life: p.life - 0.6, // 느리게 소멸
+              trail,
+            }
+          })
           .filter(p => p.life > 0)
       )
 
@@ -147,18 +141,21 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
     const result: Particle[] = []
     for (let i = 0; i < count; i++) {
       const angle = Math.random() * Math.PI * 2
-      const spread = 1 + Math.random() * 3
-      const life = 35 + Math.random() * 45
+      const spread = 0.8 + Math.random() * 2
+      const life = 60 + Math.random() * 60
+      const px = cx + 24 + (Math.random() - 0.5) * 18
+      const py = cy + 24 + (Math.random() - 0.5) * 18
       result.push({
-        x: cx + 24 + (Math.random() - 0.5) * 18,
-        y: cy + 24 + (Math.random() - 0.5) * 18,
-        vx: Math.cos(angle) * spread - velRef.current.x * 0.04,
-        vy: Math.sin(angle) * spread - velRef.current.y * 0.04,
+        x: px,
+        y: py,
+        vx: Math.cos(angle) * spread - velRef.current.x * 0.03,
+        vy: Math.sin(angle) * spread - velRef.current.y * 0.03,
         life,
         maxLife: life,
-        size: 2 + Math.random() * 5,
+        size: 1.5 + Math.random() * 3,
         hue: 210 + Math.random() * 50,
         id: particleId.current++,
+        trail: [{ x: px, y: py }],
       })
     }
     return result
@@ -197,14 +194,19 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
 
     // 파티클 물리
     setParticles(prev =>
-      prev.map(p => ({
-        ...p,
-        x: p.x + p.vx,
-        y: p.y + p.vy,
-        vx: p.vx * 0.97,
-        vy: p.vy * 0.97 + 0.02,
-        life: p.life - 1,
-      })).filter(p => p.life > 0)
+      prev.map(p => {
+        const nx2 = p.x + p.vx
+        const ny2 = p.y + p.vy
+        return {
+          ...p,
+          x: nx2,
+          y: ny2,
+          vx: p.vx * 0.97,
+          vy: p.vy * 0.97 + 0.01,
+          life: p.life - 0.8,
+          trail: [...p.trail, { x: nx2, y: ny2 }].slice(-8),
+        }
+      }).filter(p => p.life > 0)
     )
 
     if (speed > 0.3) {
@@ -261,18 +263,21 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
       const newP: Particle[] = []
       for (let i = 0; i < count; i++) {
         const angle = Math.random() * Math.PI * 2
-        const spread = 0.5 + Math.random() * 2.5
-        const life = 30 + Math.random() * 40
+        const spread = 0.4 + Math.random() * 1.8
+        const life = 50 + Math.random() * 50
+        const px = nx + 24 + (Math.random() - 0.5) * 20
+        const py = ny + 24 + (Math.random() - 0.5) * 20
         newP.push({
-          x: nx + 24 + (Math.random() - 0.5) * 20,
-          y: ny + 24 + (Math.random() - 0.5) * 20,
+          x: px,
+          y: py,
           vx: Math.cos(angle) * spread,
           vy: Math.sin(angle) * spread,
           life,
           maxLife: life,
-          size: 2 + Math.random() * 5,
+          size: 1.5 + Math.random() * 3,
           hue: 210 + Math.random() * 50,
           id: particleId.current++,
+          trail: [{ x: px, y: py }],
         })
       }
       setParticles(prev => [...prev, ...newP].slice(-80))
@@ -332,7 +337,7 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
       <div className="fixed right-3 z-[60]" style={{ top: '38%' }}>
         {aiFilterIds !== null ? (
           <div className="flex items-center gap-1 bg-white text-[#1e2d6f] pl-2.5 pr-1.5 py-2 rounded-full shadow-[0_2px_12px_rgba(0,0,0,0.15)] border border-gray-100">
-            <GeminiIcon size={14} />
+            <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
             <span className="text-[10px] font-medium max-w-[100px] truncate">{aiFilterDesc}</span>
             <button onClick={handleClear} className="p-0.5 hover:bg-gray-100 rounded-full ml-0.5" aria-label="필터 해제">
               <X className="w-3.5 h-3.5 text-gray-400" />
@@ -376,33 +381,46 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
 
   return (
     <>
-      {/* 스타더스트 파티클 */}
-      {particles.map(p => {
-        const progress = p.life / p.maxLife
-        // 부드러운 페이드: 생성 시 서서히 나타나고, 소멸 시 서서히 사라짐
-        const fadeIn = Math.min(1, (p.maxLife - p.life) / 8)
-        const fadeOut = progress
-        const opacity = fadeIn * fadeOut
-        return (
-          <div
-            key={p.id}
-            className="fixed pointer-events-none z-[55]"
-            style={{
-              left: p.x,
-              top: p.y,
-              width: p.size,
-              height: p.size,
-              opacity: opacity * 0.85,
-              borderRadius: '50%',
-              background: `radial-gradient(circle, hsla(${p.hue},85%,78%,1) 0%, hsla(${p.hue},75%,65%,0.5) 50%, transparent 70%)`,
-              boxShadow: `0 0 ${p.size * 2.5}px hsla(${p.hue},85%,72%,${opacity * 0.5}), 0 0 ${p.size}px hsla(${p.hue},90%,80%,${opacity * 0.3})`,
-              transform: `translate(-50%, -50%) scale(${0.4 + progress * 0.6})`,
-            }}
-          />
-        )
-      })}
+      {/* 스타더스트 파티클 + 꼬리 */}
+      <svg className="fixed inset-0 pointer-events-none z-[55]" width="100%" height="100%">
+        {particles.map(p => {
+          const progress = p.life / p.maxLife
+          const fadeIn = Math.min(1, (p.maxLife - p.life) / 12)
+          const fadeOut = progress
+          const opacity = fadeIn * fadeOut
 
-      {/* 메인 버튼 — 제미나이 별 아이콘 */}
+          return (
+            <g key={p.id}>
+              {/* 꼬리 (polyline) */}
+              {p.trail.length > 1 && (
+                <polyline
+                  points={p.trail.map(t => `${t.x},${t.y}`).join(' ')}
+                  fill="none"
+                  stroke={`hsla(${p.hue},80%,75%,${opacity * 0.4})`}
+                  strokeWidth={p.size * 0.6}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              )}
+              {/* 별 본체 — 4각 별 모양 */}
+              <polygon
+                points={starPoints(p.x, p.y, p.size, p.size * 0.4)}
+                fill={`hsla(${p.hue},80%,78%,${opacity * 0.9})`}
+                style={{ filter: `blur(${p.size * 0.15}px)` }}
+              />
+              {/* 글로우 */}
+              <circle
+                cx={p.x}
+                cy={p.y}
+                r={p.size * 0.8}
+                fill={`hsla(${p.hue},85%,80%,${opacity * 0.25})`}
+              />
+            </g>
+          )
+        })}
+      </svg>
+
+      {/* 메인 버튼 — Sparkles 아이콘 */}
       <div
         ref={btnRef}
         className="fixed z-[60] select-none touch-none"
@@ -421,16 +439,13 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
               setTimeout(() => inputRef.current?.focus(), 100)
             }
           }}
-          className="ai-float-btn relative"
+          className="ai-float-btn relative flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-300/40"
           style={{
             animation: speed > 1 ? 'none' : undefined,
-            background: 'transparent',
-            border: 'none',
-            padding: 0,
           }}
           aria-label="AI 필터 열기"
         >
-          <GeminiIcon size={38} />
+          <Sparkles className="w-6 h-6 text-white" strokeWidth={2} />
         </button>
       </div>
     </>
