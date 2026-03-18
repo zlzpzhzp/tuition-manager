@@ -30,31 +30,6 @@ interface Props {
   loading: boolean
 }
 
-interface Particle {
-  x: number
-  y: number
-  vx: number
-  vy: number
-  life: number
-  maxLife: number
-  size: number
-  hue: number
-  id: number
-  trail: { x: number; y: number }[]
-}
-
-/** 4각 별 모양 좌표 생성 */
-function starPoints(cx: number, cy: number, outer: number, inner: number): string {
-  const pts: string[] = []
-  for (let i = 0; i < 4; i++) {
-    const aOuter = (Math.PI / 2) * i - Math.PI / 2
-    const aInner = aOuter + Math.PI / 4
-    pts.push(`${cx + Math.cos(aOuter) * outer},${cy + Math.sin(aOuter) * outer}`)
-    pts.push(`${cx + Math.cos(aInner) * inner},${cy + Math.sin(aInner) * inner}`)
-  }
-  return pts.join(' ')
-}
-
 export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, onClear, loading }: Props) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
@@ -62,15 +37,12 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
 
   // 물리 상태
   const [pos, setPos] = useState({ x: 0, y: 0 })
-  const [particles, setParticles] = useState<Particle[]>([])
   const velRef = useRef({ x: 0, y: 0 })
   const dragging = useRef(false)
   const lastTouch = useRef({ x: 0, y: 0, t: 0 })
   const prevTouch = useRef({ x: 0, y: 0, t: 0 })
   const posRef = useRef({ x: 0, y: 0 })
   const animFrame = useRef<number>(0)
-  const idleFrame = useRef<number>(0)
-  const particleId = useRef(0)
   const btnRef = useRef<HTMLDivElement>(null)
   const initialized = useRef(false)
 
@@ -86,96 +58,7 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
     setPos({ x, y })
   }, [])
 
-  // ─── 페이지 숨김 시 파티클 정지 ───
-  useEffect(() => {
-    const handler = () => {
-      if (document.hidden) cancelAnimationFrame(idleFrame.current)
-    }
-    document.addEventListener('visibilitychange', handler)
-    return () => document.removeEventListener('visibilitychange', handler)
-  }, [])
-
-  // ─── 아이들 파티클 (경량화: 4~5프레임 간격, max 35, 꼬리 5) ───
-  useEffect(() => {
-    if (open || aiFilterIds !== null) {
-      cancelAnimationFrame(idleFrame.current)
-      setParticles(prev => prev.filter(p => p.maxLife < 120))
-      return
-    }
-
-    let frameCount = 0
-    const tick = () => {
-      frameCount++
-
-      if (frameCount % (4 + Math.floor(Math.random() * 2)) === 0) {
-        const cx = posRef.current.x + 24
-        const cy = posRef.current.y + 24
-        const angle = Math.random() * Math.PI * 2
-        const r = Math.random() * 6
-        const life = 80 + Math.random() * 50
-
-        setParticles(prev => {
-          const startX = cx + Math.cos(angle) * r
-          const startY = cy + Math.sin(angle) * r
-          const next = [...prev, {
-            x: startX,
-            y: startY,
-            vx: Math.cos(angle) * (0.15 + Math.random() * 0.35),
-            vy: Math.sin(angle) * (0.15 + Math.random() * 0.35),
-            life,
-            maxLife: life,
-            size: 1.5 + Math.random() * 2.5,
-            hue: 210 + Math.random() * 50,
-            id: particleId.current++,
-            trail: [{ x: startX, y: startY }],
-          }]
-          return next.slice(-35)
-        })
-      }
-
-      setParticles(prev =>
-        prev
-          .map(p => {
-            const nx = p.x + p.vx
-            const ny = p.y + p.vy
-            const trail = [...p.trail, { x: nx, y: ny }].slice(-5)
-            return { ...p, x: nx, y: ny, vy: p.vy * 0.995, vx: p.vx * 0.995, life: p.life - 0.7, trail }
-          })
-          .filter(p => p.life > 0)
-      )
-
-      idleFrame.current = requestAnimationFrame(tick)
-    }
-
-    idleFrame.current = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(idleFrame.current)
-  }, [open, aiFilterIds])
-
-  // ─── 이동 파티클 생성 ───
-  const spawnMoveParticles = useCallback((cx: number, cy: number, speed: number) => {
-    const count = Math.min(Math.floor(speed / 3) + 1, 4)
-    const result: Particle[] = []
-    for (let i = 0; i < count; i++) {
-      const angle = Math.random() * Math.PI * 2
-      const spread = 0.8 + Math.random() * 2
-      const life = 50 + Math.random() * 50
-      const px = cx + 24 + (Math.random() - 0.5) * 18
-      const py = cy + 24 + (Math.random() - 0.5) * 18
-      result.push({
-        x: px, y: py,
-        vx: Math.cos(angle) * spread - velRef.current.x * 0.03,
-        vy: Math.sin(angle) * spread - velRef.current.y * 0.03,
-        life, maxLife: life,
-        size: 1.5 + Math.random() * 3,
-        hue: 210 + Math.random() * 50,
-        id: particleId.current++,
-        trail: [{ x: px, y: py }],
-      })
-    }
-    return result
-  }, [])
-
-  // ─── 물리 시뮬레이션 ───
+  // ─── 물리 시뮬레이션 (관성 + 벽 탄성) ───
   const simulate = useCallback(() => {
     if (dragging.current) return
 
@@ -200,32 +83,12 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
     setPos({ x: nx, y: ny })
 
     const speed = Math.sqrt(velRef.current.x ** 2 + velRef.current.y ** 2)
-
-    if (speed > 2) {
-      const spawned = spawnMoveParticles(nx, ny, speed)
-      setParticles(prev => [...prev, ...spawned].slice(-50))
-    }
-
-    setParticles(prev =>
-      prev.map(p => {
-        const nx2 = p.x + p.vx
-        const ny2 = p.y + p.vy
-        return {
-          ...p, x: nx2, y: ny2,
-          vx: p.vx * 0.97, vy: p.vy * 0.97 + 0.01,
-          life: p.life - 0.8,
-          trail: [...p.trail, { x: nx2, y: ny2 }].slice(-5),
-        }
-      }).filter(p => p.life > 0)
-    )
-
     if (speed > 0.3) {
       animFrame.current = requestAnimationFrame(simulate)
     } else {
       velRef.current = { x: 0, y: 0 }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [spawnMoveParticles])
+  }, [])
 
   // ─── 터치/마우스 ───
   const getXY = (e: React.TouchEvent | React.MouseEvent) => {
@@ -264,32 +127,6 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
     const ny = Math.max(0, Math.min(window.innerHeight - size - getBottomPad(), y - size / 2))
     posRef.current = { x: nx, y: ny }
     setPos({ x: nx, y: ny })
-
-    const dx = x - prevTouch.current.x
-    const dy = y - prevTouch.current.y
-    const speed = Math.sqrt(dx * dx + dy * dy)
-    if (speed > 1.5) {
-      const count = Math.min(Math.floor(speed / 3) + 1, 4)
-      const newP: Particle[] = []
-      for (let i = 0; i < count; i++) {
-        const angle = Math.random() * Math.PI * 2
-        const spread = 0.4 + Math.random() * 1.8
-        const life = 40 + Math.random() * 40
-        const px = nx + 24 + (Math.random() - 0.5) * 20
-        const py = ny + 24 + (Math.random() - 0.5) * 20
-        newP.push({
-          x: px, y: py,
-          vx: Math.cos(angle) * spread,
-          vy: Math.sin(angle) * spread,
-          life, maxLife: life,
-          size: 1.5 + Math.random() * 3,
-          hue: 210 + Math.random() * 50,
-          id: particleId.current++,
-          trail: [{ x: px, y: py }],
-        })
-      }
-      setParticles(prev => [...prev, ...newP].slice(-50))
-    }
   }, [])
 
   const handleEnd = useCallback(() => {
@@ -358,34 +195,35 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
 
   return (
     <>
-      {/* 스타더스트 파티클 (경량화: circle only, no blur) */}
-      <svg className="fixed inset-0 pointer-events-none z-[55]" width="100%" height="100%">
-        {particles.map(p => {
-          const progress = p.life / p.maxLife
-          const fadeIn = Math.min(1, (p.maxLife - p.life) / 12)
-          const fadeOut = progress
-          const opacity = fadeIn * fadeOut
-
-          return (
-            <g key={p.id}>
-              {p.trail.length > 1 && (
-                <polyline
-                  points={p.trail.map(t => `${t.x},${t.y}`).join(' ')}
-                  fill="none"
-                  stroke={`hsla(${p.hue},80%,75%,${opacity * 0.35})`}
-                  strokeWidth={p.size * 0.5}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              )}
-              <polygon
-                points={starPoints(p.x, p.y, p.size, p.size * 0.4)}
-                fill={`hsla(${p.hue},80%,78%,${opacity * 0.9})`}
-              />
-            </g>
-          )
-        })}
-      </svg>
+      {/* 글레어 키프레임 */}
+      <style>{`
+        @keyframes glare-sweep {
+          0% { transform: translateX(-100%) rotate(25deg); }
+          100% { transform: translateX(200%) rotate(25deg); }
+        }
+        .ai-glare {
+          position: relative;
+          overflow: hidden;
+        }
+        .ai-glare::after {
+          content: '';
+          position: absolute;
+          top: -50%;
+          left: -50%;
+          width: 40%;
+          height: 200%;
+          background: linear-gradient(
+            90deg,
+            transparent 0%,
+            rgba(255,255,255,0) 30%,
+            rgba(255,255,255,0.45) 50%,
+            rgba(255,255,255,0) 70%,
+            transparent 100%
+          );
+          animation: glare-sweep 3.5s ease-in-out infinite;
+          pointer-events: none;
+        }
+      `}</style>
 
       {/* 메인 버튼 + 검색바 */}
       <div
@@ -459,11 +297,12 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
               }
             }}
             disabled={open && loading}
-            className={`ai-float-btn shrink-0 flex items-center justify-center rounded-full disabled:opacity-50 ${open ? 'bg-white/15 text-white' : ''}`}
+            className={`shrink-0 flex items-center justify-center rounded-full disabled:opacity-50 ${
+              open ? 'bg-white/15 text-white' : 'ai-glare'
+            }`}
             style={{
               width: BTN,
               height: BTN,
-              animation: !open && speed > 1 ? 'none' : undefined,
             }}
             aria-label={open ? 'AI 필터 실행' : 'AI 필터 열기'}
           >

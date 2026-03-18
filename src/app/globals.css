@@ -40,21 +40,3 @@ body {
 .fan-item:nth-child(3) { animation-delay: 120ms; }
 .fan-item:nth-child(4) { animation-delay: 180ms; }
 
-@keyframes sparkle {
-  0%, 100% { box-shadow: 0 2px 12px rgba(0,0,0,0.15); }
-  50% { box-shadow: 0 2px 20px rgba(30,45,111,0.35), 0 0 8px rgba(30,45,111,0.15); }
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-4px); }
-}
-
-.ai-float-btn {
-  animation: sparkle 3s ease-in-out infinite, float 4s ease-in-out infinite;
-}
-
-@keyframes shimmer {
-  0%, 100% { opacity: 0.3; transform: rotate(0deg); }
-  50% { opacity: 0.8; transform: rotate(180deg); }
-}
