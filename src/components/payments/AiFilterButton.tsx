@@ -3,20 +3,20 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { X, Loader2, ArrowRight } from 'lucide-react'
 
-/** 디엠학원 DM 마크 SVG */
-function DmMark({ size = 18, className = '' }: { size?: number; className?: string }) {
+/** 앱 마크 — 네이비 배경 + 실버 W */
+function AppMark({ size = 18 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className}>
+    <svg width={size} height={size} viewBox="0 0 24 24">
+      <rect width="24" height="24" rx="5" fill="#1e2d6f" />
       <text
-        x="12" y="16.5"
+        x="12" y="16"
         textAnchor="middle"
         fontFamily="system-ui, -apple-system, sans-serif"
         fontSize="13"
-        fontWeight="800"
-        letterSpacing="-0.5"
-        fill="currentColor"
+        fontWeight="700"
+        fill="#c8c5be"
       >
-        DM
+        W
       </text>
     </svg>
   )
@@ -40,7 +40,6 @@ interface Particle {
   size: number
   hue: number
   id: number
-  /** 꼬리 궤적 */
   trail: { x: number; y: number }[]
 }
 
@@ -75,7 +74,6 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
   const btnRef = useRef<HTMLDivElement>(null)
   const initialized = useRef(false)
 
-  // 모바일 하단 탭바 높이 (sm 미만에서만)
   const getBottomPad = () => (window.innerWidth < 640 ? 68 : 0)
 
   // 초기 위치
@@ -88,7 +86,16 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
     setPos({ x, y })
   }, [])
 
-  // ─── 항상 나오는 아이들 파티클 (느리고 풍성하게, 꼬리 포함) ───
+  // ─── 페이지 숨김 시 파티클 정지 ───
+  useEffect(() => {
+    const handler = () => {
+      if (document.hidden) cancelAnimationFrame(idleFrame.current)
+    }
+    document.addEventListener('visibilitychange', handler)
+    return () => document.removeEventListener('visibilitychange', handler)
+  }, [])
+
+  // ─── 아이들 파티클 (경량화: 4~5프레임 간격, max 35, 꼬리 5) ───
   useEffect(() => {
     if (open || aiFilterIds !== null) {
       cancelAnimationFrame(idleFrame.current)
@@ -100,13 +107,12 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
     const tick = () => {
       frameCount++
 
-      // 2~3프레임마다 1개 생성 (더 풍성)
-      if (frameCount % (2 + Math.floor(Math.random() * 2)) === 0) {
+      if (frameCount % (4 + Math.floor(Math.random() * 2)) === 0) {
         const cx = posRef.current.x + 24
         const cy = posRef.current.y + 24
         const angle = Math.random() * Math.PI * 2
         const r = Math.random() * 6
-        const life = 90 + Math.random() * 70 // 더 오래 살기
+        const life = 80 + Math.random() * 50
 
         setParticles(prev => {
           const startX = cx + Math.cos(angle) * r
@@ -114,7 +120,7 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
           const next = [...prev, {
             x: startX,
             y: startY,
-            vx: Math.cos(angle) * (0.15 + Math.random() * 0.35), // 느린 속도
+            vx: Math.cos(angle) * (0.15 + Math.random() * 0.35),
             vy: Math.sin(angle) * (0.15 + Math.random() * 0.35),
             life,
             maxLife: life,
@@ -123,26 +129,17 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
             id: particleId.current++,
             trail: [{ x: startX, y: startY }],
           }]
-          return next.slice(-60)
+          return next.slice(-35)
         })
       }
 
-      // 물리 업데이트
       setParticles(prev =>
         prev
           .map(p => {
             const nx = p.x + p.vx
             const ny = p.y + p.vy
-            const trail = [...p.trail, { x: nx, y: ny }].slice(-8) // 꼬리 8프레임
-            return {
-              ...p,
-              x: nx,
-              y: ny,
-              vy: p.vy * 0.995, // 중력 없이 자연 감속
-              vx: p.vx * 0.995,
-              life: p.life - 0.6, // 느리게 소멸
-              trail,
-            }
+            const trail = [...p.trail, { x: nx, y: ny }].slice(-5)
+            return { ...p, x: nx, y: ny, vy: p.vy * 0.995, vx: p.vx * 0.995, life: p.life - 0.7, trail }
           })
           .filter(p => p.life > 0)
       )
@@ -156,21 +153,19 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
 
   // ─── 이동 파티클 생성 ───
   const spawnMoveParticles = useCallback((cx: number, cy: number, speed: number) => {
-    const count = Math.min(Math.floor(speed / 2.5) + 1, 6)
+    const count = Math.min(Math.floor(speed / 3) + 1, 4)
     const result: Particle[] = []
     for (let i = 0; i < count; i++) {
       const angle = Math.random() * Math.PI * 2
       const spread = 0.8 + Math.random() * 2
-      const life = 60 + Math.random() * 60
+      const life = 50 + Math.random() * 50
       const px = cx + 24 + (Math.random() - 0.5) * 18
       const py = cy + 24 + (Math.random() - 0.5) * 18
       result.push({
-        x: px,
-        y: py,
+        x: px, y: py,
         vx: Math.cos(angle) * spread - velRef.current.x * 0.03,
         vy: Math.sin(angle) * spread - velRef.current.y * 0.03,
-        life,
-        maxLife: life,
+        life, maxLife: life,
         size: 1.5 + Math.random() * 3,
         hue: 210 + Math.random() * 50,
         id: particleId.current++,
@@ -180,7 +175,7 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
     return result
   }, [])
 
-  // ─── 물리 시뮬레이션 (관성 + 벽 탄성) ───
+  // ─── 물리 시뮬레이션 ───
   const simulate = useCallback(() => {
     if (dragging.current) return
 
@@ -208,22 +203,18 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
 
     if (speed > 2) {
       const spawned = spawnMoveParticles(nx, ny, speed)
-      setParticles(prev => [...prev, ...spawned].slice(-80))
+      setParticles(prev => [...prev, ...spawned].slice(-50))
     }
 
-    // 파티클 물리
     setParticles(prev =>
       prev.map(p => {
         const nx2 = p.x + p.vx
         const ny2 = p.y + p.vy
         return {
-          ...p,
-          x: nx2,
-          y: ny2,
-          vx: p.vx * 0.97,
-          vy: p.vy * 0.97 + 0.01,
+          ...p, x: nx2, y: ny2,
+          vx: p.vx * 0.97, vy: p.vy * 0.97 + 0.01,
           life: p.life - 0.8,
-          trail: [...p.trail, { x: nx2, y: ny2 }].slice(-8),
+          trail: [...p.trail, { x: nx2, y: ny2 }].slice(-5),
         }
       }).filter(p => p.life > 0)
     )
@@ -278,28 +269,26 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
     const dy = y - prevTouch.current.y
     const speed = Math.sqrt(dx * dx + dy * dy)
     if (speed > 1.5) {
-      const count = Math.min(Math.floor(speed / 3) + 1, 5)
+      const count = Math.min(Math.floor(speed / 3) + 1, 4)
       const newP: Particle[] = []
       for (let i = 0; i < count; i++) {
         const angle = Math.random() * Math.PI * 2
         const spread = 0.4 + Math.random() * 1.8
-        const life = 50 + Math.random() * 50
+        const life = 40 + Math.random() * 40
         const px = nx + 24 + (Math.random() - 0.5) * 20
         const py = ny + 24 + (Math.random() - 0.5) * 20
         newP.push({
-          x: px,
-          y: py,
+          x: px, y: py,
           vx: Math.cos(angle) * spread,
           vy: Math.sin(angle) * spread,
-          life,
-          maxLife: life,
+          life, maxLife: life,
           size: 1.5 + Math.random() * 3,
           hue: 210 + Math.random() * 50,
           id: particleId.current++,
           trail: [{ x: px, y: py }],
         })
       }
-      setParticles(prev => [...prev, ...newP].slice(-80))
+      setParticles(prev => [...prev, ...newP].slice(-50))
     }
   }, [])
 
@@ -350,14 +339,14 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
 
   const speed = Math.sqrt(velRef.current.x ** 2 + velRef.current.y ** 2)
 
-  const BTN = 34 // 버튼 크기 (px) — 플로팅 & 검색바 submit 동일
+  const BTN = 34
 
   // 필터 적용 상태 (배지)
   if (aiFilterIds !== null) {
     return (
       <div className="fixed right-3 z-[60]" style={{ top: '38%' }}>
         <div className="flex items-center gap-1 bg-white text-[#1e2d6f] pl-2.5 pr-1.5 py-2 rounded-full shadow-[0_2px_12px_rgba(0,0,0,0.15)] border border-gray-100">
-          <DmMark size={14} className="text-indigo-500" />
+          <AppMark size={14} />
           <span className="text-[10px] font-medium max-w-[100px] truncate">{aiFilterDesc}</span>
           <button onClick={handleClear} className="p-0.5 hover:bg-gray-100 rounded-full ml-0.5" aria-label="필터 해제">
             <X className="w-3.5 h-3.5 text-gray-400" />
@@ -369,7 +358,7 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
 
   return (
     <>
-      {/* 스타더스트 파티클 + 꼬리 */}
+      {/* 스타더스트 파티클 (경량화: circle only, no blur) */}
       <svg className="fixed inset-0 pointer-events-none z-[55]" width="100%" height="100%">
         {particles.map(p => {
           const progress = p.life / p.maxLife
@@ -383,8 +372,8 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
                 <polyline
                   points={p.trail.map(t => `${t.x},${t.y}`).join(' ')}
                   fill="none"
-                  stroke={`hsla(${p.hue},80%,75%,${opacity * 0.4})`}
-                  strokeWidth={p.size * 0.6}
+                  stroke={`hsla(${p.hue},80%,75%,${opacity * 0.35})`}
+                  strokeWidth={p.size * 0.5}
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />
@@ -392,20 +381,13 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
               <polygon
                 points={starPoints(p.x, p.y, p.size, p.size * 0.4)}
                 fill={`hsla(${p.hue},80%,78%,${opacity * 0.9})`}
-                style={{ filter: `blur(${p.size * 0.15}px)` }}
-              />
-              <circle
-                cx={p.x}
-                cy={p.y}
-                r={p.size * 0.8}
-                fill={`hsla(${p.hue},85%,80%,${opacity * 0.25})`}
               />
             </g>
           )
         })}
       </svg>
 
-      {/* 메인 버튼 + 검색바 (좌측 슬라이드) */}
+      {/* 메인 버튼 + 검색바 */}
       <div
         ref={btnRef}
         className="fixed z-[60] select-none touch-none"
@@ -424,13 +406,13 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
             height: BTN,
             transition: 'width 0.35s cubic-bezier(0.4,0,0.2,1), box-shadow 0.35s ease, background-color 0.3s ease',
             width: open ? 260 : BTN,
-            backgroundColor: open ? '#4338ca' : undefined,
+            backgroundColor: open ? '#1e2d6f' : undefined,
             boxShadow: open
-              ? '0 2px 16px rgba(67,56,202,0.35)'
-              : '0 4px 14px rgba(99,102,241,0.35)',
+              ? '0 2px 16px rgba(30,45,111,0.4)'
+              : '0 4px 14px rgba(30,45,111,0.3)',
           }}
         >
-          {/* 검색 입력 — open일 때만 보임 */}
+          {/* 검색 입력 */}
           <div
             style={{
               overflow: 'hidden',
@@ -448,17 +430,17 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
                 if (e.key === 'Escape') { setOpen(false); setQuery('') }
               }}
               placeholder="미납학생, 결제일 15일..."
-              className="text-xs w-full outline-none bg-transparent pl-3 pr-1 text-white placeholder:text-indigo-200"
+              className="text-xs w-full outline-none bg-transparent pl-3 pr-1 text-white placeholder:text-[#c8c5be]/60"
               style={{ height: BTN }}
               aria-label="AI 필터 검색어"
             />
           </div>
 
-          {/* 닫기 버튼 — open일 때 */}
+          {/* 닫기 버튼 */}
           {open && (
             <button
               onClick={() => { setOpen(false); setQuery('') }}
-              className="shrink-0 flex items-center justify-center text-indigo-200 hover:text-white"
+              className="shrink-0 flex items-center justify-center text-[#c8c5be] hover:text-white"
               style={{ width: 28, height: BTN }}
               aria-label="닫기"
             >
@@ -466,7 +448,7 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
             </button>
           )}
 
-          {/* 메인 원형 버튼 (플로팅 = Sparkles, 열린 상태 = 실행) */}
+          {/* 메인 원형 버튼 */}
           <button
             onClick={() => {
               if (open) {
@@ -477,7 +459,7 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
               }
             }}
             disabled={open && loading}
-            className={`ai-float-btn shrink-0 flex items-center justify-center rounded-full text-white disabled:opacity-50 ${open ? 'bg-white/20' : 'bg-gradient-to-br from-indigo-500 to-purple-600'}`}
+            className={`ai-float-btn shrink-0 flex items-center justify-center rounded-full disabled:opacity-50 ${open ? 'bg-white/15 text-white' : ''}`}
             style={{
               width: BTN,
               height: BTN,
@@ -487,7 +469,7 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
           >
             {open
               ? (loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />)
-              : <DmMark size={20} />
+              : <AppMark size={BTN} />
             }
           </button>
         </div>

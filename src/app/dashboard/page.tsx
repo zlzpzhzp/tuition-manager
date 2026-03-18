@@ -268,7 +268,7 @@ export default function DashboardPage() {
                       className="h-full rounded-full transition-all duration-500"
                       style={{
                         width: `${Math.max((c.count / maxCount) * 100, 8)}%`,
-                        background: `linear-gradient(90deg, #6366f1, #8b5cf6)`,
+                        background: `linear-gradient(90deg, #1e2d6f, #2d4298)`,
                       }}
                     />
                     <span className="absolute inset-y-0 right-2 flex items-center text-xs font-bold text-gray-500">
