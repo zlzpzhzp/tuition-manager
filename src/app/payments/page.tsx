@@ -401,8 +401,10 @@ export default function PaymentsPage() {
           <ChevronLeft className="w-7 h-7" />
         </button>
         <h1 className="font-extrabold tracking-tight text-center">
-          <span className="text-lg sm:text-xl text-gray-400">{selectedMonth.split('-')[0]}년 </span>
-          <span className="text-4xl sm:text-5xl">{parseInt(selectedMonth.split('-')[1])}월</span>
+          <span className="text-4xl sm:text-5xl">{selectedMonth.split('-')[0]}</span>
+          <span className="text-lg sm:text-xl text-gray-400">년 </span>
+          <span className="text-4xl sm:text-5xl">{parseInt(selectedMonth.split('-')[1])}</span>
+          <span className="text-lg sm:text-xl text-gray-400">월</span>
         </h1>
         <button onClick={() => navigateMonth(1)} className="p-2 hover:bg-gray-100 rounded-lg" aria-label="다음 달">
           <ChevronRight className="w-7 h-7" />
