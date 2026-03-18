@@ -249,8 +249,8 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
   if (aiFilterIds !== null) {
     return (
       <div className="fixed right-3 z-[60]" style={{ top: '38%' }}>
-        <div className="flex items-center gap-1.5 bg-white text-[#1e2d6f] pl-2 pr-1.5 py-1.5 rounded-full shadow-[0_2px_12px_rgba(0,0,0,0.15)] border border-gray-100">
-          <FairyIcon size={14} color="#1e2d6f" />
+        <div className="flex items-center gap-1.5 bg-white text-[#7c3aed] pl-2 pr-1.5 py-1.5 rounded-full shadow-[0_2px_12px_rgba(0,0,0,0.15)] border border-gray-100">
+          <FairyIcon size={14} color="#7c3aed" />
           <span className="text-[10px] font-medium max-w-[100px] truncate">{aiFilterDesc}</span>
           <button onClick={handleClear} className="p-0.5 hover:bg-gray-100 rounded-full ml-0.5" aria-label="필터 해제">
             <X className="w-3.5 h-3.5 text-gray-400" />
@@ -272,7 +272,7 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
             <polygon
               key={p.id}
               points={starPoints(p.x, p.y, p.size, p.size * 0.4)}
-              fill={`rgba(30,45,111,${opacity * 0.35})`}
+              fill={`rgba(124,58,237,${opacity * 0.45})`}
             />
           )
         })}
@@ -297,9 +297,9 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
             height: BTN,
             transition: 'width 0.35s cubic-bezier(0.4,0,0.2,1), box-shadow 0.35s ease, background-color 0.3s ease',
             width: open ? 260 : BTN,
-            backgroundColor: open ? '#1e2d6f' : undefined,
+            backgroundColor: open ? '#7c3aed' : undefined,
             boxShadow: open
-              ? '0 2px 16px rgba(30,45,111,0.4)'
+              ? '0 2px 16px rgba(124,58,237,0.4)'
               : 'none',
             overflow: open ? 'hidden' : 'visible',
           }}
@@ -359,7 +359,7 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
           >
             {open
               ? (loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />)
-              : <FairyIcon size={28} color="#1e2d6f" />
+              : <FairyIcon size={28} color="#7c3aed" />
             }
           </button>
         </div>
