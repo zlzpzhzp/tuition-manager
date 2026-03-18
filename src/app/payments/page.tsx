@@ -396,16 +396,18 @@ export default function PaymentsPage() {
   return (
     <div onClick={() => { if (swipeOpenId) closeSwipeEdit() }}>
       {/* 월 네비게이션 */}
-      <div className="flex items-center justify-center gap-4 mb-4">
+      <div className="flex items-center justify-center gap-3 mb-3">
         <button onClick={() => navigateMonth(-1)} className="p-2 hover:bg-gray-100 rounded-lg" aria-label="이전 달">
-          <ChevronLeft className="w-6 h-6 text-gray-400" />
+          <ChevronLeft className="w-7 h-7" />
         </button>
-        <div className="text-center">
-          <p className="text-xs tracking-widest text-gray-400 font-medium">{selectedMonth.split('-')[0]}</p>
-          <p className="text-5xl sm:text-6xl font-black tracking-tight leading-none -mt-0.5">{parseInt(selectedMonth.split('-')[1])}<span className="text-2xl sm:text-3xl font-bold text-gray-400 ml-0.5">월</span></p>
-        </div>
+        <h1 className="font-extrabold tracking-tight text-center">
+          <span className="text-[2.6rem] sm:text-[3.2rem] leading-none">{selectedMonth.split('-')[0]}</span>
+          <span className="text-base sm:text-lg text-gray-600">년 </span>
+          <span className="text-5xl sm:text-6xl">{parseInt(selectedMonth.split('-')[1])}</span>
+          <span className="text-base sm:text-lg text-gray-600">월</span>
+        </h1>
         <button onClick={() => navigateMonth(1)} className="p-2 hover:bg-gray-100 rounded-lg" aria-label="다음 달">
-          <ChevronRight className="w-6 h-6 text-gray-400" />
+          <ChevronRight className="w-7 h-7" />
         </button>
       </div>
 
