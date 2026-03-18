@@ -297,9 +297,9 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
             height: BTN,
             transition: 'width 0.35s cubic-bezier(0.4,0,0.2,1), box-shadow 0.35s ease, background-color 0.3s ease',
             width: open ? 260 : BTN,
-            backgroundColor: open ? '#7c3aed' : undefined,
+            backgroundColor: open ? '#a78bfa' : undefined,
             boxShadow: open
-              ? '0 2px 16px rgba(124,58,237,0.4)'
+              ? '0 2px 16px rgba(167,139,250,0.4)'
               : 'none',
             overflow: open ? 'hidden' : 'visible',
           }}
