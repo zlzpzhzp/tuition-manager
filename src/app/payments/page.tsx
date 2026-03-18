@@ -401,7 +401,7 @@ export default function PaymentsPage() {
           <ChevronLeft className="w-7 h-7" />
         </button>
         <h1 className="font-extrabold tracking-tight text-center">
-          <span className="text-3xl sm:text-4xl">{selectedMonth.split('-')[0]}</span>
+          <span className="text-[2.6rem] sm:text-[3.2rem] leading-none">{selectedMonth.split('-')[0]}</span>
           <span className="text-base sm:text-lg text-gray-600">년 </span>
           <span className="text-5xl sm:text-6xl">{parseInt(selectedMonth.split('-')[1])}</span>
           <span className="text-base sm:text-lg text-gray-600">월</span>
