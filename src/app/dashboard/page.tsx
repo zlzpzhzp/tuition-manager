@@ -135,9 +135,10 @@ export default function DashboardPage() {
         <div className="bg-white rounded-xl border p-4">
           <div className="flex items-center gap-2 mb-2">
             <CreditCard className="w-4 h-4 text-[#1e2d6f]" />
-            <span className="text-xs text-gray-400">수납 완료</span>
+            <span className="text-xs text-gray-400">수납 / 총원비</span>
           </div>
-          <p className="text-xl font-bold">{stats.totalPaid.toLocaleString()}<span className="text-xs text-gray-400 font-normal">원</span></p>
+          <p className="text-xl font-bold">{(stats.totalPaid / 10000).toFixed(0)}<span className="text-xs text-gray-400 font-normal">만</span></p>
+          <p className="text-xs text-gray-400">/ {(stats.totalFee / 10000).toFixed(0)}만원</p>
         </div>
         <div className="bg-white rounded-xl border p-4">
           <div className="flex items-center gap-2 mb-2">
@@ -234,6 +235,44 @@ export default function DashboardPage() {
           </div>
         )}
       </div>
+
+      {/* 반별 인원수 다이어그램 */}
+      {grades.length > 0 && (() => {
+        const classData = grades.flatMap(g =>
+          g.classes.map(c => ({
+            name: c.name,
+            gradeName: g.name,
+            count: getActiveStudents(c.students ?? []).length,
+            subject: c.subject,
+          }))
+        ).filter(c => c.count > 0)
+        const maxCount = Math.max(...classData.map(c => c.count), 1)
+
+        return (
+          <div className="bg-white rounded-xl border p-5 mb-4">
+            <h2 className="font-bold text-sm mb-4">반별 인원</h2>
+            <div className="space-y-2.5">
+              {classData.map((c, i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <div className="w-16 text-xs text-gray-600 font-medium truncate shrink-0">{c.name}</div>
+                  <div className="flex-1 h-6 bg-gray-50 rounded-full overflow-hidden relative">
+                    <div
+                      className="h-full rounded-full transition-all duration-500"
+                      style={{
+                        width: `${Math.max((c.count / maxCount) * 100, 8)}%`,
+                        background: `linear-gradient(90deg, #6366f1, #8b5cf6)`,
+                      }}
+                    />
+                    <span className="absolute inset-y-0 right-2 flex items-center text-xs font-bold text-gray-500">
+                      {c.count}명
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )
+      })()}
 
       {/* 학년별 총액 */}
       {grades.length > 0 && (

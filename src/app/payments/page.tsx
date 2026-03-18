@@ -369,14 +369,6 @@ export default function PaymentsPage() {
         <div className="h-6 bg-gray-200 rounded w-32"></div>
         <div className="w-9 h-9 bg-gray-200 rounded-lg"></div>
       </div>
-      <div className="grid grid-cols-4 gap-2 sm:gap-3 mb-6">
-        {[...Array(4)].map((_, i) => (
-          <div key={i} className="bg-white rounded-xl border p-3 sm:p-4 text-center">
-            <div className="h-3 bg-gray-200 rounded w-10 mx-auto mb-2"></div>
-            <div className="h-5 bg-gray-200 rounded w-16 mx-auto"></div>
-          </div>
-        ))}
-      </div>
       {[...Array(2)].map((_, gi) => (
         <div key={gi} className="mb-4">
           <div className="h-4 bg-gray-200 rounded w-20 mb-2 ml-1"></div>
@@ -424,26 +416,6 @@ export default function PaymentsPage() {
         >
           <Download className="w-4 h-4" />
         </button>
-      </div>
-
-      {/* 요약 */}
-      <div className="grid grid-cols-4 gap-3 sm:gap-4 mb-6">
-        <div className="bg-white rounded-2xl border p-3 sm:p-5 text-center">
-          <p className="text-xs sm:text-sm text-gray-400">총 원비</p>
-          <p className="text-lg sm:text-2xl font-bold mt-1">{(summaryStats.totalFee / 10000).toFixed(0)}<span className="text-xs sm:text-sm text-gray-400 ml-0.5">만</span></p>
-        </div>
-        <div className="bg-white rounded-2xl border p-3 sm:p-5 text-center">
-          <p className="text-xs sm:text-sm text-gray-400">납부</p>
-          <p className="text-lg sm:text-2xl font-bold mt-1 text-green-600">{(summaryStats.totalPaid / 10000).toFixed(0)}<span className="text-xs sm:text-sm text-gray-400 ml-0.5">만</span></p>
-        </div>
-        <div className="bg-white rounded-2xl border p-3 sm:p-5 text-center">
-          <p className="text-xs sm:text-sm text-gray-400">미납</p>
-          <p className="text-lg sm:text-2xl font-bold mt-1 text-red-600">{summaryStats.unpaidCount}<span className="text-xs sm:text-sm text-gray-400 ml-0.5">명</span></p>
-        </div>
-        <div className="bg-white rounded-2xl border p-3 sm:p-5 text-center">
-          <p className="text-xs sm:text-sm text-gray-400">예정</p>
-          <p className="text-lg sm:text-2xl font-bold mt-1 text-amber-600">{summaryStats.scheduledCount}<span className="text-xs sm:text-sm text-gray-400 ml-0.5">명</span></p>
-        </div>
       </div>
 
       {/* 학생별 납부 현황 */}

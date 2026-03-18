@@ -1,7 +1,31 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { X, Loader2, ArrowRight, Sparkles } from 'lucide-react'
+import { X, Loader2, ArrowRight } from 'lucide-react'
+
+/** 제미나이 마크 SVG */
+function GeminiMark({ size = 18, className = '' }: { size?: number; className?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className}>
+      <path
+        d="M12 2C12 2 14.5 8.5 12 12C9.5 8.5 12 2 12 2Z"
+        fill="currentColor" opacity="0.9"
+      />
+      <path
+        d="M12 22C12 22 9.5 15.5 12 12C14.5 15.5 12 22 12 22Z"
+        fill="currentColor" opacity="0.9"
+      />
+      <path
+        d="M2 12C2 12 8.5 9.5 12 12C8.5 14.5 2 12 2 12Z"
+        fill="currentColor" opacity="0.9"
+      />
+      <path
+        d="M22 12C22 12 15.5 14.5 12 12C15.5 9.5 22 12 22 12Z"
+        fill="currentColor" opacity="0.9"
+      />
+    </svg>
+  )
+}
 
 interface Props {
   aiFilterIds: Set<string> | null
@@ -338,7 +362,7 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
     return (
       <div className="fixed right-3 z-[60]" style={{ top: '38%' }}>
         <div className="flex items-center gap-1 bg-white text-[#1e2d6f] pl-2.5 pr-1.5 py-2 rounded-full shadow-[0_2px_12px_rgba(0,0,0,0.15)] border border-gray-100">
-          <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
+          <GeminiMark size={14} className="text-indigo-500" />
           <span className="text-[10px] font-medium max-w-[100px] truncate">{aiFilterDesc}</span>
           <button onClick={handleClear} className="p-0.5 hover:bg-gray-100 rounded-full ml-0.5" aria-label="필터 해제">
             <X className="w-3.5 h-3.5 text-gray-400" />
@@ -468,7 +492,7 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
           >
             {open
               ? (loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />)
-              : <Sparkles className="w-[18px] h-[18px]" strokeWidth={2} />
+              : <GeminiMark size={20} />
             }
           </button>
         </div>
