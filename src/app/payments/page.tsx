@@ -364,13 +364,10 @@ export default function PaymentsPage() {
   // ─── Render ───────────────────────────────────────────────────
   if (loading) return (
     <div className="animate-pulse">
-      <div className="flex flex-col items-center mb-6">
-        <div className="flex items-center justify-center gap-5">
-          <div className="w-10 h-10 bg-gray-200 rounded-lg"></div>
-          <div className="h-8 bg-gray-200 rounded w-40 sm:w-48"></div>
-          <div className="w-10 h-10 bg-gray-200 rounded-lg"></div>
-        </div>
-        <div className="h-4 bg-gray-100 rounded w-16 mt-2"></div>
+      <div className="flex items-center justify-center gap-3 mb-8">
+        <div className="w-10 h-10 bg-gray-200 rounded-lg"></div>
+        <div className="h-10 bg-gray-200 rounded w-56 sm:w-72"></div>
+        <div className="w-10 h-10 bg-gray-200 rounded-lg"></div>
       </div>
       {[...Array(2)].map((_, gi) => (
         <div key={gi} className="mb-4">
@@ -399,27 +396,13 @@ export default function PaymentsPage() {
   return (
     <div onClick={() => { if (swipeOpenId) closeSwipeEdit() }}>
       {/* 월 네비게이션 */}
-      <div className="flex flex-col items-center mb-6">
-        <div className="flex items-center justify-center gap-5">
-          <button onClick={() => navigateMonth(-1)} className="p-2 hover:bg-gray-100 rounded-lg" aria-label="이전 달">
-            <ChevronLeft className="w-6 h-6" />
-          </button>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight min-w-[160px] sm:min-w-[200px] text-center">{formatMonth(selectedMonth)}</h1>
-          <button onClick={() => navigateMonth(1)} className="p-2 hover:bg-gray-100 rounded-lg" aria-label="다음 달">
-            <ChevronRight className="w-6 h-6" />
-          </button>
-        </div>
-        <button
-          onClick={() => {
-            const a = document.createElement('a')
-            a.href = `/api/payments/export?billing_month=${selectedMonth}`
-            a.download = ''
-            a.click()
-          }}
-          className="mt-2 flex items-center gap-1.5 px-3 py-1 text-xs text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-full transition-colors"
-        >
-          <Download className="w-3.5 h-3.5" />
-          <span>내보내기</span>
+      <div className="flex items-center justify-center gap-3 mb-8">
+        <button onClick={() => navigateMonth(-1)} className="p-2 hover:bg-gray-100 rounded-lg" aria-label="이전 달">
+          <ChevronLeft className="w-7 h-7" />
+        </button>
+        <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-center">{formatMonth(selectedMonth)}</h1>
+        <button onClick={() => navigateMonth(1)} className="p-2 hover:bg-gray-100 rounded-lg" aria-label="다음 달">
+          <ChevronRight className="w-7 h-7" />
         </button>
       </div>
 
@@ -445,16 +428,30 @@ export default function PaymentsPage() {
             <div className="flex items-center mb-2 px-1">
               <h2 className="text-sm font-semibold text-gray-500 flex-1">{grade.name}</h2>
               {gradeIndex === 0 && (
-                <button
-                  onClick={() => setShowUnpaidOnly(prev => !prev)}
-                  className={`px-2.5 py-0.5 rounded-full text-xs font-medium transition-colors ${
-                    showUnpaidOnly
-                      ? 'bg-red-100 text-red-700'
-                      : 'bg-gray-100 text-gray-500'
-                  }`}
-                >
-                  {showUnpaidOnly ? '미납' : '전체'}
-                </button>
+                <>
+                  <button
+                    onClick={() => {
+                      const a = document.createElement('a')
+                      a.href = `/api/payments/export?billing_month=${selectedMonth}`
+                      a.download = ''
+                      a.click()
+                    }}
+                    className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors mr-1.5"
+                  >
+                    <Download className="w-3 h-3" />
+                    <span>내보내기</span>
+                  </button>
+                  <button
+                    onClick={() => setShowUnpaidOnly(prev => !prev)}
+                    className={`px-2.5 py-0.5 rounded-full text-xs font-medium transition-colors ${
+                      showUnpaidOnly
+                        ? 'bg-red-100 text-red-700'
+                        : 'bg-gray-100 text-gray-500'
+                    }`}
+                  >
+                    {showUnpaidOnly ? '미납' : '전체'}
+                  </button>
+                </>
               )}
             </div>
             <div className="bg-white rounded-xl border overflow-hidden">
