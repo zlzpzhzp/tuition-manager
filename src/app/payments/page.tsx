@@ -364,7 +364,7 @@ export default function PaymentsPage() {
   // ─── Render ───────────────────────────────────────────────────
   if (loading) return (
     <div className="animate-pulse">
-      <div className="flex items-center justify-center gap-3 mb-8">
+      <div className="flex items-center justify-center gap-3 mb-3">
         <div className="w-10 h-10 bg-gray-200 rounded-lg"></div>
         <div className="h-10 bg-gray-200 rounded w-56 sm:w-72"></div>
         <div className="w-10 h-10 bg-gray-200 rounded-lg"></div>
@@ -396,7 +396,7 @@ export default function PaymentsPage() {
   return (
     <div onClick={() => { if (swipeOpenId) closeSwipeEdit() }}>
       {/* 월 네비게이션 */}
-      <div className="flex items-center justify-center gap-3 mb-8">
+      <div className="flex items-center justify-center gap-3 mb-3">
         <button onClick={() => navigateMonth(-1)} className="p-2 hover:bg-gray-100 rounded-lg" aria-label="이전 달">
           <ChevronLeft className="w-7 h-7" />
         </button>
