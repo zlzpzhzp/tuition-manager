@@ -40,9 +40,17 @@ export default function DashboardPage() {
       )
     ), [grades])
 
+  const paidByStudentId = useMemo(() => {
+    const map = new Map<string, number>()
+    for (const p of payments) {
+      map.set(p.student_id, (map.get(p.student_id) ?? 0) + p.amount)
+    }
+    return map
+  }, [payments])
+
   const getStudentPaid = useCallback((studentId: string) =>
-    payments.filter(p => p.student_id === studentId).reduce((s, p) => s + p.amount, 0)
-  , [payments])
+    paidByStudentId.get(studentId) ?? 0
+  , [paidByStudentId])
 
   const stats = useMemo(() => {
     const totalStudents = allStudents.length
@@ -50,7 +58,7 @@ export default function DashboardPage() {
     const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0)
     const unpaidStudents = allStudents.filter(s => {
       const fee = getStudentFee(s, s.class)
-      const paid = getStudentPaid(s.id)
+      const paid = paidByStudentId.get(s.id) ?? 0
       return getPaymentStatus(paid, fee) !== 'paid'
     })
     const overdueStudents = unpaidStudents.filter(s => !isPaymentScheduled(s, currentMonth))
@@ -58,7 +66,7 @@ export default function DashboardPage() {
     const paidCount = totalStudents - unpaidStudents.length
     const paymentRate = totalStudents > 0 ? Math.round((paidCount / totalStudents) * 100) : 0
     return { totalStudents, totalFee, totalPaid, unpaidStudents, overdueStudents, scheduledStudents, paidCount, paymentRate }
-  }, [allStudents, payments, currentMonth, getStudentPaid])
+  }, [allStudents, payments, currentMonth, paidByStudentId])
 
   const urgentStudents = useMemo(() => {
     const today = new Date()

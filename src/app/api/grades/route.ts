@@ -15,10 +15,9 @@ export async function POST(request: Request) {
   const validationError = validateInput([rules.requiredString('name', body.name)])
   if (validationError) return validationError
 
-  const { count } = await supabase.from('tuition_grades').select('*', { count: 'exact', head: true })
   const { data, error } = await supabase
     .from('tuition_grades')
-    .insert({ name: body.name, order_index: count ?? 0 })
+    .insert({ name: body.name, order_index: Date.now() })
     .select()
     .single()
 

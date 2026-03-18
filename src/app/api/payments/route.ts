@@ -7,7 +7,7 @@ export async function GET(request: Request) {
   const studentId = searchParams.get('student_id')
   const billingMonth = searchParams.get('billing_month')
 
-  let query = supabase.from('tuition_payments').select('*, student:tuition_students(*, class:tuition_classes(*))').order('payment_date', { ascending: false })
+  let query = supabase.from('tuition_payments').select('id, student_id, amount, method, payment_date, billing_month, cash_receipt, memo, created_at').order('payment_date', { ascending: false })
   if (studentId) query = query.eq('student_id', studentId)
   if (billingMonth) query = query.eq('billing_month', billingMonth)
 

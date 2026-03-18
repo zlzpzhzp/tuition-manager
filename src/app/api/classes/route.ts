@@ -30,11 +30,6 @@ export async function POST(request: Request) {
   ])
   if (validationError) return validationError
 
-  const { count } = await supabase
-    .from('tuition_classes')
-    .select('*', { count: 'exact', head: true })
-    .eq('grade_id', body.grade_id)
-
   const { data, error } = await supabase
     .from('tuition_classes')
     .insert({
@@ -43,7 +38,7 @@ export async function POST(request: Request) {
       monthly_fee: body.monthly_fee ?? 0,
       subject: body.subject || null,
       class_days: body.class_days || null,
-      order_index: count ?? 0,
+      order_index: Date.now(),
     })
     .select()
     .single()
