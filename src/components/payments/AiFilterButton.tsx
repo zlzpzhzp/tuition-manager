@@ -3,23 +3,24 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { X, Loader2, ArrowRight } from 'lucide-react'
 
-/** 나비 SVG */
-function ButterflyIcon({ size = 20, color = 'white' }: { size?: number; color?: string }) {
+/** 요정 SVG — 날개 달린 실루엣 + 지팡이 */
+function FairyIcon({ size = 20, color = 'white' }: { size?: number; color?: string }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
-      {/* 왼쪽 상단 날개 */}
-      <path d="M12 12C12 12 4 3 2.5 6C1 9 5 11 12 12Z" opacity="0.95" />
-      {/* 오른쪽 상단 날개 */}
-      <path d="M12 12C12 12 20 3 21.5 6C23 9 19 11 12 12Z" opacity="0.95" />
-      {/* 왼쪽 하단 날개 */}
-      <path d="M12 12C12 12 5 15 4 18C3 21 7 19 12 12Z" opacity="0.8" />
-      {/* 오른쪽 하단 날개 */}
-      <path d="M12 12C12 12 19 15 20 18C21 21 17 19 12 12Z" opacity="0.8" />
-      {/* 몸통 */}
-      <ellipse cx="12" cy="12" rx="0.6" ry="4" opacity="0.9" />
-      {/* 더듬이 */}
-      <path d="M11.5 8.5Q10 5 8.5 4" fill="none" stroke={color} strokeWidth="0.5" strokeLinecap="round" />
-      <path d="M12.5 8.5Q14 5 15.5 4" fill="none" stroke={color} strokeWidth="0.5" strokeLinecap="round" />
+    <svg width={size} height={size} viewBox="0 0 32 32" fill={color}>
+      {/* 머리 */}
+      <circle cx="16" cy="7.5" r="3" />
+      {/* 몸 */}
+      <path d="M16 10.5C16 10.5 13.5 16 12.5 22L16 20L19.5 22C18.5 16 16 10.5 16 10.5Z" />
+      {/* 왼쪽 날개 */}
+      <path d="M14.5 11C14.5 11 7 7 5.5 10C4 13 9 15 14 13.5Z" opacity="0.6" />
+      <path d="M14 14C14 14 7 15 6.5 18C6 21 10 18.5 13.5 15.5Z" opacity="0.45" />
+      {/* 오른쪽 날개 */}
+      <path d="M17.5 11C17.5 11 25 7 26.5 10C28 13 23 15 18 13.5Z" opacity="0.6" />
+      <path d="M18 14C18 14 25 15 25.5 18C26 21 22 18.5 18.5 15.5Z" opacity="0.45" />
+      {/* 지팡이 */}
+      <line x1="19" y1="12" x2="25" y2="4" stroke={color} strokeWidth="0.8" strokeLinecap="round" />
+      {/* 지팡이 끝 별 */}
+      <polygon points="25,1.5 25.7,3.3 27.5,3.5 26.1,4.7 26.5,6.5 25,5.5 23.5,6.5 23.9,4.7 22.5,3.5 24.3,3.3" opacity="0.9" />
     </svg>
   )
 }
@@ -249,7 +250,7 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
     return (
       <div className="fixed right-3 z-[60]" style={{ top: '38%' }}>
         <div className="flex items-center gap-1.5 bg-white text-[#1e2d6f] pl-2 pr-1.5 py-1.5 rounded-full shadow-[0_2px_12px_rgba(0,0,0,0.15)] border border-gray-100">
-          <ButterflyIcon size={14} color="#1e2d6f" />
+          <FairyIcon size={14} color="#1e2d6f" />
           <span className="text-[10px] font-medium max-w-[100px] truncate">{aiFilterDesc}</span>
           <button onClick={handleClear} className="p-0.5 hover:bg-gray-100 rounded-full ml-0.5" aria-label="필터 해제">
             <X className="w-3.5 h-3.5 text-gray-400" />
@@ -271,7 +272,7 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
             <polygon
               key={p.id}
               points={starPoints(p.x, p.y, p.size, p.size * 0.4)}
-              fill={`rgba(255,255,255,${opacity * 0.85})`}
+              fill={`rgba(255,255,255,${opacity * 0.95})`}
             />
           )
         })}
@@ -299,7 +300,7 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
             backgroundColor: open ? '#1e2d6f' : undefined,
             boxShadow: open
               ? '0 2px 16px rgba(30,45,111,0.4)'
-              : '0 3px 12px rgba(30,45,111,0.25)',
+              : 'none',
             overflow: open ? 'hidden' : 'visible',
           }}
         >
@@ -351,14 +352,14 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
             }}
             disabled={open && loading}
             className={`shrink-0 flex items-center justify-center rounded-full disabled:opacity-50 ${
-              open ? 'bg-white/15 text-white' : 'bg-gradient-to-br from-[#1e2d6f] to-[#2d4298] text-white'
+              open ? 'bg-white/15 text-white' : ''
             }`}
             style={{ width: BTN, height: BTN }}
             aria-label={open ? 'AI 필터 실행' : 'AI 필터 열기'}
           >
             {open
               ? (loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />)
-              : <ButterflyIcon size={22} color="white" />
+              : <FairyIcon size={28} color="white" />
             }
           </button>
         </div>
