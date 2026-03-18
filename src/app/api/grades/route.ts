@@ -17,7 +17,7 @@ export async function POST(request: Request) {
 
   const { data, error } = await supabase
     .from('tuition_grades')
-    .insert({ name: body.name, order_index: Date.now() })
+    .insert({ name: body.name, order_index: Math.floor(Date.now() / 1000) % 2000000000 })
     .select()
     .single()
 
