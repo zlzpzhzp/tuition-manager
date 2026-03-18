@@ -23,13 +23,18 @@ interface Particle {
   id: number
 }
 
-/** 제미나이 4색 별 아이콘 (SVG) */
-function GeminiIcon({ className }: { className?: string }) {
+/** 제미나이 4색 별 아이콘 (3D 느낌, 삐죽한 별만) */
+function GeminiIcon({ size = 36 }: { size?: number }) {
   return (
-    <svg viewBox="0 0 28 28" fill="none" className={className}>
+    <svg viewBox="0 0 28 28" fill="none" width={size} height={size} style={{ filter: 'drop-shadow(0 2px 6px rgba(66,133,244,0.45)) drop-shadow(0 1px 2px rgba(155,114,203,0.3))' }}>
       <path
         d="M14 0C14 7.732 7.732 14 0 14c7.732 0 14 6.268 14 14 0-7.732 6.268-14 14-14C20.268 14 14 7.732 14 0Z"
         fill="url(#gemini-grad)"
+      />
+      <path
+        d="M14 1.5C14.2 8 8 14.2 1.5 14c6.5.2 12.7 6.2 12.5 12.5C13.8 20 20 13.8 26.5 14 20 14.2 13.8 8 14 1.5Z"
+        fill="url(#gemini-highlight)"
+        opacity="0.35"
       />
       <defs>
         <linearGradient id="gemini-grad" x1="0" y1="0" x2="28" y2="28" gradientUnits="userSpaceOnUse">
@@ -37,6 +42,10 @@ function GeminiIcon({ className }: { className?: string }) {
           <stop offset=".33" stopColor="#9B72CB" />
           <stop offset=".66" stopColor="#D96570" />
           <stop offset="1" stopColor="#D96570" />
+        </linearGradient>
+        <linearGradient id="gemini-highlight" x1="4" y1="4" x2="24" y2="24" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#ffffff" />
+          <stop offset="1" stopColor="#ffffff" stopOpacity="0" />
         </linearGradient>
       </defs>
     </svg>
@@ -323,7 +332,7 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
       <div className="fixed right-3 z-[60]" style={{ top: '38%' }}>
         {aiFilterIds !== null ? (
           <div className="flex items-center gap-1 bg-white text-[#1e2d6f] pl-2.5 pr-1.5 py-2 rounded-full shadow-[0_2px_12px_rgba(0,0,0,0.15)] border border-gray-100">
-            <GeminiIcon className="w-3.5 h-3.5 shrink-0" />
+            <GeminiIcon size={14} />
             <span className="text-[10px] font-medium max-w-[100px] truncate">{aiFilterDesc}</span>
             <button onClick={handleClear} className="p-0.5 hover:bg-gray-100 rounded-full ml-0.5" aria-label="필터 해제">
               <X className="w-3.5 h-3.5 text-gray-400" />
@@ -412,15 +421,16 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
               setTimeout(() => inputRef.current?.focus(), 100)
             }
           }}
-          className="ai-float-btn p-2.5 rounded-full shadow-[0_2px_12px_rgba(0,0,0,0.15)] relative"
+          className="ai-float-btn relative"
           style={{
             animation: speed > 1 ? 'none' : undefined,
-            background: 'rgba(255,255,255,0.9)',
-            backdropFilter: 'blur(8px)',
+            background: 'transparent',
+            border: 'none',
+            padding: 0,
           }}
           aria-label="AI 필터 열기"
         >
-          <GeminiIcon className="w-6 h-6 relative z-10" />
+          <GeminiIcon size={38} />
         </button>
       </div>
     </>
