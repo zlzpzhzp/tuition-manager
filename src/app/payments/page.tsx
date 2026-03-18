@@ -431,21 +431,23 @@ export default function PaymentsPage() {
         return (
           <div key={grade.id} className="mb-4">
             <div className="flex items-center mb-2 px-1">
-              <h2 className="text-sm font-semibold text-gray-500 flex-1">{grade.name}</h2>
+              <h2 className="text-sm font-semibold text-gray-500">{grade.name}</h2>
               {gradeIndex === 0 && (
                 <>
-                  <button
-                    onClick={() => {
-                      const a = document.createElement('a')
-                      a.href = `/api/payments/export?billing_month=${selectedMonth}`
-                      a.download = ''
-                      a.click()
-                    }}
-                    className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors mr-1.5"
-                  >
-                    <Download className="w-3 h-3" />
-                    <span>내보내기</span>
-                  </button>
+                  <div className="flex-1 flex justify-center">
+                    <button
+                      onClick={() => {
+                        const a = document.createElement('a')
+                        a.href = `/api/payments/export?billing_month=${selectedMonth}`
+                        a.download = ''
+                        a.click()
+                      }}
+                      className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors"
+                    >
+                      <Download className="w-3 h-3" />
+                      <span>내보내기</span>
+                    </button>
+                  </div>
                   <button
                     onClick={() => setShowUnpaidOnly(prev => !prev)}
                     className={`px-2.5 py-0.5 rounded-full text-xs font-medium transition-colors ${
@@ -458,6 +460,7 @@ export default function PaymentsPage() {
                   </button>
                 </>
               )}
+              {gradeIndex !== 0 && <div className="flex-1" />}
             </div>
             <div className="bg-white rounded-xl border overflow-hidden">
               {grade.classes.map(cls => {
