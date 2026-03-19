@@ -267,9 +267,9 @@ export default function SettingsPage() {
       {grades.length === 0 ? (
         <div className="text-center py-12 text-gray-400">학년을 추가해주세요</div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {grades.map(grade => (
-            <div key={grade.id} className="bg-white rounded-xl border overflow-hidden">
+            <div key={grade.id} className="bg-white rounded-xl overflow-hidden">
               <div className="flex items-center gap-2 px-4 py-3">
                 <button onClick={() => toggleGrade(grade.id)} className="text-gray-400" aria-label={expandedGrades.has(grade.id) ? '접기' : '펼치기'}>
                   {expandedGrades.has(grade.id) ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
@@ -301,11 +301,11 @@ export default function SettingsPage() {
               </div>
 
               {expandedGrades.has(grade.id) && (
-                <div className="border-t bg-gray-50 px-4 py-3">
+                <div className="bg-gray-50 px-4 py-3">
                   {grade.classes?.length > 0 && (
                     <div className="space-y-2 mb-3">
                       {grade.classes.map((cls, clsIdx) => (
-                        <div key={cls.id} className="flex items-center gap-1.5 sm:gap-2 bg-white rounded-lg px-2 sm:px-3 py-2 border">
+                        <div key={cls.id} className="flex items-center gap-1.5 sm:gap-2 bg-white rounded-lg px-2 sm:px-3 py-2">
                           {editingClassId === cls.id ? (
                             <div className="flex-1 space-y-2">
                               <div className="flex items-center gap-2">
