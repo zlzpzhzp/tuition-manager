@@ -453,7 +453,16 @@ export default function PaymentsPage() {
                     </button>
                   </div>
                   <button
-                    onClick={() => setShowUnpaidOnly(prev => !prev)}
+                    onClick={() => {
+                      setShowUnpaidOnly(prev => {
+                        if (!prev) {
+                          // 미납 필터 ON → 모든 반 펼치기
+                          const allClassIds = new Set(grades.flatMap(g => g.classes.map(c => c.id)))
+                          setExpandedClasses(allClassIds)
+                        }
+                        return !prev
+                      })
+                    }}
                     className={`px-2.5 py-0.5 rounded-full text-xs font-medium transition-colors ${
                       showUnpaidOnly
                         ? 'bg-red-100 text-red-700'
