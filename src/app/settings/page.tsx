@@ -269,7 +269,7 @@ export default function SettingsPage() {
       ) : (
         <div className="space-y-2">
           {grades.map(grade => (
-            <div key={grade.id} className="bg-white rounded-xl overflow-hidden">
+            <div key={grade.id} className="bg-white rounded-xl border border-gray-100 overflow-hidden">
               <div className="flex items-center gap-2 px-4 py-3">
                 <button onClick={() => toggleGrade(grade.id)} className="text-gray-400" aria-label={expandedGrades.has(grade.id) ? '접기' : '펼치기'}>
                   {expandedGrades.has(grade.id) ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
@@ -301,7 +301,7 @@ export default function SettingsPage() {
               </div>
 
               {expandedGrades.has(grade.id) && (
-                <div className="bg-gray-50 px-4 py-3">
+                <div className="border-t border-gray-100 bg-gray-50 px-4 py-3">
                   {grade.classes?.length > 0 && (
                     <div className="space-y-2 mb-3">
                       {grade.classes.map((cls, clsIdx) => (
