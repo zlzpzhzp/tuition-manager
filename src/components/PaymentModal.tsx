@@ -37,6 +37,7 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
   const [cashReceipt, setCashReceipt] = useState<'issued' | 'pending' | null>(payment?.cash_receipt ?? null)
   const [showConfirmDelete, setShowConfirmDelete] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
+  const [showConfirmSuccess, setShowConfirmSuccess] = useState(false)
   const [editingDate, setEditingDate] = useState(false)
   const [editDate, setEditDate] = useState(payment?.payment_date ?? today)
   const [editingMemo, setEditingMemo] = useState(false)
@@ -195,15 +196,25 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
             </div>
 
             <button
+              disabled={showConfirmSuccess}
               onClick={async () => {
                 if (editMemo !== (payment.memo ?? '') && onUpdate && payment.id) {
                   await onUpdate(payment.id, { memo: editMemo || undefined })
                 }
-                onClose()
+                setShowConfirmSuccess(true)
+                setTimeout(() => onClose(), 800)
               }}
-              className="w-full py-3 bg-[#1e2d6f] text-white rounded-lg font-medium text-sm hover:opacity-90"
+              className={`w-full py-3 rounded-lg font-medium text-sm transition-all duration-500 flex items-center justify-center gap-2 ${
+                showConfirmSuccess
+                  ? 'bg-green-500 text-white scale-105'
+                  : 'bg-green-50 border border-green-300 text-green-700 hover:bg-green-100'
+              }`}
             >
-              확인
+              {showConfirmSuccess ? (
+                <span className="flex items-center gap-2 animate-[checkBounce_0.5s_ease-out]">
+                  <Check className="w-6 h-6" strokeWidth={3} />
+                </span>
+              ) : '확인'}
             </button>
 
             <button
