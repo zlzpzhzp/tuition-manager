@@ -505,10 +505,10 @@ export default function PaymentsPage() {
                       </button>
                     </div>
                     <div
-                      className="grid transition-[grid-template-rows] duration-300 ease-in-out"
+                      className="grid transition-[grid-template-rows] duration-300 ease-in-out overflow-hidden"
                       style={{ gridTemplateRows: isClassExpanded ? '1fr' : '0fr' }}
                     >
-                    <div className="overflow-hidden">
+                    <div className="min-h-0">
                     {students.map(student => {
                       const fee = getStudentFee(student, cls)
                       const studentPayments = getStudentPayments(student.id)
