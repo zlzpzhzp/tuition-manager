@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import Link from 'next/link'
-import { ChevronLeft, ChevronRight, ChevronDown, Check, ClipboardList, Download, Plus } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Check, ClipboardList, Download, Plus } from 'lucide-react'
 import type { Grade, Class, Student, Payment, PaymentMethod, GradeWithClasses } from '@/types'
 import { getStudentFee, getPaymentStatus, PAYMENT_STATUS_LABELS, PAYMENT_STATUS_COLORS, PAYMENT_METHOD_LABELS } from '@/types'
 import PaymentModal from '@/components/PaymentModal'
@@ -493,8 +493,7 @@ export default function PaymentsPage() {
                       className="px-4 py-2 bg-gray-50 border-b flex items-center cursor-pointer active:bg-gray-100 select-none"
                       onClick={() => toggleClass(cls.id)}
                     >
-                      <ChevronDown className={`w-3.5 h-3.5 text-gray-400 mr-1.5 transition-transform ${isClassExpanded ? '' : '-rotate-90'}`} />
-                      <span className="text-xs font-medium text-gray-500">{cls.name}</span>
+                      <span className="text-sm font-medium text-gray-600">{cls.name}</span>
                       <span className="text-xs text-gray-400 ml-2">{paidCount}/{students.length}</span>
                       <span className="flex-1" />
                       <button
@@ -574,7 +573,7 @@ export default function PaymentsPage() {
                             onTouchEnd={handleTouchEnd}
                             style={isSwipeOpen ? { transform: 'translateX(-150px)', transition: 'transform 0.3s ease' } : undefined}
                           >
-                            <div className={`flex items-center gap-2 px-4 ${hasMemo && !isExpanded ? 'pt-3 pb-1' : 'py-3'} ${
+                            <div className={`flex items-center gap-2 px-4 ${hasMemo && !isExpanded ? 'pt-1.5 pb-0.5' : 'py-1.5'} ${
                               status === 'unpaid' && !isExpanded ? 'cursor-pointer active:bg-gray-50' : ''
                             }`}
                               onClick={status === 'unpaid' && !isExpanded ? () => handleExpand(student.id) : undefined}
