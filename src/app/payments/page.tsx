@@ -42,7 +42,7 @@ export default function PaymentsPage() {
   const [inlineMethod, setInlineMethod] = useState<PaymentMethod>('remote')
   const [inlineSuccess, setInlineSuccess] = useState<string | null>(null)
   const [showMethodPicker, setShowMethodPicker] = useState(false)
-  const [inlineOtherMemo, setInlineOtherMemo] = useState('')
+  const [inlineMemo, setInlineMemo] = useState('')
   const [showDatePicker, setShowDatePicker] = useState(false)
   const [datePickerPos, setDatePickerPos] = useState({ top: 0, left: 0 })
   const [methodPickerPos, setMethodPickerPos] = useState({ top: 0, right: 0 })
@@ -150,7 +150,6 @@ export default function PaymentsPage() {
   // ─── Discuss ────────────────────────────────────────────────
   const [discussInputId, setDiscussInputId] = useState<string | null>(null)
   const [discussMemoValue, setDiscussMemoValue] = useState('')
-  const [discussViewId, setDiscussViewId] = useState<string | null>(null)
 
   const toggleDiscuss = async (id: string) => {
     const student = allStudents.find(s => s.id === id)
@@ -283,19 +282,15 @@ export default function PaymentsPage() {
     setInlineMethod(prevPayment?.method as PaymentMethod || 'remote')
     setShowMethodPicker(false)
     setShowDatePicker(false)
-    setInlineOtherMemo('')
+    setInlineMemo('')
   }
 
   const handleInlineSubmit = async (studentId: string, fee: number) => {
     if (inlineSuccess) return
-    if (inlineMethod === 'other' && !inlineOtherMemo.trim()) {
-      alert('기타 결제수단 선택 시 내용을 입력해주세요.')
-      return
-    }
     const { error } = await safeMutate('/api/payments', 'POST', {
       student_id: studentId, amount: fee, method: inlineMethod,
       payment_date: inlineDate, billing_month: selectedMonth,
-      ...(inlineMethod === 'other' && inlineOtherMemo.trim() ? { memo: inlineOtherMemo.trim() } : {}),
+      ...(inlineMemo.trim() ? { memo: inlineMemo.trim() } : {}),
     })
     if (error) {
       alert(`결제 처리 실패: ${error}`)
@@ -694,23 +689,17 @@ export default function PaymentsPage() {
                             }`}
                               onClick={status === 'unpaid' && !isExpanded ? () => handleExpand(student.id) : undefined}
                             >
-                              {hasDiscuss && (
-                                <button
-                                  className="text-[9px] px-1.5 py-0.5 rounded-full bg-rose-50 text-rose-400 font-bold shrink-0"
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    setDiscussViewId(discussViewId === student.id ? null : student.id)
-                                  }}
-                                >
-                                  DISCUSS
-                                </button>
-                              )}
                               <Link
                                 href={`/students/${student.id}`}
                                 className="flex-1 min-w-0"
                                 onClick={e => { if (wasSwiped.current) e.preventDefault(); e.stopPropagation() }}
                               >
                                 <span className="text-sm font-medium">{student.name}</span>
+                                {hasDiscuss && (
+                                  <p className="text-[11px] text-rose-500 font-medium leading-tight">
+                                    {student.memo || 'DISCUSS'}
+                                  </p>
+                                )}
                               </Link>
 
                               {isExpanded ? (
@@ -768,16 +757,14 @@ export default function PaymentsPage() {
                                       <ClipboardList className="w-3.5 h-3.5" />
                                     </button>
                                   </div>
-                                  {inlineMethod === 'other' && (
-                                    <input
-                                      type="text"
-                                      value={inlineOtherMemo}
-                                      onChange={e => setInlineOtherMemo(e.target.value)}
-                                      placeholder="결제수단 입력 (예: 서울페이)"
-                                      className="fan-item w-full px-2.5 py-1 rounded-lg text-xs border border-gray-300 focus:outline-none focus:ring-1 focus:ring-indigo-400"
-                                      aria-label="기타 결제수단 입력"
-                                    />
-                                  )}
+                                  <input
+                                    type="text"
+                                    value={inlineMemo}
+                                    onChange={e => setInlineMemo(e.target.value)}
+                                    placeholder="비고"
+                                    className="fan-item w-full px-2.5 py-1 rounded-lg text-xs border border-gray-300 focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                                    aria-label="비고 입력"
+                                  />
                                 </div>
                               ) : (
                                 <>
@@ -813,19 +800,11 @@ export default function PaymentsPage() {
                               )}
                             </div>
                             {!isExpanded && hasMemo && (
-                              <div className="px-4 pb-2">
-                                {cleanMemo && <p className="text-[11px] text-gray-500 leading-tight">{cleanMemo}</p>}
-                                {prevMemo && <p className="text-[11px] text-gray-400 leading-tight">지난달: {prevMemo}</p>}
-                              </div>
-                            )}
-                            {/* DISCUSS 라벨 터치 시 메모 보기 */}
-                            {discussViewId === student.id && hasDiscuss && (
-                              <div className="px-4 pb-2">
-                                {student.memo ? (
-                                  <p className="text-xs text-rose-400 bg-rose-50 rounded-lg px-3 py-2">{student.memo}</p>
-                                ) : (
-                                  <p className="text-xs text-gray-400 italic">사유가 입력되지 않았습니다</p>
-                                )}
+                              <div className="flex justify-end px-4 pb-1">
+                                <div className="text-right">
+                                  {cleanMemo && <p className="text-[11px] text-gray-500 leading-tight">{cleanMemo}</p>}
+                                  {prevMemo && <p className="text-[11px] text-gray-400 leading-tight">지난달: {prevMemo}</p>}
+                                </div>
                               </div>
                             )}
                             {/* DISCUSS 설정 후 이유 입력 칸 */}
