@@ -557,6 +557,9 @@ export default function PaymentsPage() {
                           // 미납 필터 ON → 모든 반 펼치기
                           const allClassIds = new Set(grades.flatMap(g => g.classes.map(c => c.id)))
                           setExpandedClasses(allClassIds)
+                        } else {
+                          // 미납 필터 OFF → 모든 반 접기
+                          setExpandedClasses(new Set())
                         }
                         return !prev
                       })
