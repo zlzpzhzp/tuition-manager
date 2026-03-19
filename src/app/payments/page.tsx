@@ -438,7 +438,7 @@ export default function PaymentsPage() {
               <h2 className="text-sm font-semibold text-gray-500">{grade.name}</h2>
               {gradeIndex === 0 && (
                 <>
-                  <div className="flex-1 flex justify-center">
+                  <div className="flex-1 flex justify-center pl-4">
                     <button
                       onClick={() => {
                         const a = document.createElement('a')
