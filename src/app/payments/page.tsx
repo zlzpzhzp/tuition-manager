@@ -147,11 +147,35 @@ export default function PaymentsPage() {
     return isPaymentScheduled(student, month, student.payment_due_day ?? undefined)
   }
 
-  // ─── Discuss toggle ───────────────────────────────────────────
+  // ─── Discuss ────────────────────────────────────────────────
+  const [discussInputId, setDiscussInputId] = useState<string | null>(null)
+  const [discussMemoValue, setDiscussMemoValue] = useState('')
+  const [discussViewId, setDiscussViewId] = useState<string | null>(null)
+
   const toggleDiscuss = async (id: string) => {
     const student = allStudents.find(s => s.id === id)
     if (!student) return
-    await safeMutate(`/api/students/${id}`, 'PUT', { has_discuss: !student.has_discuss })
+    if (student.has_discuss) {
+      // 해제: discuss off + memo 제거
+      await safeMutate(`/api/students/${id}`, 'PUT', { has_discuss: false, memo: null })
+      setDiscussInputId(null)
+      fetchData()
+    } else {
+      // 켜기: discuss on + 이유 입력 칸 열기
+      await safeMutate(`/api/students/${id}`, 'PUT', { has_discuss: true })
+      fetchData()
+      setDiscussInputId(id)
+      setDiscussMemoValue('')
+    }
+  }
+
+  const saveDiscussMemo = async (id: string) => {
+    if (!discussMemoValue.trim()) {
+      setDiscussInputId(null)
+      return
+    }
+    await safeMutate(`/api/students/${id}`, 'PUT', { memo: discussMemoValue.trim() })
+    setDiscussInputId(null)
     fetchData()
   }
 
@@ -668,7 +692,15 @@ export default function PaymentsPage() {
                               onClick={status === 'unpaid' && !isExpanded ? () => handleExpand(student.id) : undefined}
                             >
                               {hasDiscuss && (
-                                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-rose-50 text-rose-400 font-bold shrink-0">DISCUSS</span>
+                                <button
+                                  className="text-[9px] px-1.5 py-0.5 rounded-full bg-rose-50 text-rose-400 font-bold shrink-0"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    setDiscussViewId(discussViewId === student.id ? null : student.id)
+                                  }}
+                                >
+                                  DISCUSS
+                                </button>
                               )}
                               <Link
                                 href={`/students/${student.id}`}
@@ -781,6 +813,36 @@ export default function PaymentsPage() {
                               <div className="px-4 pb-2">
                                 {cleanMemo && <p className="text-[11px] text-gray-500 leading-tight">{cleanMemo}</p>}
                                 {prevMemo && <p className="text-[11px] text-gray-400 leading-tight">지난달: {prevMemo}</p>}
+                              </div>
+                            )}
+                            {/* DISCUSS 라벨 터치 시 메모 보기 */}
+                            {discussViewId === student.id && hasDiscuss && (
+                              <div className="px-4 pb-2">
+                                {student.memo ? (
+                                  <p className="text-xs text-rose-400 bg-rose-50 rounded-lg px-3 py-2">{student.memo}</p>
+                                ) : (
+                                  <p className="text-xs text-gray-400 italic">사유가 입력되지 않았습니다</p>
+                                )}
+                              </div>
+                            )}
+                            {/* DISCUSS 설정 후 이유 입력 칸 */}
+                            {discussInputId === student.id && (
+                              <div className="px-4 pb-2 flex gap-1.5">
+                                <input
+                                  type="text"
+                                  value={discussMemoValue}
+                                  onChange={e => setDiscussMemoValue(e.target.value)}
+                                  placeholder="사유 입력 (예: 수강료 조정 논의)"
+                                  className="flex-1 px-2.5 py-1.5 rounded-lg text-xs border border-rose-200 focus:outline-none focus:ring-1 focus:ring-rose-300 bg-rose-50/50"
+                                  autoFocus
+                                  onKeyDown={e => { if (e.key === 'Enter') saveDiscussMemo(student.id) }}
+                                />
+                                <button
+                                  onClick={() => saveDiscussMemo(student.id)}
+                                  className="px-3 py-1.5 rounded-lg text-xs font-medium bg-rose-100 text-rose-500 hover:bg-rose-200 transition-colors shrink-0"
+                                >
+                                  저장
+                                </button>
                               </div>
                             )}
                           </div>
