@@ -11,14 +11,7 @@ import DatePickerPopup from '@/components/payments/DatePickerPopup'
 import MethodPickerPopup from '@/components/payments/MethodPickerPopup'
 import AiFilterButton from '@/components/payments/AiFilterButton'
 import { getPrevMonth, formatMonth, getPaymentDueDay, isPaymentScheduled, getUnpaidLabelText, getActiveStudents, safeMutate, decodePaymentMemo, useGrades, usePayments, revalidateGrades, revalidatePayments } from '@/lib/utils'
-
-const INLINE_METHODS: [PaymentMethod, string][] = [
-  ['remote', '결제선생'],
-  ['card', '카드'],
-  ['transfer', '이체'],
-  ['cash', '현금'],
-  ['other', '기타'],
-]
+import { METHOD_OPTIONS_SHORT } from '@/lib/constants'
 
 export default function PaymentsPage() {
   const today = new Date().toISOString().split('T')[0]
@@ -689,15 +682,18 @@ export default function PaymentsPage() {
                             }`}
                               onClick={status === 'unpaid' && !isExpanded ? () => handleExpand(student.id) : undefined}
                             >
+                              {hasDiscuss && (
+                                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-rose-50 text-rose-400 font-bold shrink-0">DISCUSS</span>
+                              )}
                               <Link
                                 href={`/students/${student.id}`}
                                 className="flex-1 min-w-0"
                                 onClick={e => { if (wasSwiped.current) e.preventDefault(); e.stopPropagation() }}
                               >
                                 <span className="text-sm font-medium">{student.name}</span>
-                                {hasDiscuss && (
+                                {hasDiscuss && student.memo && (
                                   <p className="text-[11px] text-rose-500 font-medium leading-tight">
-                                    {student.memo || 'DISCUSS'}
+                                    {student.memo}
                                   </p>
                                 )}
                               </Link>
@@ -736,7 +732,7 @@ export default function PaymentsPage() {
                                       className="fan-item px-2 py-0.5 rounded-full text-xs font-medium bg-[#E0E7FF] text-[#3730A3] flex items-center gap-0.5 whitespace-nowrap"
                                       aria-label="결제수단 선택"
                                     >
-                                      {INLINE_METHODS.find(([v]) => v === inlineMethod)?.[1]}
+                                      {METHOD_OPTIONS_SHORT.find(([v]) => v === inlineMethod)?.[1]}
                                       <span className="text-[9px] opacity-50">▼</span>
                                     </button>
                                     <button
