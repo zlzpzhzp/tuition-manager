@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import Link from 'next/link'
-import { ChevronLeft, ChevronRight, Check, ClipboardList, Download, Plus } from 'lucide-react'
+import { ChevronLeft, ChevronRight, ChevronDown, Check, ClipboardList, Download, Plus } from 'lucide-react'
 import type { Grade, Class, Student, Payment, PaymentMethod, GradeWithClasses } from '@/types'
 import { getStudentFee, getPaymentStatus, PAYMENT_STATUS_LABELS, PAYMENT_STATUS_COLORS, PAYMENT_METHOD_LABELS } from '@/types'
 import PaymentModal from '@/components/PaymentModal'
@@ -70,6 +70,16 @@ export default function PaymentsPage() {
   // 학생 추가 모달
   const [showStudentModal, setShowStudentModal] = useState(false)
   const [addStudentClassId, setAddStudentClassId] = useState<string | null>(null)
+
+  // 반 접기/펼치기 (기본: 접힘)
+  const [expandedClasses, setExpandedClasses] = useState<Set<string>>(new Set())
+  const toggleClass = (classId: string) => {
+    setExpandedClasses(prev => {
+      const next = new Set(prev)
+      next.has(classId) ? next.delete(classId) : next.add(classId)
+      return next
+    })
+  }
 
   // 미납 필터
   const [showUnpaidOnly, setShowUnpaidOnly] = useState(false)
@@ -471,20 +481,31 @@ export default function PaymentsPage() {
                 }
                 if (students.length === 0) return null
 
+                const paidCount = students.filter(s => {
+                  const paid = (paymentsByStudentId.get(s.id) ?? []).reduce((sum, p) => sum + p.amount, 0)
+                  return getPaymentStatus(paid, getStudentFee(s, cls)) === 'paid'
+                }).length
+                const isClassExpanded = expandedClasses.has(cls.id)
+
                 return (
                   <div key={cls.id}>
-                    <div className="px-4 py-2 bg-gray-50 border-b flex items-center">
+                    <div
+                      className="px-4 py-2 bg-gray-50 border-b flex items-center cursor-pointer active:bg-gray-100 select-none"
+                      onClick={() => toggleClass(cls.id)}
+                    >
+                      <ChevronDown className={`w-3.5 h-3.5 text-gray-400 mr-1.5 transition-transform ${isClassExpanded ? '' : '-rotate-90'}`} />
                       <span className="text-xs font-medium text-gray-500">{cls.name}</span>
-                      <span className="text-xs text-gray-400 ml-2 flex-1">{cls.monthly_fee.toLocaleString()}원</span>
+                      <span className="text-xs text-gray-400 ml-2">{paidCount}/{students.length}</span>
+                      <span className="flex-1" />
                       <button
-                        onClick={() => handleAddStudent(cls.id)}
+                        onClick={(e) => { e.stopPropagation(); handleAddStudent(cls.id) }}
                         className="p-0.5 text-gray-400 hover:text-[#1e2d6f] transition-colors"
                         aria-label={`${cls.name}에 학생 추가`}
                       >
                         <Plus className="w-3.5 h-3.5" />
                       </button>
                     </div>
-                    {students.map(student => {
+                    {isClassExpanded && students.map(student => {
                       const fee = getStudentFee(student, cls)
                       const studentPayments = getStudentPayments(student.id)
                       const paid = studentPayments.reduce((s, p) => s + p.amount, 0)
