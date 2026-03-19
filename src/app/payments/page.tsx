@@ -621,8 +621,8 @@ export default function PaymentsPage() {
                       return (
                         <div key={student.id} className="relative overflow-hidden">
                           {/* 왼쪽 스와이프 액션 */}
-                          <div className={`absolute inset-y-0 left-0 w-24 flex items-center justify-center ${hasDiscuss ? 'bg-gray-400' : 'bg-red-500'}`}>
-                            <span className="text-white font-bold text-xs">{hasDiscuss ? '해제' : 'DISCUSS'}</span>
+                          <div className={`absolute inset-y-0 left-0 w-24 flex items-center justify-center ${hasDiscuss ? 'bg-gray-300' : 'bg-rose-200'}`}>
+                            <span className={`font-bold text-xs ${hasDiscuss ? 'text-gray-500' : 'text-rose-500'}`}>{hasDiscuss ? '해제' : 'DISCUSS'}</span>
                           </div>
 
                           {/* 오른쪽 수정 패널 */}
