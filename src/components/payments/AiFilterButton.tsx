@@ -321,7 +321,7 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
                 if (e.key === 'Enter') handleFilter()
                 if (e.key === 'Escape') { setOpen(false); setQuery('') }
               }}
-              placeholder="미납학생, 결제일 15일..."
+              placeholder="15일 이후 미납, 7일이상 미납..."
               className="text-xs w-full outline-none bg-transparent pl-3 pr-1 text-white placeholder:text-[#c8c5be]/60"
               style={{ height: BTN }}
               aria-label="AI 필터 검색어"
