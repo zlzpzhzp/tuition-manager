@@ -458,8 +458,8 @@ export default function PaymentsPage() {
 
   return (
     <div ref={containerRef} onClick={() => { if (swipeOpenId) closeSwipeEdit() }}>
-      {/* 월 네비게이션 — sticky 고정 */}
-      <div className="sticky top-0 z-30 bg-white pb-1">
+      {/* 월 네비게이션 — sticky 고정 (iOS 대응: -top-6으로 main py-6 상쇄) */}
+      <div className="sticky -top-6 z-30 bg-gray-50 -mx-4 px-4 pt-6 pb-1">
         {/* Pull-to-refresh 인디케이터 */}
         <div
           className="flex items-center justify-center overflow-hidden transition-all duration-200 ease-out"
@@ -474,18 +474,18 @@ export default function PaymentsPage() {
           </div>
         </div>
         <div className="flex items-center justify-center gap-3 mb-1">
-        <button onClick={() => navigateMonth(-1)} className="p-2 hover:bg-gray-100 rounded-lg" aria-label="이전 달">
-          <ChevronLeft className="w-7 h-7" />
-        </button>
-        <h1 className="font-extrabold tracking-tight text-center">
-          <span className="text-[2.6rem] sm:text-[3.2rem] leading-none">{selectedMonth.split('-')[0]}</span>
-          <span className="text-[1.8rem] sm:text-[2.2rem] text-gray-600">년 </span>
-          <span className="text-5xl sm:text-6xl">{parseInt(selectedMonth.split('-')[1])}</span>
-          <span className="text-[1.8rem] sm:text-[2.2rem] text-gray-600">월</span>
-        </h1>
-        <button onClick={() => navigateMonth(1)} className="p-2 hover:bg-gray-100 rounded-lg" aria-label="다음 달">
-          <ChevronRight className="w-7 h-7" />
-        </button>
+          <button onClick={() => navigateMonth(-1)} className="p-2 hover:bg-gray-100 rounded-lg" aria-label="이전 달">
+            <ChevronLeft className="w-7 h-7" />
+          </button>
+          <h1 className="font-extrabold tracking-tight text-center">
+            <span className="text-[2.6rem] sm:text-[3.2rem] leading-none">{selectedMonth.split('-')[0]}</span>
+            <span className="text-[1.8rem] sm:text-[2.2rem] text-gray-600">년 </span>
+            <span className="text-5xl sm:text-6xl">{parseInt(selectedMonth.split('-')[1])}</span>
+            <span className="text-[1.8rem] sm:text-[2.2rem] text-gray-600">월</span>
+          </h1>
+          <button onClick={() => navigateMonth(1)} className="p-2 hover:bg-gray-100 rounded-lg" aria-label="다음 달">
+            <ChevronRight className="w-7 h-7" />
+          </button>
         </div>
       </div>
 
