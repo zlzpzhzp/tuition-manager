@@ -219,7 +219,7 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
 
             <button
               onClick={() => setShowConfirmDelete(true)}
-              className="w-full py-2.5 border border-red-300 text-red-600 rounded-lg font-medium text-sm hover:bg-red-50 flex items-center justify-center gap-2"
+              className="w-full py-2.5 bg-red-50 border border-red-300 text-red-600 rounded-lg font-medium text-sm hover:bg-red-100 flex items-center justify-center gap-2"
             >
               <Trash2 className="w-4 h-4" />
               납부 취소
