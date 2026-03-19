@@ -501,9 +501,10 @@ export default function PaymentsPage() {
         </div>
       </div>
 
-      {/* 학생별 납부 현황 */}
+      {/* 학생별 납부 현황 — 영어 반 제외 */}
       {grades.map((grade, gradeIndex) => {
-        const gradeStudentsAll = grade.classes.flatMap(c =>
+        const nonEnglishClasses = grade.classes.filter(c => c.subject !== '영어')
+        const gradeStudentsAll = nonEnglishClasses.flatMap(c =>
           getActiveStudents(c.students ?? []).map(s => ({ ...s, class: c }))
         )
         let gradeStudents = aiFilterIds ? gradeStudentsAll.filter(s => aiFilterIds.has(s.id)) : gradeStudentsAll
@@ -565,7 +566,7 @@ export default function PaymentsPage() {
               {gradeIndex !== 0 && <div className="flex-1" />}
             </div>
             <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-              {grade.classes.map(cls => {
+              {nonEnglishClasses.map(cls => {
                 const allClassStudents = getActiveStudents(cls.students ?? [])
                 let students = aiFilterIds ? allClassStudents.filter(s => aiFilterIds.has(s.id)) : allClassStudents
                 if (showUnpaidOnly) {
@@ -836,6 +837,313 @@ export default function PaymentsPage() {
           </div>
         )
       })}
+
+      {/* 영어 섹션 — 학년별로 분리 표시 */}
+      {(() => {
+        const englishGrades = grades
+          .map(grade => ({
+            ...grade,
+            classes: grade.classes.filter(c => c.subject === '영어'),
+          }))
+          .filter(grade => {
+            const studentsAll = grade.classes.flatMap(c =>
+              getActiveStudents(c.students ?? []).map(s => ({ ...s, class: c }))
+            )
+            let filtered = aiFilterIds ? studentsAll.filter(s => aiFilterIds.has(s.id)) : studentsAll
+            if (showUnpaidOnly) {
+              filtered = filtered.filter(s => {
+                const paid = (paymentsByStudentId.get(s.id) ?? []).reduce((sum, p) => sum + p.amount, 0)
+                const status = getPaymentStatus(paid, getStudentFee(s, s.class))
+                if (status === 'paid') return false
+                if (status === 'unpaid' && checkScheduled(s, selectedMonth)) return false
+                return true
+              })
+            }
+            return filtered.length > 0
+          })
+        if (englishGrades.length === 0) return null
+        return (
+          <>
+            {englishGrades.map(grade => (
+              <div key={`eng-${grade.id}`} className="mb-4">
+                <div className="flex items-center mb-2 px-1">
+                  <h2 className="text-sm font-semibold text-gray-500">{grade.name} 영어</h2>
+                  <div className="flex-1" />
+                </div>
+                <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                  {grade.classes.map(cls => {
+                    const allClassStudents = getActiveStudents(cls.students ?? [])
+                    let students = aiFilterIds ? allClassStudents.filter(s => aiFilterIds.has(s.id)) : allClassStudents
+                    if (showUnpaidOnly) {
+                      students = students.filter(s => {
+                        const paid = (paymentsByStudentId.get(s.id) ?? []).reduce((sum, p) => sum + p.amount, 0)
+                        const status = getPaymentStatus(paid, getStudentFee(s, cls))
+                        if (status === 'paid') return false
+                        if (status === 'unpaid' && checkScheduled(s, selectedMonth)) return false
+                        return true
+                      })
+                    }
+                    if (students.length === 0) return null
+
+                    const paidCount = students.filter(s => {
+                      const paid = (paymentsByStudentId.get(s.id) ?? []).reduce((sum, p) => sum + p.amount, 0)
+                      return getPaymentStatus(paid, getStudentFee(s, cls)) === 'paid'
+                    }).length
+                    const isClassExpanded = expandedClasses.has(cls.id)
+
+                    return (
+                      <div key={cls.id}>
+                        <div
+                          className="px-4 py-2 bg-gray-50 border-b border-gray-200 flex items-center cursor-pointer active:bg-gray-100 select-none"
+                          onClick={() => toggleClass(cls.id)}
+                        >
+                          <span className="text-sm font-medium text-gray-600">{cls.name}</span>
+                          <span className="text-xs text-gray-400 ml-1">{cls.monthly_fee > 0 ? `${cls.monthly_fee.toLocaleString()}원` : ''}</span>
+                          <span className="text-xs text-gray-400 ml-2">{paidCount}/{students.length}</span>
+                          <span className="flex-1" />
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleAddStudent(cls.id) }}
+                            className="p-0.5 text-gray-400 hover:text-[#1e2d6f] transition-colors"
+                            aria-label={`${cls.name}에 학생 추가`}
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                        <div
+                          className="grid transition-[grid-template-rows] duration-300 ease-in-out overflow-hidden"
+                          style={{ gridTemplateRows: isClassExpanded ? '1fr' : '0fr' }}
+                        >
+                        <div className="min-h-0">
+                        {students.map(student => {
+                          const fee = getStudentFee(student, cls)
+                          const studentPayments = getStudentPayments(student.id)
+                          const paid = studentPayments.reduce((s, p) => s + p.amount, 0)
+                          const status = getPaymentStatus(paid, fee)
+                          const scheduled = status === 'unpaid' && checkScheduled(student, selectedMonth)
+                          const displayColors = scheduled ? { bg: '#FEF3C7', text: '#92400E' } : PAYMENT_STATUS_COLORS[status]
+                          let displayLabel = ''
+                          if (status === 'unpaid') {
+                            displayLabel = getUnpaidLabelText(student, selectedMonth, student.payment_due_day ?? undefined)
+                          } else if (studentPayments.length > 0) {
+                            const pDate = new Date(studentPayments[0].payment_date)
+                            displayLabel = `${pDate.getMonth() + 1}/${pDate.getDate()} 납부`
+                          } else {
+                            displayLabel = PAYMENT_STATUS_LABELS[status]
+                          }
+                          const prevMemo = getPrevMemo(student.id)
+                          const currentMemo = studentPayments[0]?.memo
+                          const isExpanded = expandedStudentId === student.id && status === 'unpaid'
+                          const isSuccess = inlineSuccess === student.id
+                          const { cleanMemo } = decodePaymentMemo(currentMemo)
+                          const hasMemo = !!(prevMemo || cleanMemo)
+                          const hasDiscuss = student.has_discuss ?? false
+                          const isSwipeOpen = swipeOpenId === student.id
+
+                          return (
+                            <div key={student.id} className="relative overflow-hidden">
+                              {/* 왼쪽 스와이프 액션 */}
+                              <div className={`absolute inset-y-0 left-0 w-24 flex items-center justify-center ${hasDiscuss ? 'bg-gray-300' : 'bg-rose-200'}`}>
+                                <span className={`font-bold text-xs ${hasDiscuss ? 'text-gray-500' : 'text-rose-500'}`}>{hasDiscuss ? '해제' : 'DISCUSS'}</span>
+                              </div>
+
+                              {/* 오른쪽 수정 패널 */}
+                              <div className="absolute inset-y-0 right-0 w-[150px] flex items-center gap-1.5 px-2 bg-violet-50" onClick={e => e.stopPropagation()}>
+                                <div className="flex flex-col items-center">
+                                  <label htmlFor={`dueday-${student.id}`} className="text-[8px] text-violet-400 mb-0.5 font-medium">결제일</label>
+                                  <input
+                                    id={`dueday-${student.id}`}
+                                    type="number"
+                                    value={isSwipeOpen ? editDueDayValue : ''}
+                                    onChange={e => setEditDueDayValue(e.target.value)}
+                                    className="w-10 px-1 py-1 text-xs border border-violet-200 rounded-lg text-center bg-white focus:outline-none focus:ring-1 focus:ring-violet-300"
+                                    min={1} max={31}
+                                  />
+                                </div>
+                                <div className="flex flex-col items-center">
+                                  <label htmlFor={`fee-${student.id}`} className="text-[8px] text-violet-400 mb-0.5 font-medium">원비(만)</label>
+                                  <input
+                                    id={`fee-${student.id}`}
+                                    type="number"
+                                    value={isSwipeOpen ? editFeeValue : ''}
+                                    onChange={e => setEditFeeValue(e.target.value)}
+                                    className="w-12 px-1 py-1 text-xs border border-violet-200 rounded-lg text-center bg-white focus:outline-none focus:ring-1 focus:ring-violet-300"
+                                  />
+                                </div>
+                                <button onClick={() => handleSaveEdit(student.id)} className="p-1.5 bg-violet-400 hover:bg-violet-500 text-white rounded-full shrink-0 shadow-sm transition-colors" aria-label="저장">
+                                  <Check className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+
+                              {/* 메인 콘텐츠 */}
+                              <div
+                                data-swipe-row={student.id}
+                                className="relative bg-white z-10"
+                                onTouchStart={e => handleTouchStart(e, student.id)}
+                                onTouchMove={handleTouchMove}
+                                onTouchEnd={handleTouchEnd}
+                                style={isSwipeOpen ? { transform: 'translateX(-150px)', transition: 'transform 0.3s ease' } : undefined}
+                              >
+                                <div className={`flex items-center gap-2 px-4 ${hasMemo && !isExpanded ? 'pt-1.5 pb-0.5' : 'py-1.5'} ${
+                                  status === 'unpaid' && !isExpanded ? 'cursor-pointer active:bg-gray-50' : ''
+                                }`}
+                                  onClick={status === 'unpaid' && !isExpanded ? () => handleExpand(student.id) : undefined}
+                                >
+                                  {hasDiscuss && (
+                                    <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-rose-50 text-rose-400 font-bold shrink-0">DISCUSS</span>
+                                  )}
+                                  <Link
+                                    href={`/students/${student.id}`}
+                                    className="flex-1 min-w-0"
+                                    onClick={e => { if (wasSwiped.current) e.preventDefault(); e.stopPropagation() }}
+                                  >
+                                    <span className="text-sm font-medium">{student.name}</span>
+                                    {hasDiscuss && student.memo && (
+                                      <p className="text-[11px] text-rose-500 font-medium leading-tight">
+                                        {student.memo}
+                                      </p>
+                                    )}
+                                  </Link>
+
+                                  {isExpanded ? (
+                                    <div className="flex flex-col items-end gap-1" onClick={e => e.stopPropagation()}>
+                                      <div className="flex items-center gap-1.5">
+                                        <button
+                                          ref={dateButtonRef}
+                                          type="button"
+                                          onClick={() => {
+                                            if (!showDatePicker && dateButtonRef.current) {
+                                              const rect = dateButtonRef.current.getBoundingClientRect()
+                                              setDatePickerPos({ top: rect.bottom + 4, left: Math.max(8, rect.left) })
+                                            }
+                                            setShowDatePicker(!showDatePicker)
+                                            setShowMethodPicker(false)
+                                          }}
+                                          className="fan-item px-2 py-0.5 rounded-full text-xs font-medium bg-[#FEF3C7] text-[#92400E] whitespace-nowrap"
+                                          aria-label="결제일 선택"
+                                        >
+                                          {(() => { const d = new Date(inlineDate); return `${d.getMonth()+1}/${d.getDate()}` })()}
+                                          <span className="text-[9px] opacity-50 ml-0.5">▼</span>
+                                        </button>
+                                        <button
+                                          ref={methodButtonRef}
+                                          type="button"
+                                          onClick={() => {
+                                            if (!showMethodPicker && methodButtonRef.current) {
+                                              const rect = methodButtonRef.current.getBoundingClientRect()
+                                              setMethodPickerPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right })
+                                            }
+                                            setShowMethodPicker(!showMethodPicker)
+                                            setShowDatePicker(false)
+                                          }}
+                                          className="fan-item px-2 py-0.5 rounded-full text-xs font-medium bg-[#E0E7FF] text-[#3730A3] flex items-center gap-0.5 whitespace-nowrap"
+                                          aria-label="결제수단 선택"
+                                        >
+                                          {METHOD_OPTIONS_SHORT.find(([v]) => v === inlineMethod)?.[1]}
+                                          <span className="text-[9px] opacity-50">▼</span>
+                                        </button>
+                                        <button
+                                          onClick={() => handleInlineSubmit(student.id, fee)}
+                                          disabled={!!inlineSuccess}
+                                          className={`fan-item px-2.5 py-0.5 rounded-full text-xs font-medium transition-all ${
+                                            isSuccess ? 'bg-green-500 text-white scale-105' : 'bg-[#DEF7EC] text-[#03543F] hover:opacity-80'
+                                          }`}
+                                          aria-label="납부 처리"
+                                        >
+                                          {isSuccess ? <Check className="w-3.5 h-3.5" strokeWidth={3} /> : '납부'}
+                                        </button>
+                                        <button
+                                          onClick={() => handleOpenModal(student.id, fee)}
+                                          className="fan-item p-1 text-[#1e2d6f] hover:opacity-70"
+                                          aria-label="상세 납부 기록"
+                                        >
+                                          <ClipboardList className="w-3.5 h-3.5" />
+                                        </button>
+                                      </div>
+                                      <input
+                                        type="text"
+                                        value={inlineMemo}
+                                        onChange={e => setInlineMemo(e.target.value)}
+                                        placeholder="비고"
+                                        className="fan-item w-full px-2.5 py-1 rounded-lg text-xs border border-gray-300 focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                                        aria-label="비고 입력"
+                                      />
+                                    </div>
+                                  ) : (
+                                    <>
+                                      {studentPayments.length > 0 && status !== 'unpaid' && (() => {
+                                        const p = studentPayments[0]
+                                        const { otherMethod } = decodePaymentMemo(p.memo)
+                                        const methodLabel = otherMethod || PAYMENT_METHOD_LABELS[p.method as keyof typeof PAYMENT_METHOD_LABELS]
+                                        return (
+                                          <span className="text-[10px] text-gray-400 whitespace-nowrap">
+                                            {methodLabel} 결제일{parseInt(selectedMonth.split('-')[1])}/{getDueDay(student)}
+                                          </span>
+                                        )
+                                      })()}
+                                      {status !== 'unpaid' ? (
+                                        <button
+                                          onClick={(e) => { e.stopPropagation(); handleOpenModal(student.id, fee) }}
+                                          className="px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap cursor-pointer hover:opacity-80 transition-opacity"
+                                          style={{ backgroundColor: displayColors.bg, color: displayColors.text }}
+                                          role="status"
+                                        >
+                                          {displayLabel}
+                                        </button>
+                                      ) : (
+                                        <span
+                                          className="px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap"
+                                          style={{ backgroundColor: displayColors.bg, color: displayColors.text }}
+                                          role="status"
+                                        >
+                                          {displayLabel}
+                                        </span>
+                                      )}
+                                    </>
+                                  )}
+                                </div>
+                                {!isExpanded && hasMemo && (
+                                  <div className="flex justify-end px-4 pb-1">
+                                    <div className="text-right">
+                                      {cleanMemo && <p className="text-[11px] text-gray-500 leading-tight">{cleanMemo}</p>}
+                                      {prevMemo && <p className="text-[11px] text-gray-400 leading-tight">지난달: {prevMemo}</p>}
+                                    </div>
+                                  </div>
+                                )}
+                                {/* DISCUSS 설정 후 이유 입력 칸 */}
+                                {discussInputId === student.id && (
+                                  <div className="px-4 pb-2 flex gap-1.5">
+                                    <input
+                                      type="text"
+                                      value={discussMemoValue}
+                                      onChange={e => setDiscussMemoValue(e.target.value)}
+                                      placeholder="사유 입력 (예: 수강료 조정 논의)"
+                                      className="flex-1 px-2.5 py-1.5 rounded-lg text-xs border border-rose-200 focus:outline-none focus:ring-1 focus:ring-rose-300 bg-rose-50/50"
+                                      autoFocus
+                                      onKeyDown={e => { if (e.key === 'Enter') saveDiscussMemo(student.id) }}
+                                    />
+                                    <button
+                                      onClick={() => saveDiscussMemo(student.id)}
+                                      className="px-3 py-1.5 rounded-lg text-xs font-medium bg-rose-100 text-rose-500 hover:bg-rose-200 transition-colors shrink-0"
+                                    >
+                                      저장
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )
+                        })}
+                        </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            ))}
+          </>
+        )
+      })()}
 
       {allStudents.length === 0 && (
         <div className="text-center py-12 text-gray-400">등록된 학생이 없습니다</div>
