@@ -457,20 +457,21 @@ export default function PaymentsPage() {
   )
 
   return (
-    <div ref={containerRef} onClick={() => { if (swipeOpenId) closeSwipeEdit() }}>
-      {/* Pull-to-refresh 인디케이터 */}
-      <div
-        className="flex items-center justify-center overflow-hidden transition-all duration-200 ease-out"
-        style={{ height: pullDistance > 0 ? `${pullDistance}px` : '0px' }}
-      >
-        <div className={`transition-transform duration-200 ${isRefreshing ? 'animate-spin' : ''}`}
-          style={{ transform: `rotate(${Math.min(pullDistance / PULL_THRESHOLD, 1) * 360}deg)` }}
+    <div ref={containerRef} className="relative" onClick={() => { if (swipeOpenId) closeSwipeEdit() }}>
+      {/* Pull-to-refresh 인디케이터 — 타이틀 위에 겹쳐서 표시 */}
+      {pullDistance > 0 && (
+        <div className="absolute left-0 right-0 flex items-center justify-center z-50 pointer-events-none"
+          style={{ top: `${Math.min(pullDistance, 120) - 32}px` }}
         >
-          <svg className="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
+          <div className={`transition-transform duration-200 ${isRefreshing ? 'animate-spin' : ''}`}
+            style={{ transform: `rotate(${Math.min(pullDistance / PULL_THRESHOLD, 1) * 360}deg)`, opacity: Math.min(pullDistance / 30, 1) }}
+          >
+            <svg className="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+          </div>
         </div>
-      </div>
+      )}
       {/* 월 네비게이션 */}
       <div className="flex items-center justify-center gap-3 mb-3">
         <button onClick={() => navigateMonth(-1)} className="p-2 hover:bg-gray-100 rounded-lg" aria-label="이전 달">
