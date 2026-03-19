@@ -376,10 +376,10 @@ export default function PaymentsPage() {
       {[...Array(2)].map((_, gi) => (
         <div key={gi} className="mb-4">
           <div className="h-4 bg-gray-200 rounded w-20 mb-2 ml-1"></div>
-          <div className="bg-white rounded-xl border overflow-hidden">
-            <div className="px-4 py-2 bg-gray-50 border-b"><div className="h-3 bg-gray-200 rounded w-24"></div></div>
+          <div className="bg-white rounded-xl overflow-hidden">
+            <div className="px-4 py-2 bg-gray-50"><div className="h-3 bg-gray-200 rounded w-24"></div></div>
             {[...Array(4)].map((_, si) => (
-              <div key={si} className="flex items-center gap-2 px-4 py-3 border-b last:border-b-0">
+              <div key={si} className="flex items-center gap-2 px-4 py-3">
                 <div className="h-4 bg-gray-200 rounded w-14 flex-1"></div>
                 <div className="h-5 bg-gray-200 rounded-full w-16"></div>
               </div>
@@ -466,7 +466,7 @@ export default function PaymentsPage() {
               )}
               {gradeIndex !== 0 && <div className="flex-1" />}
             </div>
-            <div className="bg-white rounded-xl border overflow-hidden">
+            <div className="bg-white rounded-xl overflow-hidden">
               {grade.classes.map(cls => {
                 const allClassStudents = getActiveStudents(cls.students ?? [])
                 let students = aiFilterIds ? allClassStudents.filter(s => aiFilterIds.has(s.id)) : allClassStudents
@@ -490,7 +490,7 @@ export default function PaymentsPage() {
                 return (
                   <div key={cls.id}>
                     <div
-                      className="px-4 py-2 bg-gray-50 border-b flex items-center cursor-pointer active:bg-gray-100 select-none"
+                      className="px-4 py-2 bg-gray-50 flex items-center cursor-pointer active:bg-gray-100 select-none"
                       onClick={() => toggleClass(cls.id)}
                     >
                       <span className="text-sm font-medium text-gray-600">{cls.name}</span>
