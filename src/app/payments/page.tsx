@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
+import { useState, useCallback, useRef, useMemo } from 'react'
 import Link from 'next/link'
 import { ChevronLeft, ChevronRight, Check, ClipboardList, Download, Plus } from 'lucide-react'
 import type { Grade, Class, Student, Payment, PaymentMethod, GradeWithClasses } from '@/types'
@@ -392,7 +392,7 @@ export default function PaymentsPage() {
 
   if (error) return (
     <div className="text-center py-12">
-      <p className="text-red-500 mb-4">{error}</p>
+      <p className="text-red-500 mb-4">{error?.message || '데이터 로딩 실패'}</p>
       <button onClick={fetchData} className="px-4 py-2 bg-[#1e2d6f] text-white rounded-lg hover:opacity-90">다시 시도</button>
     </div>
   )
