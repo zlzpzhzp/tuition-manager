@@ -179,12 +179,7 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
                     type="text"
                     value={editMemo}
                     onChange={e => setEditMemo(e.target.value)}
-                    onBlur={async () => {
-                      if (editMemo !== (payment.memo ?? '') && onUpdate && payment.id) {
-                        await onUpdate(payment.id, { memo: editMemo || undefined })
-                      }
-                      setEditingMemo(false)
-                    }}
+                    onBlur={() => setEditingMemo(false)}
                     className="flex-1 px-2 py-1 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1e2d6f]"
                     placeholder="특이사항이 있으면 입력하세요"
                   />
@@ -198,6 +193,18 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
                 </button>
               )}
             </div>
+
+            <button
+              onClick={async () => {
+                if (editMemo !== (payment.memo ?? '') && onUpdate && payment.id) {
+                  await onUpdate(payment.id, { memo: editMemo || undefined })
+                }
+                onClose()
+              }}
+              className="w-full py-3 bg-[#1e2d6f] text-white rounded-lg font-medium text-sm hover:opacity-90"
+            >
+              확인
+            </button>
 
             <button
               onClick={() => setShowConfirmDelete(true)}
