@@ -503,6 +503,7 @@ export default function PaymentsPage() {
                       onClick={() => toggleClass(cls.id)}
                     >
                       <span className="text-sm font-medium text-gray-600">{cls.name}</span>
+                      <span className="text-xs text-gray-400 ml-1">{cls.monthly_fee > 0 ? `${cls.monthly_fee.toLocaleString()}원` : ''}</span>
                       <span className="text-xs text-gray-400 ml-2">{paidCount}/{students.length}</span>
                       <span className="flex-1" />
                       <button
