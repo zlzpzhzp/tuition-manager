@@ -16,6 +16,8 @@ export default function Navbar() {
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/')
 
+  if (pathname === '/login') return null
+
   return (
     <>
       <nav className="shadow-lg" style={{ backgroundColor: '#1e2d6f' }}>

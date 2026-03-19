@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useCallback, useMemo } from 'react'
-import { Plus, Pencil, Trash2, ChevronDown, ChevronRight, X, Check, ArrowRightLeft, ChevronUp } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { Plus, Pencil, Trash2, ChevronDown, ChevronRight, X, Check, ArrowRightLeft, ChevronUp, LogOut } from 'lucide-react'
 import type { Grade, Class, Student } from '@/types'
 import { DAY_LABELS, parseClassDays } from '@/types'
 import { getActiveStudents, safeMutate, useGrades, revalidateGrades } from '@/lib/utils'
@@ -11,6 +12,7 @@ const SUBJECT_COLORS = ['bg-blue-100 text-blue-700', 'bg-green-100 text-green-70
 type GradeWithClasses = import('@/types').Grade & { classes: (Class & { students?: Student[] })[] }
 
 export default function SettingsPage() {
+  const router = useRouter()
   const { data: grades = [], isLoading: loading } = useGrades<GradeWithClasses[]>()
   const [expandedGrades, setExpandedGrades] = useState<Set<string>>(new Set())
 
@@ -406,6 +408,22 @@ export default function SettingsPage() {
       <datalist id="subject-list">
         {existingSubjects.map(s => <option key={s} value={s} />)}
       </datalist>
+
+      {/* 로그아웃 */}
+      <div className="mt-12 pt-6 border-t">
+        <button
+          onClick={async () => {
+            if (!confirm('로그아웃 하시겠습니까?')) return
+            await fetch('/api/auth/logout', { method: 'POST' })
+            router.push('/login')
+            router.refresh()
+          }}
+          className="w-full py-3 text-red-500 bg-white border border-red-200 rounded-xl text-sm font-medium hover:bg-red-50 flex items-center justify-center gap-2"
+        >
+          <LogOut className="w-4 h-4" />
+          로그아웃
+        </button>
+      </div>
 
       {/* 학생 반이동 모달 */}
       {transferClass && (
