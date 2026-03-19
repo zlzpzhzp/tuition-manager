@@ -68,84 +68,102 @@ function getGeminiTools(): Tool[] {
 // ── Tool execution (공유 쿼리 사용) ──
 
 async function listGradesAndClasses() {
-  const { data, error } = await queryGradesTree()
-  if (error) return { error: error.message }
+  try {
+    const { data, error } = await queryGradesTree()
+    if (error) return { error: error.message }
 
-  const mapped = mapGradesTree(data ?? [])
-  return mapped.map(g => ({
-    grade: g.name,
-    classes: g.classes.map(c => ({
-      name: c.name,
-      subject: c.subject,
-      monthly_fee: c.monthly_fee,
-      students: (c.students ?? [])
-        .filter((s: Record<string, unknown>) => !s.withdrawal_date)
-        .map((s: Record<string, unknown>) => ({
-          name: s.name,
-          custom_fee: s.custom_fee,
-          id: s.id,
-        })),
-    })),
-  }))
+    const mapped = mapGradesTree(data ?? [])
+    return mapped.map(g => ({
+      grade: g.name,
+      classes: g.classes.map(c => ({
+        name: c.name,
+        subject: c.subject,
+        monthly_fee: c.monthly_fee,
+        students: (c.students ?? [])
+          .filter((s: Record<string, unknown>) => !s.withdrawal_date)
+          .map((s: Record<string, unknown>) => ({
+            name: s.name,
+            custom_fee: s.custom_fee,
+            id: s.id,
+          })),
+      })),
+    }))
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    console.error('listGradesAndClasses error:', msg)
+    return { error: `학년/반 조회 실패: ${msg}` }
+  }
 }
 
 async function getUnpaidStudents(args: Record<string, string>) {
-  const { data, error } = await queryGradesTree()
-  if (error || !data) return { error: error?.message ?? '데이터 조회 실패' }
+  try {
+    const { data, error } = await queryGradesTree()
+    if (error || !data) return { error: error?.message ?? '데이터 조회 실패' }
 
-  const mapped = mapGradesTree(data)
-  const { paidMap } = await queryPaidMap(args.billing_month)
+    const mapped = mapGradesTree(data)
+    const { paidMap } = await queryPaidMap(args.billing_month)
 
-  const unpaid: { grade: string; class_name: string; name: string; fee: number; paid: number }[] = []
-  for (const g of mapped) {
-    for (const c of g.classes) {
-      for (const s of (c.students ?? [])) {
-        const student = s as Record<string, unknown>
-        if (student.withdrawal_date) continue
-        const fee = (student.custom_fee as number | null) ?? c.monthly_fee
-        const paid = paidMap[student.id as string] ?? 0
-        if (paid < fee) unpaid.push({ grade: g.name, class_name: c.name, name: student.name as string, fee, paid })
+    const unpaid: { grade: string; class_name: string; name: string; fee: number; paid: number }[] = []
+    for (const g of mapped) {
+      for (const c of g.classes) {
+        for (const s of (c.students ?? [])) {
+          const student = s as Record<string, unknown>
+          if (student.withdrawal_date) continue
+          const fee = (student.custom_fee as number | null) ?? c.monthly_fee
+          const paid = paidMap[student.id as string] ?? 0
+          if (paid < fee) unpaid.push({ grade: g.name, class_name: c.name, name: student.name as string, fee, paid })
+        }
       }
     }
-  }
 
-  return { billing_month: args.billing_month, total_unpaid: unpaid.length, students: unpaid }
+    return { billing_month: args.billing_month, total_unpaid: unpaid.length, students: unpaid }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    console.error('getUnpaidStudents error:', msg)
+    return { error: `미납 학생 조회 실패: ${msg}` }
+  }
 }
 
 async function getPaymentStatusByMonth(args: Record<string, string>) {
-  const { data, error } = await queryGradesTree()
-  if (error || !data) return { error: error?.message ?? '데이터 조회 실패' }
+  try {
+    const { data, error } = await queryGradesTree()
+    if (error || !data) return { error: error?.message ?? '데이터 조회 실패' }
 
-  const mapped = mapGradesTree(data)
-  const { paidMap } = await queryPaidMap(args.billing_month)
+    const mapped = mapGradesTree(data)
+    const { paidMap } = await queryPaidMap(args.billing_month)
 
-  const result = []
-  for (const g of mapped) {
-    for (const c of g.classes) {
-      const activeStudents = (c.students ?? []).filter((s: Record<string, unknown>) => !s.withdrawal_date)
-      let paidCount = 0, totalFee = 0, totalPaid = 0
+    const result = []
+    for (const g of mapped) {
+      for (const c of g.classes) {
+        const activeStudents = (c.students ?? []).filter((s: Record<string, unknown>) => !s.withdrawal_date)
+        let paidCount = 0, totalFee = 0, totalPaid = 0
 
-      for (const s of activeStudents) {
-        const student = s as Record<string, unknown>
-        const fee = (student.custom_fee as number | null) ?? c.monthly_fee
-        const paid = paidMap[student.id as string] ?? 0
-        totalFee += fee
-        totalPaid += paid
-        if (paid >= fee) paidCount++
-      }
+        for (const s of activeStudents) {
+          const student = s as Record<string, unknown>
+          const fee = (student.custom_fee as number | null) ?? c.monthly_fee
+          const paid = paidMap[student.id as string] ?? 0
+          totalFee += fee
+          totalPaid += paid
+          if (paid >= fee) paidCount++
+        }
 
-      if (activeStudents.length > 0) {
-        result.push({
-          grade: g.name, class_name: c.name,
-          total_students: activeStudents.length, paid_count: paidCount,
-          unpaid_count: activeStudents.length - paidCount,
-          total_fee: totalFee, total_paid: totalPaid,
-        })
+        if (activeStudents.length > 0) {
+          result.push({
+            grade: g.name, class_name: c.name,
+            total_students: activeStudents.length, paid_count: paidCount,
+            unpaid_count: activeStudents.length - paidCount,
+            total_fee: totalFee, total_paid: totalPaid,
+          })
+        }
       }
     }
-  }
 
-  return { billing_month: args.billing_month, classes: result }
+    return { billing_month: args.billing_month, classes: result }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    console.error('getPaymentStatusByMonth error:', msg)
+    return { error: `납부 현황 조회 실패: ${msg}` }
+  }
 }
 
 async function executeTool(name: string, args: Record<string, string>): Promise<unknown> {

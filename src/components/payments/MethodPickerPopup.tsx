@@ -1,14 +1,7 @@
 'use client'
 
 import type { PaymentMethod } from '@/types'
-
-const INLINE_METHODS: [PaymentMethod, string][] = [
-  ['remote', '결제선생'],
-  ['card', '카드'],
-  ['transfer', '이체'],
-  ['cash', '현금'],
-  ['other', '기타'],
-]
+import { METHOD_OPTIONS_SHORT } from '@/lib/constants'
 
 interface Props {
   currentMethod: PaymentMethod
@@ -27,7 +20,7 @@ export default function MethodPickerPopup({ currentMethod, onMethodChange, posit
         role="listbox"
         aria-label="결제수단 선택"
       >
-        {INLINE_METHODS.map(([val, label]) => (
+        {METHOD_OPTIONS_SHORT.map(([val, label]) => (
           <button
             key={val}
             type="button"

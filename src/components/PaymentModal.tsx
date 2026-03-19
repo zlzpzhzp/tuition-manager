@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { X, Trash2, AlertTriangle, Check } from 'lucide-react'
 import type { Payment, PaymentMethod } from '@/types'
 import { PAYMENT_METHOD_LABELS } from '@/types'
+import { METHOD_OPTIONS } from '@/lib/constants'
 
 interface Props {
   payment?: Payment | null
@@ -16,14 +17,6 @@ interface Props {
   onDelete?: (paymentId: string) => void
   onClose: () => void
 }
-
-const METHOD_OPTIONS: [PaymentMethod, string][] = [
-  ['remote', '결제선생'],
-  ['card', '카드결제'],
-  ['transfer', '계좌이체'],
-  ['cash', '현금'],
-  ['other', '기타'],
-]
 
 export default function PaymentModal({ payment, studentId, defaultBillingMonth, defaultAmount, prevMemo, onSave, onUpdate, onDelete, onClose }: Props) {
   const today = new Date().toISOString().split('T')[0]

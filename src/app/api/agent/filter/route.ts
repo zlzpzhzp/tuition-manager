@@ -71,11 +71,17 @@ export async function POST(req: Request) {
 
     const jsonMatch = text.match(/\{[\s\S]*\}/)
     if (jsonMatch) {
-      const parsed = JSON.parse(jsonMatch[0])
+      let parsed: Record<string, unknown>
+      try {
+        parsed = JSON.parse(jsonMatch[0])
+      } catch {
+        console.error('Filter JSON parse error:', jsonMatch[0])
+        return NextResponse.json({ student_ids: [], description: 'AI 응답 파싱 실패' })
+      }
 
       // Validate returned IDs exist in input context
       const validIds = new Set((context.students || []).map((s: { id: string }) => s.id))
-      const filteredIds = (parsed.student_ids || []).filter((id: string) => validIds.has(id))
+      const filteredIds = ((parsed.student_ids as string[]) || []).filter((id: string) => validIds.has(id))
 
       return NextResponse.json({
         student_ids: filteredIds,
