@@ -668,7 +668,7 @@ export default function PaymentsPage() {
                               onClick={status === 'unpaid' && !isExpanded ? () => handleExpand(student.id) : undefined}
                             >
                               {hasDiscuss && (
-                                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-red-100 text-red-600 font-bold shrink-0">DISCUSS</span>
+                                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-rose-50 text-rose-400 font-bold shrink-0">DISCUSS</span>
                               )}
                               <Link
                                 href={`/students/${student.id}`}
