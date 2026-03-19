@@ -23,7 +23,7 @@ export default function Navbar() {
           <div className="flex items-center justify-between h-14">
             <Link href="/dashboard" className="flex items-center gap-2" aria-label="홈으로 이동">
               <Image src="/icons/icon-192x192.png" alt="원비관리" width={32} height={32} className="rounded-md" />
-              <span className="text-lg font-bold text-[#c8c5be]">원비관리</span>
+              <span className="text-lg font-bold text-[#d8d8dc]">원비관리</span>
             </Link>
             <div className="hidden sm:flex gap-1">
               {navItems.map(({ href, label, icon: Icon }) => (
@@ -33,7 +33,7 @@ export default function Navbar() {
                   aria-label={label}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors
                     ${isActive(href)
-                      ? 'bg-[#c8c5be] text-[#1e2d6f]'
+                      ? 'bg-[#d8d8dc] text-[#1e2d6f]'
                       : 'text-[#c8c5be] hover:bg-white/10'}`}
                 >
                   <Icon className="w-4 h-4" />
