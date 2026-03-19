@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useRef, useMemo } from 'react'
+import { useState, useCallback, useRef, useMemo, useEffect } from 'react'
 import Link from 'next/link'
 import { ChevronLeft, ChevronRight, Check, ClipboardList, Download, Plus } from 'lucide-react'
 import type { Grade, Class, Student, Payment, PaymentMethod, GradeWithClasses } from '@/types'
@@ -352,6 +352,65 @@ export default function PaymentsPage() {
 
   const clearAiFilter = () => { setAiFilterIds(null); setAiFilterDesc('') }
 
+  // ─── Pull-to-refresh ──────────────────────────────────────
+  const [pullDistance, setPullDistance] = useState(0)
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  const pullRef = useRef<{ startY: number; pulling: boolean } | null>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const PULL_THRESHOLD = 60
+
+  const handlePullStart = useCallback((e: TouchEvent) => {
+    if (isRefreshing) return
+    // 스크롤이 최상단일 때만 pull-to-refresh 시작
+    const scrollTop = window.scrollY || document.documentElement.scrollTop
+    if (scrollTop > 0) return
+    pullRef.current = { startY: e.touches[0].clientY, pulling: false }
+  }, [isRefreshing])
+
+  const handlePullMove = useCallback((e: TouchEvent) => {
+    if (!pullRef.current || isRefreshing) return
+    const dy = e.touches[0].clientY - pullRef.current.startY
+    if (dy > 0) {
+      pullRef.current.pulling = true
+      // 감속 효과 (당길수록 저항 증가)
+      const distance = Math.min(120, dy * 0.4)
+      setPullDistance(distance)
+    } else {
+      pullRef.current.pulling = false
+      setPullDistance(0)
+    }
+  }, [isRefreshing])
+
+  const handlePullEnd = useCallback(async () => {
+    if (!pullRef.current?.pulling || isRefreshing) {
+      pullRef.current = null
+      return
+    }
+    pullRef.current = null
+    if (pullDistance >= PULL_THRESHOLD) {
+      setIsRefreshing(true)
+      setPullDistance(40) // 새로고침 중 표시 위치
+      await fetchData()
+      // 약간의 딜레이로 새로고침 느낌
+      await new Promise(r => setTimeout(r, 500))
+      setIsRefreshing(false)
+    }
+    setPullDistance(0)
+  }, [pullDistance, isRefreshing, fetchData])
+
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    el.addEventListener('touchstart', handlePullStart, { passive: true })
+    el.addEventListener('touchmove', handlePullMove, { passive: true })
+    el.addEventListener('touchend', handlePullEnd)
+    return () => {
+      el.removeEventListener('touchstart', handlePullStart)
+      el.removeEventListener('touchmove', handlePullMove)
+      el.removeEventListener('touchend', handlePullEnd)
+    }
+  }, [handlePullStart, handlePullMove, handlePullEnd])
+
   // ─── Student add ────────────────────────────────────────────
   const handleAddStudent = (classId: string) => {
     setAddStudentClassId(classId)
@@ -398,7 +457,20 @@ export default function PaymentsPage() {
   )
 
   return (
-    <div onClick={() => { if (swipeOpenId) closeSwipeEdit() }}>
+    <div ref={containerRef} onClick={() => { if (swipeOpenId) closeSwipeEdit() }}>
+      {/* Pull-to-refresh 인디케이터 */}
+      <div
+        className="flex items-center justify-center overflow-hidden transition-all duration-200 ease-out"
+        style={{ height: pullDistance > 0 ? `${pullDistance}px` : '0px' }}
+      >
+        <div className={`transition-transform duration-200 ${isRefreshing ? 'animate-spin' : ''}`}
+          style={{ transform: `rotate(${Math.min(pullDistance / PULL_THRESHOLD, 1) * 360}deg)` }}
+        >
+          <svg className="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+        </div>
+      </div>
       {/* 월 네비게이션 */}
       <div className="flex items-center justify-center gap-3 mb-3">
         <button onClick={() => navigateMonth(-1)} className="p-2 hover:bg-gray-100 rounded-lg" aria-label="이전 달">
