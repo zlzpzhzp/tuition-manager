@@ -504,7 +504,12 @@ export default function PaymentsPage() {
                         <Plus className="w-3.5 h-3.5" />
                       </button>
                     </div>
-                    {isClassExpanded && students.map(student => {
+                    <div
+                      className="grid transition-[grid-template-rows] duration-300 ease-in-out"
+                      style={{ gridTemplateRows: isClassExpanded ? '1fr' : '0fr' }}
+                    >
+                    <div className="overflow-hidden">
+                    {students.map(student => {
                       const fee = getStudentFee(student, cls)
                       const studentPayments = getStudentPayments(student.id)
                       const paid = studentPayments.reduce((s, p) => s + p.amount, 0)
@@ -698,6 +703,8 @@ export default function PaymentsPage() {
                         </div>
                       )
                     })}
+                    </div>
+                    </div>
                   </div>
                 )
               })}
