@@ -172,43 +172,29 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
             </div>
 
             <div className="flex justify-between items-center py-2">
-              <span className="text-sm text-gray-400">비고</span>
-              {editingMemo ? (
+              <span className="text-sm text-gray-400 shrink-0">비고</span>
+              {editingMemo || !payment.memo ? (
                 <div className="flex items-center gap-1.5 flex-1 ml-4">
                   <input
                     type="text"
                     value={editMemo}
                     onChange={e => setEditMemo(e.target.value)}
-                    className="flex-1 px-2 py-1 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1e2d6f]"
-                    placeholder="특이사항이 있으면 입력하세요"
-                    autoFocus
-                  />
-                  <button
-                    onClick={async () => {
-                      if (onUpdate && payment.id) {
+                    onBlur={async () => {
+                      if (editMemo !== (payment.memo ?? '') && onUpdate && payment.id) {
                         await onUpdate(payment.id, { memo: editMemo || undefined })
                       }
                       setEditingMemo(false)
                     }}
-                    className="p-1 text-green-600 hover:text-green-700"
-                    aria-label="저장"
-                  >
-                    <Check className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => { setEditingMemo(false); setEditMemo(payment.memo ?? '') }}
-                    className="p-1 text-gray-400 hover:text-gray-600"
-                    aria-label="취소"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
+                    className="flex-1 px-2 py-1 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1e2d6f]"
+                    placeholder="특이사항이 있으면 입력하세요"
+                  />
                 </div>
               ) : (
                 <button
                   onClick={() => setEditingMemo(true)}
                   className="text-sm font-medium text-right max-w-[60%] hover:text-[#1e2d6f] hover:underline transition-colors"
                 >
-                  {payment.memo || '입력'}
+                  {payment.memo}
                 </button>
               )}
             </div>
