@@ -504,7 +504,7 @@ export default function PaymentsPage() {
             </svg>
           </div>
         </div>
-        <div className="relative flex items-center justify-center gap-3 mb-1">
+        <div className="flex items-center justify-center gap-3 mb-1">
           <button onClick={() => navigateMonth(-1)} className="p-2 hover:bg-gray-100 rounded-lg" aria-label="이전 달">
             <ChevronLeft className="w-7 h-7" />
           </button>
@@ -517,6 +517,8 @@ export default function PaymentsPage() {
           <button onClick={() => navigateMonth(1)} className="p-2 hover:bg-gray-100 rounded-lg" aria-label="다음 달">
             <ChevronRight className="w-7 h-7" />
           </button>
+        </div>
+        <div className="flex justify-center">
           <button
             onClick={() => {
               const a = document.createElement('a')
@@ -524,7 +526,7 @@ export default function PaymentsPage() {
               a.download = ''
               a.click()
             }}
-            className="absolute right-4 flex items-center gap-1 px-2 py-0.5 rounded-full text-xs text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+            className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
           >
             <Download className="w-3 h-3" />
             <span>내보내기</span>
