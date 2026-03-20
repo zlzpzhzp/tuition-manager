@@ -96,7 +96,7 @@ export default function PaymentsPage() {
 
   // 과목별 그룹핑: subject → { gradeName, cls }[]
   const subjectGroups = useMemo(() => {
-    const map = new Map<string, { gradeName: string; cls: GradeWithClasses['classes'][number] }[]>()
+    const map = new Map<string, { gradeName: string; cls: (Class & { students: Student[] }) }[]>()
     grades.forEach(grade => {
       grade.classes.forEach(cls => {
         const subject = cls.subject || '기타'
