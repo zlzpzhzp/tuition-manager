@@ -504,7 +504,7 @@ export default function PaymentsPage() {
             </svg>
           </div>
         </div>
-        <div className="flex items-center justify-center gap-3 mb-1">
+        <div className="relative flex items-center justify-center gap-3 mb-1">
           <button onClick={() => navigateMonth(-1)} className="p-2 hover:bg-gray-100 rounded-lg" aria-label="이전 달">
             <ChevronLeft className="w-7 h-7" />
           </button>
@@ -516,6 +516,18 @@ export default function PaymentsPage() {
           </h1>
           <button onClick={() => navigateMonth(1)} className="p-2 hover:bg-gray-100 rounded-lg" aria-label="다음 달">
             <ChevronRight className="w-7 h-7" />
+          </button>
+          <button
+            onClick={() => {
+              const a = document.createElement('a')
+              a.href = `/api/payments/export?billing_month=${selectedMonth}`
+              a.download = ''
+              a.click()
+            }}
+            className="absolute right-4 flex items-center gap-1 px-2 py-0.5 rounded-full text-xs text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+          >
+            <Download className="w-3 h-3" />
+            <span>내보내기</span>
           </button>
         </div>
       </div>
@@ -546,48 +558,10 @@ export default function PaymentsPage() {
           <div key={subject} className="mb-6">
             <div className="flex items-center mb-2 px-1">
               <h2 className="text-sm font-semibold text-gray-500">{subject}</h2>
-              {groupIndex === 0 && (
-                <>
-                  <div className="flex-1 flex justify-center pl-4">
-                    <button
-                      onClick={() => {
-                        const a = document.createElement('a')
-                        a.href = `/api/payments/export?billing_month=${selectedMonth}`
-                        a.download = ''
-                        a.click()
-                      }}
-                      className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors"
-                    >
-                      <Download className="w-3 h-3" />
-                      <span>내보내기</span>
-                    </button>
-                  </div>
-                  <button
-                    onClick={() => {
-                      setShowUnpaidOnly(prev => {
-                        if (!prev) {
-                          const allClassIds = new Set(grades.flatMap(g => g.classes.map(c => c.id)))
-                          setExpandedClasses(allClassIds)
-                        } else {
-                          setExpandedClasses(new Set())
-                        }
-                        return !prev
-                      })
-                    }}
-                    className={`px-2.5 py-0.5 rounded-full text-xs font-medium transition-colors ${
-                      showUnpaidOnly
-                        ? 'bg-red-100 text-red-700'
-                        : 'bg-gray-100 text-gray-500'
-                    }`}
-                  >
-                    {showUnpaidOnly ? '미납' : '전체'}
-                  </button>
-                </>
-              )}
-              {groupIndex !== 0 && <div className="flex-1" />}
+              <div className="flex-1" />
             </div>
             <div className="space-y-2">
-            {subjectGrades.map(({ gradeId, gradeName, classes: gradeClasses }) => {
+            {(() => { let isFirstVisibleGrade = groupIndex === 0; return subjectGrades.map(({ gradeId, gradeName, classes: gradeClasses }) => {
               // 이 학년에 표시할 학생이 있는지
               const hasGradeStudents = gradeClasses.some(cls => {
                 let students = aiFilterIds
@@ -606,9 +580,37 @@ export default function PaymentsPage() {
               })
               if (!hasGradeStudents) return null
 
+              const showFilter = isFirstVisibleGrade
+              if (isFirstVisibleGrade) isFirstVisibleGrade = false
+
               return (
                 <div key={gradeId}>
-                  <p className="text-xs text-gray-400 mb-1 px-1">{gradeName}</p>
+                  <div className="flex items-center mb-1 px-1">
+                    <span className="text-xs text-gray-400">{gradeName}</span>
+                    <div className="flex-1" />
+                    {showFilter && (
+                      <button
+                        onClick={() => {
+                          setShowUnpaidOnly(prev => {
+                            if (!prev) {
+                              const allClassIds = new Set(grades.flatMap(g => g.classes.map(c => c.id)))
+                              setExpandedClasses(allClassIds)
+                            } else {
+                              setExpandedClasses(new Set())
+                            }
+                            return !prev
+                          })
+                        }}
+                        className={`px-2.5 py-0.5 rounded-full text-xs font-medium transition-colors ${
+                          showUnpaidOnly
+                            ? 'bg-red-100 text-red-700'
+                            : 'bg-gray-100 text-gray-500'
+                        }`}
+                      >
+                        {showUnpaidOnly ? '미납' : '전체'}
+                      </button>
+                    )}
+                  </div>
                   <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
                   {gradeClasses.map(cls => {
                 const allClassStudents = getActiveStudents(cls.students ?? [])
@@ -880,7 +882,7 @@ export default function PaymentsPage() {
                   </div>
                 </div>
               )
-            })}
+            }) })()}
             </div>
           </div>
         )
