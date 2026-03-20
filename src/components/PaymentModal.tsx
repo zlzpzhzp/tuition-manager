@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { X, Trash2, AlertTriangle, Check } from 'lucide-react'
 import type { Payment, PaymentMethod } from '@/types'
 import { PAYMENT_METHOD_LABELS } from '@/types'
@@ -37,8 +37,6 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
   const [editMemo, setEditMemo] = useState(payment?.memo ?? '')
   const [editingMethod, setEditingMethod] = useState(false)
   const [editMethod, setEditMethod] = useState<PaymentMethod>(payment?.method as PaymentMethod ?? 'remote')
-  const modalRef = useRef<HTMLDivElement>(null)
-
   const needsCashReceipt = method === 'transfer' || method === 'cash'
 
   useEffect(() => {
@@ -49,12 +47,6 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [method])
-
-  useEffect(() => {
-    requestAnimationFrame(() => {
-      modalRef.current?.scrollTo(0, 0)
-    })
-  }, [])
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
@@ -93,8 +85,8 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
   }
 
   return (
-    <div className="fixed inset-0 bg-black/40 z-50 flex items-end sm:items-center justify-center" onClick={onClose}>
-      <div ref={modalRef} className="bg-white w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-white w-full sm:max-w-md rounded-2xl max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between px-5 py-4 border-b">
           <h2 className="text-lg font-bold">{payment ? '납부 정보' : '납부'}</h2>
           <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
