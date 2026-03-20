@@ -155,7 +155,7 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
                     onClick={() => setEditingMethod(true)}
                     className="font-medium hover:text-[#1e2d6f] hover:underline transition-colors"
                   >
-                    {PAYMENT_METHOD_LABELS[payment.method as PaymentMethod]}
+                    {PAYMENT_METHOD_LABELS[editMethod]}
                   </button>
                 )}
               </div>
