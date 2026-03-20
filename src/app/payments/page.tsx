@@ -94,19 +94,23 @@ export default function PaymentsPage() {
       getActiveStudents(c.students ?? []).map(s => ({ ...s, class: c }))
     )), [grades])
 
-  // 과목별 그룹핑: subject → { gradeName, cls }[]
-  const subjectGroups = useMemo(() => {
-    const map = new Map<string, { gradeName: string; cls: GradeWithClasses['classes'][number] }[]>()
-    type ClassWithStudents = GradeWithClasses['classes'][number]
+  // 과목별 → 학년별 그룹핑
+  type ClassWithStudents = GradeWithClasses['classes'][number]
+  const subjectGradeGroups = useMemo(() => {
+    const subjectMap = new Map<string, Map<string, { gradeName: string; classes: ClassWithStudents[] }>>()
     grades.forEach(grade => {
       grade.classes.forEach(cls => {
         const subject = cls.subject || '기타'
-        const arr = map.get(subject) ?? []
-        arr.push({ gradeName: grade.name, cls: cls as ClassWithStudents })
-        map.set(subject, arr)
+        if (!subjectMap.has(subject)) subjectMap.set(subject, new Map())
+        const gradeMap = subjectMap.get(subject)!
+        if (!gradeMap.has(grade.id)) gradeMap.set(grade.id, { gradeName: grade.name, classes: [] })
+        gradeMap.get(grade.id)!.classes.push(cls as ClassWithStudents)
       })
     })
-    return Array.from(map.entries()).map(([subject, items]) => ({ subject, items }))
+    return Array.from(subjectMap.entries()).map(([subject, gradeMap]) => ({
+      subject,
+      grades: Array.from(gradeMap.entries()).map(([gradeId, data]) => ({ gradeId, ...data })),
+    }))
   }, [grades])
 
   const paymentsByStudentId = useMemo(() => {
@@ -516,25 +520,30 @@ export default function PaymentsPage() {
         </div>
       </div>
 
-      {/* 과목별 납부 현황 */}
-      {subjectGroups.map(({ subject, items }, groupIndex) => {
-        const groupStudentsAll = items.flatMap(({ cls }) =>
-          getActiveStudents(cls.students ?? []).map(s => ({ ...s, class: cls }))
-        )
-        let groupStudents = aiFilterIds ? groupStudentsAll.filter(s => aiFilterIds.has(s.id)) : groupStudentsAll
-        if (showUnpaidOnly) {
-          groupStudents = groupStudents.filter(s => {
-            const paid = (paymentsByStudentId.get(s.id) ?? []).reduce((sum, p) => sum + p.amount, 0)
-            const status = getPaymentStatus(paid, getStudentFee(s, s.class))
-            if (status === 'paid') return false
-            if (status === 'unpaid' && checkScheduled(s, selectedMonth)) return false
-            return true
+      {/* 과목별 → 학년별 납부 현황 */}
+      {subjectGradeGroups.map(({ subject, grades: subjectGrades }, groupIndex) => {
+        // 과목 전체에 표시할 학생이 있는지 확인
+        const hasVisibleStudents = subjectGrades.some(({ classes: gradeClasses }) =>
+          gradeClasses.some(cls => {
+            let students = aiFilterIds
+              ? getActiveStudents(cls.students ?? []).filter(s => aiFilterIds.has(s.id))
+              : getActiveStudents(cls.students ?? [])
+            if (showUnpaidOnly) {
+              students = students.filter(s => {
+                const paid = (paymentsByStudentId.get(s.id) ?? []).reduce((sum, p) => sum + p.amount, 0)
+                const status = getPaymentStatus(paid, getStudentFee(s, cls))
+                if (status === 'paid') return false
+                if (status === 'unpaid' && checkScheduled(s, selectedMonth)) return false
+                return true
+              })
+            }
+            return students.length > 0
           })
-        }
-        if (groupStudents.length === 0) return null
+        )
+        if (!hasVisibleStudents) return null
 
         return (
-          <div key={subject} className="mb-4">
+          <div key={subject} className="mb-6">
             <div className="flex items-center mb-2 px-1">
               <h2 className="text-sm font-semibold text-gray-500">{subject}</h2>
               {groupIndex === 0 && (
@@ -577,8 +586,31 @@ export default function PaymentsPage() {
               )}
               {groupIndex !== 0 && <div className="flex-1" />}
             </div>
-            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-              {items.map(({ gradeName, cls }) => {
+            <div className="space-y-2">
+            {subjectGrades.map(({ gradeId, gradeName, classes: gradeClasses }) => {
+              // 이 학년에 표시할 학생이 있는지
+              const hasGradeStudents = gradeClasses.some(cls => {
+                let students = aiFilterIds
+                  ? getActiveStudents(cls.students ?? []).filter(s => aiFilterIds.has(s.id))
+                  : getActiveStudents(cls.students ?? [])
+                if (showUnpaidOnly) {
+                  students = students.filter(s => {
+                    const paid = (paymentsByStudentId.get(s.id) ?? []).reduce((sum, p) => sum + p.amount, 0)
+                    const status = getPaymentStatus(paid, getStudentFee(s, cls))
+                    if (status === 'paid') return false
+                    if (status === 'unpaid' && checkScheduled(s, selectedMonth)) return false
+                    return true
+                  })
+                }
+                return students.length > 0
+              })
+              if (!hasGradeStudents) return null
+
+              return (
+                <div key={gradeId}>
+                  <p className="text-xs text-gray-400 mb-1 px-1">{gradeName}</p>
+                  <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                  {gradeClasses.map(cls => {
                 const allClassStudents = getActiveStudents(cls.students ?? [])
                 let students = aiFilterIds ? allClassStudents.filter(s => aiFilterIds.has(s.id)) : allClassStudents
                 if (showUnpaidOnly) {
@@ -604,7 +636,6 @@ export default function PaymentsPage() {
                       className="px-4 py-2 bg-gray-50 border-b border-gray-200 flex items-center cursor-pointer active:bg-gray-100 select-none"
                       onClick={() => toggleClass(cls.id)}
                     >
-                      <span className="text-xs text-gray-400 mr-1">{gradeName}</span>
                       <span className="text-sm font-medium text-gray-600">{cls.name}</span>
                       <span className="text-xs text-gray-400 ml-1">{cls.monthly_fee > 0 ? `${cls.monthly_fee.toLocaleString()}원` : ''}</span>
                       <span className="text-xs text-gray-400 ml-2">{paidCount}/{students.length}</span>
@@ -846,6 +877,10 @@ export default function PaymentsPage() {
                   </div>
                 )
               })}
+                  </div>
+                </div>
+              )
+            })}
             </div>
           </div>
         )
