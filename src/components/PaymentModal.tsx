@@ -35,6 +35,8 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
   const [editDate, setEditDate] = useState(payment?.payment_date ?? today)
   const [editingMemo, setEditingMemo] = useState(false)
   const [editMemo, setEditMemo] = useState(payment?.memo ?? '')
+  const [editingMethod, setEditingMethod] = useState(false)
+  const [editMethod, setEditMethod] = useState<PaymentMethod>(payment?.method as PaymentMethod ?? 'remote')
 
   const needsCashReceipt = method === 'transfer' || method === 'cash'
 
@@ -110,9 +112,52 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
               <p className="text-green-600 text-sm mt-1">납부완료</p>
             </div>
             <div className="space-y-2 text-sm">
-              <div className="flex justify-between py-2 border-b">
+              <div className="flex justify-between items-center py-2 border-b">
                 <span className="text-gray-400">납부 방법</span>
-                <span className="font-medium">{PAYMENT_METHOD_LABELS[payment.method as PaymentMethod]}</span>
+                {editingMethod ? (
+                  <div className="flex items-center gap-1.5">
+                    <div className="flex gap-1">
+                      {METHOD_OPTIONS.map(([val, label]) => (
+                        <button
+                          key={val}
+                          type="button"
+                          onClick={() => setEditMethod(val)}
+                          className={`px-2 py-1 rounded text-[11px] font-medium border transition-colors ${
+                            editMethod === val ? 'bg-[#1e2d6f] text-white border-[#1e2d6f]' : 'bg-white text-gray-600 border-gray-300'
+                          }`}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                    <button
+                      onClick={async () => {
+                        if (onUpdate && payment.id && editMethod !== payment.method) {
+                          await onUpdate(payment.id, { method: editMethod })
+                        }
+                        setEditingMethod(false)
+                      }}
+                      className="p-1 text-green-600 hover:text-green-700"
+                      aria-label="저장"
+                    >
+                      <Check className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => { setEditingMethod(false); setEditMethod(payment.method as PaymentMethod) }}
+                      className="p-1 text-gray-400 hover:text-gray-600"
+                      aria-label="취소"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setEditingMethod(true)}
+                    className="font-medium hover:text-[#1e2d6f] hover:underline transition-colors"
+                  >
+                    {PAYMENT_METHOD_LABELS[payment.method as PaymentMethod]}
+                  </button>
+                )}
               </div>
               <div className="flex justify-between items-center py-2 border-b">
                 <span className="text-gray-400">납부일</span>
