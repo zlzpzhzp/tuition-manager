@@ -14,12 +14,7 @@ type GradeWithClasses = import('@/types').Grade & { classes: (Class & { students
 export default function SettingsPage() {
   const router = useRouter()
   const { data: grades = [], isLoading: loading } = useGrades<GradeWithClasses[]>()
-  const [expandedGrades, setExpandedGrades] = useState<Set<string>>(new Set())
   const [expandedSubjects, setExpandedSubjects] = useState<Set<string>>(new Set())
-
-  const [newGradeName, setNewGradeName] = useState('')
-  const [editingGradeId, setEditingGradeId] = useState<string | null>(null)
-  const [editGradeName, setEditGradeName] = useState('')
 
   const [addingClassToSubject, setAddingClassToSubject] = useState<string | null>(null)
   const [newClassGradeId, setNewClassGradeId] = useState<string>('')
@@ -93,14 +88,6 @@ export default function SettingsPage() {
 
   const fetchGrades = revalidateGrades
 
-  const toggleGrade = (id: string) => {
-    setExpandedGrades(prev => {
-      const next = new Set(prev)
-      next.has(id) ? next.delete(id) : next.add(id)
-      return next
-    })
-  }
-
   const toggleSubject = (subject: string) => {
     setExpandedSubjects(prev => {
       const next = new Set(prev)
@@ -119,29 +106,6 @@ export default function SettingsPage() {
     setNewClassSubject(subject)
     setAddingClassToSubject(subject)
     setExpandedSubjects(prev => new Set(prev).add(subject))
-  }
-
-  const addGrade = async () => {
-    if (!newGradeName.trim()) return
-    const { data, error } = await safeMutate<Grade>('/api/grades', 'POST', { name: newGradeName.trim() })
-    if (error) { alert(`학년 추가 실패: ${error}`); return }
-    setNewGradeName('')
-    await fetchGrades()
-  }
-
-  const updateGrade = async (id: string) => {
-    if (!editGradeName.trim()) return
-    const { error } = await safeMutate(`/api/grades/${id}`, 'PUT', { name: editGradeName.trim() })
-    if (error) { alert(`학년 수정 실패: ${error}`); return }
-    setEditingGradeId(null)
-    fetchGrades()
-  }
-
-  const deleteGrade = async (id: string, name: string) => {
-    if (!confirm(`"${name}" 학년을 삭제하시겠습니까?\n하위 반과 학생도 모두 삭제됩니다.`)) return
-    const { error } = await safeMutate(`/api/grades/${id}`, 'DELETE')
-    if (error) { alert(`학년 삭제 실패: ${error}`); return }
-    fetchGrades()
   }
 
   const addClass = async () => {
@@ -393,59 +357,6 @@ export default function SettingsPage() {
           })}
         </div>
       )}
-
-      {/* 학년 관리 */}
-      <div className="mb-6">
-        <h2 className="text-sm font-semibold text-gray-500 mb-2 px-1">학년 관리</h2>
-        <div className="flex gap-2 mb-3">
-          <input
-            type="text"
-            value={newGradeName}
-            onChange={e => setNewGradeName(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && addGrade()}
-            placeholder="새 학년 (예: 중3)"
-            className="flex-1 px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1e2d6f]"
-            aria-label="새 학년 이름"
-          />
-          <button
-            onClick={addGrade}
-            className="px-4 py-2 bg-[#1e2d6f] text-white rounded-lg text-sm font-medium flex items-center gap-1 hover:opacity-90"
-          >
-            <Plus className="w-4 h-4" /> 추가
-          </button>
-        </div>
-        {grades.length > 0 && (
-          <div className="space-y-1">
-            {grades.map(grade => (
-              <div key={grade.id} className="flex items-center gap-2 bg-white rounded-lg px-3 py-2 border border-gray-200">
-                {editingGradeId === grade.id ? (
-                  <div className="flex-1 flex items-center gap-2">
-                    <input
-                      type="text" value={editGradeName} onChange={e => setEditGradeName(e.target.value)}
-                      onKeyDown={e => e.key === 'Enter' && updateGrade(grade.id)}
-                      className="flex-1 px-2 py-1 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1e2d6f]"
-                      autoFocus aria-label="학년 이름 수정"
-                    />
-                    <button onClick={() => updateGrade(grade.id)} className="text-green-600" aria-label="저장"><Check className="w-4 h-4" /></button>
-                    <button onClick={() => setEditingGradeId(null)} className="text-gray-400" aria-label="취소"><X className="w-4 h-4" /></button>
-                  </div>
-                ) : (
-                  <>
-                    <span className="flex-1 text-sm font-medium">{grade.name}</span>
-                    <span className="text-xs text-gray-400">{grade.classes?.length ?? 0}개 반</span>
-                    <button onClick={() => { setEditingGradeId(grade.id); setEditGradeName(grade.name) }} className="p-1 text-gray-400 hover:text-gray-600" aria-label="학년 수정">
-                      <Pencil className="w-3.5 h-3.5" />
-                    </button>
-                    <button onClick={() => deleteGrade(grade.id, grade.name)} className="p-1 text-gray-400 hover:text-red-500" aria-label="학년 삭제">
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
 
       <datalist id="subject-list">
         {existingSubjects.map(s => <option key={s} value={s} />)}
