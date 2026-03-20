@@ -15,12 +15,14 @@ export default function SettingsPage() {
   const router = useRouter()
   const { data: grades = [], isLoading: loading } = useGrades<GradeWithClasses[]>()
   const [expandedGrades, setExpandedGrades] = useState<Set<string>>(new Set())
+  const [expandedSubjects, setExpandedSubjects] = useState<Set<string>>(new Set())
 
   const [newGradeName, setNewGradeName] = useState('')
   const [editingGradeId, setEditingGradeId] = useState<string | null>(null)
   const [editGradeName, setEditGradeName] = useState('')
 
-  const [addingClassToGrade, setAddingClassToGrade] = useState<string | null>(null)
+  const [addingClassToSubject, setAddingClassToSubject] = useState<string | null>(null)
+  const [newClassGradeId, setNewClassGradeId] = useState<string>('')
   const [newClassName, setNewClassName] = useState('')
   const [newClassFee, setNewClassFee] = useState('')
   const [newClassSubject, setNewClassSubject] = useState('')
@@ -51,6 +53,20 @@ export default function SettingsPage() {
   const allClasses = useMemo(() =>
     grades.flatMap(g => g.classes.map(c => ({ ...c, gradeName: g.name })))
   , [grades])
+
+  // 과목별 그룹핑: subject → { gradeName, gradeId, cls }[]
+  const subjectGroups = useMemo(() => {
+    const map = new Map<string, { gradeName: string; gradeId: string; cls: (Class & { students?: Student[] }) }[]>()
+    grades.forEach(grade => {
+      grade.classes.forEach(cls => {
+        const subject = cls.subject || '기타'
+        const arr = map.get(subject) ?? []
+        arr.push({ gradeName: grade.name, gradeId: grade.id, cls })
+        map.set(subject, arr)
+      })
+    })
+    return Array.from(map.entries()).map(([subject, items]) => ({ subject, items }))
+  }, [grades])
 
   const toggleDay = (days: number[], setDays: (d: number[]) => void, day: number) => {
     setDays(days.includes(day) ? days.filter(d => d !== day) : [...days, day].sort())
@@ -85,15 +101,24 @@ export default function SettingsPage() {
     })
   }
 
-  // ─── 반 추가 폼 초기화 ───
-  const resetClassForm = () => {
-    setNewClassName(''); setNewClassFee(''); setNewClassSubject(''); setNewClassDays([])
+  const toggleSubject = (subject: string) => {
+    setExpandedSubjects(prev => {
+      const next = new Set(prev)
+      next.has(subject) ? next.delete(subject) : next.add(subject)
+      return next
+    })
   }
 
-  const openClassForm = (gradeId: string) => {
+  // ─── 반 추가 폼 초기화 ───
+  const resetClassForm = () => {
+    setNewClassName(''); setNewClassFee(''); setNewClassSubject(''); setNewClassDays([]); setNewClassGradeId('')
+  }
+
+  const openClassFormForSubject = (subject: string) => {
     resetClassForm()
-    setAddingClassToGrade(gradeId)
-    setExpandedGrades(prev => new Set(prev).add(gradeId))
+    setNewClassSubject(subject)
+    setAddingClassToSubject(subject)
+    setExpandedSubjects(prev => new Set(prev).add(subject))
   }
 
   const addGrade = async () => {
@@ -125,18 +150,18 @@ export default function SettingsPage() {
     fetchGrades()
   }
 
-  const addClass = async (gradeId: string) => {
-    if (!newClassName.trim()) return
+  const addClass = async () => {
+    if (!newClassName.trim() || !newClassGradeId) return
     const feeValue = newClassFee.trim() ? parseInt(newClassFee) : 0
     const { error } = await safeMutate('/api/classes', 'POST', {
-      grade_id: gradeId,
+      grade_id: newClassGradeId,
       name: newClassName.trim(),
       monthly_fee: isNaN(feeValue) ? 0 : feeValue,
       subject: newClassSubject || null,
       class_days: newClassDays.length > 0 ? newClassDays.join(',') : null,
     })
     if (error) { alert(`반 추가 실패: ${error}`); return }
-    setAddingClassToGrade(null)
+    setAddingClassToSubject(null)
     resetClassForm()
     fetchGrades()
   }
@@ -244,37 +269,161 @@ export default function SettingsPage() {
 
   return (
     <div>
-      <h1 className="text-xl font-bold mb-6">학년/반 설정</h1>
+      <h1 className="text-xl font-bold mb-6">과목/반 설정</h1>
 
-      <div className="flex gap-2 mb-6">
-        <input
-          type="text"
-          value={newGradeName}
-          onChange={e => setNewGradeName(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && addGrade()}
-          placeholder="새 학년 이름 (예: 초등 3학년)"
-          className="flex-1 px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1e2d6f]"
-          aria-label="새 학년 이름"
-        />
-        <button
-          onClick={addGrade}
-          className="px-4 py-2 bg-[#1e2d6f] text-white rounded-lg text-sm font-medium flex items-center gap-1 hover:opacity-90"
-        >
-          <Plus className="w-4 h-4" /> 학년 추가
-        </button>
-      </div>
-
-      {grades.length === 0 ? (
-        <div className="text-center py-12 text-gray-400">학년을 추가해주세요</div>
+      {/* 과목별 반 관리 */}
+      {subjectGroups.length === 0 ? (
+        <div className="text-center py-12 text-gray-400">반을 추가해주세요</div>
       ) : (
-        <div className="space-y-2">
-          {grades.map(grade => (
-            <div key={grade.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-              <div className="flex items-center gap-2 px-4 py-3">
-                <button onClick={() => toggleGrade(grade.id)} className="text-gray-400" aria-label={expandedGrades.has(grade.id) ? '접기' : '펼치기'}>
-                  {expandedGrades.has(grade.id) ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
-                </button>
+        <div className="space-y-2 mb-6">
+          {subjectGroups.map(({ subject, items }) => {
+            const totalStudents = items.reduce((sum, { cls }) => sum + getActiveStudents(cls.students ?? []).length, 0)
+            return (
+              <div key={subject} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                <div className="flex items-center gap-2 px-4 py-3">
+                  <button onClick={() => toggleSubject(subject)} className="text-gray-400" aria-label={expandedSubjects.has(subject) ? '접기' : '펼치기'}>
+                    {expandedSubjects.has(subject) ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
+                  </button>
+                  <span className="flex-1 font-semibold text-sm">{subject}</span>
+                  <span className="text-xs text-gray-400 mr-1">{items.length}개 반</span>
+                  <span className="text-xs text-gray-400">{totalStudents}명</span>
+                </div>
 
+                {expandedSubjects.has(subject) && (
+                  <div className="border-t border-gray-200 bg-gray-50 px-4 py-3">
+                    {items.length > 0 && (
+                      <div className="space-y-2 mb-3">
+                        {items.map(({ gradeName, gradeId, cls }, clsIdx) => (
+                          <div key={cls.id} className="flex items-center gap-1.5 sm:gap-2 bg-white rounded-lg px-2 sm:px-3 py-2">
+                            {editingClassId === cls.id ? (
+                              <div className="flex-1 space-y-2">
+                                <div className="flex items-center gap-2">
+                                  <input type="text" list="subject-list" value={editClassSubject} onChange={e => setEditClassSubject(e.target.value)} placeholder="과목" className="w-16 px-1 py-1 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1e2d6f]" />
+                                  <input type="text" value={editClassName} onChange={e => setEditClassName(e.target.value)} className="flex-1 px-2 py-1 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1e2d6f]" placeholder="반 이름" autoFocus />
+                                  <input type="number" value={editClassFee} onChange={e => setEditClassFee(e.target.value)} className="w-28 px-2 py-1 border rounded text-sm text-right focus:outline-none focus:ring-2 focus:ring-[#1e2d6f]" placeholder="원비" />
+                                  <span className="text-xs text-gray-400">원</span>
+                                  <button onClick={() => updateClass(cls.id)} className="text-green-600" aria-label="저장"><Check className="w-4 h-4" /></button>
+                                  <button onClick={() => setEditingClassId(null)} className="text-gray-400" aria-label="취소"><X className="w-4 h-4" /></button>
+                                </div>
+                                <div className="flex items-center gap-2 pl-1">
+                                  <span className="text-xs text-gray-500">수업 요일</span>
+                                  <DayPicker days={editClassDays} setDays={setEditClassDays} />
+                                </div>
+                              </div>
+                            ) : (
+                              <>
+                                {/* 순서 변경 버튼 */}
+                                <div className="flex flex-col shrink-0">
+                                  <button
+                                    onClick={() => swapClassOrder(gradeId, clsIdx, -1)}
+                                    disabled={clsIdx === 0}
+                                    className="p-0 text-gray-300 hover:text-gray-600 disabled:opacity-20 disabled:hover:text-gray-300"
+                                    aria-label="위로"
+                                  >
+                                    <ChevronUp className="w-3.5 h-3.5" />
+                                  </button>
+                                  <button
+                                    onClick={() => swapClassOrder(gradeId, clsIdx, 1)}
+                                    disabled={clsIdx === items.length - 1}
+                                    className="p-0 text-gray-300 hover:text-gray-600 disabled:opacity-20 disabled:hover:text-gray-300"
+                                    aria-label="아래로"
+                                  >
+                                    <ChevronDown className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                                <span className="text-[10px] sm:text-xs text-gray-400 shrink-0">{gradeName}</span>
+                                <span className="flex-1 text-xs sm:text-sm truncate min-w-0">{cls.name}</span>
+                                {cls.class_days && (
+                                  <span className="text-[10px] sm:text-xs text-gray-400 shrink-0 hidden sm:inline">{parseClassDays(cls.class_days)?.map(d => DAY_LABELS[d]).join('/')}</span>
+                                )}
+                                <span className="text-xs sm:text-sm font-medium text-[#1e2d6f] shrink-0">{formatFee(cls.monthly_fee)}</span>
+                                <span className="text-[10px] sm:text-xs text-gray-400 shrink-0">{getActiveStudents(cls.students ?? []).length}명</span>
+                                <button onClick={() => openTransfer(cls)} className="p-0.5 sm:p-1 text-gray-400 hover:text-[#1e2d6f] shrink-0" aria-label="학생 반이동" title="학생 반이동">
+                                  <ArrowRightLeft className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                                </button>
+                                <button onClick={() => { setEditingClassId(cls.id); setEditClassName(cls.name); setEditClassFee(String(cls.monthly_fee)); setEditClassSubject(cls.subject || ''); setEditClassDays(parseClassDays(cls.class_days) ?? []) }} className="p-0.5 sm:p-1 text-gray-400 hover:text-gray-600 shrink-0" aria-label="반 수정">
+                                  <Pencil className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                                </button>
+                                <button onClick={() => deleteClass(cls.id, cls.name)} className="p-0.5 sm:p-1 text-gray-400 hover:text-red-500 shrink-0" aria-label="반 삭제">
+                                  <Trash2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {addingClassToSubject === subject ? (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <select
+                            value={newClassGradeId}
+                            onChange={e => setNewClassGradeId(e.target.value)}
+                            className="w-20 px-1 py-1.5 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1e2d6f] bg-white"
+                          >
+                            <option value="">학년</option>
+                            {grades.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
+                          </select>
+                          <input
+                            type="text" value={newClassName} onChange={e => setNewClassName(e.target.value)}
+                            onKeyDown={e => e.key === 'Enter' && addClass()}
+                            placeholder="반 이름" className="flex-1 px-2 py-1.5 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1e2d6f]" autoFocus
+                          />
+                          <input
+                            type="number" value={newClassFee} onChange={e => setNewClassFee(e.target.value)}
+                            onKeyDown={e => e.key === 'Enter' && addClass()}
+                            placeholder="원비" className="w-28 px-2 py-1.5 border rounded text-sm text-right focus:outline-none focus:ring-2 focus:ring-[#1e2d6f]"
+                          />
+                          <span className="text-xs text-gray-400">원</span>
+                          <button onClick={() => addClass()} className="text-green-600" aria-label="저장"><Check className="w-4 h-4" /></button>
+                          <button onClick={() => { setAddingClassToSubject(null); resetClassForm() }} className="text-gray-400" aria-label="취소"><X className="w-4 h-4" /></button>
+                        </div>
+                        <div className="flex items-center gap-2 pl-1">
+                          <span className="text-xs text-gray-500">수업 요일</span>
+                          <DayPicker days={newClassDays} setDays={setNewClassDays} />
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => openClassFormForSubject(subject)}
+                        className="flex items-center gap-1 text-sm text-[#1e2d6f] font-medium hover:opacity-70"
+                      >
+                        <Plus className="w-4 h-4" /> 반 추가
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {/* 학년 관리 */}
+      <div className="mb-6">
+        <h2 className="text-sm font-semibold text-gray-500 mb-2 px-1">학년 관리</h2>
+        <div className="flex gap-2 mb-3">
+          <input
+            type="text"
+            value={newGradeName}
+            onChange={e => setNewGradeName(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && addGrade()}
+            placeholder="새 학년 (예: 중3)"
+            className="flex-1 px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1e2d6f]"
+            aria-label="새 학년 이름"
+          />
+          <button
+            onClick={addGrade}
+            className="px-4 py-2 bg-[#1e2d6f] text-white rounded-lg text-sm font-medium flex items-center gap-1 hover:opacity-90"
+          >
+            <Plus className="w-4 h-4" /> 추가
+          </button>
+        </div>
+        {grades.length > 0 && (
+          <div className="space-y-1">
+            {grades.map(grade => (
+              <div key={grade.id} className="flex items-center gap-2 bg-white rounded-lg px-3 py-2 border border-gray-200">
                 {editingGradeId === grade.id ? (
                   <div className="flex-1 flex items-center gap-2">
                     <input
@@ -288,122 +437,21 @@ export default function SettingsPage() {
                   </div>
                 ) : (
                   <>
-                    <span className="flex-1 font-semibold text-sm">{grade.name}</span>
-                    <span className="text-xs text-gray-400 mr-2">{grade.classes?.length ?? 0}개 반</span>
+                    <span className="flex-1 text-sm font-medium">{grade.name}</span>
+                    <span className="text-xs text-gray-400">{grade.classes?.length ?? 0}개 반</span>
                     <button onClick={() => { setEditingGradeId(grade.id); setEditGradeName(grade.name) }} className="p-1 text-gray-400 hover:text-gray-600" aria-label="학년 수정">
-                      <Pencil className="w-4 h-4" />
+                      <Pencil className="w-3.5 h-3.5" />
                     </button>
                     <button onClick={() => deleteGrade(grade.id, grade.name)} className="p-1 text-gray-400 hover:text-red-500" aria-label="학년 삭제">
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </>
                 )}
               </div>
-
-              {expandedGrades.has(grade.id) && (
-                <div className="border-t border-gray-200 bg-gray-50 px-4 py-3">
-                  {grade.classes?.length > 0 && (
-                    <div className="space-y-2 mb-3">
-                      {grade.classes.map((cls, clsIdx) => (
-                        <div key={cls.id} className="flex items-center gap-1.5 sm:gap-2 bg-white rounded-lg px-2 sm:px-3 py-2">
-                          {editingClassId === cls.id ? (
-                            <div className="flex-1 space-y-2">
-                              <div className="flex items-center gap-2">
-                                <input type="text" list="subject-list" value={editClassSubject} onChange={e => setEditClassSubject(e.target.value)} placeholder="과목" className="w-16 px-1 py-1 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1e2d6f]" />
-                                <input type="text" value={editClassName} onChange={e => setEditClassName(e.target.value)} className="flex-1 px-2 py-1 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1e2d6f]" placeholder="반 이름" autoFocus />
-                                <input type="number" value={editClassFee} onChange={e => setEditClassFee(e.target.value)} className="w-28 px-2 py-1 border rounded text-sm text-right focus:outline-none focus:ring-2 focus:ring-[#1e2d6f]" placeholder="원비" />
-                                <span className="text-xs text-gray-400">원</span>
-                                <button onClick={() => updateClass(cls.id)} className="text-green-600" aria-label="저장"><Check className="w-4 h-4" /></button>
-                                <button onClick={() => setEditingClassId(null)} className="text-gray-400" aria-label="취소"><X className="w-4 h-4" /></button>
-                              </div>
-                              <div className="flex items-center gap-2 pl-1">
-                                <span className="text-xs text-gray-500">수업 요일</span>
-                                <DayPicker days={editClassDays} setDays={setEditClassDays} />
-                              </div>
-                            </div>
-                          ) : (
-                            <>
-                              {/* 순서 변경 버튼 */}
-                              <div className="flex flex-col shrink-0">
-                                <button
-                                  onClick={() => swapClassOrder(grade.id, clsIdx, -1)}
-                                  disabled={clsIdx === 0}
-                                  className="p-0 text-gray-300 hover:text-gray-600 disabled:opacity-20 disabled:hover:text-gray-300"
-                                  aria-label="위로"
-                                >
-                                  <ChevronUp className="w-3.5 h-3.5" />
-                                </button>
-                                <button
-                                  onClick={() => swapClassOrder(grade.id, clsIdx, 1)}
-                                  disabled={clsIdx === grade.classes.length - 1}
-                                  className="p-0 text-gray-300 hover:text-gray-600 disabled:opacity-20 disabled:hover:text-gray-300"
-                                  aria-label="아래로"
-                                >
-                                  <ChevronDown className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
-                              {cls.subject && (
-                                <span className={`text-[10px] sm:text-xs px-1 sm:px-1.5 py-0.5 rounded font-medium shrink-0 ${getSubjectColor(cls.subject)}`}>{cls.subject}</span>
-                              )}
-                              <span className="flex-1 text-xs sm:text-sm truncate min-w-0">{cls.name}</span>
-                              {cls.class_days && (
-                                <span className="text-[10px] sm:text-xs text-gray-400 shrink-0 hidden sm:inline">{parseClassDays(cls.class_days)?.map(d => DAY_LABELS[d]).join('/')}</span>
-                              )}
-                              <span className="text-xs sm:text-sm font-medium text-[#1e2d6f] shrink-0">{formatFee(cls.monthly_fee)}</span>
-                              <span className="text-[10px] sm:text-xs text-gray-400 shrink-0">{getActiveStudents(cls.students ?? []).length}명</span>
-                              <button onClick={() => openTransfer(cls)} className="p-0.5 sm:p-1 text-gray-400 hover:text-[#1e2d6f] shrink-0" aria-label="학생 반이동" title="학생 반이동">
-                                <ArrowRightLeft className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                              </button>
-                              <button onClick={() => { setEditingClassId(cls.id); setEditClassName(cls.name); setEditClassFee(String(cls.monthly_fee)); setEditClassSubject(cls.subject || ''); setEditClassDays(parseClassDays(cls.class_days) ?? []) }} className="p-0.5 sm:p-1 text-gray-400 hover:text-gray-600 shrink-0" aria-label="반 수정">
-                                <Pencil className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                              </button>
-                              <button onClick={() => deleteClass(cls.id, cls.name)} className="p-0.5 sm:p-1 text-gray-400 hover:text-red-500 shrink-0" aria-label="반 삭제">
-                                <Trash2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                              </button>
-                            </>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {addingClassToGrade === grade.id ? (
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <input type="text" list="subject-list" value={newClassSubject} onChange={e => setNewClassSubject(e.target.value)} placeholder="과목" className="w-16 px-1 py-1.5 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1e2d6f]" />
-                        <input
-                          type="text" value={newClassName} onChange={e => setNewClassName(e.target.value)}
-                          onKeyDown={e => e.key === 'Enter' && addClass(grade.id)}
-                          placeholder="반 이름" className="flex-1 px-2 py-1.5 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1e2d6f]" autoFocus
-                        />
-                        <input
-                          type="number" value={newClassFee} onChange={e => setNewClassFee(e.target.value)}
-                          onKeyDown={e => e.key === 'Enter' && addClass(grade.id)}
-                          placeholder="원비" className="w-28 px-2 py-1.5 border rounded text-sm text-right focus:outline-none focus:ring-2 focus:ring-[#1e2d6f]"
-                        />
-                        <span className="text-xs text-gray-400">원</span>
-                        <button onClick={() => addClass(grade.id)} className="text-green-600" aria-label="저장"><Check className="w-4 h-4" /></button>
-                        <button onClick={() => { setAddingClassToGrade(null); resetClassForm() }} className="text-gray-400" aria-label="취소"><X className="w-4 h-4" /></button>
-                      </div>
-                      <div className="flex items-center gap-2 pl-1">
-                        <span className="text-xs text-gray-500">수업 요일</span>
-                        <DayPicker days={newClassDays} setDays={setNewClassDays} />
-                      </div>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => openClassForm(grade.id)}
-                      className="flex items-center gap-1 text-sm text-[#1e2d6f] font-medium hover:opacity-70"
-                    >
-                      <Plus className="w-4 h-4" /> 반 추가
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
+      </div>
 
       <datalist id="subject-list">
         {existingSubjects.map(s => <option key={s} value={s} />)}
