@@ -421,6 +421,7 @@ export default function PaymentsPage() {
     if (pullDistance >= PULL_THRESHOLD) {
       setIsRefreshing(true)
       setPullDistance(40) // 새로고침 중 표시 위치
+      clearAiFilter()
       await fetchData()
       // 약간의 딜레이로 새로고침 느낌
       await new Promise(r => setTimeout(r, 500))
