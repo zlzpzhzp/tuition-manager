@@ -4,6 +4,7 @@ import "./globals.css";
 import Navbar from "@/components/Navbar";
 import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration";
 import SWRProvider from "@/components/SWRProvider";
+import PageTransition, { NavDirectionProvider } from "@/components/PageTransition";
 import { queryGradesTree, mapGradesTree } from "@/lib/queries";
 import { supabase } from "@/lib/supabase";
 
@@ -63,11 +64,15 @@ export default async function RootLayout({
     <html lang="ko">
       <body className={`${geist.className} ${notoSansKR.variable} bg-gray-50 min-h-screen`}>
         <SWRProvider fallback={fallback}>
-          <ServiceWorkerRegistration />
-          <Navbar />
-          <main className="max-w-4xl mx-auto px-4 py-6 pb-24 sm:pb-8">
-            {children}
-          </main>
+          <NavDirectionProvider>
+            <ServiceWorkerRegistration />
+            <Navbar />
+            <main className="max-w-4xl mx-auto px-4 py-6 pb-24 sm:pb-8">
+              <PageTransition>
+                {children}
+              </PageTransition>
+            </main>
+          </NavDirectionProvider>
         </SWRProvider>
       </body>
     </html>
