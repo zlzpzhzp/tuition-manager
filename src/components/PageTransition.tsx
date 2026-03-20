@@ -43,7 +43,7 @@ export default function PageTransition({ children }: { children: React.ReactNode
   }, [pathname, direction])
 
   return (
-    <div className={animClass} style={animClass ? { willChange: 'transform, opacity' } : undefined}>
+    <div className={animClass} style={{ overflowX: 'hidden' }}>
       {children}
     </div>
   )
