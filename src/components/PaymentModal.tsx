@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { X, Trash2, AlertTriangle, Check } from 'lucide-react'
 import type { Payment, PaymentMethod } from '@/types'
 import { PAYMENT_METHOD_LABELS } from '@/types'
@@ -15,10 +15,11 @@ interface Props {
   onSave: (data: Partial<Payment>) => Promise<void> | void
   onUpdate?: (paymentId: string, data: Partial<Payment>) => Promise<void> | void
   onDelete?: (paymentId: string) => void
+  clickY?: number
   onClose: () => void
 }
 
-export default function PaymentModal({ payment, studentId, defaultBillingMonth, defaultAmount, prevMemo, onSave, onUpdate, onDelete, onClose }: Props) {
+export default function PaymentModal({ payment, studentId, defaultBillingMonth, defaultAmount, prevMemo, clickY, onSave, onUpdate, onDelete, onClose }: Props) {
   const today = new Date().toISOString().split('T')[0]
   const currentMonth = today.slice(0, 7)
 
@@ -37,6 +38,8 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
   const [editMemo, setEditMemo] = useState(payment?.memo ?? '')
   const [editingMethod, setEditingMethod] = useState(false)
   const [editMethod, setEditMethod] = useState<PaymentMethod>(payment?.method as PaymentMethod ?? 'remote')
+  const modalRef = useRef<HTMLDivElement>(null)
+  const [modalTop, setModalTop] = useState<number | null>(null)
   const needsCashReceipt = method === 'transfer' || method === 'cash'
 
   useEffect(() => {
@@ -47,6 +50,18 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [method])
+
+  useEffect(() => {
+    if (clickY !== undefined && modalRef.current) {
+      const modalH = modalRef.current.offsetHeight
+      const vh = window.innerHeight
+      const padding = 16
+      // 클릭 위치를 모달 중심으로, 화면 밖으로 안 나가게 클램프
+      let top = clickY - modalH / 2
+      top = Math.max(padding, Math.min(top, vh - modalH - padding))
+      setModalTop(top)
+    }
+  }, [clickY])
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
@@ -85,8 +100,13 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
   }
 
   return (
-    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-white w-full sm:max-w-md rounded-2xl max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+    <div className="fixed inset-0 bg-black/40 z-50" onClick={onClose}>
+      <div
+        ref={modalRef}
+        className="absolute left-1/2 -translate-x-1/2 bg-white w-[calc(100%-2rem)] sm:max-w-md rounded-2xl max-h-[85vh] overflow-y-auto"
+        style={{ top: modalTop !== null ? modalTop : '50%', transform: modalTop !== null ? 'translateX(-50%)' : 'translate(-50%, -50%)' }}
+        onClick={e => e.stopPropagation()}
+      >
         <div className="flex items-center justify-between px-5 py-4 border-b">
           <h2 className="text-lg font-bold">{payment ? '납부 정보' : '납부'}</h2>
           <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
