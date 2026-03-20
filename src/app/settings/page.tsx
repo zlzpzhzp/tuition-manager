@@ -127,12 +127,6 @@ export default function SettingsPage() {
     if (error) { alert(`학년 추가 실패: ${error}`); return }
     setNewGradeName('')
     await fetchGrades()
-    // 새 학년 자동 펼침 + 반 추가 폼 바로 열기
-    if (data?.id) {
-      setExpandedGrades(prev => new Set(prev).add(data.id))
-      resetClassForm()
-      setAddingClassToGrade(data.id)
-    }
   }
 
   const updateGrade = async (id: string) => {
