@@ -43,7 +43,7 @@ export default function PageTransition({ children }: { children: React.ReactNode
   }, [pathname, direction])
 
   return (
-    <div className={animClass} style={{ willChange: 'transform, opacity' }}>
+    <div className={animClass}>
       {children}
     </div>
   )

@@ -48,7 +48,6 @@ export default function PaymentsPage() {
   const [selectedStudentFee, setSelectedStudentFee] = useState(0)
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null)
   const [selectedPrevMemo, setSelectedPrevMemo] = useState<string | null>(null)
-  const [modalClickY, setModalClickY] = useState<number | undefined>(undefined)
 
   // 스와이프
   const [swipeOpenId, setSwipeOpenId] = useState<string | null>(null)
@@ -318,14 +317,13 @@ export default function PaymentsPage() {
   }
 
   // ─── Modal handlers ───────────────────────────────────────────
-  const handleOpenModal = (studentId: string, fee: number, e?: React.MouseEvent) => {
+  const handleOpenModal = (studentId: string, fee: number) => {
     if (wasSwiped.current) return
     const existing = payments.find(p => p.student_id === studentId)
     setSelectedStudentId(studentId)
     setSelectedStudentFee(fee)
     setSelectedPayment(existing || null)
     setSelectedPrevMemo(getPrevMemo(studentId))
-    setModalClickY(e?.clientY)
     setShowPaymentModal(true)
   }
 
@@ -798,7 +796,7 @@ export default function PaymentsPage() {
                                       {isSuccess ? <Check className="w-3.5 h-3.5" strokeWidth={3} /> : '납부'}
                                     </button>
                                     <button
-                                      onClick={(e) => handleOpenModal(student.id, fee, e)}
+                                      onClick={() => handleOpenModal(student.id, fee)}
                                       className="fan-item p-1 text-[#1e2d6f] hover:opacity-70"
                                       aria-label="상세 납부 기록"
                                     >
@@ -828,7 +826,7 @@ export default function PaymentsPage() {
                                   })()}
                                   {status !== 'unpaid' ? (
                                     <button
-                                      onClick={(e) => { e.stopPropagation(); handleOpenModal(student.id, fee, e) }}
+                                      onClick={(e) => { e.stopPropagation(); handleOpenModal(student.id, fee) }}
                                       className="px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap cursor-pointer hover:opacity-80 transition-opacity"
                                       style={{ backgroundColor: displayColors.bg, color: displayColors.text }}
                                       role="status"
@@ -904,7 +902,6 @@ export default function PaymentsPage() {
           defaultBillingMonth={selectedMonth}
           defaultAmount={selectedStudentFee}
           prevMemo={selectedPrevMemo}
-          clickY={modalClickY}
           onSave={handleSavePayment}
           onUpdate={handleUpdatePayment}
           onDelete={handleDeletePayment}
