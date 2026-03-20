@@ -173,7 +173,6 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
                     type="text"
                     value={editMemo}
                     onChange={e => setEditMemo(e.target.value)}
-                    onBlur={() => setEditingMemo(false)}
                     className="flex-1 px-2 py-1 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1e2d6f]"
                     placeholder="특이사항이 있으면 입력하세요"
                   />
