@@ -96,12 +96,13 @@ export default function PaymentsPage() {
 
   // 과목별 그룹핑: subject → { gradeName, cls }[]
   const subjectGroups = useMemo(() => {
-    const map = new Map<string, { gradeName: string; cls: (Class & { students: Student[] }) }[]>()
+    const map = new Map<string, { gradeName: string; cls: GradeWithClasses['classes'][number] }[]>()
+    type ClassWithStudents = GradeWithClasses['classes'][number]
     grades.forEach(grade => {
       grade.classes.forEach(cls => {
         const subject = cls.subject || '기타'
         const arr = map.get(subject) ?? []
-        arr.push({ gradeName: grade.name, cls })
+        arr.push({ gradeName: grade.name, cls: cls as ClassWithStudents })
         map.set(subject, arr)
       })
     })
