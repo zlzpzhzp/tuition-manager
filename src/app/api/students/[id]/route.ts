@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { validateInput, rules } from '@/lib/validate'
+import { writeAuditLog } from '@/lib/auditLog'
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -46,13 +47,31 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // has_discuss, memo 변경은 빈번하므로 중요 변경만 로그
+  const importantKeys = ['name', 'class_id', 'custom_fee', 'payment_due_day', 'withdrawal_date', 'enrollment_date']
+  const changed = Object.keys(updates).filter(k => importantKeys.includes(k))
+  if (changed.length > 0) {
+    const name = data.name || id
+    writeAuditLog('student', id, 'update', `학생 수정: ${name} (${changed.join(', ')})`, updates)
+  }
+
   return NextResponse.json(data)
 }
 
 export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
 
+  const { data: existing } = await supabase
+    .from('tuition_students')
+    .select('name')
+    .eq('id', id)
+    .single()
+
   const { error } = await supabase.from('tuition_students').delete().eq('id', id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  writeAuditLog('student', id, 'delete', `학생 삭제: ${existing?.name ?? id}`, existing ?? undefined)
+
   return NextResponse.json({ success: true })
 }

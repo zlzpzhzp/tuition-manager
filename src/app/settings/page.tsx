@@ -2,10 +2,10 @@
 
 import { useState, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, Pencil, Trash2, ChevronDown, X, Check, ArrowRightLeft, ChevronUp, LogOut } from 'lucide-react'
+import { Plus, Pencil, Trash2, ChevronDown, X, Check, ArrowRightLeft, ChevronUp, LogOut, ScrollText } from 'lucide-react'
 import type { Grade, Class, Student } from '@/types'
 import { DAY_LABELS, parseClassDays } from '@/types'
-import { getActiveStudents, safeMutate, useGrades, revalidateGrades } from '@/lib/utils'
+import { getActiveStudents, safeMutate, safeFetch, useGrades, revalidateGrades } from '@/lib/utils'
 
 const SUBJECT_COLORS = ['bg-blue-100 text-blue-700', 'bg-green-100 text-green-700', 'bg-purple-100 text-purple-700', 'bg-orange-100 text-orange-700', 'bg-pink-100 text-pink-700', 'bg-teal-100 text-teal-700', 'bg-yellow-100 text-yellow-700', 'bg-red-100 text-red-700']
 
@@ -24,6 +24,19 @@ export default function SettingsPage() {
   const [editClassFee, setEditClassFee] = useState('')
   const [editClassSubject, setEditClassSubject] = useState('')
   const [editClassDays, setEditClassDays] = useState<number[]>([])
+
+  // 감사 로그
+  const [showLogs, setShowLogs] = useState(false)
+  const [logs, setLogs] = useState<{ id: string; entity_type: string; action: string; summary: string; details: Record<string, unknown> | null; created_at: string }[]>([])
+  const [logsLoading, setLogsLoading] = useState(false)
+
+  const loadLogs = async () => {
+    setShowLogs(true)
+    setLogsLoading(true)
+    const { data } = await safeFetch<typeof logs>('/api/audit-logs?limit=100')
+    setLogs(data ?? [])
+    setLogsLoading(false)
+  }
 
   // 학생 반이동
   const [transferClass, setTransferClass] = useState<(Class & { students?: Student[] }) | null>(null)
@@ -328,8 +341,15 @@ export default function SettingsPage() {
         {existingSubjects.map(s => <option key={s} value={s} />)}
       </datalist>
 
-      {/* 로그아웃 */}
-      <div className="mt-12 pt-6 border-t">
+      {/* 로그 & 로그아웃 */}
+      <div className="mt-12 pt-6 border-t space-y-3">
+        <button
+          onClick={loadLogs}
+          className="w-full py-3 text-gray-600 bg-white border border-gray-200 rounded-xl text-sm font-medium hover:bg-gray-50 flex items-center justify-center gap-2"
+        >
+          <ScrollText className="w-4 h-4" />
+          변경 로그
+        </button>
         <button
           onClick={async () => {
             if (!confirm('로그아웃 하시겠습니까?')) return
@@ -432,6 +452,45 @@ export default function SettingsPage() {
                 </button>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* 감사 로그 모달 */}
+      {showLogs && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center" onClick={() => setShowLogs(false)}>
+          <div className="bg-white w-full sm:max-w-lg sm:rounded-xl rounded-t-xl max-h-[85vh] flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="px-5 py-4 border-b flex items-center justify-between shrink-0">
+              <h2 className="font-bold text-sm">변경 로그</h2>
+              <button onClick={() => setShowLogs(false)} className="p-1 text-gray-400 hover:text-gray-600" aria-label="닫기">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto px-5 py-3">
+              {logsLoading ? (
+                <div className="text-center py-12 text-gray-400 text-sm">불러오는 중...</div>
+              ) : logs.length === 0 ? (
+                <div className="text-center py-12 text-gray-400 text-sm">로그가 없습니다</div>
+              ) : (
+                <div className="space-y-2">
+                  {logs.map(log => {
+                    const actionColor = log.action === 'create' ? 'text-green-600 bg-green-50' : log.action === 'delete' ? 'text-red-600 bg-red-50' : 'text-blue-600 bg-blue-50'
+                    const actionLabel = log.action === 'create' ? '생성' : log.action === 'delete' ? '삭제' : '수정'
+                    const date = new Date(log.created_at)
+                    const timeStr = `${date.getMonth() + 1}/${date.getDate()} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
+                    return (
+                      <div key={log.id} className="flex items-start gap-2 py-2 border-b border-gray-100 last:border-0">
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium shrink-0 mt-0.5 ${actionColor}`}>{actionLabel}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-gray-800 break-words">{log.summary}</p>
+                          <p className="text-[10px] text-gray-400 mt-0.5">{timeStr}</p>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { validateInput, rules } from '@/lib/validate'
+import { writeAuditLog } from '@/lib/auditLog'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -46,5 +47,13 @@ export async function POST(request: Request) {
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  const studentName = (data as Record<string, unknown>).student
+    ? ((data as Record<string, unknown>).student as Record<string, unknown>).name
+    : body.student_id
+  writeAuditLog('payment', data.id, 'create',
+    `납부 등록: ${studentName} ${body.billing_month} ${body.amount?.toLocaleString()}원`,
+    { ...payload, student_name: studentName })
+
   return NextResponse.json(data)
 }

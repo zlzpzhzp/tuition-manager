@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { validateInput, rules } from '@/lib/validate'
+import { writeAuditLog } from '@/lib/auditLog'
 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -28,13 +29,34 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  const fields = Object.keys(updates).join(', ')
+  writeAuditLog('payment', id, 'update', `납부 수정: ${fields}`, updates)
+
   return NextResponse.json(data)
 }
 
 export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
 
+  // 삭제 전 데이터 조회
+  const { data: existing } = await supabase
+    .from('tuition_payments')
+    .select('*, student:tuition_students(name)')
+    .eq('id', id)
+    .single()
+
   const { error } = await supabase.from('tuition_payments').delete().eq('id', id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  if (existing) {
+    const studentName = (existing as Record<string, unknown>).student
+      ? ((existing as Record<string, unknown>).student as Record<string, unknown>).name
+      : ''
+    writeAuditLog('payment', id, 'delete',
+      `납부 삭제: ${studentName} ${existing.billing_month} ${existing.amount?.toLocaleString()}원`,
+      existing)
+  }
+
   return NextResponse.json({ success: true })
 }

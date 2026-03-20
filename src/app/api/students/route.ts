@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { validateInput, rules } from '@/lib/validate'
+import { writeAuditLog } from '@/lib/auditLog'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -42,5 +43,8 @@ export async function POST(request: Request) {
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  writeAuditLog('student', data.id, 'create', `학생 등록: ${body.name}`, { name: body.name, class_id: body.class_id })
+
   return NextResponse.json(data)
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { validateInput, rules } from '@/lib/validate'
+import { writeAuditLog } from '@/lib/auditLog'
 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -28,13 +29,29 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // order_index만 변경은 순서 변경이므로 로그 생략
+  const logKeys = Object.keys(updates).filter(k => k !== 'order_index')
+  if (logKeys.length > 0) {
+    writeAuditLog('class', id, 'update', `반 수정: ${data.name} (${logKeys.join(', ')})`, updates)
+  }
+
   return NextResponse.json(data)
 }
 
 export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
 
+  const { data: existing } = await supabase
+    .from('tuition_classes')
+    .select('name, subject, monthly_fee')
+    .eq('id', id)
+    .single()
+
   const { error } = await supabase.from('tuition_classes').delete().eq('id', id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  writeAuditLog('class', id, 'delete', `반 삭제: ${existing?.name ?? id}`, existing ?? undefined)
+
   return NextResponse.json({ success: true })
 }

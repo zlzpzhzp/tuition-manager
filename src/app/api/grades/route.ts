@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { validateInput, rules } from '@/lib/validate'
 import { queryGradesTree, mapGradesTree } from '@/lib/queries'
+import { writeAuditLog } from '@/lib/auditLog'
 
 export async function GET() {
   const { data, error } = await queryGradesTree()
@@ -22,5 +23,8 @@ export async function POST(request: Request) {
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  writeAuditLog('grade', data.id, 'create', `학년 추가: ${body.name}`, { name: body.name })
+
   return NextResponse.json(data)
 }
