@@ -192,7 +192,7 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
               disabled={showConfirmSuccess}
               onClick={async () => {
                 if (editMemo !== (payment.memo ?? '') && onUpdate && payment.id) {
-                  await onUpdate(payment.id, { memo: editMemo || undefined })
+                  await onUpdate(payment.id, { memo: editMemo.trim() || '' })
                 }
                 setShowConfirmSuccess(true)
                 setTimeout(() => onClose(), 800)
