@@ -108,38 +108,38 @@ export default function DashboardPage() {
       {/* 요약 카드 */}
       <div className="grid grid-cols-2 gap-3 mb-6">
         <div className="bg-white rounded-xl border p-4">
-          <div className="flex items-center gap-2 mb-2">
+          <div className="flex items-center gap-2 mb-1">
             <Users className="w-4 h-4 text-[#1e2d6f]" />
             <span className="text-xs text-gray-400">재원생</span>
           </div>
-          <p className="text-2xl font-bold">{stats.totalStudents}<span className="text-sm text-gray-400 font-normal">명</span></p>
+          <p className="text-4xl font-bold tracking-tight">{stats.totalStudents}<span className="text-base text-gray-400 font-normal ml-0.5">명</span></p>
         </div>
         <div className="bg-white rounded-xl border p-4">
-          <div className="flex items-center gap-2 mb-2">
+          <div className="flex items-center gap-2 mb-1">
             <TrendingUp className="w-4 h-4 text-green-600" />
             <span className="text-xs text-gray-400">납부율</span>
           </div>
-          <p className="text-2xl font-bold">{stats.paymentRate}<span className="text-sm text-gray-400 font-normal">%</span></p>
-          <p className="text-xs text-gray-400">{stats.paidCount}/{stats.totalStudents}명</p>
+          <p className="text-4xl font-bold tracking-tight">{stats.paymentRate}<span className="text-base text-gray-400 font-normal ml-0.5">%</span></p>
+          <p className="text-xs text-gray-400 mt-0.5">{stats.paidCount}/{stats.totalStudents}명</p>
         </div>
         <div className="bg-white rounded-xl border p-4">
-          <div className="flex items-center gap-2 mb-2">
+          <div className="flex items-center gap-2 mb-1">
             <CreditCard className="w-4 h-4 text-[#1e2d6f]" />
             <span className="text-xs text-gray-400">수납 / 총원비</span>
           </div>
-          <p className="text-xl font-bold">{(stats.totalPaid / 10000).toFixed(0)}<span className="text-xs text-gray-400 font-normal">만</span></p>
-          <p className="text-xs text-gray-400">/ {(stats.totalFee / 10000).toFixed(0)}만원</p>
+          <p className="text-3xl font-bold tracking-tight">{(stats.totalPaid / 10000).toFixed(0)}<span className="text-sm text-gray-400 font-normal ml-0.5">만</span></p>
+          <p className="text-xs text-gray-400 mt-0.5">/ {(stats.totalFee / 10000).toFixed(0)}만원</p>
         </div>
         <div className="bg-white rounded-xl border p-4">
-          <div className="flex items-center gap-2 mb-2">
+          <div className="flex items-center gap-2 mb-1">
             <AlertCircle className="w-4 h-4 text-red-500" />
             <span className="text-xs text-gray-400">미납 / 예정</span>
           </div>
-          <p className="text-xl font-bold">
+          <p className="text-3xl font-bold tracking-tight">
             <span className="text-red-600">{stats.overdueStudents.length}</span>
             <span className="text-gray-300 font-normal mx-1">/</span>
             <span className="text-amber-600">{stats.scheduledStudents.length}</span>
-            <span className="text-sm text-gray-400 font-normal">명</span>
+            <span className="text-base text-gray-400 font-normal ml-0.5">명</span>
           </p>
         </div>
       </div>
