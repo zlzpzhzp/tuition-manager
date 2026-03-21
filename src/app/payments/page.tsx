@@ -48,6 +48,7 @@ export default function PaymentsPage() {
   const [selectedStudentFee, setSelectedStudentFee] = useState(0)
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null)
   const [selectedPrevMemo, setSelectedPrevMemo] = useState<string | null>(null)
+  const [selectedPrevMethod, setSelectedPrevMethod] = useState<PaymentMethod | null>(null)
 
   // 스와이프
   const [swipeOpenId, setSwipeOpenId] = useState<string | null>(null)
@@ -324,6 +325,8 @@ export default function PaymentsPage() {
     setSelectedStudentFee(fee)
     setSelectedPayment(existing || null)
     setSelectedPrevMemo(getPrevMemo(studentId))
+    const prevPayment = prevPayments.find(p => p.student_id === studentId)
+    setSelectedPrevMethod(prevPayment?.method as PaymentMethod || null)
     setShowPaymentModal(true)
   }
 
@@ -820,7 +823,7 @@ export default function PaymentsPage() {
                                     const methodLabel = otherMethod || PAYMENT_METHOD_LABELS[p.method as keyof typeof PAYMENT_METHOD_LABELS]
                                     return (
                                       <span className="text-[10px] text-gray-400 whitespace-nowrap">
-                                        {methodLabel} 결제일{parseInt(selectedMonth.split('-')[1])}/{getDueDay(student)}
+                                        {parseInt(selectedMonth.split('-')[1])}/{getDueDay(student)} {methodLabel}
                                       </span>
                                     )
                                   })()}
@@ -902,6 +905,7 @@ export default function PaymentsPage() {
           defaultBillingMonth={selectedMonth}
           defaultAmount={selectedStudentFee}
           prevMemo={selectedPrevMemo}
+          prevMethod={selectedPrevMethod}
           onSave={handleSavePayment}
           onUpdate={handleUpdatePayment}
           onDelete={handleDeletePayment}
