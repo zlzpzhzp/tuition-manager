@@ -10,7 +10,7 @@ import StudentModal from '@/components/StudentModal'
 import DatePickerPopup from '@/components/payments/DatePickerPopup'
 import MethodPickerPopup from '@/components/payments/MethodPickerPopup'
 import AiFilterButton from '@/components/payments/AiFilterButton'
-import { getPrevMonth, formatMonth, getPaymentDueDay, isPaymentScheduled, getUnpaidLabelText, getActiveStudents, safeMutate, decodePaymentMemo, useGrades, usePayments, revalidateGrades, revalidatePayments } from '@/lib/utils'
+import { getPrevMonth, formatMonth, getPaymentDueDay, isPaymentScheduled, getUnpaidLabelText, getActiveStudents, isWithdrawnStudent, safeMutate, decodePaymentMemo, useGrades, usePayments, revalidateGrades, revalidatePayments } from '@/lib/utils'
 import { METHOD_OPTIONS_SHORT } from '@/lib/constants'
 
 export default function PaymentsPage() {
@@ -92,8 +92,8 @@ export default function PaymentsPage() {
   // ─── Memoized data ────────────────────────────────────────────
   const allStudents = useMemo(() =>
     grades.flatMap(g => g.classes.flatMap(c =>
-      getActiveStudents(c.students ?? []).map(s => ({ ...s, class: c }))
-    )), [grades])
+      getActiveStudents(c.students ?? [], selectedMonth).map(s => ({ ...s, class: c }))
+    )), [grades, selectedMonth])
 
   // 과목별 → 학년별 그룹핑
   type ClassWithStudents = GradeWithClasses['classes'][number]
@@ -544,8 +544,8 @@ export default function PaymentsPage() {
         const hasVisibleStudents = subjectGrades.some(({ classes: gradeClasses }) =>
           gradeClasses.some(cls => {
             let students = aiFilterIds
-              ? getActiveStudents(cls.students ?? []).filter(s => aiFilterIds.has(s.id))
-              : getActiveStudents(cls.students ?? [])
+              ? getActiveStudents(cls.students ?? [], selectedMonth).filter(s => aiFilterIds.has(s.id))
+              : getActiveStudents(cls.students ?? [], selectedMonth)
             if (showUnpaidOnly) {
               students = students.filter(s => {
                 const paid = (paymentsByStudentId.get(s.id) ?? []).reduce((sum, p) => sum + p.amount, 0)
@@ -571,8 +571,8 @@ export default function PaymentsPage() {
               // 이 학년에 표시할 학생이 있는지
               const hasGradeStudents = gradeClasses.some(cls => {
                 let students = aiFilterIds
-                  ? getActiveStudents(cls.students ?? []).filter(s => aiFilterIds.has(s.id))
-                  : getActiveStudents(cls.students ?? [])
+                  ? getActiveStudents(cls.students ?? [], selectedMonth).filter(s => aiFilterIds.has(s.id))
+                  : getActiveStudents(cls.students ?? [], selectedMonth)
                 if (showUnpaidOnly) {
                   students = students.filter(s => {
                     const paid = (paymentsByStudentId.get(s.id) ?? []).reduce((sum, p) => sum + p.amount, 0)
@@ -619,7 +619,7 @@ export default function PaymentsPage() {
                   </div>
                   <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
                   {gradeClasses.map(cls => {
-                const allClassStudents = getActiveStudents(cls.students ?? [])
+                const allClassStudents = getActiveStudents(cls.students ?? [], selectedMonth)
                 let students = aiFilterIds ? allClassStudents.filter(s => aiFilterIds.has(s.id)) : allClassStudents
                 if (showUnpaidOnly) {
                   students = students.filter(s => {
@@ -685,6 +685,7 @@ export default function PaymentsPage() {
                       const hasMemo = !!(prevMemo || cleanMemo)
                       const hasDiscuss = student.has_discuss ?? false
                       const isSwipeOpen = swipeOpenId === student.id
+                      const withdrawn = isWithdrawnStudent(student)
 
                       return (
                         <div key={student.id} className="relative overflow-hidden">
@@ -731,9 +732,9 @@ export default function PaymentsPage() {
                             style={isSwipeOpen ? { transform: 'translateX(-150px)', transition: 'transform 0.3s ease' } : undefined}
                           >
                             <div className={`flex items-center gap-2 px-4 ${hasMemo && !isExpanded ? 'pt-1.5 pb-0.5' : 'py-1.5'} ${
-                              status === 'unpaid' && !isExpanded ? 'cursor-pointer active:bg-gray-50' : ''
-                            }`}
-                              onClick={status === 'unpaid' && !isExpanded ? () => handleExpand(student.id) : undefined}
+                              status === 'unpaid' && !isExpanded && !withdrawn ? 'cursor-pointer active:bg-gray-50' : ''
+                            } ${withdrawn ? 'opacity-60' : ''}`}
+                              onClick={status === 'unpaid' && !isExpanded && !withdrawn ? () => handleExpand(student.id) : undefined}
                             >
                               {hasDiscuss && (
                                 <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-rose-50 text-rose-400 font-bold shrink-0">DISCUSS</span>
@@ -743,7 +744,8 @@ export default function PaymentsPage() {
                                 className="flex-1 min-w-0"
                                 onClick={e => { if (wasSwiped.current) e.preventDefault(); e.stopPropagation() }}
                               >
-                                <span className="text-sm font-medium">{student.name}</span>
+                                <span className={`text-sm font-medium ${withdrawn ? 'line-through decoration-red-500 decoration-2 text-gray-400' : ''}`}>{student.name}</span>
+                                {withdrawn && <span className="text-[10px] text-red-400 ml-1.5">퇴원</span>}
                                 {hasDiscuss && student.memo && (
                                   <p className="text-[11px] text-rose-500 font-medium leading-tight">
                                     {student.memo}

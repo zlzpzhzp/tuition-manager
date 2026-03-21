@@ -83,9 +83,19 @@ export function decodePaymentMemo(memo?: string | null): { cleanMemo: string | n
 }
 
 // ─── Student Helpers ──────────────────────────────────────────────
-/** 활성 학생만 필터링 (퇴원하지 않은) */
-export function getActiveStudents<T extends { withdrawal_date?: string | null }>(students: T[]): T[] {
-  return students.filter(s => !s.withdrawal_date)
+/** 활성 학생 필터링 — month를 넘기면 해당 월에 퇴원한 학생도 포함 (취소선 표시용) */
+export function getActiveStudents<T extends { withdrawal_date?: string | null }>(students: T[], month?: string): T[] {
+  return students.filter(s => {
+    if (!s.withdrawal_date) return true
+    if (!month) return false
+    // 퇴원한 달까지는 목록에 포함
+    return s.withdrawal_date.slice(0, 7) >= month
+  })
+}
+
+/** 해당 월 기준으로 퇴원한 학생인지 확인 */
+export function isWithdrawnStudent(student: { withdrawal_date?: string | null }): boolean {
+  return !!student.withdrawal_date
 }
 
 /** 학생의 미납 라벨 텍스트 생성 */
