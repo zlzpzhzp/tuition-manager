@@ -12,18 +12,19 @@ interface Props {
   defaultBillingMonth?: string
   defaultAmount?: number
   prevMemo?: string | null
+  prevMethod?: PaymentMethod | null
   onSave: (data: Partial<Payment>) => Promise<void> | void
   onUpdate?: (paymentId: string, data: Partial<Payment>) => Promise<void> | void
   onDelete?: (paymentId: string) => void
   onClose: () => void
 }
 
-export default function PaymentModal({ payment, studentId, defaultBillingMonth, defaultAmount, prevMemo, onSave, onUpdate, onDelete, onClose }: Props) {
+export default function PaymentModal({ payment, studentId, defaultBillingMonth, defaultAmount, prevMemo, prevMethod, onSave, onUpdate, onDelete, onClose }: Props) {
   const today = new Date().toISOString().split('T')[0]
   const currentMonth = today.slice(0, 7)
 
   const [amount, setAmount] = useState(payment?.amount ? String(payment.amount) : defaultAmount ? String(defaultAmount) : '')
-  const [method, setMethod] = useState<PaymentMethod>(payment?.method as PaymentMethod ?? 'remote')
+  const [method, setMethod] = useState<PaymentMethod>(payment?.method as PaymentMethod ?? prevMethod ?? 'remote')
   const [paymentDate, setPaymentDate] = useState(payment?.payment_date ?? today)
   const [billingMonth, setBillingMonth] = useState(payment?.billing_month ?? defaultBillingMonth ?? currentMonth)
   const [memo, setMemo] = useState(payment?.memo ?? '')
@@ -36,7 +37,7 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
   const [editingMemo, setEditingMemo] = useState(false)
   const [editMemo, setEditMemo] = useState(payment?.memo ?? '')
   const [editingMethod, setEditingMethod] = useState(false)
-  const [editMethod, setEditMethod] = useState<PaymentMethod>(payment?.method as PaymentMethod ?? 'remote')
+  const [editMethod, setEditMethod] = useState<PaymentMethod>(payment?.method as PaymentMethod ?? prevMethod ?? 'remote')
   const modalRef = useRef<HTMLDivElement>(null)
   const needsCashReceipt = method === 'transfer' || method === 'cash'
 
