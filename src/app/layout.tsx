@@ -9,10 +9,10 @@ import { queryGradesTree, mapGradesTree } from "@/lib/queries";
 import { supabase } from "@/lib/supabase";
 
 const geist = Geist({ subsets: ["latin"] });
-const notoSansKR = Noto_Sans_KR({ subsets: ["latin"], weight: ["300", "400", "500"], variable: "--font-noto" });
+const notoSansKR = Noto_Sans_KR({ subsets: ["latin"], weight: ["400", "600", "700"], variable: "--font-noto" });
 
 export const viewport: Viewport = {
-  themeColor: '#1e2d6f',
+  themeColor: '#2B3A67',
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
@@ -62,12 +62,12 @@ export default async function RootLayout({
 
   return (
     <html lang="ko">
-      <body className={`${geist.className} ${notoSansKR.variable} bg-gray-50 min-h-screen`}>
+      <body className={`${notoSansKR.variable} min-h-screen`} style={{ fontFamily: "'Noto Sans KR', -apple-system, sans-serif", background: 'var(--bg-primary)' }}>
         <SWRProvider fallback={fallback}>
           <NavDirectionProvider>
             <ServiceWorkerRegistration />
             <Navbar />
-            <main className="max-w-4xl mx-auto px-4 py-6 pb-24 sm:pb-8">
+            <main className="max-w-4xl mx-auto pb-24 sm:pb-8">
               <PageTransition>
                 {children}
               </PageTransition>

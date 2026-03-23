@@ -3,26 +3,70 @@
 @theme {
   --color-primary: #1e2d6f;
   --color-primary-light: #dde1ef;
-  --color-accent: #c8c5be;
+  --color-accent: #2B3A67;
 }
 
+/* ─── iOS 디자인 토큰 ─── */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* 배경 */
+  --bg-primary: #F2F2F7;
+  --bg-card: #FFFFFF;
+  --bg-card-alt: #F9F9FB;
+
+  /* 텍스트 */
+  --text-primary: #1C1C1E;
+  --text-secondary: #8E8E93;
+  --text-tertiary: #C7C7CC;
+
+  /* 시스템 컬러 (iOS) */
+  --color-blue: #007AFF;
+  --color-green: #34C759;
+  --color-red: #FF3B30;
+  --color-orange: #FF9500;
+  --color-yellow: #FFCC00;
+  --color-purple: #AF52DE;
+
+  /* 액센트 (앱 브랜드) */
+  --accent: #2B3A67;
+  --accent-light: rgba(43,58,103,0.08);
+
+  /* 구분선 */
+  --separator: rgba(60, 60, 67, 0.12);
+
+  /* 간격 */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 20px;
+  --space-2xl: 24px;
+  --space-3xl: 32px;
+
+  --card-padding: 16px;
+  --card-margin: 16px;
+  --card-radius: 12px;
+  --cell-height: 44px;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-background: var(--bg-primary);
+  --color-foreground: var(--text-primary);
   --font-sans: var(--font-geist-sans);
 }
 
 body {
-  background: #f9fafb;
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: 'Noto Sans KR', -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
+/* ─── iOS 트랜지션 ─── */
+* {
+  transition-timing-function: cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+/* ─── 애니메이션 ─── */
 @keyframes slide-in-right {
   from { opacity: 0; transform: translateX(40px); }
   to { opacity: 1; transform: translateX(0); }
@@ -35,9 +79,25 @@ body {
   from { opacity: 0; }
   to { opacity: 1; }
 }
+@keyframes modal-slide-up {
+  from { opacity: 0; transform: translateY(100%); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes modal-backdrop {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes accordion-open {
+  from { opacity: 0; max-height: 0; }
+  to { opacity: 1; max-height: 1000px; }
+}
+
 .animate-slide-in-right { animation: slide-in-right 0.15s ease-out; }
 .animate-slide-in-left { animation: slide-in-left 0.15s ease-out; }
-.animate-fade-in { animation: fade-in 0.12s ease-out; }
+.animate-fade-in { animation: fade-in 0.25s ease-out; }
+.animate-modal-up { animation: modal-slide-up 0.35s cubic-bezier(0.25, 0.1, 0.25, 1); }
+.animate-backdrop { animation: modal-backdrop 0.3s ease-out; }
+.animate-accordion { animation: accordion-open 0.3s ease-out; }
 
 @keyframes checkBounce {
   0% { transform: scale(0); opacity: 0; }
@@ -56,3 +116,34 @@ body {
 .fan-item:nth-child(3) { animation-delay: 120ms; }
 .fan-item:nth-child(4) { animation-delay: 180ms; }
 
+/* ─── iOS 공통 유틸 클래스 ─── */
+.ios-card {
+  background: var(--bg-card);
+  border-radius: var(--card-radius);
+  margin: 0 var(--card-margin);
+  /* shadow 없음, border 없음 — 배경색 차이만으로 분리 */
+}
+
+.ios-card-inner {
+  padding: var(--card-padding);
+}
+
+.ios-separator {
+  border-bottom: 0.5px solid var(--separator);
+  margin-left: var(--card-padding);
+}
+
+.ios-cell {
+  min-height: var(--cell-height);
+  display: flex;
+  align-items: center;
+  padding: 0 var(--card-padding);
+}
+
+/* 버튼 탭 피드백 */
+.ios-tap {
+  transition: opacity 150ms;
+}
+.ios-tap:active {
+  opacity: 0.7;
+}
