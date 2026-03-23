@@ -39,6 +39,7 @@ export async function POST(request: Request) {
       monthly_fee: body.monthly_fee ?? 0,
       subject: body.subject || null,
       class_days: body.class_days || null,
+      teacher_id: body.teacher_id || null,
       order_index: Math.floor(Date.now() / 1000) % 2000000000,
     })
     .select()

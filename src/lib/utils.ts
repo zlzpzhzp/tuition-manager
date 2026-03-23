@@ -20,6 +20,14 @@ export function useGrades<T = unknown>() {
   return useSWR<T>('/api/grades', swrFetcher, swrOptions)
 }
 
+export function useTeachers<T = unknown>() {
+  return useSWR<T>('/api/teachers', swrFetcher, swrOptions)
+}
+
+export function revalidateTeachers() {
+  globalMutate('/api/teachers')
+}
+
 export function usePayments<T = unknown>(billingMonth: string | null) {
   return useSWR<T>(
     billingMonth ? `/api/payments?billing_month=${billingMonth}` : null,

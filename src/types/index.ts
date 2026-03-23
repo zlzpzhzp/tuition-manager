@@ -1,5 +1,15 @@
 export type PaymentMethod = 'remote' | 'card' | 'transfer' | 'cash' | 'other'
 
+export interface Teacher {
+  id: string
+  name: string
+  phone?: string | null
+  subject?: string | null
+  memo?: string | null
+  order_index: number
+  created_at: string
+}
+
 export interface Grade {
   id: string
   name: string
@@ -15,9 +25,11 @@ export interface Class {
   monthly_fee: number
   subject?: string | null
   class_days?: string | null
+  teacher_id?: string | null
   order_index: number
   created_at: string
   grade?: Grade
+  teacher?: Teacher | null
   students?: Student[]
 }
 

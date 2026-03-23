@@ -15,8 +15,10 @@ interface RawClass {
   monthly_fee: number
   subject?: string | null
   class_days?: string | null
+  teacher_id?: string | null
   order_index: number
   created_at: string
+  tuition_teachers?: Record<string, unknown> | null
   tuition_students?: Record<string, unknown>[]
 }
 
@@ -24,7 +26,7 @@ interface RawClass {
 export async function queryGradesTree() {
   const { data, error } = await supabase
     .from('tuition_grades')
-    .select('*, tuition_classes(*, tuition_students(*))')
+    .select('*, tuition_classes(*, tuition_teachers:teacher_id(*), tuition_students(*))')
     .order('order_index')
     .order('order_index', { referencedTable: 'tuition_classes' })
     .order('name', { referencedTable: 'tuition_classes.tuition_students' })
@@ -38,6 +40,7 @@ export function mapGradesTree(data: RawGrade[]) {
     ...g,
     classes: (g.tuition_classes ?? []).map(c => ({
       ...c,
+      teacher: c.tuition_teachers ?? null,
       students: c.tuition_students ?? [],
     })),
   }))

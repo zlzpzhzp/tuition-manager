@@ -9,21 +9,18 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 
   const validationError = validateInput([
     rules.optionalString('name', body.name),
-    rules.nonNegativeNumber('monthly_fee', body.monthly_fee),
   ])
   if (validationError) return validationError
 
   const updates: Record<string, unknown> = {}
   if (body.name !== undefined) updates.name = body.name
-  if (body.monthly_fee !== undefined) updates.monthly_fee = body.monthly_fee
-  if (body.grade_id !== undefined) updates.grade_id = body.grade_id
+  if (body.phone !== undefined) updates.phone = body.phone || null
   if (body.subject !== undefined) updates.subject = body.subject || null
-  if (body.class_days !== undefined) updates.class_days = body.class_days || null
-  if (body.teacher_id !== undefined) updates.teacher_id = body.teacher_id || null
+  if (body.memo !== undefined) updates.memo = body.memo || null
   if (body.order_index !== undefined) updates.order_index = body.order_index
 
   const { data, error } = await supabase
-    .from('tuition_classes')
+    .from('tuition_teachers')
     .update(updates)
     .eq('id', id)
     .select()
@@ -31,10 +28,9 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  // order_index만 변경은 순서 변경이므로 로그 생략
   const logKeys = Object.keys(updates).filter(k => k !== 'order_index')
   if (logKeys.length > 0) {
-    writeAuditLog('class', id, 'update', `반 수정: ${data.name} (${logKeys.join(', ')})`, updates)
+    writeAuditLog('teacher', id, 'update', `선생님 수정: ${data.name} (${logKeys.join(', ')})`, updates)
   }
 
   return NextResponse.json(data)
@@ -44,15 +40,15 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
   const { id } = await params
 
   const { data: existing } = await supabase
-    .from('tuition_classes')
-    .select('name, subject, monthly_fee')
+    .from('tuition_teachers')
+    .select('name, subject')
     .eq('id', id)
     .single()
 
-  const { error } = await supabase.from('tuition_classes').delete().eq('id', id)
+  const { error } = await supabase.from('tuition_teachers').delete().eq('id', id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  writeAuditLog('class', id, 'delete', `반 삭제: ${existing?.name ?? id}`, existing ?? undefined)
+  writeAuditLog('teacher', id, 'delete', `선생님 삭제: ${existing?.name ?? id}`, existing ?? undefined)
 
   return NextResponse.json({ success: true })
 }

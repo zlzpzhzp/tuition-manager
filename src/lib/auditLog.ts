@@ -1,6 +1,6 @@
 import { supabase } from './supabase'
 
-type EntityType = 'payment' | 'student' | 'class' | 'grade'
+type EntityType = 'payment' | 'student' | 'class' | 'grade' | 'teacher'
 type Action = 'create' | 'update' | 'delete'
 
 export async function writeAuditLog(
