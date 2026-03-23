@@ -8,12 +8,12 @@ import { DAY_LABELS, parseClassDays } from '@/types'
 import { getActiveStudents, safeMutate, safeFetch, useGrades, revalidateGrades, useTeachers, revalidateTeachers } from '@/lib/utils'
 
 const SUBJECT_BG_COLORS = [
-  { bg: '#E8EAF0', color: '#2B3A67' },
-  { bg: '#E8F5E9', color: '#2E7D32' },
-  { bg: '#F3E5F5', color: '#7B1FA2' },
-  { bg: '#FFF3E0', color: '#E65100' },
-  { bg: '#FFEBEE', color: '#C62828' },
-  { bg: '#E3F2FD', color: '#1565C0' },
+  { bg: 'rgba(43,58,103,0.12)', color: 'var(--accent)' },
+  { bg: 'rgba(52,199,89,0.12)', color: 'var(--color-green)' },
+  { bg: 'rgba(175,82,222,0.12)', color: 'var(--color-purple)' },
+  { bg: 'rgba(255,149,0,0.12)', color: 'var(--color-orange)' },
+  { bg: 'rgba(255,59,48,0.12)', color: 'var(--color-red)' },
+  { bg: 'rgba(0,122,255,0.12)', color: 'var(--color-blue)' },
 ]
 
 type GradeWithClasses = import('@/types').Grade & { classes: (Class & { students?: Student[] })[] }
@@ -623,9 +623,9 @@ export default function SettingsPage() {
                 <div>
                   {logs.map((log, idx) => {
                     let badgeBg: string, badgeColor: string
-                    if (log.action === 'create') { badgeBg = 'var(--badge-paid-bg)'; badgeColor = 'var(--badge-paid-text)' }
-                    else if (log.action === 'delete') { badgeBg = 'var(--badge-unpaid-bg)'; badgeColor = 'var(--badge-unpaid-text)' }
-                    else { badgeBg = '#E3F2FD'; badgeColor = '#1565C0' }
+                    if (log.action === 'create') { badgeBg = 'rgba(52,199,89,0.12)'; badgeColor = 'var(--color-green)' }
+                    else if (log.action === 'delete') { badgeBg = 'rgba(255,59,48,0.12)'; badgeColor = 'var(--color-red)' }
+                    else { badgeBg = 'rgba(0,122,255,0.12)'; badgeColor = 'var(--color-blue)' }
                     const actionLabel = log.action === 'create' ? '생성' : log.action === 'delete' ? '삭제' : '수정'
                     const date = new Date(log.created_at)
                     const timeStr = `${date.getMonth() + 1}/${date.getDate()} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
