@@ -2,7 +2,8 @@
 
 import { useState, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, Pencil, Trash2, ChevronDown, X, Check, ArrowRightLeft, ChevronUp, LogOut, ScrollText, UserCircle } from 'lucide-react'
+import Link from 'next/link'
+import { Plus, Pencil, Trash2, ChevronDown, X, Check, ArrowRightLeft, ChevronUp, LogOut, ScrollText, UserCircle, FileText } from 'lucide-react'
 import type { Grade, Class, Student, Teacher } from '@/types'
 import { DAY_LABELS, parseClassDays } from '@/types'
 import { getActiveStudents, safeMutate, safeFetch, useGrades, revalidateGrades, useTeachers, revalidateTeachers } from '@/lib/utils'
@@ -239,6 +240,18 @@ export default function SettingsPage() {
     fetchGrades()
   }
 
+  const swapTeacherOrder = async (idx: number, dir: -1 | 1) => {
+    const targetIdx = idx + dir
+    if (targetIdx < 0 || targetIdx >= teachers.length) return
+    const a = teachers[idx]
+    const b = teachers[targetIdx]
+    await Promise.all([
+      safeMutate(`/api/teachers/${a.id}`, 'PUT', { order_index: b.order_index }),
+      safeMutate(`/api/teachers/${b.id}`, 'PUT', { order_index: a.order_index }),
+    ])
+    revalidateTeachers()
+  }
+
   const getTeacherName = (teacherId?: string | null) => {
     if (!teacherId) return null
     return teachers.find(t => t.id === teacherId)?.name ?? null
@@ -433,7 +446,7 @@ export default function SettingsPage() {
             <div className="px-4 py-3">
               {teachers.length > 0 && (
                 <div className="space-y-2 mb-3">
-                  {teachers.map(teacher => (
+                  {teachers.map((teacher, tIdx) => (
                     <div key={teacher.id} className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2">
                       {editingTeacherId === teacher.id ? (
                         <div className="flex-1 flex items-center gap-2">
@@ -445,10 +458,21 @@ export default function SettingsPage() {
                         </div>
                       ) : (
                         <>
+                          <div className="flex flex-col shrink-0">
+                            <button onClick={() => swapTeacherOrder(tIdx, -1)} disabled={tIdx === 0} className="p-0 text-gray-300 hover:text-gray-600 disabled:opacity-20" aria-label="위로">
+                              <ChevronUp className="w-3.5 h-3.5" />
+                            </button>
+                            <button onClick={() => swapTeacherOrder(tIdx, 1)} disabled={tIdx === teachers.length - 1} className="p-0 text-gray-300 hover:text-gray-600 disabled:opacity-20" aria-label="아래로">
+                              <ChevronDown className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                           <span className="text-sm font-medium">{teacher.name}</span>
                           {teacher.subject && <span className="text-xs text-gray-400">{teacher.subject}</span>}
                           {teacher.phone && <span className="text-xs text-gray-400">{teacher.phone}</span>}
                           <span className="flex-1" />
+                          <Link href={`/teachers/${teacher.id}`} className="p-1 text-gray-400 hover:text-[#1e2d6f]" aria-label="급여명세서" title="급여명세서">
+                            <FileText className="w-3.5 h-3.5" />
+                          </Link>
                           <button onClick={() => { setEditingTeacherId(teacher.id); setEditTeacherName(teacher.name); setEditTeacherPhone(teacher.phone || ''); setEditTeacherSubject(teacher.subject || '') }} className="p-1 text-gray-400 hover:text-gray-600" aria-label="수정">
                             <Pencil className="w-3.5 h-3.5" />
                           </button>
