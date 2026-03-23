@@ -87,53 +87,49 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center animate-backdrop" style={{ background: 'rgba(0,0,0,0.3)' }} onClick={onClose}>
+    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={onClose}>
       <div
         ref={modalRef}
-        className="w-full sm:max-w-md max-h-[85vh] overflow-y-auto animate-modal-up"
-        style={{ background: 'var(--bg-card)', borderRadius: '16px 16px 0 0', ...(typeof window !== 'undefined' && window.innerWidth >= 640 ? { borderRadius: 16 } : {}) }}
+        className="bg-white w-full sm:max-w-md rounded-2xl max-h-[85vh] overflow-y-auto"
         onClick={e => e.stopPropagation()}
       >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '0.5px solid var(--separator)' }}>
-          <h2 style={{ fontSize: 20, fontWeight: 700, lineHeight: 1.3, color: 'var(--text-primary)' }}>{payment ? '납부 정보' : '납부'}</h2>
-          <button onClick={onClose} className="ios-tap" style={{ padding: 4, color: 'var(--text-secondary)' }}><X style={{ width: 20, height: 20 }} /></button>
+        <div className="flex items-center justify-between px-5 py-4 border-b">
+          <h2 className="text-lg font-bold">{payment ? '납부 정보' : '납부'}</h2>
+          <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
         </div>
 
         {/* 이전달 비고 알림 */}
         {prevMemo && (
-          <div style={{ margin: '12px 20px 0', padding: 12, background: 'rgba(255,149,0,0.08)', borderRadius: 12, display: 'flex', gap: 8 }}>
-            <AlertTriangle style={{ width: 16, height: 16, color: 'var(--color-orange)', flexShrink: 0, marginTop: 2 }} />
+          <div className="mx-5 mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg flex gap-2">
+            <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
             <div>
-              <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>지난달 비고</p>
-              <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 2 }}>{prevMemo}</p>
+              <p className="text-xs font-medium text-amber-800">지난달 비고</p>
+              <p className="text-xs text-amber-700 mt-0.5">{prevMemo}</p>
             </div>
           </div>
         )}
 
         {/* 기존 납부 정보 확인 모드 */}
         {payment && !showConfirmDelete ? (
-          <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div style={{ background: 'rgba(52,199,89,0.06)', borderRadius: 12, padding: 20, textAlign: 'center' }}>
-              <p style={{ fontSize: 28, fontWeight: 700, color: 'var(--color-green)' }}>{payment.amount.toLocaleString()}원</p>
-              <p style={{ fontSize: 15, fontWeight: 400, color: 'var(--color-green)', marginTop: 4 }}>납부완료</p>
+          <div className="p-5 space-y-4">
+            <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-center">
+              <p className="text-green-800 font-bold text-lg">{payment.amount.toLocaleString()}원</p>
+              <p className="text-green-600 text-sm mt-1">납부완료</p>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '0.5px solid var(--separator)' }}>
-                <span style={{ fontSize: 15, fontWeight: 400, color: 'var(--text-secondary)' }}>납부 방법</span>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between items-center py-2 border-b">
+                <span className="text-gray-400">납부 방법</span>
                 {editingMethod ? (
                   <div className="flex items-center gap-1.5">
-                    <div style={{ display: 'flex', gap: 4 }}>
+                    <div className="flex gap-1">
                       {METHOD_OPTIONS.map(([val, label]) => (
                         <button
                           key={val}
                           type="button"
                           onClick={() => setEditMethod(val)}
-                          className="ios-tap"
-                          style={{
-                            padding: '4px 8px', borderRadius: 6, fontSize: 12, fontWeight: 600,
-                            background: editMethod === val ? 'var(--accent)' : 'var(--bg-primary)',
-                            color: editMethod === val ? '#fff' : 'var(--text-secondary)',
-                          }}
+                          className={`px-2 py-1 rounded text-[11px] font-medium border transition-colors ${
+                            editMethod === val ? 'bg-[#1e2d6f] text-white border-[#1e2d6f]' : 'bg-white text-gray-600 border-gray-300'
+                          }`}
                         >
                           {label}
                         </button>
@@ -146,32 +142,37 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
                         }
                         setEditingMethod(false)
                       }}
-                      className="ios-tap" style={{ padding: 4, color: 'var(--color-green)' }} aria-label="저장"
+                      className="p-1 text-green-600 hover:text-green-700"
+                      aria-label="저장"
                     >
-                      <Check style={{ width: 16, height: 16 }} />
+                      <Check className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => { setEditingMethod(false); setEditMethod(payment.method as PaymentMethod) }}
-                      className="ios-tap" style={{ padding: 4, color: 'var(--text-tertiary)' }} aria-label="취소"
+                      className="p-1 text-gray-400 hover:text-gray-600"
+                      aria-label="취소"
                     >
-                      <X style={{ width: 16, height: 16 }} />
+                      <X className="w-4 h-4" />
                     </button>
                   </div>
                 ) : (
-                  <button onClick={() => setEditingMethod(true)} className="ios-tap" style={{ fontSize: 15, fontWeight: 400, color: 'var(--text-primary)', textAlign: 'right' }}>
+                  <button
+                    onClick={() => setEditingMethod(true)}
+                    className="font-medium hover:text-[#1e2d6f] hover:underline transition-colors"
+                  >
                     {PAYMENT_METHOD_LABELS[editMethod]}
                   </button>
                 )}
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '0.5px solid var(--separator)' }}>
-                <span style={{ fontSize: 15, fontWeight: 400, color: 'var(--text-secondary)' }}>납부일</span>
+              <div className="flex justify-between items-center py-2 border-b">
+                <span className="text-gray-400">납부일</span>
                 {editingDate ? (
                   <div className="flex items-center gap-1.5">
                     <input
                       type="date"
                       value={editDate}
                       onChange={e => setEditDate(e.target.value)}
-                      style={{ padding: '4px 8px', border: '0.5px solid var(--separator)', borderRadius: 8, fontSize: 15, outline: 'none' }}
+                      className="px-2 py-1 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1e2d6f]"
                     />
                     <button
                       onClick={async () => {
@@ -180,50 +181,58 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
                         }
                         setEditingDate(false)
                       }}
-                      className="ios-tap" style={{ padding: 4, color: 'var(--color-green)' }} aria-label="저장"
+                      className="p-1 text-green-600 hover:text-green-700"
+                      aria-label="저장"
                     >
-                      <Check style={{ width: 16, height: 16 }} />
+                      <Check className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => { setEditingDate(false); setEditDate(payment.payment_date) }}
-                      className="ios-tap" style={{ padding: 4, color: 'var(--text-tertiary)' }} aria-label="취소"
+                      className="p-1 text-gray-400 hover:text-gray-600"
+                      aria-label="취소"
                     >
-                      <X style={{ width: 16, height: 16 }} />
+                      <X className="w-4 h-4" />
                     </button>
                   </div>
                 ) : (
-                  <button onClick={() => setEditingDate(true)} className="ios-tap" style={{ fontSize: 15, fontWeight: 400, color: 'var(--text-primary)', textAlign: 'right' }}>
+                  <button
+                    onClick={() => setEditingDate(true)}
+                    className="font-medium hover:text-[#1e2d6f] hover:underline transition-colors"
+                  >
                     {payment.payment_date}
                   </button>
                 )}
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '0.5px solid var(--separator)' }}>
-                <span style={{ fontSize: 15, fontWeight: 400, color: 'var(--text-secondary)' }}>해당 월</span>
-                <span style={{ fontSize: 15, fontWeight: 400, color: 'var(--text-primary)' }}>{payment.billing_month}</span>
+              <div className="flex justify-between py-2 border-b">
+                <span className="text-gray-400">해당 월</span>
+                <span className="font-medium">{payment.billing_month}</span>
               </div>
               {payment.cash_receipt && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '0.5px solid var(--separator)' }}>
-                  <span style={{ fontSize: 15, fontWeight: 400, color: 'var(--text-secondary)' }}>현금영수증</span>
-                  <span style={{ fontSize: 15, fontWeight: 400, color: 'var(--text-primary)' }}>{payment.cash_receipt === 'issued' ? '발행완료' : '미발행'}</span>
+                <div className="flex justify-between py-2 border-b">
+                  <span className="text-gray-400">현금영수증</span>
+                  <span className="font-medium">{payment.cash_receipt === 'issued' ? '발행완료' : '미발행'}</span>
                 </div>
               )}
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0' }}>
-              <span style={{ fontSize: 15, fontWeight: 400, color: 'var(--text-secondary)', flexShrink: 0 }}>비고</span>
+            <div className="flex justify-between items-center py-2">
+              <span className="text-sm text-gray-400 shrink-0">비고</span>
               {editingMemo ? (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1, marginLeft: 16 }}>
+                <div className="flex items-center gap-1.5 flex-1 ml-4">
                   <input
                     type="text"
                     value={editMemo}
                     onChange={e => setEditMemo(e.target.value)}
-                    style={{ flex: 1, padding: '6px 10px', border: '0.5px solid var(--separator)', borderRadius: 8, fontSize: 15, outline: 'none' }}
+                    className="flex-1 px-2 py-1 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1e2d6f]"
                     placeholder="특이사항이 있으면 입력하세요"
                     autoFocus
                   />
                 </div>
               ) : (
-                <button onClick={() => setEditingMemo(true)} className="ios-tap" style={{ fontSize: 15, fontWeight: 400, color: payment.memo ? 'var(--text-primary)' : 'var(--text-tertiary)', textAlign: 'right', maxWidth: '60%' }}>
+                <button
+                  onClick={() => setEditingMemo(true)}
+                  className="text-sm font-medium text-right max-w-[60%] hover:text-[#1e2d6f] hover:underline transition-colors text-gray-400"
+                >
                   {payment.memo || '탭하여 입력'}
                 </button>
               )}
@@ -238,91 +247,113 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
                 setShowConfirmSuccess(true)
                 setTimeout(() => onClose(), 800)
               }}
-              className="ios-tap"
-              style={{
-                width: '100%', height: 50, borderRadius: 12, fontSize: 17, fontWeight: 600,
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                background: showConfirmSuccess ? 'var(--color-green)' : 'var(--accent)',
-                color: '#fff', transition: 'all 0.3s',
-              }}
+              className={`w-full py-3 rounded-lg font-medium text-sm transition-all duration-500 flex items-center justify-center gap-2 ${
+                showConfirmSuccess
+                  ? 'bg-green-500 text-white scale-105'
+                  : 'bg-green-50 border border-green-300 text-green-700 hover:bg-green-100'
+              }`}
             >
               {showConfirmSuccess ? (
-                <span className="animate-[checkBounce_0.5s_ease-out]" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <Check style={{ width: 24, height: 24 }} strokeWidth={3} />
+                <span className="flex items-center gap-2 animate-[checkBounce_0.5s_ease-out]">
+                  <Check className="w-6 h-6" strokeWidth={3} />
                 </span>
               ) : '확인'}
             </button>
 
             <button
               onClick={() => setShowConfirmDelete(true)}
-              className="ios-tap"
-              style={{
-                width: '100%', height: 50, borderRadius: 12, fontSize: 17, fontWeight: 600,
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                background: 'rgba(255,59,48,0.08)', color: 'var(--color-red)',
-              }}
+              className="w-full py-2.5 bg-red-50 border border-red-300 text-red-600 rounded-lg font-medium text-sm hover:bg-red-100 flex items-center justify-center gap-2"
             >
-              <Trash2 style={{ width: 16, height: 16 }} />
+              <Trash2 className="w-4 h-4" />
               납부 취소
             </button>
           </div>
         ) : payment && showConfirmDelete ? (
-          <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div style={{ background: 'rgba(255,59,48,0.06)', borderRadius: 12, padding: 20, textAlign: 'center' }}>
-              <p style={{ fontSize: 17, fontWeight: 700, color: 'var(--text-primary)' }}>납부 기록을 삭제하시겠습니까?</p>
-              <p style={{ fontSize: 15, color: 'var(--color-red)', marginTop: 4 }}>이 작업은 되돌릴 수 없습니다</p>
+          <div className="p-5 space-y-4">
+            <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-center">
+              <p className="text-red-800 font-bold">납부 기록을 삭제하시겠습니까?</p>
+              <p className="text-red-600 text-sm mt-1">이 작업은 되돌릴 수 없습니다</p>
             </div>
-            <div style={{ display: 'flex', gap: 12 }}>
-              <button onClick={() => setShowConfirmDelete(false)} className="ios-tap" style={{ flex: 1, height: 50, borderRadius: 12, fontSize: 17, fontWeight: 600, background: 'var(--bg-card)', color: 'var(--text-primary)', border: '1px solid var(--separator)' }}>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowConfirmDelete(false)}
+                className="flex-1 py-2.5 border rounded-lg font-medium text-sm text-gray-600 hover:bg-gray-50"
+              >
                 돌아가기
               </button>
-              <button onClick={handleDelete} className="ios-tap" style={{ flex: 1, height: 50, borderRadius: 12, fontSize: 17, fontWeight: 600, background: 'var(--color-red)', color: '#fff' }}>
+              <button
+                onClick={handleDelete}
+                className="flex-1 py-2.5 bg-red-600 text-white rounded-lg font-medium text-sm hover:bg-red-700"
+              >
                 삭제
               </button>
             </div>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <form onSubmit={handleSubmit} className="p-5 space-y-4">
             <div>
-              <label style={{ display: 'block', fontSize: 15, fontWeight: 400, color: 'var(--text-secondary)', marginBottom: 6 }}>해당 월</label>
-              <input type="month" value={billingMonth} onChange={e => setBillingMonth(e.target.value)}
-                style={{ width: '100%', padding: '10px 12px', border: '0.5px solid var(--separator)', borderRadius: 8, fontSize: 15, outline: 'none', background: 'var(--bg-card)' }} />
+              <label className="block text-sm font-medium text-gray-700 mb-1">해당 월</label>
+              <input
+                type="month"
+                value={billingMonth}
+                onChange={e => setBillingMonth(e.target.value)}
+                className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1e2d6f]"
+              />
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: 15, fontWeight: 400, color: 'var(--text-secondary)', marginBottom: 6 }}>납부 금액 *</label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <input type="number" value={amount} onChange={e => setAmount(e.target.value)} required autoFocus
-                  style={{ flex: 1, padding: '10px 12px', border: '0.5px solid var(--separator)', borderRadius: 8, fontSize: 15, outline: 'none', background: 'var(--bg-card)' }} />
-                <span style={{ fontSize: 15, color: 'var(--text-secondary)' }}>원</span>
+              <label className="block text-sm font-medium text-gray-700 mb-1">납부 금액 *</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  value={amount}
+                  onChange={e => setAmount(e.target.value)}
+                  className="flex-1 px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1e2d6f]"
+                  required
+                  autoFocus
+                />
+                <span className="text-sm text-gray-400">원</span>
               </div>
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: 15, fontWeight: 400, color: 'var(--text-secondary)', marginBottom: 6 }}>납부 방법</label>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
+              <label className="block text-sm font-medium text-gray-700 mb-1">납부 방법</label>
+              <div className="grid grid-cols-4 gap-1.5">
                 {METHOD_OPTIONS.map(([val, label]) => (
-                  <button key={val} type="button" onClick={() => setMethod(val)} className="ios-tap"
-                    style={{
-                      padding: '8px 0', borderRadius: 8, fontSize: 13, fontWeight: 600,
-                      background: method === val ? 'var(--accent)' : 'var(--bg-primary)',
-                      color: method === val ? '#fff' : 'var(--text-secondary)',
-                    }}
-                  >{label}</button>
+                  <button
+                    key={val}
+                    type="button"
+                    onClick={() => setMethod(val)}
+                    className={`py-2 rounded-lg text-xs font-medium border transition-colors ${
+                      method === val ? 'bg-[#1e2d6f] text-white border-[#1e2d6f]' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    {label}
+                  </button>
                 ))}
               </div>
             </div>
 
             {needsCashReceipt && (
               <div>
-                <label style={{ display: 'block', fontSize: 15, fontWeight: 400, color: 'var(--text-secondary)', marginBottom: 6 }}>현금영수증</label>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <button type="button" onClick={() => setCashReceipt('issued')} className="ios-tap"
-                    style={{ flex: 1, padding: '8px 0', borderRadius: 8, fontSize: 15, fontWeight: 600, background: cashReceipt === 'issued' ? 'var(--color-green)' : 'var(--bg-primary)', color: cashReceipt === 'issued' ? '#fff' : 'var(--text-secondary)' }}>
+                <label className="block text-sm font-medium text-gray-700 mb-1">현금영수증</label>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setCashReceipt('issued')}
+                    className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-colors ${
+                      cashReceipt === 'issued' ? 'bg-green-600 text-white border-green-600' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
                     발행완료
                   </button>
-                  <button type="button" onClick={() => setCashReceipt('pending')} className="ios-tap"
-                    style={{ flex: 1, padding: '8px 0', borderRadius: 8, fontSize: 15, fontWeight: 600, background: cashReceipt === 'pending' ? 'var(--color-orange)' : 'var(--bg-primary)', color: cashReceipt === 'pending' ? '#fff' : 'var(--text-secondary)' }}>
+                  <button
+                    type="button"
+                    onClick={() => setCashReceipt('pending')}
+                    className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-colors ${
+                      cashReceipt === 'pending' ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
                     미발행
                   </button>
                 </div>
@@ -330,29 +361,39 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
             )}
 
             <div>
-              <label style={{ display: 'block', fontSize: 15, fontWeight: 400, color: 'var(--text-secondary)', marginBottom: 6 }}>납부일</label>
-              <input type="date" value={paymentDate} onChange={e => setPaymentDate(e.target.value)}
-                style={{ width: '100%', padding: '10px 12px', border: '0.5px solid var(--separator)', borderRadius: 8, fontSize: 15, outline: 'none', background: 'var(--bg-card)' }} />
+              <label className="block text-sm font-medium text-gray-700 mb-1">납부일</label>
+              <input
+                type="date"
+                value={paymentDate}
+                onChange={e => setPaymentDate(e.target.value)}
+                className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1e2d6f]"
+              />
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: 15, fontWeight: 400, color: 'var(--text-secondary)', marginBottom: 6 }}>비고</label>
-              <input type="text" value={memo} onChange={e => setMemo(e.target.value)} placeholder="특이사항이 있으면 입력하세요"
-                style={{ width: '100%', padding: '10px 12px', border: '0.5px solid var(--separator)', borderRadius: 8, fontSize: 15, outline: 'none', background: 'var(--bg-card)' }} />
+              <label className="block text-sm font-medium text-gray-700 mb-1">비고</label>
+              <input
+                type="text"
+                value={memo}
+                onChange={e => setMemo(e.target.value)}
+                className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1e2d6f]"
+                placeholder="특이사항이 있으면 입력하세요"
+              />
             </div>
 
-            <button type="submit" disabled={showSuccess} className="ios-tap"
-              style={{
-                width: '100%', height: 50, borderRadius: 12, fontSize: 17, fontWeight: 600,
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                background: showSuccess ? 'var(--color-green)' : 'var(--accent)',
-                color: '#fff', transition: 'all 0.3s',
-              }}
+            <button
+              type="submit"
+              disabled={showSuccess}
+              className={`w-full py-3 rounded-lg font-medium text-sm transition-all duration-500 flex items-center justify-center gap-2 ${
+                showSuccess
+                  ? 'bg-green-500 text-white scale-105'
+                  : 'bg-[#1e2d6f] text-white hover:opacity-90'
+              }`}
             >
               {showSuccess ? (
-                <span className="animate-[checkBounce_0.5s_ease-out]" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <Check style={{ width: 24, height: 24 }} strokeWidth={3} />
-                  <span style={{ fontSize: 17, fontWeight: 700 }}>완료!</span>
+                <span className="flex items-center gap-2 animate-[checkBounce_0.5s_ease-out]">
+                  <Check className="w-6 h-6" strokeWidth={3} />
+                  <span className="text-base font-bold">완료!</span>
                 </span>
               ) : '납부'}
             </button>

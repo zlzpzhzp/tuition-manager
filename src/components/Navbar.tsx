@@ -43,6 +43,7 @@ export default function Navbar() {
     const dt = Date.now() - touchStart.current.time
     touchStart.current = null
 
+    // 수평 스와이프 감지: 최소 60px, 수직보다 수평이 커야, 500ms 이내
     if (Math.abs(dx) < 60 || Math.abs(dy) > Math.abs(dx) || dt > 500) return
 
     const currentIdx = navItems.findIndex(item => pathname === item.href || pathname.startsWith(item.href + '/'))
@@ -50,10 +51,12 @@ export default function Navbar() {
 
     const len = navItems.length
     if (dx < 0) {
+      // 왼쪽 스와이프 → 다음 탭
       const nextIdx = (currentIdx + 1) % len
       setDirection('left')
       router.push(navItems[nextIdx].href)
     } else if (dx > 0) {
+      // 오른쪽 스와이프 → 이전 탭
       const prevIdx = (currentIdx - 1 + len) % len
       setDirection('right')
       router.push(navItems[prevIdx].href)
@@ -73,13 +76,12 @@ export default function Navbar() {
 
   return (
     <>
-      {/* 상단 헤더 — 56px 높이, accent 배경 */}
-      <nav style={{ backgroundColor: 'var(--accent)', height: 56 }}>
-        <div className="max-w-4xl mx-auto px-4 h-full">
-          <div className="flex items-center justify-between h-full">
-            <Link href="/dashboard" className="flex items-center gap-2 ios-tap" aria-label="홈으로 이동">
-              <Image src="/icons/icon-192x192.png" alt="원비관리" width={28} height={28} className="rounded-md" />
-              <span style={{ color: '#FFFFFF', fontSize: 17, fontWeight: 700, lineHeight: 1.2 }}>원비관리</span>
+      <nav className="shadow-lg" style={{ backgroundColor: '#1e2d6f' }}>
+        <div className="max-w-4xl mx-auto px-4">
+          <div className="flex items-center justify-between h-14">
+            <Link href="/dashboard" className="flex items-center gap-2" aria-label="홈으로 이동">
+              <Image src="/icons/icon-192x192.png" alt="원비관리" width={32} height={32} className="rounded-md" />
+              <span className="text-lg font-bold text-[#d8d8dc]">원비관리</span>
             </Link>
             <div className="hidden sm:flex gap-1">
               {navItems.map(({ href, label, icon: Icon }, idx) => {
@@ -90,11 +92,10 @@ export default function Navbar() {
                     href={href}
                     aria-label={label}
                     onClick={() => setDirection(idx > currentIdx ? 'left' : idx < currentIdx ? 'right' : 'none')}
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium ios-tap"
-                    style={{
-                      color: isActive(href) ? '#FFFFFF' : 'rgba(255,255,255,0.6)',
-                      backgroundColor: isActive(href) ? 'rgba(255,255,255,0.15)' : 'transparent',
-                    }}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors
+                      ${isActive(href)
+                        ? 'bg-[#d8d8dc] text-[#1e2d6f]'
+                        : 'text-[#c8c5be] hover:bg-white/10'}`}
                   >
                     <Icon className="w-4 h-4" />
                     {label}
@@ -106,16 +107,7 @@ export default function Navbar() {
         </div>
       </nav>
 
-      {/* 하단 탭바 (모바일) — iOS 스타일 블러 배경 */}
-      <div
-        className="fixed bottom-0 left-0 right-0 sm:hidden z-50"
-        style={{
-          background: 'rgba(255,255,255,0.85)',
-          backdropFilter: 'blur(20px)',
-          WebkitBackdropFilter: 'blur(20px)',
-          borderTop: '0.5px solid var(--separator)',
-        }}
-      >
+      <div className="fixed bottom-0 left-0 right-0 sm:hidden z-50 border-t bg-white" style={{ borderColor: '#dde1ef' }}>
         <div className="flex">
           {navItems.map(({ href, label, icon: Icon }, idx) => {
             const active = isActive(href)
@@ -126,11 +118,14 @@ export default function Navbar() {
                 href={href}
                 aria-label={label}
                 onClick={() => setDirection(idx > currentIdx ? 'left' : idx < currentIdx ? 'right' : 'none')}
-                className="flex-1 flex flex-col items-center justify-center py-2 gap-0.5 ios-tap"
-                style={{ color: active ? 'var(--accent)' : 'var(--text-tertiary)' }}
+                className="flex-1 flex flex-col items-center justify-center py-3 gap-1 transition-colors relative"
+                style={{ color: active ? '#1e2d6f' : '#9ca3af' }}
               >
-                <Icon style={{ width: 24, height: 24 }} />
-                <span style={{ fontSize: 10, fontWeight: 500 }}>{label}</span>
+                <Icon className="w-5 h-5" />
+                <span className="text-[11px] font-medium">{label}</span>
+                {active && (
+                  <span className="absolute bottom-0 w-8 h-0.5 rounded-full" style={{ backgroundColor: '#1e2d6f' }} />
+                )}
               </Link>
             )
           })}

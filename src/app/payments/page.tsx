@@ -461,20 +461,21 @@ export default function PaymentsPage() {
 
   // ─── Render ───────────────────────────────────────────────────
   if (loading) return (
-    <div className="animate-pulse" style={{ padding: '0 16px' }}>
-      <div className="flex items-center justify-center gap-3 py-6">
-        <div className="w-10 h-10 rounded-lg" style={{ background: '#E5E7EB' }}></div>
-        <div className="h-10 rounded w-56 sm:w-72" style={{ background: '#E5E7EB' }}></div>
-        <div className="w-10 h-10 rounded-lg" style={{ background: '#E5E7EB' }}></div>
+    <div className="animate-pulse">
+      <div className="flex items-center justify-center gap-3 mb-3">
+        <div className="w-10 h-10 bg-gray-200 rounded-lg"></div>
+        <div className="h-10 bg-gray-200 rounded w-56 sm:w-72"></div>
+        <div className="w-10 h-10 bg-gray-200 rounded-lg"></div>
       </div>
       {[...Array(2)].map((_, gi) => (
         <div key={gi} className="mb-4">
-          <div className="h-4 rounded w-20 mb-2" style={{ background: '#E5E7EB' }}></div>
-          <div style={{ background: 'var(--bg-card)', borderRadius: 'var(--card-radius)', overflow: 'hidden' }}>
+          <div className="h-4 bg-gray-200 rounded w-20 mb-2 ml-1"></div>
+          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <div className="px-4 py-2 bg-gray-50 border-b border-gray-200"><div className="h-3 bg-gray-200 rounded w-24"></div></div>
             {[...Array(4)].map((_, si) => (
-              <div key={si} className="flex items-center gap-2" style={{ padding: '12px 16px', borderBottom: '0.5px solid var(--separator)' }}>
-                <div className="h-4 rounded w-14 flex-1" style={{ background: '#E5E7EB' }}></div>
-                <div className="h-5 rounded-full w-16" style={{ background: '#E5E7EB' }}></div>
+              <div key={si} className="flex items-center gap-2 px-4 py-3">
+                <div className="h-4 bg-gray-200 rounded w-14 flex-1"></div>
+                <div className="h-5 bg-gray-200 rounded-full w-16"></div>
               </div>
             ))}
           </div>
@@ -485,37 +486,40 @@ export default function PaymentsPage() {
 
   if (error) return (
     <div className="text-center py-12">
-      <p style={{ color: 'var(--color-red)' }} className="mb-4">{error?.message || '데이터 로딩 실패'}</p>
-      <button onClick={fetchData} className="ios-tap" style={{ background: 'var(--accent)', color: '#fff', padding: '10px 20px', borderRadius: 8 }}>다시 시도</button>
+      <p className="text-red-500 mb-4">{error?.message || '데이터 로딩 실패'}</p>
+      <button onClick={fetchData} className="px-4 py-2 bg-[#1e2d6f] text-white rounded-lg hover:opacity-90">다시 시도</button>
     </div>
   )
 
   return (
     <div ref={containerRef} onClick={() => { if (swipeOpenId) closeSwipeEdit() }}>
-      {/* 월 선택 헤더 */}
-      <div className="sticky top-0 z-30" style={{ background: 'var(--bg-primary)', paddingTop: 8, paddingBottom: 8 }}>
+      {/* 월 네비게이션 — sticky 고정 (iOS 대응: -top-6으로 main py-6 상쇄) */}
+      <div className="sticky -top-6 z-30 bg-gray-50 -mx-4 px-4 pt-6 pb-1">
         {/* Pull-to-refresh 인디케이터 */}
         <div
-          className="flex items-center justify-center overflow-hidden"
-          style={{ height: pullDistance > 0 ? `${pullDistance}px` : '0px', transition: 'height 0.2s ease-out' }}
+          className="flex items-center justify-center overflow-hidden transition-all duration-200 ease-out"
+          style={{ height: pullDistance > 0 ? `${pullDistance}px` : '0px' }}
         >
-          <div className={isRefreshing ? 'animate-spin' : ''}
-            style={{ transform: `rotate(${Math.min(pullDistance / PULL_THRESHOLD, 1) * 360}deg)`, transition: 'transform 0.2s' }}
+          <div className={`transition-transform duration-200 ${isRefreshing ? 'animate-spin' : ''}`}
+            style={{ transform: `rotate(${Math.min(pullDistance / PULL_THRESHOLD, 1) * 360}deg)` }}
           >
-            <svg className="w-6 h-6" style={{ color: 'var(--text-secondary)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <svg className="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
           </div>
         </div>
         <div className="flex items-center justify-center gap-3 mb-1">
-          <button onClick={() => navigateMonth(-1)} className="ios-tap" style={{ padding: 8, minWidth: 44, minHeight: 44, display: 'flex', alignItems: 'center', justifyContent: 'center' }} aria-label="이전 달">
-            <ChevronLeft style={{ width: 24, height: 24, color: 'var(--text-secondary)' }} />
+          <button onClick={() => navigateMonth(-1)} className="p-2 hover:bg-gray-100 rounded-lg" aria-label="이전 달">
+            <ChevronLeft className="w-7 h-7" />
           </button>
-          <h1 style={{ fontSize: 34, fontWeight: 700, lineHeight: 1.2, textAlign: 'center', color: 'var(--text-primary)' }}>
-            {selectedMonth.split('-')[0]}년 {parseInt(selectedMonth.split('-')[1])}월
+          <h1 className="font-extrabold tracking-tight text-center">
+            <span className="text-[2.6rem] sm:text-[3.2rem] leading-none">{selectedMonth.split('-')[0]}</span>
+            <span className="text-[1.8rem] sm:text-[2.2rem] text-gray-600">년 </span>
+            <span className="text-5xl sm:text-6xl">{parseInt(selectedMonth.split('-')[1])}</span>
+            <span className="text-[1.8rem] sm:text-[2.2rem] text-gray-600">월</span>
           </h1>
-          <button onClick={() => navigateMonth(1)} className="ios-tap" style={{ padding: 8, minWidth: 44, minHeight: 44, display: 'flex', alignItems: 'center', justifyContent: 'center' }} aria-label="다음 달">
-            <ChevronRight style={{ width: 24, height: 24, color: 'var(--text-secondary)' }} />
+          <button onClick={() => navigateMonth(1)} className="p-2 hover:bg-gray-100 rounded-lg" aria-label="다음 달">
+            <ChevronRight className="w-7 h-7" />
           </button>
         </div>
         <div className="flex justify-center">
@@ -526,10 +530,9 @@ export default function PaymentsPage() {
               a.download = ''
               a.click()
             }}
-            className="ios-tap"
-            style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '2px 8px', fontSize: 13, fontWeight: 400, color: 'var(--color-blue)' }}
+            className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
           >
-            <Download style={{ width: 12, height: 12 }} />
+            <Download className="w-3 h-3" />
             <span>내보내기</span>
           </button>
         </div>
@@ -558,11 +561,12 @@ export default function PaymentsPage() {
         if (!hasVisibleStudents) return null
 
         return (
-          <div key={subject} style={{ marginBottom: 24 }}>
-            <div style={{ padding: '0 16px', marginBottom: 8 }}>
-              <h2 style={{ fontSize: 20, fontWeight: 700, lineHeight: 1.3, color: 'var(--text-primary)' }}>{subject}</h2>
+          <div key={subject} className="mb-6">
+            <div className="flex items-center mb-2 px-1">
+              <h2 className="text-sm font-semibold text-gray-500">{subject}</h2>
+              <div className="flex-1" />
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div className="space-y-2">
             {(() => { let isFirstVisibleGrade = groupIndex === 0; return subjectGrades.map(({ gradeId, gradeName, classes: gradeClasses }) => {
               // 이 학년에 표시할 학생이 있는지
               const hasGradeStudents = gradeClasses.some(cls => {
@@ -587,9 +591,9 @@ export default function PaymentsPage() {
 
               return (
                 <div key={gradeId}>
-                  <div style={{ display: 'flex', alignItems: 'center', padding: '0 16px', marginBottom: 4 }}>
-                    <span style={{ fontSize: 13, fontWeight: 400, lineHeight: 1.3, color: 'var(--text-secondary)' }}>{gradeName}</span>
-                    <div style={{ flex: 1 }} />
+                  <div className="flex items-center mb-1 px-1">
+                    <span className="text-xs text-gray-400">{gradeName}</span>
+                    <div className="flex-1" />
                     {showFilter && (
                       <button
                         onClick={() => {
@@ -603,14 +607,17 @@ export default function PaymentsPage() {
                             return !prev
                           })
                         }}
-                        className="ios-tap"
-                        style={{ fontSize: 13, fontWeight: 400, color: 'var(--color-blue)' }}
+                        className={`px-2.5 py-0.5 rounded-full text-xs font-medium transition-colors ${
+                          showUnpaidOnly
+                            ? 'bg-red-100 text-red-700'
+                            : 'bg-gray-100 text-gray-500'
+                        }`}
                       >
                         {showUnpaidOnly ? '미납' : '전체'}
                       </button>
                     )}
                   </div>
-                  <div style={{ background: 'var(--bg-card)', borderRadius: 'var(--card-radius)', margin: '0 16px', overflow: 'hidden' }}>
+                  <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
                   {gradeClasses.map(cls => {
                 const allClassStudents = getActiveStudents(cls.students ?? [], selectedMonth)
                 let students = aiFilterIds ? allClassStudents.filter(s => aiFilterIds.has(s.id)) : allClassStudents
@@ -634,28 +641,19 @@ export default function PaymentsPage() {
                 return (
                   <div key={cls.id}>
                     <div
-                      className="ios-tap select-none"
-                      style={{
-                        display: 'flex', alignItems: 'center', minHeight: 44,
-                        padding: '0 16px', cursor: 'pointer',
-                        borderBottom: '0.5px solid var(--separator)',
-                      }}
+                      className="px-4 py-2 bg-gray-50 border-b border-gray-200 flex items-center cursor-pointer active:bg-gray-100 select-none"
                       onClick={() => toggleClass(cls.id)}
                     >
-                      <span style={{ fontSize: 17, fontWeight: 600, lineHeight: 1.4, color: 'var(--text-primary)' }}>{cls.name}</span>
-                      <span style={{ fontSize: 16, fontWeight: 400, color: 'var(--text-secondary)', marginLeft: 8 }}>
-                        {cls.monthly_fee > 0 ? `${cls.monthly_fee.toLocaleString()}원` : ''}
-                      </span>
-                      <span style={{ fontSize: 16, fontWeight: 400, color: 'var(--text-secondary)', marginLeft: 8 }}>{paidCount}/{students.length}</span>
-                      <span style={{ flex: 1 }} />
-                      <ChevronRight style={{ width: 16, height: 16, color: 'var(--text-tertiary)', transform: isClassExpanded ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s' }} />
+                      <span className="text-sm font-medium text-gray-600">{cls.name}</span>
+                      <span className="text-xs text-gray-400 ml-1">{cls.monthly_fee > 0 ? `${cls.monthly_fee.toLocaleString()}원` : ''}</span>
+                      <span className="text-xs text-gray-400 ml-2">{paidCount}/{students.length}</span>
+                      <span className="flex-1" />
                       <button
                         onClick={(e) => { e.stopPropagation(); handleAddStudent(cls.id) }}
-                        className="ios-tap"
-                        style={{ padding: 4, color: 'var(--text-secondary)', marginLeft: 4 }}
+                        className="p-0.5 text-gray-400 hover:text-[#1e2d6f] transition-colors"
                         aria-label={`${cls.name}에 학생 추가`}
                       >
-                        <Plus style={{ width: 16, height: 16 }} />
+                        <Plus className="w-3.5 h-3.5" />
                       </button>
                     </div>
                     <div
@@ -727,38 +725,29 @@ export default function PaymentsPage() {
                           {/* 메인 콘텐츠 */}
                           <div
                             data-swipe-row={student.id}
-                            className="relative z-10"
-                            style={{ background: 'var(--bg-card)', ...(isSwipeOpen ? { transform: 'translateX(-150px)', transition: 'transform 0.3s ease' } : {}) }}
+                            className="relative bg-white z-10"
                             onTouchStart={e => handleTouchStart(e, student.id)}
                             onTouchMove={handleTouchMove}
                             onTouchEnd={handleTouchEnd}
+                            style={isSwipeOpen ? { transform: 'translateX(-150px)', transition: 'transform 0.3s ease' } : undefined}
                           >
-                            <div
-                              className={`${status === 'unpaid' && !isExpanded && !withdrawn ? 'ios-tap cursor-pointer' : ''}`}
-                              style={{
-                                display: 'flex', alignItems: 'center', gap: 8,
-                                padding: hasMemo && !isExpanded ? '6px 16px 2px' : '6px 16px',
-                                minHeight: 44,
-                                borderBottom: '0.5px solid var(--separator)',
-                                opacity: withdrawn ? 0.5 : 1,
-                              }}
+                            <div className={`flex items-center gap-2 px-4 ${hasMemo && !isExpanded ? 'pt-1.5 pb-0.5' : 'py-1.5'} ${
+                              status === 'unpaid' && !isExpanded && !withdrawn ? 'cursor-pointer active:bg-gray-50' : ''
+                            } ${withdrawn ? 'opacity-60' : ''}`}
                               onClick={status === 'unpaid' && !isExpanded && !withdrawn ? () => handleExpand(student.id) : undefined}
                             >
                               {hasDiscuss && (
-                                <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 6, background: 'rgba(175,82,222,0.12)', color: 'var(--color-purple)', fontWeight: 700, flexShrink: 0 }}>DISCUSS</span>
+                                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-rose-50 text-rose-400 font-bold shrink-0">DISCUSS</span>
                               )}
                               <Link
                                 href={`/students/${student.id}`}
-                                style={{ flex: 1, minWidth: 0 }}
+                                className="flex-1 min-w-0"
                                 onClick={e => { if (wasSwiped.current) e.preventDefault(); e.stopPropagation() }}
                               >
-                                <span style={{
-                                  fontSize: 17, fontWeight: 600, lineHeight: 1.4,
-                                  ...(withdrawn ? { textDecoration: 'line-through', color: 'var(--text-tertiary)' } : {}),
-                                }}>{student.name}</span>
-                                {withdrawn && <span style={{ fontSize: 12, color: 'var(--text-tertiary)', marginLeft: 6 }}>퇴원</span>}
+                                <span className={`text-sm font-medium ${withdrawn ? 'line-through decoration-red-500 decoration-2 text-gray-400' : ''}`}>{student.name}</span>
+                                {withdrawn && <span className="text-[10px] text-red-400 ml-1.5">퇴원</span>}
                                 {hasDiscuss && student.memo && (
-                                  <p style={{ fontSize: 12, color: 'var(--color-purple)', fontWeight: 600, lineHeight: 1.3 }}>
+                                  <p className="text-[11px] text-rose-500 font-medium leading-tight">
                                     {student.memo}
                                   </p>
                                 )}
@@ -778,12 +767,11 @@ export default function PaymentsPage() {
                                         setShowDatePicker(!showDatePicker)
                                         setShowMethodPicker(false)
                                       }}
-                                      className="fan-item ios-tap"
-                                      style={{ padding: '3px 8px', borderRadius: 6, fontSize: 13, fontWeight: 600, background: 'rgba(255,149,0,0.12)', color: 'var(--color-orange)', whiteSpace: 'nowrap' }}
+                                      className="fan-item px-2 py-0.5 rounded-full text-xs font-medium bg-[#FEF3C7] text-[#92400E] whitespace-nowrap"
                                       aria-label="결제일 선택"
                                     >
                                       {(() => { const d = new Date(inlineDate); return `${d.getMonth()+1}/${d.getDate()}` })()}
-                                      <span style={{ fontSize: 9, opacity: 0.5, marginLeft: 2 }}>▼</span>
+                                      <span className="text-[9px] opacity-50 ml-0.5">▼</span>
                                     </button>
                                     <button
                                       ref={methodButtonRef}
@@ -796,35 +784,28 @@ export default function PaymentsPage() {
                                         setShowMethodPicker(!showMethodPicker)
                                         setShowDatePicker(false)
                                       }}
-                                      className="fan-item ios-tap"
-                                      style={{ padding: '3px 8px', borderRadius: 6, fontSize: 13, fontWeight: 600, background: 'rgba(0,122,255,0.12)', color: 'var(--color-blue)', display: 'flex', alignItems: 'center', gap: 2, whiteSpace: 'nowrap' }}
+                                      className="fan-item px-2 py-0.5 rounded-full text-xs font-medium bg-[#E0E7FF] text-[#3730A3] flex items-center gap-0.5 whitespace-nowrap"
                                       aria-label="결제수단 선택"
                                     >
                                       {METHOD_OPTIONS_SHORT.find(([v]) => v === inlineMethod)?.[1]}
-                                      <span style={{ fontSize: 9, opacity: 0.5 }}>▼</span>
+                                      <span className="text-[9px] opacity-50">▼</span>
                                     </button>
                                     <button
                                       onClick={() => handleInlineSubmit(student.id, fee)}
                                       disabled={!!inlineSuccess}
-                                      className="fan-item ios-tap"
-                                      style={{
-                                        padding: '3px 10px', borderRadius: 8, fontSize: 13, fontWeight: 600,
-                                        background: isSuccess ? 'var(--color-green)' : 'var(--accent)',
-                                        color: '#fff',
-                                        height: 44,
-                                        transition: 'all 0.15s',
-                                      }}
+                                      className={`fan-item px-2.5 py-0.5 rounded-full text-xs font-medium transition-all ${
+                                        isSuccess ? 'bg-green-500 text-white scale-105' : 'bg-[#DEF7EC] text-[#03543F] hover:opacity-80'
+                                      }`}
                                       aria-label="납부 처리"
                                     >
                                       {isSuccess ? <Check className="w-3.5 h-3.5" strokeWidth={3} /> : '납부'}
                                     </button>
                                     <button
                                       onClick={() => handleOpenModal(student.id, fee)}
-                                      className="fan-item ios-tap"
-                                      style={{ padding: 4, color: 'var(--accent)' }}
+                                      className="fan-item p-1 text-[#1e2d6f] hover:opacity-70"
                                       aria-label="상세 납부 기록"
                                     >
-                                      <ClipboardList style={{ width: 16, height: 16 }} />
+                                      <ClipboardList className="w-3.5 h-3.5" />
                                     </button>
                                   </div>
                                   <input
@@ -832,8 +813,7 @@ export default function PaymentsPage() {
                                     value={inlineMemo}
                                     onChange={e => setInlineMemo(e.target.value)}
                                     placeholder="비고"
-                                    className="fan-item"
-                                    style={{ width: '100%', padding: '6px 10px', borderRadius: 8, fontSize: 13, border: '0.5px solid var(--separator)', outline: 'none', background: 'var(--bg-card)' }}
+                                    className="fan-item w-full px-2.5 py-1 rounded-lg text-xs border border-gray-300 focus:outline-none focus:ring-1 focus:ring-indigo-400"
                                     aria-label="비고 입력"
                                   />
                                 </div>
@@ -844,66 +824,55 @@ export default function PaymentsPage() {
                                     const { otherMethod } = decodePaymentMemo(p.memo)
                                     const methodLabel = otherMethod || PAYMENT_METHOD_LABELS[p.method as keyof typeof PAYMENT_METHOD_LABELS]
                                     return (
-                                      <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
+                                      <span className="text-[10px] text-gray-400 whitespace-nowrap">
                                         {parseInt(selectedMonth.split('-')[1])}/{getDueDay(student)} {methodLabel}
                                       </span>
                                     )
                                   })()}
-                                  {(() => {
-                                    let badgeBg: string, badgeColor: string
-                                    if (status === 'paid') {
-                                      badgeBg = 'rgba(52,199,89,0.12)'; badgeColor = 'var(--color-green)'
-                                    } else if (status === 'partial') {
-                                      badgeBg = 'rgba(255,149,0,0.12)'; badgeColor = 'var(--color-orange)'
-                                    } else if (scheduled) {
-                                      badgeBg = 'rgba(255,149,0,0.12)'; badgeColor = 'var(--color-orange)'
-                                    } else {
-                                      badgeBg = 'rgba(255,59,48,0.12)'; badgeColor = 'var(--color-red)'
-                                    }
-                                    return status !== 'unpaid' ? (
-                                      <button
-                                        onClick={(e) => { e.stopPropagation(); handleOpenModal(student.id, fee) }}
-                                        className="ios-tap"
-                                        style={{ padding: '4px 8px', borderRadius: 12, fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap', background: badgeBg, color: badgeColor }}
-                                        role="status"
-                                      >
-                                        {displayLabel}
-                                      </button>
-                                    ) : (
-                                      <span
-                                        style={{ padding: '4px 8px', borderRadius: 12, fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap', background: badgeBg, color: badgeColor }}
-                                        role="status"
-                                      >
-                                        {displayLabel}
-                                      </span>
-                                    )
-                                  })()}
+                                  {status !== 'unpaid' ? (
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); handleOpenModal(student.id, fee) }}
+                                      className="px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap cursor-pointer hover:opacity-80 transition-opacity"
+                                      style={{ backgroundColor: displayColors.bg, color: displayColors.text }}
+                                      role="status"
+                                    >
+                                      {displayLabel}
+                                    </button>
+                                  ) : (
+                                    <span
+                                      className="px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap"
+                                      style={{ backgroundColor: displayColors.bg, color: displayColors.text }}
+                                      role="status"
+                                    >
+                                      {displayLabel}
+                                    </span>
+                                  )}
                                 </>
                               )}
                             </div>
                             {!isExpanded && hasMemo && (
-                              <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '0 16px 4px' }}>
-                                <div style={{ textAlign: 'right' }}>
-                                  {cleanMemo && <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.3 }}>{cleanMemo}</p>}
-                                  {prevMemo && <p style={{ fontSize: 12, color: 'var(--text-tertiary)', lineHeight: 1.3 }}>지난달: {prevMemo}</p>}
+                              <div className="flex justify-end px-4 pb-1">
+                                <div className="text-right">
+                                  {cleanMemo && <p className="text-[11px] text-gray-500 leading-tight">{cleanMemo}</p>}
+                                  {prevMemo && <p className="text-[11px] text-gray-400 leading-tight">지난달: {prevMemo}</p>}
                                 </div>
                               </div>
                             )}
+                            {/* DISCUSS 설정 후 이유 입력 칸 */}
                             {discussInputId === student.id && (
-                              <div style={{ display: 'flex', gap: 6, padding: '0 16px 8px' }}>
+                              <div className="px-4 pb-2 flex gap-1.5">
                                 <input
                                   type="text"
                                   value={discussMemoValue}
                                   onChange={e => setDiscussMemoValue(e.target.value)}
                                   placeholder="사유 입력 (예: 수강료 조정 논의)"
-                                  style={{ flex: 1, padding: '6px 10px', borderRadius: 8, fontSize: 13, border: '0.5px solid var(--color-purple)', outline: 'none', background: 'rgba(175,82,222,0.04)' }}
+                                  className="flex-1 px-2.5 py-1.5 rounded-lg text-xs border border-rose-200 focus:outline-none focus:ring-1 focus:ring-rose-300 bg-rose-50/50"
                                   autoFocus
                                   onKeyDown={e => { if (e.key === 'Enter') saveDiscussMemo(student.id) }}
                                 />
                                 <button
                                   onClick={() => saveDiscussMemo(student.id)}
-                                  className="ios-tap"
-                                  style={{ padding: '6px 12px', borderRadius: 8, fontSize: 13, fontWeight: 600, background: 'rgba(175,82,222,0.12)', color: 'var(--color-purple)', flexShrink: 0 }}
+                                  className="px-3 py-1.5 rounded-lg text-xs font-medium bg-rose-100 text-rose-500 hover:bg-rose-200 transition-colors shrink-0"
                                 >
                                   저장
                                 </button>
@@ -928,7 +897,7 @@ export default function PaymentsPage() {
       })}
 
       {allStudents.length === 0 && (
-        <div style={{ textAlign: 'center', padding: '48px 16px', color: 'var(--text-tertiary)', fontSize: 15 }}>등록된 학생이 없습니다</div>
+        <div className="text-center py-12 text-gray-400">등록된 학생이 없습니다</div>
       )}
 
       {showPaymentModal && selectedStudentId && (

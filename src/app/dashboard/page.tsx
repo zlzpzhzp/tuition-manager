@@ -4,7 +4,7 @@ import { useCallback, useMemo } from 'react'
 import Link from 'next/link'
 import { Users, CreditCard, AlertCircle, TrendingUp } from 'lucide-react'
 import type { Payment, GradeWithClasses } from '@/types'
-import { getStudentFee, getPaymentStatus, PAYMENT_STATUS_LABELS } from '@/types'
+import { getStudentFee, getPaymentStatus, PAYMENT_STATUS_LABELS, PAYMENT_STATUS_COLORS } from '@/types'
 import { getPaymentDueDay, isPaymentScheduled, getActiveStudents, getCurrentMonth, formatMonth, useGrades, usePayments } from '@/lib/utils'
 
 export default function DashboardPage() {
@@ -20,7 +20,7 @@ export default function DashboardPage() {
       g.classes.flatMap(c =>
         getActiveStudents(c.students ?? [], currentMonth).map(s => ({ ...s, class: c }))
       )
-    ), [grades, currentMonth])
+    ), [grades])
 
   const paidByStudentId = useMemo(() => {
     const map = new Map<string, number>()
@@ -62,175 +62,171 @@ export default function DashboardPage() {
   }, [stats.unpaidStudents])
 
   if (loading) return (
-    <div className="animate-pulse" style={{ padding: '20px 16px 12px' }}>
+    <div className="animate-pulse">
       <div className="h-6 bg-gray-200 rounded w-40 mb-2"></div>
       <div className="h-4 bg-gray-100 rounded w-56 mb-6"></div>
-      <div className="grid grid-cols-2 gap-3 mb-4">
+      <div className="grid grid-cols-2 gap-3 mb-6">
         {[...Array(4)].map((_, i) => (
-          <div key={i} style={{ background: 'var(--bg-card)', borderRadius: 'var(--card-radius)', padding: 16 }}>
-            <div className="h-3 bg-gray-200 rounded w-12 mb-3"></div>
+          <div key={i} className="bg-white rounded-xl border p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-4 h-4 bg-gray-200 rounded"></div>
+              <div className="h-3 bg-gray-200 rounded w-12"></div>
+            </div>
             <div className="h-7 bg-gray-200 rounded w-20"></div>
           </div>
         ))}
+      </div>
+      <div className="bg-white rounded-xl border p-5">
+        <div className="h-4 bg-gray-200 rounded w-28 mb-4"></div>
+        <div className="space-y-3">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="flex items-center gap-3 px-3 py-2">
+              <div className="flex-1">
+                <div className="h-4 bg-gray-200 rounded w-16 mb-1"></div>
+              </div>
+              <div className="h-4 bg-gray-100 rounded w-20"></div>
+              <div className="h-5 bg-gray-200 rounded-full w-12"></div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   )
 
   if (error) return (
     <div className="text-center py-12">
-      <p style={{ color: 'var(--color-red)' }} className="mb-4">{error?.message}</p>
-      <button onClick={() => window.location.reload()} className="ios-tap" style={{ background: 'var(--accent)', color: '#fff', padding: '10px 20px', borderRadius: 8 }}>다시 시도</button>
+      <p className="text-red-500 mb-4">{error?.message}</p>
+      <button onClick={() => window.location.reload()} className="px-4 py-2 bg-[#1e2d6f] text-white rounded-lg hover:opacity-90">다시 시도</button>
     </div>
   )
 
   return (
     <div>
-      {/* 월 타이틀 */}
-      <div style={{ padding: '20px 16px 12px' }}>
-        <h1 style={{ fontSize: 22, fontWeight: 700, lineHeight: 1.3, color: 'var(--text-primary)' }}>
-          {formatMonth(currentMonth)} 대시보드
-        </h1>
-        <p style={{ fontSize: 15, fontWeight: 400, lineHeight: 1.4, color: 'var(--text-secondary)', marginTop: 2 }}>
-          {new Date().toLocaleDateString('ko-KR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-        </p>
-      </div>
+      <h1 className="text-xl font-bold mb-1">{formatMonth(currentMonth)} 대시보드</h1>
+      <p className="text-sm text-gray-400 mb-6">{new Date().toLocaleDateString('ko-KR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
 
-      {/* 4개 KPI 카드 (2x2 그리드) */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, margin: '0 16px 16px' }}>
-        {[
-          { icon: <Users style={{ width: 16, height: 16, color: 'var(--accent)' }} />, label: '재원생', value: stats.totalStudents, unit: '명' },
-          { icon: <TrendingUp style={{ width: 16, height: 16, color: 'var(--color-green)' }} />, label: '납부율', value: stats.paymentRate, unit: '%', sub: `${stats.paidCount}/${stats.totalStudents}명` },
-          { icon: <CreditCard style={{ width: 16, height: 16, color: 'var(--accent)' }} />, label: '수납/총원비', value: (stats.totalPaid / 10000).toFixed(0), unit: '만', sub: `/ ${(stats.totalFee / 10000).toFixed(0)}만원` },
-          { icon: <AlertCircle style={{ width: 16, height: 16, color: 'var(--color-red)' }} />, label: '미납/예정', isSpecial: true },
-        ].map((card, i) => (
-          <div key={i} style={{ background: 'var(--bg-card)', borderRadius: 'var(--card-radius)', padding: 16 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-              {card.icon}
-              <span style={{ fontSize: 13, fontWeight: 400, lineHeight: 1.3, color: 'var(--text-secondary)' }}>{card.label}</span>
-            </div>
-            {'isSpecial' in card && card.isSpecial ? (
-              <p style={{ fontSize: 28, fontWeight: 700, lineHeight: 1.2, letterSpacing: -0.5 }}>
-                <span style={{ color: 'var(--color-red)' }}>{stats.overdueStudents.length}</span>
-                <span style={{ color: 'var(--text-tertiary)', fontWeight: 400, margin: '0 4px' }}>/</span>
-                <span style={{ color: 'var(--color-orange)' }}>{stats.scheduledStudents.length}</span>
-                <span style={{ fontSize: 16, fontWeight: 400, color: 'var(--text-secondary)', marginLeft: 2 }}>명</span>
-              </p>
-            ) : (
-              <>
-                <p style={{ fontSize: 28, fontWeight: 700, lineHeight: 1.2, letterSpacing: -0.5 }}>
-                  {card.value}<span style={{ fontSize: 16, fontWeight: 400, color: 'var(--text-secondary)', marginLeft: 2 }}>{card.unit}</span>
-                </p>
-                {card.sub && <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 2 }}>{card.sub}</p>}
-              </>
-            )}
+      {/* 요약 카드 */}
+      <div className="grid grid-cols-2 gap-3 mb-6">
+        <div className="bg-white rounded-xl border p-4">
+          <div className="flex items-center gap-2 mb-1">
+            <Users className="w-4 h-4 text-[#1e2d6f]" />
+            <span className="text-xs text-gray-400">재원생</span>
           </div>
-        ))}
+          <p className="text-4xl font-bold tracking-tight">{stats.totalStudents}<span className="text-base text-gray-400 font-normal ml-0.5">명</span></p>
+        </div>
+        <div className="bg-white rounded-xl border p-4">
+          <div className="flex items-center gap-2 mb-1">
+            <TrendingUp className="w-4 h-4 text-green-600" />
+            <span className="text-xs text-gray-400">납부율</span>
+          </div>
+          <p className="text-4xl font-bold tracking-tight">{stats.paymentRate}<span className="text-base text-gray-400 font-normal ml-0.5">%</span></p>
+          <p className="text-xs text-gray-400 mt-0.5">{stats.paidCount}/{stats.totalStudents}명</p>
+        </div>
+        <div className="bg-white rounded-xl border p-4">
+          <div className="flex items-center gap-2 mb-1">
+            <CreditCard className="w-4 h-4 text-[#1e2d6f]" />
+            <span className="text-xs text-gray-400">수납 / 총원비</span>
+          </div>
+          <p className="text-3xl font-bold tracking-tight">{(stats.totalPaid / 10000).toFixed(0)}<span className="text-sm text-gray-400 font-normal ml-0.5">만</span></p>
+          <p className="text-xs text-gray-400 mt-0.5">/ {(stats.totalFee / 10000).toFixed(0)}만원</p>
+        </div>
+        <div className="bg-white rounded-xl border p-4">
+          <div className="flex items-center gap-2 mb-1">
+            <AlertCircle className="w-4 h-4 text-red-500" />
+            <span className="text-xs text-gray-400">미납 / 예정</span>
+          </div>
+          <p className="text-3xl font-bold tracking-tight">
+            <span className="text-red-600">{stats.overdueStudents.length}</span>
+            <span className="text-gray-300 font-normal mx-1">/</span>
+            <span className="text-amber-600">{stats.scheduledStudents.length}</span>
+            <span className="text-base text-gray-400 font-normal ml-0.5">명</span>
+          </p>
+        </div>
       </div>
 
       {/* 납부 기한 임박 */}
       {urgentStudents.length > 0 && (
-        <div style={{ background: 'var(--bg-card)', borderRadius: 'var(--card-radius)', margin: '0 16px 16px', overflow: 'hidden', borderLeft: '3px solid var(--color-orange)' }}>
-          <div style={{ padding: 16 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--color-orange)', display: 'inline-block' }} />
-              <span style={{ fontSize: 17, fontWeight: 600, lineHeight: 1.4, color: 'var(--text-primary)' }}>납부 기한 임박 ({urgentStudents.length}명)</span>
-            </div>
-            <div>
-              {urgentStudents.slice(0, 5).map((s, idx) => {
-                const fee = getStudentFee(s, s.class)
-                const paid = getStudentPaid(s.id)
-                const enrollDay = new Date(s.enrollment_date).getDate()
-                return (
-                  <Link key={s.id} href={`/students/${s.id}`}>
-                    <div
-                      className="ios-tap"
-                      style={{
-                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                        minHeight: 44, padding: '0 0',
-                        borderBottom: idx < urgentStudents.slice(0, 5).length - 1 ? '0.5px solid var(--separator)' : 'none',
-                      }}
-                    >
-                      <div>
-                        <span style={{ fontSize: 17, fontWeight: 600, lineHeight: 1.4 }}>{s.name}</span>
-                        <span style={{ fontSize: 12, color: 'var(--text-secondary)', marginLeft: 6 }}>{s.class?.name}</span>
-                      </div>
-                      <span style={{ fontSize: 15, fontWeight: 400, color: 'var(--text-secondary)' }}>
-                        매월 {enrollDay}일 · {(fee - paid).toLocaleString()}원 미납
-                      </span>
-                    </div>
-                  </Link>
-                )
-              })}
-            </div>
+        <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 mb-6">
+          <h2 className="text-sm font-bold text-orange-800 mb-2 flex items-center gap-1">
+            <AlertCircle className="w-4 h-4" /> 납부 기한 임박 ({urgentStudents.length}명)
+          </h2>
+          <div className="space-y-2">
+            {urgentStudents.slice(0, 5).map(s => {
+              const fee = getStudentFee(s, s.class)
+              const paid = getStudentPaid(s.id)
+              const enrollDay = new Date(s.enrollment_date).getDate()
+              return (
+                <Link
+                  key={s.id}
+                  href={`/students/${s.id}`}
+                  className="flex items-center justify-between text-sm hover:bg-orange-100 active:bg-orange-100 rounded-lg px-2 py-2 -mx-2"
+                >
+                  <div>
+                    <span className="font-medium text-orange-900">{s.name}</span>
+                    <span className="text-orange-600 ml-2 text-xs">{s.class?.name}</span>
+                  </div>
+                  <div className="text-xs text-orange-700">
+                    매월 {enrollDay}일 · {(fee - paid).toLocaleString()}원 미납
+                  </div>
+                </Link>
+              )
+            })}
           </div>
         </div>
       )}
 
-      {/* 미납 학생 섹션 */}
-      <div style={{ background: 'var(--bg-card)', borderRadius: 'var(--card-radius)', margin: '0 16px 16px', overflow: 'hidden' }}>
-        <div style={{ padding: 16 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
-            <span style={{ fontSize: 17, fontWeight: 600, lineHeight: 1.4 }}>미납 학생</span>
-            {stats.overdueStudents.length > 0 && <span style={{ fontSize: 17, fontWeight: 600, color: 'var(--color-red)' }}>미납 {stats.overdueStudents.length}</span>}
-            {stats.overdueStudents.length > 0 && stats.scheduledStudents.length > 0 && <span style={{ color: 'var(--text-tertiary)', margin: '0 2px' }}>·</span>}
-            {stats.scheduledStudents.length > 0 && <span style={{ fontSize: 17, fontWeight: 600, color: 'var(--color-orange)' }}>예정 {stats.scheduledStudents.length}</span>}
+      {/* 미납 학생 목록 */}
+      <div className="bg-white rounded-xl border p-5">
+        <h2 className="font-bold text-sm mb-3">
+          미납 학생
+          {stats.overdueStudents.length > 0 && <span className="text-red-600 ml-1">미납 {stats.overdueStudents.length}</span>}
+          {stats.overdueStudents.length > 0 && stats.scheduledStudents.length > 0 && <span className="text-gray-300 mx-1">·</span>}
+          {stats.scheduledStudents.length > 0 && <span className="text-amber-600">예정 {stats.scheduledStudents.length}</span>}
+          {stats.unpaidStudents.length === 0 && ' (0명)'}
+        </h2>
+        {stats.unpaidStudents.length === 0 ? (
+          <p className="text-sm text-gray-400 py-4 text-center">모든 학생이 납부 완료했습니다 🎉</p>
+        ) : (
+          <div className="space-y-1">
+            {stats.unpaidStudents.map(s => {
+              const fee = getStudentFee(s, s.class)
+              const paid = getStudentPaid(s.id)
+              const status = getPaymentStatus(paid, fee)
+              const scheduled = status === 'unpaid' && isPaymentScheduled(s, currentMonth)
+              const displayColors = scheduled
+                ? { bg: '#FEF3C7', text: '#92400E' }
+                : PAYMENT_STATUS_COLORS[status]
+              const dueDay = getPaymentDueDay(s)
+              const month = parseInt(currentMonth.split('-')[1])
+              const displayLabel = status === 'unpaid'
+                ? `${month}/${dueDay} ${scheduled ? '예정' : '미납'}`
+                : PAYMENT_STATUS_LABELS[status]
+              return (
+                <Link
+                  key={s.id}
+                  href={`/students/${s.id}`}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 active:bg-gray-50"
+                >
+                  <div className="flex-1 min-w-0">
+                    <span className="text-sm font-medium">{s.name}</span>
+                    <span className="text-xs text-gray-400 ml-2">{s.class?.name}</span>
+                  </div>
+                  <span className="text-xs text-gray-400">{(fee - paid).toLocaleString()}원</span>
+                  <span
+                    className="px-2 py-0.5 rounded-full text-xs font-medium"
+                    style={{ backgroundColor: displayColors.bg, color: displayColors.text }}
+                    role="status"
+                  >
+                    {displayLabel}
+                  </span>
+                </Link>
+              )
+            })}
           </div>
-          {stats.unpaidStudents.length === 0 ? (
-            <p style={{ fontSize: 15, color: 'var(--text-secondary)', padding: '16px 0', textAlign: 'center' }}>모든 학생이 납부 완료했습니다</p>
-          ) : (
-            <div>
-              {stats.unpaidStudents.map((s, idx) => {
-                const fee = getStudentFee(s, s.class)
-                const paid = getStudentPaid(s.id)
-                const status = getPaymentStatus(paid, fee)
-                const scheduled = status === 'unpaid' && isPaymentScheduled(s, currentMonth)
-                const dueDay = getPaymentDueDay(s)
-                const month = parseInt(currentMonth.split('-')[1])
-                const displayLabel = status === 'unpaid'
-                  ? `${month}/${dueDay} ${scheduled ? '예정' : '미납'}`
-                  : PAYMENT_STATUS_LABELS[status]
-
-                let badgeBg: string, badgeColor: string
-                if (scheduled) {
-                  badgeBg = 'rgba(255,149,0,0.12)'; badgeColor = 'var(--color-orange)'
-                } else if (status === 'partial') {
-                  badgeBg = 'rgba(255,204,0,0.12)'; badgeColor = '#92400E'
-                } else {
-                  badgeBg = 'rgba(255,59,48,0.12)'; badgeColor = 'var(--color-red)'
-                }
-
-                return (
-                  <Link key={s.id} href={`/students/${s.id}`}>
-                    <div
-                      className="ios-tap"
-                      style={{
-                        display: 'flex', alignItems: 'center', minHeight: 44,
-                        borderBottom: idx < stats.unpaidStudents.length - 1 ? '0.5px solid var(--separator)' : 'none',
-                        paddingLeft: 0,
-                      }}
-                    >
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <span style={{ fontSize: 17, fontWeight: 600, lineHeight: 1.4 }}>{s.name}</span>
-                        <span style={{ fontSize: 12, color: 'var(--text-secondary)', marginLeft: 6 }}>{s.class?.name}</span>
-                      </div>
-                      <span style={{ fontSize: 16, fontWeight: 400, color: 'var(--text-primary)', marginRight: 8 }}>{(fee - paid).toLocaleString()}원</span>
-                      <span style={{
-                        background: badgeBg, color: badgeColor,
-                        borderRadius: 6, padding: '4px 8px',
-                        fontSize: 12, fontWeight: 600,
-                      }}>
-                        {displayLabel}
-                      </span>
-                    </div>
-                  </Link>
-                )
-              })}
-            </div>
-          )}
-        </div>
+        )}
       </div>
 
-      {/* 반별 인원 바 차트 */}
+      {/* 반별 인원수 다이어그램 */}
       {grades.length > 0 && (() => {
         const classData = grades.flatMap(g =>
           g.classes.map(c => ({
@@ -243,68 +239,60 @@ export default function DashboardPage() {
         const maxCount = Math.max(...classData.map(c => c.count), 1)
 
         return (
-          <div style={{ background: 'var(--bg-card)', borderRadius: 'var(--card-radius)', margin: '0 16px 16px', overflow: 'hidden' }}>
-            <div style={{ padding: 16 }}>
-              <h2 style={{ fontSize: 20, fontWeight: 700, lineHeight: 1.3, marginBottom: 12 }}>반별 인원</h2>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {classData.map((c, i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <span style={{ width: 56, fontSize: 15, fontWeight: 400, color: 'var(--text-secondary)', flexShrink: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</span>
-                    <div style={{ flex: 1, height: 8, background: 'var(--bg-primary)', borderRadius: 4, overflow: 'hidden' }}>
-                      <div style={{
-                        height: '100%', borderRadius: 4,
+          <div className="bg-white rounded-xl border p-5 mb-4">
+            <h2 className="font-bold text-sm mb-4">반별 인원</h2>
+            <div className="space-y-2.5">
+              {classData.map((c, i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <div className="w-16 text-xs text-gray-600 font-medium truncate shrink-0">{c.name}</div>
+                  <div className="flex-1 h-6 bg-gray-50 rounded-full overflow-hidden relative">
+                    <div
+                      className="h-full rounded-full transition-all duration-500"
+                      style={{
                         width: `${Math.max((c.count / maxCount) * 100, 8)}%`,
-                        background: 'var(--accent)',
-                        transition: 'width 0.5s ease',
-                      }} />
-                    </div>
-                    <span style={{ fontSize: 15, fontWeight: 400, color: 'var(--text-secondary)', minWidth: 30, textAlign: 'right' }}>{c.count}</span>
+                        background: `linear-gradient(90deg, #1e2d6f, #2d4298)`,
+                      }}
+                    />
+                    <span className="absolute inset-y-0 right-2 flex items-center text-xs font-bold text-gray-500">
+                      {c.count}명
+                    </span>
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
             </div>
           </div>
         )
       })()}
 
-      {/* 학년별 원비 총액 */}
+      {/* 학년별 총액 */}
       {grades.length > 0 && (
-        <div style={{ background: 'var(--bg-card)', borderRadius: 'var(--card-radius)', margin: '0 16px 16px', overflow: 'hidden' }}>
-          <div style={{ padding: 16 }}>
-            <h2 style={{ fontSize: 20, fontWeight: 700, lineHeight: 1.3, marginBottom: 12 }}>학년별 원비 총액</h2>
-            <div>
-              {grades.map((grade, idx) => {
-                const gradeStudents = grade.classes.flatMap(c =>
-                  getActiveStudents(c.students ?? [], currentMonth).map(s => ({ ...s, class: c }))
-                )
-                const gradeFee = gradeStudents.reduce((sum, s) => sum + getStudentFee(s, s.class), 0)
-                const gradePaid = gradeStudents.reduce((sum, s) => sum + getStudentPaid(s.id), 0)
-                if (gradeStudents.length === 0) return null
+        <div className="bg-white rounded-xl border p-5 mt-4">
+          <h2 className="font-bold text-sm mb-3">학년별 원비 총액</h2>
+          <div className="space-y-2">
+            {grades.map(grade => {
+              const gradeStudents = grade.classes.flatMap(c =>
+                getActiveStudents(c.students ?? [], currentMonth).map(s => ({ ...s, class: c }))
+              )
+              const gradeFee = gradeStudents.reduce((sum, s) => sum + getStudentFee(s, s.class), 0)
+              const gradePaid = gradeStudents.reduce((sum, s) => sum + getStudentPaid(s.id), 0)
+              if (gradeStudents.length === 0) return null
 
-                return (
-                  <div key={grade.id} style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    minHeight: 44,
-                    borderBottom: idx < grades.length - 1 ? '0.5px solid var(--separator)' : 'none',
-                  }}>
-                    <div>
-                      <span style={{ fontSize: 17, fontWeight: 600, lineHeight: 1.4 }}>{grade.name}</span>
-                      <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-secondary)', marginLeft: 6 }}>{gradeStudents.length}명</span>
-                    </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <span style={{ fontSize: 17, fontWeight: 600, lineHeight: 1.4 }}>{gradeFee.toLocaleString()}원</span>
-                      <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-secondary)', marginLeft: 6 }}>수납 {gradePaid.toLocaleString()}원</span>
-                    </div>
+              return (
+                <div key={grade.id} className="flex items-center justify-between py-2 border-b last:border-b-0">
+                  <div>
+                    <span className="text-sm font-medium">{grade.name}</span>
+                    <span className="text-xs text-gray-400 ml-2">{gradeStudents.length}명</span>
                   </div>
-                )
-              })}
-              <div style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                minHeight: 44, borderTop: '1px solid var(--separator)',
-              }}>
-                <span style={{ fontSize: 17, fontWeight: 700 }}>합계</span>
-                <span style={{ fontSize: 17, fontWeight: 700 }}>{stats.totalFee.toLocaleString()}원</span>
-              </div>
+                  <div className="text-right">
+                    <p className="text-sm font-medium">{gradeFee.toLocaleString()}원</p>
+                    <p className="text-xs text-gray-400">수납 {gradePaid.toLocaleString()}원</p>
+                  </div>
+                </div>
+              )
+            })}
+            <div className="flex items-center justify-between pt-2 border-t font-bold">
+              <span className="text-sm">합계</span>
+              <span className="text-sm">{stats.totalFee.toLocaleString()}원</span>
             </div>
           </div>
         </div>
