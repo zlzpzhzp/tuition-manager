@@ -110,7 +110,7 @@ export default function Navbar() {
       <div
         className="fixed bottom-0 left-0 right-0 sm:hidden z-50"
         style={{
-          background: 'rgba(255,255,255,0.85)',
+          background: 'rgba(250,248,245,0.85)',
           backdropFilter: 'blur(20px)',
           WebkitBackdropFilter: 'blur(20px)',
           borderTop: '0.5px solid var(--separator)',

@@ -101,7 +101,7 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
 
         {/* 이전달 비고 알림 */}
         {prevMemo && (
-          <div style={{ margin: '12px 20px 0', padding: 12, background: 'rgba(255,149,0,0.08)', borderRadius: 12, display: 'flex', gap: 8 }}>
+          <div style={{ margin: '12px 20px 0', padding: 12, background: 'var(--badge-scheduled-bg)', borderRadius: 12, display: 'flex', gap: 8 }}>
             <AlertTriangle style={{ width: 16, height: 16, color: 'var(--color-orange)', flexShrink: 0, marginTop: 2 }} />
             <div>
               <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>지난달 비고</p>
@@ -113,7 +113,7 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
         {/* 기존 납부 정보 확인 모드 */}
         {payment && !showConfirmDelete ? (
           <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div style={{ background: 'rgba(52,199,89,0.06)', borderRadius: 12, padding: 20, textAlign: 'center' }}>
+            <div style={{ background: 'var(--badge-paid-bg)', borderRadius: 12, padding: 20, textAlign: 'center' }}>
               <p style={{ fontSize: 28, fontWeight: 700, color: 'var(--color-green)' }}>{payment.amount.toLocaleString()}원</p>
               <p style={{ fontSize: 15, fontWeight: 400, color: 'var(--color-green)', marginTop: 4 }}>납부완료</p>
             </div>
@@ -259,7 +259,7 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
               style={{
                 width: '100%', height: 50, borderRadius: 12, fontSize: 17, fontWeight: 600,
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                background: 'rgba(255,59,48,0.08)', color: 'var(--color-red)',
+                background: 'var(--badge-unpaid-bg)', color: 'var(--color-red)',
               }}
             >
               <Trash2 style={{ width: 16, height: 16 }} />
@@ -268,7 +268,7 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
           </div>
         ) : payment && showConfirmDelete ? (
           <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div style={{ background: 'rgba(255,59,48,0.06)', borderRadius: 12, padding: 20, textAlign: 'center' }}>
+            <div style={{ background: 'var(--badge-unpaid-bg)', borderRadius: 12, padding: 20, textAlign: 'center' }}>
               <p style={{ fontSize: 17, fontWeight: 700, color: 'var(--text-primary)' }}>납부 기록을 삭제하시겠습니까?</p>
               <p style={{ fontSize: 15, color: 'var(--color-red)', marginTop: 4 }}>이 작업은 되돌릴 수 없습니다</p>
             </div>

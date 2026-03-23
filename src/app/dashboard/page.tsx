@@ -192,11 +192,11 @@ export default function DashboardPage() {
 
                 let badgeBg: string, badgeColor: string
                 if (scheduled) {
-                  badgeBg = 'rgba(255,149,0,0.12)'; badgeColor = 'var(--color-orange)'
+                  badgeBg = 'var(--badge-scheduled-bg)'; badgeColor = 'var(--badge-scheduled-text)'
                 } else if (status === 'partial') {
-                  badgeBg = 'rgba(255,204,0,0.12)'; badgeColor = '#92400E'
+                  badgeBg = 'var(--badge-partial-bg)'; badgeColor = 'var(--badge-partial-text)'
                 } else {
-                  badgeBg = 'rgba(255,59,48,0.12)'; badgeColor = 'var(--color-red)'
+                  badgeBg = 'var(--badge-unpaid-bg)'; badgeColor = 'var(--badge-unpaid-text)'
                 }
 
                 return (

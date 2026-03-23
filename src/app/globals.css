@@ -8,10 +8,10 @@
 
 /* ─── iOS 디자인 토큰 ─── */
 :root {
-  /* 배경 */
-  --bg-primary: #F2F2F7;
+  /* 배경 (Bear/Craft 따뜻한 크림) */
+  --bg-primary: #FAF8F5;
   --bg-card: #FFFFFF;
-  --bg-card-alt: #F9F9FB;
+  --bg-card-alt: #F7F5F2;
 
   /* 텍스트 */
   --text-primary: #1C1C1E;
@@ -26,12 +26,24 @@
   --color-yellow: #FFCC00;
   --color-purple: #AF52DE;
 
+  /* 뱃지/태그 (뮤트 파스텔) */
+  --badge-paid-bg: #E8F5E9;
+  --badge-paid-text: #2E7D32;
+  --badge-unpaid-bg: #FFEBEE;
+  --badge-unpaid-text: #C62828;
+  --badge-scheduled-bg: #FFF3E0;
+  --badge-scheduled-text: #E65100;
+  --badge-discuss-bg: #F3E5F5;
+  --badge-discuss-text: #7B1FA2;
+  --badge-partial-bg: #FFF3E0;
+  --badge-partial-text: #E65100;
+
   /* 액센트 (앱 브랜드) */
   --accent: #2B3A67;
   --accent-light: rgba(43,58,103,0.08);
 
-  /* 구분선 */
-  --separator: rgba(60, 60, 67, 0.12);
+  /* 구분선 (더 연하게) */
+  --separator: rgba(60, 60, 67, 0.08);
 
   /* 간격 */
   --space-xs: 4px;

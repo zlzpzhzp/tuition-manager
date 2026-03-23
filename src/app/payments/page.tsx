@@ -745,7 +745,7 @@ export default function PaymentsPage() {
                               onClick={status === 'unpaid' && !isExpanded && !withdrawn ? () => handleExpand(student.id) : undefined}
                             >
                               {hasDiscuss && (
-                                <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 6, background: 'rgba(175,82,222,0.12)', color: 'var(--color-purple)', fontWeight: 700, flexShrink: 0 }}>DISCUSS</span>
+                                <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 6, background: 'var(--badge-discuss-bg)', color: 'var(--badge-discuss-text)', fontWeight: 700, flexShrink: 0 }}>DISCUSS</span>
                               )}
                               <Link
                                 href={`/students/${student.id}`}
@@ -758,7 +758,7 @@ export default function PaymentsPage() {
                                 }}>{student.name}</span>
                                 {withdrawn && <span style={{ fontSize: 12, color: 'var(--text-tertiary)', marginLeft: 6 }}>퇴원</span>}
                                 {hasDiscuss && student.memo && (
-                                  <p style={{ fontSize: 12, color: 'var(--color-purple)', fontWeight: 600, lineHeight: 1.3 }}>
+                                  <p style={{ fontSize: 12, color: 'var(--badge-discuss-text)', fontWeight: 600, lineHeight: 1.3 }}>
                                     {student.memo}
                                   </p>
                                 )}
@@ -779,7 +779,7 @@ export default function PaymentsPage() {
                                         setShowMethodPicker(false)
                                       }}
                                       className="fan-item ios-tap"
-                                      style={{ padding: '3px 8px', borderRadius: 6, fontSize: 13, fontWeight: 600, background: 'rgba(255,149,0,0.12)', color: 'var(--color-orange)', whiteSpace: 'nowrap' }}
+                                      style={{ padding: '3px 8px', borderRadius: 6, fontSize: 13, fontWeight: 600, background: 'var(--badge-scheduled-bg)', color: 'var(--badge-scheduled-text)', whiteSpace: 'nowrap' }}
                                       aria-label="결제일 선택"
                                     >
                                       {(() => { const d = new Date(inlineDate); return `${d.getMonth()+1}/${d.getDate()}` })()}
@@ -797,7 +797,7 @@ export default function PaymentsPage() {
                                         setShowDatePicker(false)
                                       }}
                                       className="fan-item ios-tap"
-                                      style={{ padding: '3px 8px', borderRadius: 6, fontSize: 13, fontWeight: 600, background: 'rgba(0,122,255,0.12)', color: 'var(--color-blue)', display: 'flex', alignItems: 'center', gap: 2, whiteSpace: 'nowrap' }}
+                                      style={{ padding: '3px 8px', borderRadius: 6, fontSize: 13, fontWeight: 600, background: '#E3F2FD', color: '#1565C0', display: 'flex', alignItems: 'center', gap: 2, whiteSpace: 'nowrap' }}
                                       aria-label="결제수단 선택"
                                     >
                                       {METHOD_OPTIONS_SHORT.find(([v]) => v === inlineMethod)?.[1]}
@@ -852,13 +852,13 @@ export default function PaymentsPage() {
                                   {(() => {
                                     let badgeBg: string, badgeColor: string
                                     if (status === 'paid') {
-                                      badgeBg = 'rgba(52,199,89,0.12)'; badgeColor = 'var(--color-green)'
+                                      badgeBg = 'var(--badge-paid-bg)'; badgeColor = 'var(--badge-paid-text)'
                                     } else if (status === 'partial') {
-                                      badgeBg = 'rgba(255,149,0,0.12)'; badgeColor = 'var(--color-orange)'
+                                      badgeBg = 'var(--badge-partial-bg)'; badgeColor = 'var(--badge-partial-text)'
                                     } else if (scheduled) {
-                                      badgeBg = 'rgba(255,149,0,0.12)'; badgeColor = 'var(--color-orange)'
+                                      badgeBg = 'var(--badge-scheduled-bg)'; badgeColor = 'var(--badge-scheduled-text)'
                                     } else {
-                                      badgeBg = 'rgba(255,59,48,0.12)'; badgeColor = 'var(--color-red)'
+                                      badgeBg = 'var(--badge-unpaid-bg)'; badgeColor = 'var(--badge-unpaid-text)'
                                     }
                                     return status !== 'unpaid' ? (
                                       <button
@@ -896,14 +896,14 @@ export default function PaymentsPage() {
                                   value={discussMemoValue}
                                   onChange={e => setDiscussMemoValue(e.target.value)}
                                   placeholder="사유 입력 (예: 수강료 조정 논의)"
-                                  style={{ flex: 1, padding: '6px 10px', borderRadius: 8, fontSize: 13, border: '0.5px solid var(--color-purple)', outline: 'none', background: 'rgba(175,82,222,0.04)' }}
+                                  style={{ flex: 1, padding: '6px 10px', borderRadius: 8, fontSize: 13, border: '0.5px solid var(--badge-discuss-text)', outline: 'none', background: 'var(--badge-discuss-bg)' }}
                                   autoFocus
                                   onKeyDown={e => { if (e.key === 'Enter') saveDiscussMemo(student.id) }}
                                 />
                                 <button
                                   onClick={() => saveDiscussMemo(student.id)}
                                   className="ios-tap"
-                                  style={{ padding: '6px 12px', borderRadius: 8, fontSize: 13, fontWeight: 600, background: 'rgba(175,82,222,0.12)', color: 'var(--color-purple)', flexShrink: 0 }}
+                                  style={{ padding: '6px 12px', borderRadius: 8, fontSize: 13, fontWeight: 600, background: 'var(--badge-discuss-bg)', color: 'var(--badge-discuss-text)', flexShrink: 0 }}
                                 >
                                   저장
                                 </button>
