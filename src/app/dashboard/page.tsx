@@ -3,14 +3,15 @@
 import { useCallback, useMemo } from 'react'
 import Link from 'next/link'
 import { Users, CreditCard, AlertCircle, TrendingUp } from 'lucide-react'
-import type { Payment, GradeWithClasses } from '@/types'
+import type { Payment, GradeWithClasses, Teacher } from '@/types'
 import { getStudentFee, getPaymentStatus, PAYMENT_STATUS_LABELS, PAYMENT_STATUS_COLORS } from '@/types'
-import { getPaymentDueDay, isPaymentScheduled, getActiveStudents, getCurrentMonth, formatMonth, useGrades, usePayments } from '@/lib/utils'
+import { getPaymentDueDay, isPaymentScheduled, getActiveStudents, getCurrentMonth, formatMonth, useGrades, usePayments, useTeachers } from '@/lib/utils'
 
 export default function DashboardPage() {
   const currentMonth = getCurrentMonth()
   const { data: grades = [], error: gradesError, isLoading: gradesLoading } = useGrades<GradeWithClasses[]>()
   const { data: payments = [], error: paymentsError, isLoading: paymentsLoading } = usePayments<Payment[]>(currentMonth)
+  const { data: teachers = [] } = useTeachers<Teacher[]>()
 
   const loading = gradesLoading || paymentsLoading
   const error = gradesError || paymentsError
@@ -225,6 +226,55 @@ export default function DashboardPage() {
           </div>
         )}
       </div>
+
+      {/* 선생님별 매출 */}
+      {teachers.length > 0 && grades.length > 0 && (() => {
+        const teacherStats = teachers.map(teacher => {
+          const teacherClasses = grades.flatMap(g =>
+            g.classes.filter(c => c.teacher_id === teacher.id)
+          )
+          const teacherStudents = teacherClasses.flatMap(c =>
+            getActiveStudents(c.students ?? [], currentMonth).map(s => ({ ...s, class: c }))
+          )
+          const totalFee = teacherStudents.reduce((sum, s) => sum + getStudentFee(s, s.class), 0)
+          const totalPaid = teacherStudents.reduce((sum, s) => sum + getStudentPaid(s.id), 0)
+          const studentCount = teacherStudents.length
+          return { teacher, totalFee, totalPaid, studentCount, classCount: teacherClasses.length }
+        }).filter(t => t.studentCount > 0)
+
+        if (teacherStats.length === 0) return null
+
+        const grandFee = teacherStats.reduce((sum, t) => sum + t.totalFee, 0)
+        const grandPaid = teacherStats.reduce((sum, t) => sum + t.totalPaid, 0)
+
+        return (
+          <div className="bg-white rounded-xl border p-5 mb-4">
+            <h2 className="font-bold text-sm mb-3">선생님별 매출</h2>
+            <div className="space-y-2">
+              {teacherStats.map(({ teacher, totalFee, totalPaid, studentCount, classCount }) => (
+                <div key={teacher.id} className="flex items-center justify-between py-2 border-b last:border-b-0">
+                  <div>
+                    <span className="text-sm font-medium">{teacher.name}</span>
+                    {teacher.subject && <span className="text-xs text-gray-400 ml-1">({teacher.subject})</span>}
+                    <span className="text-xs text-gray-400 ml-2">{classCount}반 · {studentCount}명</span>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-medium">{totalFee.toLocaleString()}원</p>
+                    <p className="text-xs text-gray-400">수납 {totalPaid.toLocaleString()}원</p>
+                  </div>
+                </div>
+              ))}
+              <div className="flex items-center justify-between pt-2 border-t font-bold">
+                <span className="text-sm">합계</span>
+                <div className="text-right">
+                  <span className="text-sm">{grandFee.toLocaleString()}원</span>
+                  <p className="text-xs text-gray-400 font-normal">수납 {grandPaid.toLocaleString()}원</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
 
       {/* 반별 인원수 다이어그램 */}
       {grades.length > 0 && (() => {
