@@ -9,7 +9,7 @@ import { getActiveStudents, useGrades, usePayments, getCurrentMonth, formatMonth
 import useSWR from 'swr'
 
 const TAX_RATE = 0.033 // 3.3%
-const TEACHER_RATIO = 0.4 // 선생님 40%
+const DEFAULT_RATIO = 40 // 기본 40%
 
 const fetcher = (url: string) => fetch(url).then(r => r.json())
 
@@ -18,8 +18,10 @@ export default function TeacherDetailPage({ params }: { params: Promise<{ id: st
   const router = useRouter()
 
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth)
+  const [editingRatio, setEditingRatio] = useState(false)
+  const [ratioInput, setRatioInput] = useState('')
 
-  const { data: teacher } = useSWR<Teacher>(`/api/teachers/${teacherId}`, fetcher)
+  const { data: teacher, mutate: mutateTeacher } = useSWR<Teacher>(`/api/teachers/${teacherId}`, fetcher)
   const { data: grades = [] } = useGrades<GradeWithClasses[]>()
   const { data: payments = [] } = usePayments<Payment[]>(selectedMonth)
   const { data: bonuses = [], mutate: mutateBonuses } = useSWR<{ id: string; amount: number; memo: string | null; billing_month: string }[]>(
@@ -61,17 +63,27 @@ export default function TeacherDetailPage({ params }: { params: Promise<{ id: st
     paidByStudentId.get(studentId) ?? 0
   , [paidByStudentId])
 
+  const payRatio = teacher?.pay_ratio ?? DEFAULT_RATIO
+
   // 급여 계산
   const payroll = useMemo(() => {
     const totalFee = teacherStudents.reduce((sum, s) => sum + getStudentFee(s, s.class), 0)
     const totalPaid = teacherStudents.reduce((sum, s) => sum + getStudentPaid(s.id), 0)
-    const teacherShare = Math.round(totalPaid * TEACHER_RATIO)
+    const teacherShare = Math.round(totalPaid * payRatio / 100)
     const totalBonus = bonuses.reduce((sum, b) => sum + b.amount, 0)
     const grossPay = teacherShare + totalBonus
     const tax = Math.round(grossPay * TAX_RATE)
     const netPay = grossPay - tax
     return { totalFee, totalPaid, teacherShare, totalBonus, grossPay, tax, netPay }
-  }, [teacherStudents, getStudentPaid, bonuses])
+  }, [teacherStudents, getStudentPaid, bonuses, payRatio])
+
+  const saveRatio = async () => {
+    const val = parseInt(ratioInput)
+    if (isNaN(val) || val < 0 || val > 100) return
+    await safeMutate(`/api/teachers/${teacherId}`, 'PUT', { pay_ratio: val })
+    setEditingRatio(false)
+    mutateTeacher()
+  }
 
   const addBonus = async () => {
     const amt = parseInt(bonusAmount)
@@ -141,8 +153,33 @@ export default function TeacherDetailPage({ params }: { params: Promise<{ id: st
             <span className="text-gray-400">수납액</span>
             <span className="font-medium">{payroll.totalPaid.toLocaleString()}원</span>
           </div>
-          <div className="flex justify-between py-1.5 border-b">
-            <span className="text-gray-400">선생님 배분 (40%)</span>
+          <div className="flex justify-between items-center py-1.5 border-b">
+            <div className="flex items-center gap-1">
+              <span className="text-gray-400">선생님 배분</span>
+              {editingRatio ? (
+                <span className="flex items-center gap-1">
+                  <span className="text-gray-400">(</span>
+                  <input
+                    type="number"
+                    value={ratioInput}
+                    onChange={e => setRatioInput(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && saveRatio()}
+                    className="w-12 px-1 py-0.5 border rounded text-sm text-center focus:outline-none focus:ring-2 focus:ring-[#1e2d6f]"
+                    min={0} max={100} autoFocus
+                  />
+                  <span className="text-gray-400">%)</span>
+                  <button onClick={saveRatio} className="text-green-600"><Check className="w-3.5 h-3.5" /></button>
+                  <button onClick={() => setEditingRatio(false)} className="text-gray-400"><X className="w-3.5 h-3.5" /></button>
+                </span>
+              ) : (
+                <button
+                  onClick={() => { setEditingRatio(true); setRatioInput(String(payRatio)) }}
+                  className="text-[#1e2d6f] hover:underline text-sm"
+                >
+                  ({payRatio}%)
+                </button>
+              )}
+            </div>
             <span className="font-medium text-[#1e2d6f]">{payroll.teacherShare.toLocaleString()}원</span>
           </div>
 

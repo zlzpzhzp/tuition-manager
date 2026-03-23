@@ -29,6 +29,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   if (body.phone !== undefined) updates.phone = body.phone || null
   if (body.subject !== undefined) updates.subject = body.subject || null
   if (body.memo !== undefined) updates.memo = body.memo || null
+  if (body.pay_ratio !== undefined) updates.pay_ratio = body.pay_ratio
   if (body.order_index !== undefined) updates.order_index = body.order_index
 
   const { data, error } = await supabase

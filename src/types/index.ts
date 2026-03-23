@@ -6,6 +6,7 @@ export interface Teacher {
   phone?: string | null
   subject?: string | null
   memo?: string | null
+  pay_ratio?: number | null
   order_index: number
   created_at: string
 }
