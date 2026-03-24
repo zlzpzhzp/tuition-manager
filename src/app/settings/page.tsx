@@ -30,7 +30,6 @@ export default function SettingsPage() {
   const [editClassTeacherId, setEditClassTeacherId] = useState('')
 
   // 선생님 관리
-  const [showTeacherManager, setShowTeacherManager] = useState(false)
   const [addingTeacher, setAddingTeacher] = useState(false)
   const [newTeacherName, setNewTeacherName] = useState('')
   const [newTeacherPhone, setNewTeacherPhone] = useState('')
@@ -432,17 +431,12 @@ export default function SettingsPage() {
 
       {/* 선생님 관리 */}
       <div className="mt-8">
-        <button
-          onClick={() => setShowTeacherManager(!showTeacherManager)}
-          className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-3"
-        >
+        <div className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-3">
           <UserCircle className="w-4 h-4" />
           선생님 관리
-          <ChevronDown className={`w-4 h-4 transition-transform ${showTeacherManager ? 'rotate-180' : ''}`} />
-        </button>
+        </div>
 
-        {showTeacherManager && (
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
             <div className="px-4 py-3">
               {teachers.length > 0 && (
                 <div className="space-y-2 mb-3">
@@ -504,7 +498,6 @@ export default function SettingsPage() {
               )}
             </div>
           </div>
-        )}
       </div>
 
       {/* 로그 & 로그아웃 */}
