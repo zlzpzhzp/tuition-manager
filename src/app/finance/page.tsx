@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useMemo, useCallback } from 'react'
-import { ChevronLeft, ChevronRight, Plus, Trash2, Pencil, Check, X } from 'lucide-react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
+import { ChevronLeft, ChevronRight, Plus, Trash2, Pencil, Check, X, Lock } from 'lucide-react'
 import type { Payment, GradeWithClasses, Teacher } from '@/types'
 import { getStudentFee } from '@/types'
 import { getActiveStudents, useGrades, usePayments, useTeachers, getCurrentMonth, formatMonth, safeMutate } from '@/lib/utils'
@@ -18,7 +18,30 @@ interface Expense {
 
 const fetcher = (url: string) => fetch(url).then(r => r.json())
 
+const FINANCE_PIN = '327575'
+
 export default function FinancePage() {
+  const [authenticated, setAuthenticated] = useState(false)
+  const [pin, setPin] = useState('')
+  const [pinError, setPinError] = useState(false)
+
+  useEffect(() => {
+    if (sessionStorage.getItem('finance_auth') === 'true') {
+      setAuthenticated(true)
+    }
+  }, [])
+
+  const handlePinSubmit = () => {
+    if (pin === FINANCE_PIN) {
+      setAuthenticated(true)
+      sessionStorage.setItem('finance_auth', 'true')
+      setPinError(false)
+    } else {
+      setPinError(true)
+      setPin('')
+    }
+  }
+
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth)
 
   const { data: grades = [] } = useGrades<GradeWithClasses[]>()
@@ -192,6 +215,37 @@ export default function FinancePage() {
       )}
     </div>
   )
+
+  if (!authenticated) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] px-4">
+        <div className="bg-white rounded-xl border p-8 w-full max-w-xs text-center">
+          <Lock className="w-10 h-10 text-[#1e2d6f] mx-auto mb-4" />
+          <h1 className="text-lg font-bold mb-1">원장 전용</h1>
+          <p className="text-sm text-gray-400 mb-6">PIN 번호를 입력하세요</p>
+          <input
+            type="password"
+            inputMode="numeric"
+            maxLength={6}
+            value={pin}
+            onChange={e => { setPin(e.target.value.replace(/\D/g, '')); setPinError(false) }}
+            onKeyDown={e => e.key === 'Enter' && handlePinSubmit()}
+            placeholder="••••••"
+            className={`w-full text-center text-2xl tracking-[0.5em] px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1e2d6f] ${pinError ? 'border-red-400' : ''}`}
+            autoFocus
+          />
+          {pinError && <p className="text-xs text-red-500 mt-2">PIN이 올바르지 않습니다</p>}
+          <button
+            onClick={handlePinSubmit}
+            className="w-full mt-4 py-2.5 rounded-lg text-white font-medium text-sm"
+            style={{ backgroundColor: '#1e2d6f' }}
+          >
+            확인
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div>

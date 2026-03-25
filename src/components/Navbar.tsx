@@ -10,7 +10,6 @@ import { useNavDirection } from './PageTransition'
 const navItems = [
   { href: '/dashboard', label: '대시보드', icon: LayoutDashboard },
   { href: '/payments', label: '납부', icon: CreditCard },
-  { href: '/finance', label: '재정', icon: Wallet },
   { href: '/settings', label: '설정', icon: Settings },
 ]
 
@@ -84,6 +83,7 @@ export default function Navbar() {
               <Image src="/icons/icon-192x192.png" alt="원비관리" width={32} height={32} className="rounded-md" />
               <span className="text-lg font-bold text-[#d8d8dc]">원비관리</span>
             </Link>
+            <div className="flex items-center gap-2">
             <div className="hidden sm:flex gap-1">
               {navItems.map(({ href, label, icon: Icon }, idx) => {
                 const currentIdx = navItems.findIndex(item => isActive(item.href))
@@ -103,6 +103,14 @@ export default function Navbar() {
                   </Link>
                 )
               })}
+            </div>
+              <Link
+                href="/finance"
+                aria-label="재정"
+                className="p-2 rounded-lg text-[#c8c5be] hover:bg-white/10 transition-colors"
+              >
+                <Wallet className="w-5 h-5" />
+              </Link>
             </div>
           </div>
         </div>
