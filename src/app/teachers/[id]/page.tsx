@@ -236,12 +236,27 @@ export default function TeacherDetailPage({ params }: { params: Promise<{ id: st
 </div>
 </body></html>`
 
-    // 새 창에서 인쇄 (PDF로 저장)
-    const printWindow = window.open('', '_blank')
-    if (!printWindow) { alert('팝업이 차단되었습니다. 팝업을 허용해주세요.'); return }
-    printWindow.document.write(html)
-    printWindow.document.close()
-    setTimeout(() => printWindow.print(), 300)
+    // 숨겨진 iframe으로 인쇄 (페이지 이동 없음)
+    let iframe = document.getElementById('payslip-print-frame') as HTMLIFrameElement | null
+    if (!iframe) {
+      iframe = document.createElement('iframe')
+      iframe.id = 'payslip-print-frame'
+      iframe.style.position = 'fixed'
+      iframe.style.right = '-9999px'
+      iframe.style.bottom = '-9999px'
+      iframe.style.width = '0'
+      iframe.style.height = '0'
+      iframe.style.border = 'none'
+      document.body.appendChild(iframe)
+    }
+    const doc = iframe.contentDocument || iframe.contentWindow?.document
+    if (!doc) { alert('인쇄를 열 수 없습니다.'); return }
+    doc.open()
+    doc.write(html)
+    doc.close()
+    setTimeout(() => {
+      iframe!.contentWindow?.print()
+    }, 300)
   }, [selectedMonth, teacher, classDetails, bonuses, payroll, payRatio])
 
   const saveRatio = async () => {
