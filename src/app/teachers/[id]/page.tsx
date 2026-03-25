@@ -133,7 +133,7 @@ export default function TeacherDetailPage({ params }: { params: Promise<{ id: st
             <td style="padding:6px 8px;font-size:12px;font-weight:500;">${s.name}</td>
             <td style="padding:6px 8px;text-align:right;font-size:12px;">${s.fee.toLocaleString()}</td>
             <td style="padding:6px 8px;text-align:right;font-size:12px;">${s.paid.toLocaleString()}</td>
-            <td style="padding:6px 8px;text-align:center;font-size:11px;color:${statusColor(s.status)};font-weight:600;">${statusLabel(s.status)}</td>
+            <td style="padding:6px 8px;text-align:center;font-size:11px;color:${statusColor(s.status)};font-weight:600;">${s.status !== 'paid' ? statusLabel(s.status) : ''}</td>
           </tr>`
       }
     }
@@ -454,31 +454,28 @@ export default function TeacherDetailPage({ params }: { params: Promise<{ id: st
             )}
           </div>
           <div className="divide-y">
-            {students.map(s => {
-              const statusColors = {
-                paid: { bg: '#DEF7EC', text: '#03543F' },
-                partial: { bg: '#FEF3C7', text: '#92400E' },
-                unpaid: { bg: '#FDE8E8', text: '#9B1C1C' },
-              }
-              const c = statusColors[s.status]
-              return (
-                <div key={s.id} className="flex items-center justify-between px-4 py-2.5">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm">{s.name}</span>
+            {students.map(s => (
+              <div key={s.id} className="flex items-center justify-between px-4 py-2.5">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm">{s.name}</span>
+                  {s.status !== 'paid' && (
                     <span
                       className="text-[10px] font-semibold px-1.5 py-0.5 rounded"
-                      style={{ backgroundColor: c.bg, color: c.text }}
+                      style={{
+                        backgroundColor: s.status === 'partial' ? '#FEF3C7' : '#FDE8E8',
+                        color: s.status === 'partial' ? '#92400E' : '#9B1C1C',
+                      }}
                     >
                       {PAYMENT_STATUS_LABELS[s.status]}
                     </span>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-sm font-medium">{s.paid.toLocaleString()}</span>
-                    <span className="text-xs text-gray-400"> / {s.fee.toLocaleString()}원</span>
-                  </div>
+                  )}
                 </div>
-              )
-            })}
+                <div className="text-right">
+                  <span className="text-sm font-medium">{s.paid.toLocaleString()}</span>
+                  <span className="text-xs text-gray-400"> / {s.fee.toLocaleString()}원</span>
+                </div>
+              </div>
+            ))}
             {students.length === 0 && (
               <p className="text-xs text-gray-400 text-center py-3">학생이 없습니다</p>
             )}
