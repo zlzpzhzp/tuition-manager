@@ -179,11 +179,11 @@ export default function FinancePage() {
                   <span className="flex-1 text-sm">{item.name}</span>
                   {item.memo && <span className="text-xs text-gray-400">{item.memo}</span>}
                   <span className="text-sm font-medium">{item.amount.toLocaleString()}원</span>
-                  <button onClick={() => { setEditingId(item.id); setEditName(item.name); setEditAmount(String(item.amount)) }} className="p-0.5 text-gray-300 hover:text-gray-600">
-                    <Pencil className="w-3 h-3" />
+                  <button onClick={() => { setEditingId(item.id); setEditName(item.name); setEditAmount(String(item.amount)) }} className="p-2 -m-1 text-gray-400 hover:text-gray-600">
+                    <Pencil className="w-4 h-4" />
                   </button>
-                  <button onClick={() => deleteExpense(item.id, item.name)} className="p-0.5 text-gray-300 hover:text-red-500">
-                    <Trash2 className="w-3 h-3" />
+                  <button onClick={() => deleteExpense(item.id, item.name)} className="p-2 -m-1 text-gray-400 hover:text-red-500">
+                    <Trash2 className="w-4 h-4" />
                   </button>
                 </>
               )}
