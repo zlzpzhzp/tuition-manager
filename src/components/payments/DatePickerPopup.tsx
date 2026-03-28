@@ -1,5 +1,7 @@
 'use client'
 
+import { useRef, useState, useEffect } from 'react'
+
 interface Props {
   inlineDate: string
   onDateChange: (date: string) => void
@@ -8,6 +10,18 @@ interface Props {
 }
 
 export default function DatePickerPopup({ inlineDate, onDateChange, position, onClose }: Props) {
+  const popupRef = useRef<HTMLDivElement>(null)
+  const [adjustedTop, setAdjustedTop] = useState(position.top)
+
+  useEffect(() => {
+    if (popupRef.current) {
+      const rect = popupRef.current.getBoundingClientRect()
+      const viewportHeight = window.innerHeight
+      if (rect.bottom > viewportHeight - 10) {
+        setAdjustedTop(position.top - (rect.bottom - viewportHeight) - 20)
+      }
+    }
+  }, [position.top])
   const selDate = new Date(inlineDate)
   const year = selDate.getFullYear()
   const month = selDate.getMonth()
@@ -31,8 +45,9 @@ export default function DatePickerPopup({ inlineDate, onDateChange, position, on
     <>
       <div className="fixed inset-0 z-40" onClick={onClose} />
       <div
+        ref={popupRef}
         className="fixed z-50 bg-white border rounded-lg shadow-lg p-2"
-        style={{ top: position.top, left: position.left, width: '220px' }}
+        style={{ top: adjustedTop, left: position.left, width: '220px' }}
         role="dialog"
         aria-label="날짜 선택"
       >
