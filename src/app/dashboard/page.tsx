@@ -21,7 +21,7 @@ export default function DashboardPage() {
       g.classes.flatMap(c =>
         getActiveStudents(c.students ?? [], currentMonth).map(s => ({ ...s, class: c }))
       )
-    ), [grades])
+    ), [grades, currentMonth])
 
   const paidByStudentId = useMemo(() => {
     const map = new Map<string, number>()
@@ -164,6 +164,9 @@ export default function DashboardPage() {
                 >
                   <div>
                     <span className="font-medium text-orange-900">{s.name}</span>
+                    {s.enrollment_date?.startsWith(currentMonth) && (
+                      <span className="text-[9px] ml-1 px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-500 font-bold">신규</span>
+                    )}
                     <span className="text-orange-600 ml-2 text-xs">{s.class?.name}</span>
                   </div>
                   <div className="text-xs text-orange-700">
@@ -210,6 +213,9 @@ export default function DashboardPage() {
                 >
                   <div className="flex-1 min-w-0">
                     <span className="text-sm font-medium">{s.name}</span>
+                    {s.enrollment_date?.startsWith(currentMonth) && (
+                      <span className="text-[9px] ml-1 px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-500 font-bold">신규</span>
+                    )}
                     <span className="text-xs text-gray-400 ml-2">{s.class?.name}</span>
                   </div>
                   <span className="text-xs text-gray-400">{(fee - paid).toLocaleString()}원</span>

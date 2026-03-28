@@ -3,9 +3,9 @@
 import { useState, useMemo, useCallback, use } from 'react'
 import { useRouter } from 'next/navigation'
 import { ChevronLeft, ChevronRight, Plus, Trash2, X, Check, Download } from 'lucide-react'
-import type { GradeWithClasses, Payment, Teacher, Class, Student } from '@/types'
+import type { GradeWithClasses, Payment, Teacher } from '@/types'
 import { getStudentFee, getPaymentStatus, PAYMENT_STATUS_LABELS, parseClassDays, countClassDays, DAY_LABELS } from '@/types'
-import { getActiveStudents, useGrades, usePayments, getCurrentMonth, formatMonth, safeFetch, safeMutate } from '@/lib/utils'
+import { getActiveStudents, useGrades, usePayments, getCurrentMonth, formatMonth, safeMutate } from '@/lib/utils'
 import useSWR from 'swr'
 
 const TAX_RATE = 0.033 // 3.3%
@@ -123,7 +123,6 @@ export default function TeacherDetailPage({ params }: { params: Promise<{ id: st
     let studentRows = ''
     let rowNum = 0
     for (const cd of classDetails) {
-      const daysLabel = cd.days ? cd.days.map(d => DAY_LABELS[d]).join(',') : '-'
       for (const s of cd.students) {
         rowNum++
         studentRows += `

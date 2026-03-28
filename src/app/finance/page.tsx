@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useCallback, useEffect } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { ChevronLeft, ChevronRight, Plus, Trash2, Pencil, Check, X, Lock } from 'lucide-react'
 import type { Payment, GradeWithClasses, Teacher } from '@/types'
 import { getStudentFee } from '@/types'
@@ -307,7 +307,7 @@ export default function FinancePage() {
           <p className="text-sm text-gray-400 text-center py-2">이번 달 선생님 급여가 없습니다</p>
         ) : (
           <div className="space-y-1">
-            {teacherPayroll.map(({ teacher, share, bonus, gross, tax, net }) => (
+            {teacherPayroll.map(({ teacher, bonus, gross, tax, net }) => (
               <div key={teacher.id} className="flex items-center justify-between py-1.5 border-b last:border-b-0">
                 <div>
                   <span className="text-sm font-medium">{teacher.name}</span>

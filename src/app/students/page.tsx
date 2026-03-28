@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { Plus, ChevronDown, ChevronRight, UserCircle } from 'lucide-react'
-import type { Grade, Class, Student, GradeWithClasses } from '@/types'
+import type { Grade, Student, GradeWithClasses } from '@/types'
 import { getStudentFee } from '@/types'
 import StudentModal from '@/components/StudentModal'
 import { getActiveStudents, safeFetch, safeMutate } from '@/lib/utils'
@@ -15,7 +15,7 @@ export default function StudentsPage() {
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editingStudent, setEditingStudent] = useState<Student | null>(null)
-  const [preselectedClassId, setPreselectedClassId] = useState<string | null>(null)
+  const [, setPreselectedClassId] = useState<string | null>(null)
 
   const fetchData = useCallback(async () => {
     const { data, error } = await safeFetch<GradeWithClasses[]>('/api/grades')
@@ -37,7 +37,7 @@ export default function StudentsPage() {
   const toggleGrade = (id: string) => {
     setExpandedGrades(prev => {
       const next = new Set(prev)
-      next.has(id) ? next.delete(id) : next.add(id)
+      if (next.has(id)) next.delete(id); else next.add(id)
       return next
     })
   }
@@ -45,7 +45,7 @@ export default function StudentsPage() {
   const toggleClass = (id: string) => {
     setExpandedClasses(prev => {
       const next = new Set(prev)
-      next.has(id) ? next.delete(id) : next.add(id)
+      if (next.has(id)) next.delete(id); else next.add(id)
       return next
     })
   }

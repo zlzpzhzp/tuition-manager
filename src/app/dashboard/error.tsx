@@ -1,6 +1,6 @@
 'use client'
 
-export default function Error({ error, reset }: { error: Error; reset: () => void }) {
+export default function Error({ reset }: { error: Error; reset: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center py-20">
       <p className="text-gray-500 mb-4">문제가 발생했습니다</p>

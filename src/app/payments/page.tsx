@@ -3,14 +3,14 @@
 import { useState, useCallback, useRef, useMemo, useEffect } from 'react'
 import Link from 'next/link'
 import { ChevronLeft, ChevronRight, Check, ClipboardList, Download, Plus } from 'lucide-react'
-import type { Grade, Class, Student, Payment, PaymentMethod, GradeWithClasses } from '@/types'
+import type { Student, Payment, PaymentMethod, GradeWithClasses } from '@/types'
 import { getStudentFee, getPaymentStatus, PAYMENT_STATUS_LABELS, PAYMENT_STATUS_COLORS, PAYMENT_METHOD_LABELS } from '@/types'
 import PaymentModal from '@/components/PaymentModal'
 import StudentModal from '@/components/StudentModal'
 import DatePickerPopup from '@/components/payments/DatePickerPopup'
 import MethodPickerPopup from '@/components/payments/MethodPickerPopup'
 import AiFilterButton from '@/components/payments/AiFilterButton'
-import { getPrevMonth, formatMonth, getPaymentDueDay, isPaymentScheduled, getUnpaidLabelText, getActiveStudents, isWithdrawnStudent, safeMutate, decodePaymentMemo, useGrades, usePayments, revalidateGrades, revalidatePayments } from '@/lib/utils'
+import { getPrevMonth, getPaymentDueDay, isPaymentScheduled, getUnpaidLabelText, getActiveStudents, isWithdrawnStudent, safeMutate, decodePaymentMemo, useGrades, usePayments, revalidateGrades, revalidatePayments } from '@/lib/utils'
 import { METHOD_OPTIONS_SHORT } from '@/lib/constants'
 
 export default function PaymentsPage() {
@@ -70,7 +70,7 @@ export default function PaymentsPage() {
   const toggleClass = (classId: string) => {
     setExpandedClasses(prev => {
       const next = new Set(prev)
-      next.has(classId) ? next.delete(classId) : next.add(classId)
+      if (next.has(classId)) next.delete(classId); else next.add(classId)
       return next
     })
   }
@@ -123,18 +123,6 @@ export default function PaymentsPage() {
     }
     return map
   }, [payments])
-
-  const summaryStats = useMemo(() => {
-    const totalFee = allStudents.reduce((sum, s) => sum + getStudentFee(s, s.class), 0)
-    const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0)
-    const unpaidStudents = allStudents.filter(s => {
-      const paid = (paymentsByStudentId.get(s.id) ?? []).reduce((sum, p) => sum + p.amount, 0)
-      return getPaymentStatus(paid, getStudentFee(s, s.class)) === 'unpaid'
-    })
-    const unpaidCount = unpaidStudents.filter(s => !checkScheduled(s, selectedMonth)).length
-    const scheduledCount = unpaidStudents.filter(s => checkScheduled(s, selectedMonth)).length
-    return { totalFee, totalPaid, unpaidCount, scheduledCount }
-  }, [allStudents, payments, paymentsByStudentId, selectedMonth])
 
   // ─── Helpers ──────────────────────────────────────────────────
   const navigateMonth = (delta: number) => {
@@ -746,6 +734,9 @@ export default function PaymentsPage() {
                               >
                                 <span className={`text-sm font-medium ${withdrawn ? 'line-through decoration-red-500 decoration-2 text-gray-400' : ''}`}>{student.name}</span>
                                 {withdrawn && <span className="text-[10px] text-red-400 ml-1.5">퇴원</span>}
+                                {!withdrawn && student.enrollment_date?.startsWith(selectedMonth) && (
+                                  <span className="text-[9px] ml-1.5 px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-500 font-bold">신규</span>
+                                )}
                                 {hasDiscuss && student.memo && (
                                   <p className="text-[11px] text-rose-500 font-medium leading-tight">
                                     {student.memo}
