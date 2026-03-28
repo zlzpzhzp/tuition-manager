@@ -19,7 +19,9 @@ export default function DashboardPage() {
   const allStudents = useMemo(() =>
     grades.flatMap(g =>
       g.classes.flatMap(c =>
-        getActiveStudents(c.students ?? [], currentMonth).map(s => ({ ...s, class: c }))
+        getActiveStudents(c.students ?? [], currentMonth)
+          .filter(s => !s.withdrawal_date)
+          .map(s => ({ ...s, class: c }))
       )
     ), [grades, currentMonth])
 
@@ -240,7 +242,7 @@ export default function DashboardPage() {
             g.classes.filter(c => c.teacher_id === teacher.id)
           )
           const teacherStudents = teacherClasses.flatMap(c =>
-            getActiveStudents(c.students ?? [], currentMonth).map(s => ({ ...s, class: c }))
+            getActiveStudents(c.students ?? [], currentMonth).filter(s => !s.withdrawal_date).map(s => ({ ...s, class: c }))
           )
           const totalFee = teacherStudents.reduce((sum, s) => sum + getStudentFee(s, s.class), 0)
           const totalPaid = teacherStudents.reduce((sum, s) => sum + getStudentPaid(s.id), 0)
@@ -288,7 +290,7 @@ export default function DashboardPage() {
           g.classes.map(c => ({
             name: c.name,
             gradeName: g.name,
-            count: getActiveStudents(c.students ?? [], currentMonth).length,
+            count: getActiveStudents(c.students ?? [], currentMonth).filter(s => !s.withdrawal_date).length,
             subject: c.subject,
           }))
         ).filter(c => c.count > 0)
@@ -327,7 +329,7 @@ export default function DashboardPage() {
           <div className="space-y-2">
             {grades.map(grade => {
               const gradeStudents = grade.classes.flatMap(c =>
-                getActiveStudents(c.students ?? [], currentMonth).map(s => ({ ...s, class: c }))
+                getActiveStudents(c.students ?? [], currentMonth).filter(s => !s.withdrawal_date).map(s => ({ ...s, class: c }))
               )
               const gradeFee = gradeStudents.reduce((sum, s) => sum + getStudentFee(s, s.class), 0)
               const gradePaid = gradeStudents.reduce((sum, s) => sum + getStudentPaid(s.id), 0)
