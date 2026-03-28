@@ -77,6 +77,12 @@ export default function PaymentsPage() {
 
   // 미납 필터
   const [showUnpaidOnly, setShowUnpaidOnly] = useState(false)
+  const [monthMemo, setMonthMemo] = useState('')
+
+  // 월별 메모 로드
+  useEffect(() => {
+    setMonthMemo(localStorage.getItem(`payment_memo_${selectedMonth}`) ?? '')
+  }, [selectedMonth])
 
   // AI 필터
   const [aiFilterIds, setAiFilterIds] = useState<Set<string> | null>(null)
@@ -524,6 +530,20 @@ export default function PaymentsPage() {
             <span>내보내기</span>
           </button>
         </div>
+      </div>
+
+      {/* 월별 메모 */}
+      <div className="mb-4">
+        <textarea
+          value={monthMemo}
+          onChange={e => {
+            setMonthMemo(e.target.value)
+            localStorage.setItem(`payment_memo_${selectedMonth}`, e.target.value)
+          }}
+          placeholder="메모..."
+          className="w-full px-4 py-3 text-sm border border-gray-200 rounded-xl bg-white resize-none focus:outline-none focus:ring-2 focus:ring-[#1e2d6f] placeholder-gray-300"
+          rows={3}
+        />
       </div>
 
       {/* 과목별 → 학년별 납부 현황 */}
