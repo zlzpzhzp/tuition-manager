@@ -67,7 +67,6 @@ export default function PaymentsPage() {
 
   // 반 접기/펼치기 (기본: 접힘)
   const [expandedClasses, setExpandedClasses] = useState<Set<string>>(new Set())
-  const [expandedGradeId, setExpandedGradeId] = useState<string | null>(null)
   const toggleClass = (classId: string) => {
     setExpandedClasses(prev => {
       const next = new Set(prev)
@@ -598,21 +597,33 @@ export default function PaymentsPage() {
               const showFilter = isFirstVisibleGrade
               if (isFirstVisibleGrade) isFirstVisibleGrade = false
 
-              const isGradeExpanded = expandedGradeId === gradeId
+              const gradeClassIds = gradeClasses.map(c => c.id)
+              const isGradeExpanded = gradeClassIds.every(id => expandedClasses.has(id))
+
+              const toggleGradeExpand = () => {
+                setExpandedClasses(prev => {
+                  const next = new Set<string>()
+                  if (!isGradeExpanded) {
+                    gradeClassIds.forEach(id => next.add(id))
+                  }
+                  return next
+                })
+              }
 
               return (
                 <div key={gradeId}>
-                  <div
-                    className="flex items-center mb-1 px-1 cursor-pointer active:opacity-70 select-none"
-                    onClick={() => setExpandedGradeId(prev => prev === gradeId ? null : gradeId)}
-                  >
-                    <ChevronRight className={`w-3.5 h-3.5 text-gray-400 transition-transform ${isGradeExpanded ? 'rotate-90' : ''}`} />
-                    <span className="text-xs text-gray-400 ml-0.5">{gradeName}</span>
+                  <div className="flex items-center mb-1 px-1">
+                    <button
+                      onClick={toggleGradeExpand}
+                      className="flex items-center gap-0.5 active:opacity-70"
+                    >
+                      <ChevronRight className={`w-3.5 h-3.5 text-gray-400 transition-transform ${isGradeExpanded ? 'rotate-90' : ''}`} />
+                      <span className="text-xs text-gray-400">{gradeName}</span>
+                    </button>
                     <div className="flex-1" />
                     {showFilter && (
                       <button
-                        onClick={(e) => {
-                          e.stopPropagation()
+                        onClick={() => {
                           setShowUnpaidOnly(prev => {
                             if (!prev) {
                               const allClassIds = new Set(grades.flatMap(g => g.classes.map(c => c.id)))
@@ -633,11 +644,6 @@ export default function PaymentsPage() {
                       </button>
                     )}
                   </div>
-                  <div
-                    className="grid transition-[grid-template-rows] duration-300 ease-in-out overflow-hidden"
-                    style={{ gridTemplateRows: isGradeExpanded ? '1fr' : '0fr' }}
-                  >
-                  <div className="min-h-0">
                   <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
                   {gradeClasses.map(cls => {
                 const allClassStudents = getActiveStudents(cls.students ?? [], selectedMonth)
@@ -911,8 +917,6 @@ export default function PaymentsPage() {
                   </div>
                 )
               })}
-                  </div>
-                  </div>
                   </div>
                 </div>
               )
