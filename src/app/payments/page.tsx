@@ -693,6 +693,9 @@ export default function PaymentsPage() {
                     return true
                   })
                 }
+                // 결제일 오름차순 정렬
+                students = [...students].sort((a, b) => getDueDay(a) - getDueDay(b))
+
                 if (students.length === 0) return null
 
                 const paidCount = students.filter(s => {
