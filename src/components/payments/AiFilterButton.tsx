@@ -73,7 +73,7 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
   useEffect(() => {
     if (initialized.current) return
     initialized.current = true
-    const x = window.innerWidth - 60
+    const x = window.innerWidth - 80
     const y = window.innerHeight * 0.38
     posRef.current = { x, y }
     setPos({ x, y })
