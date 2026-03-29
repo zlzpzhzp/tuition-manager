@@ -35,6 +35,7 @@ export default function PaymentsPage() {
   const [inlineMethod, setInlineMethod] = useState<PaymentMethod>('remote')
   const [inlineSuccess, setInlineSuccess] = useState<string | null>(null)
   const [inlineSubmitting, setInlineSubmitting] = useState<string | null>(null)
+  const [inlineSlideOut, setInlineSlideOut] = useState<string | null>(null)
   const [showMethodPicker, setShowMethodPicker] = useState(false)
   const [inlineMemo, setInlineMemo] = useState('')
   const [showDatePicker, setShowDatePicker] = useState(false)
@@ -334,9 +335,14 @@ export default function PaymentsPage() {
       return
     }
     setInlineSuccess(studentId)
+    // 체크 표시 후 우측으로 슬라이드하며 접힘
+    setTimeout(() => {
+      setInlineSlideOut(studentId)
+    }, 400)
     setTimeout(async () => {
       await fetchData()
       setInlineSuccess(null)
+      setInlineSlideOut(null)
       setExpandedStudentId(null)
     }, 1000)
   }
@@ -815,7 +821,11 @@ export default function PaymentsPage() {
                               </Link>
 
                               {isExpanded ? (
-                                <div className="flex flex-col items-end gap-1" onClick={e => e.stopPropagation()}>
+                                <div
+                                  className="flex flex-col items-end gap-1 transition-all duration-500 ease-in-out"
+                                  style={inlineSlideOut === student.id ? { transform: 'translateX(100px)', opacity: 0 } : undefined}
+                                  onClick={e => e.stopPropagation()}
+                                >
                                   <div className="flex items-center gap-1.5">
                                     <button
                                       ref={dateButtonRef}
