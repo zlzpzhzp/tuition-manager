@@ -34,6 +34,7 @@ export default function PaymentsPage() {
   const [inlineDate, setInlineDate] = useState(today)
   const [inlineMethod, setInlineMethod] = useState<PaymentMethod>('remote')
   const [inlineSuccess, setInlineSuccess] = useState<string | null>(null)
+  const [inlineSubmitting, setInlineSubmitting] = useState<string | null>(null)
   const [showMethodPicker, setShowMethodPicker] = useState(false)
   const [inlineMemo, setInlineMemo] = useState('')
   const [showDatePicker, setShowDatePicker] = useState(false)
@@ -293,12 +294,14 @@ export default function PaymentsPage() {
   }
 
   const handleInlineSubmit = async (studentId: string, fee: number) => {
-    if (inlineSuccess) return
+    if (inlineSuccess || inlineSubmitting) return
+    setInlineSubmitting(studentId)
     const { error } = await safeMutate('/api/payments', 'POST', {
       student_id: studentId, amount: fee, method: inlineMethod,
       payment_date: inlineDate, billing_month: selectedMonth,
       ...(inlineMemo.trim() ? { memo: inlineMemo.trim() } : {}),
     })
+    setInlineSubmitting(null)
     if (error) {
       alert(`결제 처리 실패: ${error}`)
       return
@@ -708,6 +711,7 @@ export default function PaymentsPage() {
                       const currentMemo = studentPayments[0]?.memo
                       const isExpanded = expandedStudentId === student.id && status === 'unpaid'
                       const isSuccess = inlineSuccess === student.id
+                      const isSubmitting = inlineSubmitting === student.id
                       const { cleanMemo } = decodePaymentMemo(currentMemo)
                       const hasMemo = !!(prevMemo || cleanMemo)
                       const hasDiscuss = student.has_discuss ?? false
@@ -822,13 +826,17 @@ export default function PaymentsPage() {
                                     </button>
                                     <button
                                       onClick={() => handleInlineSubmit(student.id, fee)}
-                                      disabled={!!inlineSuccess}
-                                      className={`fan-item px-2.5 py-0.5 rounded-full text-xs font-medium transition-all ${
-                                        isSuccess ? 'bg-green-500 text-white scale-105' : 'bg-[#DEF7EC] text-[#03543F] hover:opacity-80'
+                                      disabled={!!inlineSuccess || !!inlineSubmitting}
+                                      className={`fan-item px-2.5 py-0.5 rounded-full text-xs font-medium transition-all duration-300 ${
+                                        isSuccess ? 'bg-green-500 text-white scale-110' : isSubmitting ? 'bg-green-300 text-white scale-100' : 'bg-[#DEF7EC] text-[#03543F] hover:opacity-80'
                                       }`}
                                       aria-label="납부 처리"
                                     >
-                                      {isSuccess ? <Check className="w-3.5 h-3.5" strokeWidth={3} /> : '납부'}
+                                      {isSuccess ? (
+                                        <Check className="w-3.5 h-3.5 animate-[checkBounce_0.3s_ease-out]" strokeWidth={3} />
+                                      ) : isSubmitting ? (
+                                        <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                      ) : '납부'}
                                     </button>
                                     <button
                                       onClick={() => handleOpenModal(student.id, fee)}
