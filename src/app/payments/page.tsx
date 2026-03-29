@@ -146,8 +146,8 @@ export default function PaymentsPage() {
       const dt = Date.now() - swipeStart.current.time
       swipeStart.current = null
       if (Math.abs(dx) < 60 || Math.abs(dy) > Math.abs(dx)) return
-      // 빠르게 밀기(300ms 이내) = 월 변경, 느리게 = 원래 스와이프 기능
-      if (dt > 300) return
+      // 아주 빠르게 밀기(200ms 이내) = 월 변경, 느리게 = 원래 스와이프 기능
+      if (dt > 200) return
       if (dx < 0) navigateMonth(1)
       else navigateMonth(-1)
     }
