@@ -35,7 +35,7 @@ export default function Navbar() {
           <div className="flex items-center justify-between h-14">
             <Link href="/dashboard" className="flex items-center gap-2" aria-label="홈으로 이동">
               <Image src="/icons/icon-192x192.png" alt="원비관리" width={32} height={32} className="rounded-md" />
-              <span className="text-lg font-bold text-[#d8d8dc]">원비관리</span>
+              <span className="text-lg font-bold text-[#f0f0f2]">원비관리</span>
             </Link>
             <div className="flex items-center gap-2">
             <div className="hidden sm:flex gap-1">
@@ -49,8 +49,8 @@ export default function Navbar() {
                     onClick={() => setDirection(idx > currentIdx ? 'left' : idx < currentIdx ? 'right' : 'none')}
                     className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors
                       ${isActive(href)
-                        ? 'bg-[#d8d8dc] text-[#1e2d6f]'
-                        : 'text-[#c8c5be] hover:bg-white/10'}`}
+                        ? 'bg-[#f0f0f2] text-[#1e2d6f]'
+                        : 'text-[#e8e8ec] hover:bg-white/10'}`}
                   >
                     <Icon className="w-4 h-4" />
                     {label}
@@ -61,7 +61,7 @@ export default function Navbar() {
               <Link
                 href="/finance"
                 aria-label="재정"
-                className="p-2 rounded-lg text-[#c8c5be] hover:bg-white/10 transition-colors"
+                className="p-2 rounded-lg text-[#e8e8ec] hover:bg-white/10 transition-colors"
               >
                 <Wallet className="w-5 h-5" />
               </Link>
