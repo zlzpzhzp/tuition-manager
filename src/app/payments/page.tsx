@@ -828,15 +828,15 @@ export default function PaymentsPage() {
                                       onClick={() => handleInlineSubmit(student.id, fee)}
                                       disabled={!!inlineSuccess || !!inlineSubmitting}
                                       className={`fan-item px-2.5 py-0.5 rounded-full text-xs font-medium transition-all duration-300 ${
-                                        isSuccess ? 'bg-green-500 text-white scale-110' : isSubmitting ? 'bg-green-300 text-white scale-100' : 'bg-[#DEF7EC] text-[#03543F] hover:opacity-80'
+                                        isSuccess ? 'bg-green-500 text-white scale-110' : isSubmitting ? 'bg-[#DEF7EC] scale-100' : 'bg-[#DEF7EC] text-[#03543F] hover:opacity-80'
                                       }`}
                                       aria-label="납부 처리"
                                     >
                                       {isSuccess ? (
                                         <Check className="w-3.5 h-3.5 animate-[checkBounce_0.3s_ease-out]" strokeWidth={3} />
                                       ) : isSubmitting ? (
-                                        <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                      ) : '납부'}
+                                        <span className="text-sm animate-[wink_0.8s_ease-in-out_infinite]">😉</span>
+                                      ) : '😊'}
                                     </button>
                                     <button
                                       onClick={() => handleOpenModal(student.id, fee)}
