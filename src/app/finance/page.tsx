@@ -228,7 +228,20 @@ export default function FinancePage() {
             inputMode="numeric"
             maxLength={6}
             value={pin}
-            onChange={e => { setPin(e.target.value.replace(/\D/g, '')); setPinError(false) }}
+            onChange={e => {
+              const val = e.target.value.replace(/\D/g, '')
+              setPin(val)
+              setPinError(false)
+              if (val.length === 6) {
+                if (val === FINANCE_PIN) {
+                  setAuthenticated(true)
+                  sessionStorage.setItem('finance_auth', 'true')
+                } else {
+                  setPinError(true)
+                  setTimeout(() => setPin(''), 300)
+                }
+              }
+            }}
             onKeyDown={e => e.key === 'Enter' && handlePinSubmit()}
             placeholder="••••••"
             className={`w-full text-center text-2xl tracking-[0.5em] px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1e2d6f] ${pinError ? 'border-red-400' : ''}`}
