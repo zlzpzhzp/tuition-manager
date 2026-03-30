@@ -283,9 +283,8 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
         ref={btnRef}
         className="fixed z-[60] select-none touch-none"
         style={{
-          left: open ? undefined : pos.x,
-          top: open ? '38%' : pos.y,
-          right: open ? 12 : undefined,
+          left: open ? Math.max(8, Math.min(pos.x, (typeof window !== 'undefined' ? window.innerWidth : 400) - 272)) : pos.x,
+          top: pos.y,
           cursor: open ? undefined : (dragging.current ? 'grabbing' : 'grab'),
         }}
         onTouchStart={open ? undefined : handleStart}
