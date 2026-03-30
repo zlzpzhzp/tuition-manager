@@ -133,6 +133,12 @@ export default function PaymentsPage() {
   }, [payments])
 
   // ─── Helpers ──────────────────────────────────────────────────
+  const navigateMonth = (delta: number) => {
+    const [y, m] = selectedMonth.split('-').map(Number)
+    const d = new Date(y, m - 1 + delta, 1)
+    setSelectedMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`)
+  }
+
   // 좌우 스와이프로 월 변경
   const swipeStart = useRef<{ x: number; y: number; time: number } | null>(null)
 
@@ -159,12 +165,6 @@ export default function PaymentsPage() {
       document.removeEventListener('touchend', onTouchEnd)
     }
   })
-
-  const navigateMonth = (delta: number) => {
-    const [y, m] = selectedMonth.split('-').map(Number)
-    const d = new Date(y, m - 1 + delta, 1)
-    setSelectedMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`)
-  }
 
   const getStudentPayments = useCallback((studentId: string) =>
     paymentsByStudentId.get(studentId) ?? []
@@ -637,7 +637,7 @@ export default function PaymentsPage() {
               const isGradeExpanded = gradeClassIds.every(id => expandedClasses.has(id))
 
               const toggleGradeExpand = () => {
-                setExpandedClasses(prev => {
+                setExpandedClasses(() => {
                   const next = new Set<string>()
                   if (!isGradeExpanded) {
                     gradeClassIds.forEach(id => next.add(id))

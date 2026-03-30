@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import { LayoutDashboard, CreditCard, Wallet, Settings } from 'lucide-react'
 import { useEffect } from 'react'
 import { useNavDirection } from './PageTransition'
@@ -15,7 +15,6 @@ const navItems = [
 
 export default function Navbar() {
   const pathname = usePathname()
-  const router = useRouter()
   const { setDirection } = useNavDirection()
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/')
