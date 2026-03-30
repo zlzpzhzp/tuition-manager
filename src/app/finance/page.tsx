@@ -18,7 +18,7 @@ interface Expense {
 
 const fetcher = (url: string) => fetch(url).then(r => r.json())
 
-const FINANCE_PIN = '327575'
+const FINANCE_PIN = '151004'
 
 export default function FinancePage() {
   const [authenticated, setAuthenticated] = useState(false)
