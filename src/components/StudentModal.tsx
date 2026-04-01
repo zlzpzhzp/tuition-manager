@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { X } from 'lucide-react'
 import type { Student, Grade, Class } from '@/types'
+import { getTodayString } from '@/lib/utils'
 
 interface Props {
   student?: Student | null
@@ -17,7 +18,7 @@ export default function StudentModal({ student, grades, defaultClassId, onSave, 
   const [classId, setClassId] = useState(student?.class_id ?? defaultClassId ?? '')
   const [phone, setPhone] = useState(student?.phone ?? '')
   const [parentPhone, setParentPhone] = useState(student?.parent_phone ?? '')
-  const [enrollmentDate, setEnrollmentDate] = useState(student?.enrollment_date ?? new Date().toISOString().split('T')[0])
+  const [enrollmentDate, setEnrollmentDate] = useState(student?.enrollment_date ?? getTodayString())
   const [customFee, setCustomFee] = useState(student?.custom_fee != null ? String(student.custom_fee) : '')
   const [memo, setMemo] = useState(student?.memo ?? '')
 

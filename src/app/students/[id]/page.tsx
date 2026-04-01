@@ -7,7 +7,7 @@ import type { Student, Payment, Grade, Class } from '@/types'
 import { getStudentFee, calcRefund, parseClassDays, DAY_LABELS, PAYMENT_METHOD_LABELS, CASH_RECEIPT_LABELS, getPaymentStatus, PAYMENT_STATUS_LABELS, PAYMENT_STATUS_COLORS } from '@/types'
 import StudentModal from '@/components/StudentModal'
 import PaymentModal from '@/components/PaymentModal'
-import { safeFetch, safeMutate } from '@/lib/utils'
+import { safeFetch, safeMutate, getTodayString } from '@/lib/utils'
 
 export default function StudentDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
@@ -19,7 +19,7 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
   const [showEditModal, setShowEditModal] = useState(false)
   const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [showRefundCalc, setShowRefundCalc] = useState(false)
-  const [refundDate, setRefundDate] = useState(new Date().toISOString().split('T')[0])
+  const [refundDate, setRefundDate] = useState(getTodayString())
 
   const fetchData = useCallback(async () => {
     const [studentResult, paymentsResult] = await Promise.all([
@@ -65,7 +65,7 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
 
   const handleWithdraw = async () => {
     if (!student) return
-    const date = prompt('퇴원일을 입력하세요 (YYYY-MM-DD)', new Date().toISOString().split('T')[0])
+    const date = prompt('퇴원일을 입력하세요 (YYYY-MM-DD)', getTodayString())
     if (!date) return
     const { error } = await safeMutate(`/api/students/${id}`, 'PUT', { withdrawal_date: date })
     if (error) {

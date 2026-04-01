@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { GoogleGenerativeAI, SchemaType, Content, Part, type Tool } from '@google/generative-ai'
 import { queryGradesTree, mapGradesTree, queryPaidMap } from '@/lib/queries'
+import { getTodayString } from '@/lib/date'
 
 // ── Tool definitions ──
 
@@ -210,8 +211,7 @@ export async function POST(req: Request) {
 
     const { messages } = (await req.json()) as { messages: ChatMessage[] }
 
-    const now = new Date()
-    const currentDate = now.toISOString().split('T')[0]
+    const currentDate = getTodayString()
     const currentMonth = currentDate.slice(0, 7)
 
     const genAI = new GoogleGenerativeAI(apiKey)

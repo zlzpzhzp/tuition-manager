@@ -5,6 +5,7 @@ import { X, Trash2, AlertTriangle, Check } from 'lucide-react'
 import type { Payment, PaymentMethod } from '@/types'
 import { PAYMENT_METHOD_LABELS } from '@/types'
 import { METHOD_OPTIONS } from '@/lib/constants'
+import { getTodayString } from '@/lib/utils'
 
 interface Props {
   payment?: Payment | null
@@ -20,7 +21,7 @@ interface Props {
 }
 
 export default function PaymentModal({ payment, studentId, defaultBillingMonth, defaultAmount, prevMemo, prevMethod, onSave, onUpdate, onDelete, onClose }: Props) {
-  const today = new Date().toISOString().split('T')[0]
+  const today = getTodayString()
   const currentMonth = today.slice(0, 7)
 
   const [amount, setAmount] = useState(payment?.amount ? String(payment.amount) : defaultAmount ? String(defaultAmount) : '')

@@ -45,6 +45,9 @@ export function revalidatePayments(billingMonth: string) {
   globalMutate(`/api/payments?billing_month=${billingMonth}`)
 }
 
+// ─── Date Helpers (re-export from lib/date) ─────────────────────────
+export { getTodayString } from './date'
+
 // ─── Payment Due Day ──────────────────────────────────────────────
 /** 학생의 결제 예정일 (등록일 기준 매월 같은 날) */
 export function getPaymentDueDay(student: Student): number {

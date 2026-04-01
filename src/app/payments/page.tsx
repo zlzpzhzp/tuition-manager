@@ -10,11 +10,11 @@ import StudentModal from '@/components/StudentModal'
 import DatePickerPopup from '@/components/payments/DatePickerPopup'
 import MethodPickerPopup from '@/components/payments/MethodPickerPopup'
 import AiFilterButton from '@/components/payments/AiFilterButton'
-import { getPrevMonth, getPaymentDueDay, isPaymentScheduled, getUnpaidLabelText, getActiveStudents, isWithdrawnStudent, safeMutate, decodePaymentMemo, useGrades, usePayments, revalidateGrades, revalidatePayments } from '@/lib/utils'
+import { getPrevMonth, getPaymentDueDay, isPaymentScheduled, getUnpaidLabelText, getActiveStudents, isWithdrawnStudent, safeMutate, decodePaymentMemo, useGrades, usePayments, revalidateGrades, revalidatePayments, getTodayString } from '@/lib/utils'
 import { METHOD_OPTIONS_SHORT } from '@/lib/constants'
 
 export default function PaymentsPage() {
-  const today = new Date().toISOString().split('T')[0]
+  const today = getTodayString()
 
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const now = new Date()

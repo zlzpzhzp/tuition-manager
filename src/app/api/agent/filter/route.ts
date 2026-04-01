@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
+import { getTodayString } from '@/lib/date'
 
 const SYSTEM_PROMPT = `당신은 학원 원비관리 시스템의 필터 엔진입니다.
 학생 데이터 목록과 사용자의 한국어 필터 요청을 받아서, 조건에 맞는 학생만 골라냅니다.
@@ -53,8 +54,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: '필터 요청은 200자 이내여야 합니다.' }, { status: 400 })
     }
 
-    const now = new Date()
-    const currentDate = now.toISOString().split('T')[0]
+    const currentDate = getTodayString()
 
     const genAI = new GoogleGenerativeAI(apiKey)
     const model = genAI.getGenerativeModel({
