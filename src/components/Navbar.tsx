@@ -19,48 +19,52 @@ export default function Navbar() {
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/')
 
-  // 탭 전환 시 스크롤 상단으로
   useEffect(() => {
     window.scrollTo(0, 0)
   }, [pathname])
-
 
   if (pathname === '/login') return null
 
   return (
     <>
-      <nav className="shadow-lg" style={{ backgroundColor: '#1e2d6f' }}>
+      {/* 데스크톱 상단 네비게이션 */}
+      <nav className="backdrop-blur-md bg-[#1e2d6f]/95 sticky top-0 z-40">
         <div className="max-w-4xl mx-auto px-4">
           <div className="flex items-center justify-between h-14">
-            <Link href="/dashboard" className="flex items-center gap-2" aria-label="홈으로 이동">
-              <Image src="/icons/icon-192x192.png" alt="원비관리" width={32} height={32} className="rounded-md" />
-              <span className="text-lg font-bold text-[#f0f0f2]">원비관리</span>
+            <Link href="/dashboard" className="flex items-center gap-2.5" aria-label="홈으로 이동">
+              <Image src="/icons/icon-192x192.png" alt="원비관리" width={30} height={30} className="rounded-lg" />
+              <span className="text-[17px] font-bold text-white tracking-tight">원비관리</span>
             </Link>
-            <div className="flex items-center gap-2">
-            <div className="hidden sm:flex gap-1">
-              {navItems.map(({ href, label, icon: Icon }, idx) => {
-                const currentIdx = navItems.findIndex(item => isActive(item.href))
-                return (
-                  <Link
-                    key={href}
-                    href={href}
-                    aria-label={label}
-                    onClick={() => setDirection(idx > currentIdx ? 'left' : idx < currentIdx ? 'right' : 'none')}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors
-                      ${isActive(href)
-                        ? 'bg-[#f0f0f2] text-[#1e2d6f]'
-                        : 'text-[#e8e8ec] hover:bg-white/10'}`}
-                  >
-                    <Icon className="w-4 h-4" />
-                    {label}
-                  </Link>
-                )
-              })}
-            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="hidden sm:flex gap-1">
+                {navItems.map(({ href, label, icon: Icon }, idx) => {
+                  const currentIdx = navItems.findIndex(item => isActive(item.href))
+                  const active = isActive(href)
+                  return (
+                    <Link
+                      key={href}
+                      href={href}
+                      aria-label={label}
+                      onClick={() => setDirection(idx > currentIdx ? 'left' : idx < currentIdx ? 'right' : 'none')}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-150
+                        ${active
+                          ? 'bg-white text-[#1e2d6f] shadow-sm'
+                          : 'text-white/80 hover:text-white hover:bg-white/10'}`}
+                    >
+                      <Icon className="w-4 h-4" />
+                      {label}
+                    </Link>
+                  )
+                })}
+              </div>
               <Link
                 href="/finance"
                 aria-label="재정"
-                className="p-2 rounded-lg text-[#e8e8ec] hover:bg-white/10 transition-colors"
+                className={`p-2 rounded-lg transition-all duration-150 ${
+                  isActive('/finance')
+                    ? 'bg-white text-[#1e2d6f] shadow-sm'
+                    : 'text-white/80 hover:text-white hover:bg-white/10'
+                }`}
               >
                 <Wallet className="w-5 h-5" />
               </Link>
@@ -69,7 +73,8 @@ export default function Navbar() {
         </div>
       </nav>
 
-      <div className="fixed bottom-0 left-0 right-0 sm:hidden z-50 border-t bg-white" style={{ borderColor: '#dde1ef' }}>
+      {/* 모바일 하단 네비게이션 */}
+      <div className="fixed bottom-0 left-0 right-0 sm:hidden z-50 bg-white/95 backdrop-blur-md border-t border-gray-100">
         <div className="flex">
           {navItems.map(({ href, label, icon: Icon }, idx) => {
             const active = isActive(href)
@@ -80,18 +85,19 @@ export default function Navbar() {
                 href={href}
                 aria-label={label}
                 onClick={() => setDirection(idx > currentIdx ? 'left' : idx < currentIdx ? 'right' : 'none')}
-                className="flex-1 flex flex-col items-center justify-center py-3 gap-1 transition-colors relative"
-                style={{ color: active ? '#1e2d6f' : '#9ca3af' }}
+                className="flex-1 flex flex-col items-center justify-center py-2.5 gap-0.5 transition-colors relative"
               >
-                <Icon className="w-5 h-5" />
-                <span className="text-[11px] font-medium">{label}</span>
+                <Icon className="w-5 h-5" style={{ color: active ? '#1e2d6f' : '#b0b5c3' }} />
+                <span className="text-[10px] font-semibold" style={{ color: active ? '#1e2d6f' : '#b0b5c3' }}>{label}</span>
                 {active && (
-                  <span className="absolute bottom-0 w-8 h-0.5 rounded-full" style={{ backgroundColor: '#1e2d6f' }} />
+                  <span className="absolute bottom-0 w-10 h-[3px] rounded-full bg-[#1e2d6f]" />
                 )}
               </Link>
             )
           })}
         </div>
+        {/* Safe area for iPhone home indicator */}
+        <div className="h-[env(safe-area-inset-bottom)]" />
       </div>
     </>
   )

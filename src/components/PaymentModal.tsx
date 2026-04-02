@@ -88,15 +88,15 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
   }
 
   return (
-    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center" onClick={onClose}>
       <div
         ref={modalRef}
-        className="bg-white w-full sm:max-w-md rounded-2xl max-h-[85vh] overflow-y-auto"
+        className="bg-white w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl max-h-[85vh] overflow-y-auto animate-fade-in-up"
         onClick={e => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-5 py-4 border-b">
-          <h2 className="text-lg font-bold">{payment ? '납부 정보' : '납부'}</h2>
-          <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <h2 className="text-lg font-bold tracking-tight">{payment ? '납부 정보' : '납부'}</h2>
+          <button onClick={onClose} className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"><X className="w-5 h-5" /></button>
         </div>
 
         {/* 이전달 비고 알림 */}

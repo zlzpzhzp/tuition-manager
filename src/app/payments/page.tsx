@@ -500,8 +500,8 @@ export default function PaymentsPage() {
       {[...Array(2)].map((_, gi) => (
         <div key={gi} className="mb-4">
           <div className="h-4 bg-gray-200 rounded w-20 mb-2 ml-1"></div>
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-            <div className="px-4 py-2 bg-gray-50 border-b border-gray-200"><div className="h-3 bg-gray-200 rounded w-24"></div></div>
+          <div className="card overflow-hidden">
+            <div className="px-4 py-2.5 bg-gray-50/70 border-b border-gray-100"><div className="h-3 bg-gray-200 rounded w-24"></div></div>
             {[...Array(4)].map((_, si) => (
               <div key={si} className="flex items-center gap-2 px-4 py-3">
                 <div className="h-4 bg-gray-200 rounded w-14 flex-1"></div>
@@ -524,7 +524,7 @@ export default function PaymentsPage() {
   return (
     <div ref={containerRef} onClick={() => { if (swipeOpenId) closeSwipeEdit() }}>
       {/* 월 네비게이션 — sticky 고정 (iOS 대응: -top-6으로 main py-6 상쇄) */}
-      <div className="sticky -top-6 z-30 bg-gray-50 -mx-4 px-4 pt-6 pb-1">
+      <div className="sticky -top-6 z-30 bg-[#f5f6fa] -mx-4 px-4 pt-6 pb-1">
         {/* Pull-to-refresh 인디케이터 */}
         <div
           className="flex items-center justify-center overflow-hidden transition-all duration-200 ease-out"
@@ -577,7 +577,7 @@ export default function PaymentsPage() {
             localStorage.setItem(`payment_memo_${selectedMonth}`, e.target.value)
           }}
           placeholder="메모..."
-          className="w-full px-4 py-3 text-sm border border-gray-200 rounded-xl bg-white resize-none focus:outline-none focus:ring-2 focus:ring-[#1e2d6f] placeholder-gray-300"
+          className="w-full px-4 py-3 text-sm card resize-none focus:outline-none focus:ring-2 focus:ring-[#1e2d6f] placeholder-gray-300"
           rows={3}
         />
       </div>
@@ -680,7 +680,7 @@ export default function PaymentsPage() {
                       </button>
                     )}
                   </div>
-                  <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                  <div className="card overflow-hidden">
                   {gradeClasses.map(cls => {
                 const allClassStudents = getActiveStudents(cls.students ?? [], selectedMonth)
                 let students = aiFilterIds ? allClassStudents.filter(s => aiFilterIds.has(s.id)) : allClassStudents
@@ -707,7 +707,7 @@ export default function PaymentsPage() {
                 return (
                   <div key={cls.id}>
                     <div
-                      className="px-4 py-2 bg-gray-50 border-b border-gray-200 flex items-center cursor-pointer active:bg-gray-100 select-none"
+                      className="px-4 py-2.5 bg-gray-50/70 border-b border-gray-100 flex items-center cursor-pointer active:bg-gray-100 select-none"
                       onClick={() => toggleClass(cls.id)}
                     >
                       <span className="text-sm font-medium text-gray-600">{cls.name}</span>
@@ -910,7 +910,7 @@ export default function PaymentsPage() {
                                   {status !== 'unpaid' ? (
                                     <button
                                       onClick={(e) => { e.stopPropagation(); handleOpenModal(student.id, fee) }}
-                                      className="px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap cursor-pointer hover:opacity-80 transition-opacity"
+                                      className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap cursor-pointer hover:opacity-80 transition-opacity"
                                       style={{ backgroundColor: displayColors.bg, color: displayColors.text }}
                                       role="status"
                                     >
@@ -918,7 +918,7 @@ export default function PaymentsPage() {
                                     </button>
                                   ) : (
                                     <span
-                                      className="px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap"
+                                      className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap"
                                       style={{ backgroundColor: displayColors.bg, color: displayColors.text }}
                                       role="status"
                                     >

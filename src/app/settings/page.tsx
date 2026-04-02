@@ -280,7 +280,7 @@ export default function SettingsPage() {
 
   return (
     <div>
-      <h1 className="text-xl font-bold mb-6">과목/반 설정</h1>
+      <h1 className="text-[22px] font-bold tracking-tight mb-6">과목/반 설정</h1>
 
       {/* 학년별 반 관리 */}
       {grades.length === 0 ? (
@@ -290,14 +290,14 @@ export default function SettingsPage() {
           {grades.map((grade) => {
             const totalStudents = grade.classes.reduce((sum, cls) => sum + getActiveStudents(cls.students ?? []).length, 0)
             return (
-              <div key={grade.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+              <div key={grade.id} className="card overflow-hidden">
                 <div className="flex items-center gap-2 px-4 py-3">
                   <span className="flex-1 font-semibold text-sm">{grade.name}</span>
                   <span className="text-xs text-gray-400 mr-1">{grade.classes.length}개 반</span>
                   <span className="text-xs text-gray-400">{totalStudents}명</span>
                 </div>
 
-                <div className="border-t border-gray-200 bg-gray-50 px-4 py-3">
+                <div className="border-t border-gray-100 bg-gray-50/50 px-4 py-3">
                   {grade.classes.length > 0 && (
                     <div className="space-y-2 mb-3">
                       {grade.classes.map((cls, clsIdx) => (
@@ -431,12 +431,12 @@ export default function SettingsPage() {
 
       {/* 선생님 관리 */}
       <div className="mt-8">
-        <div className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-3">
-          <UserCircle className="w-4 h-4" />
+        <div className="flex items-center gap-2 text-[15px] font-bold text-gray-700 mb-3">
+          <UserCircle className="w-4.5 h-4.5" />
           선생님 관리
         </div>
 
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className="card overflow-hidden">
             <div className="px-4 py-3">
               {teachers.length > 0 && (
                 <div className="space-y-2 mb-3">
@@ -501,10 +501,10 @@ export default function SettingsPage() {
       </div>
 
       {/* 로그 & 로그아웃 */}
-      <div className="mt-12 pt-6 border-t space-y-3">
+      <div className="mt-12 pt-6 border-t border-gray-100 space-y-3">
         <button
           onClick={loadLogs}
-          className="w-full py-3 text-gray-600 bg-white border border-gray-200 rounded-xl text-sm font-medium hover:bg-gray-50 flex items-center justify-center gap-2"
+          className="w-full py-3 text-gray-500 card text-sm font-medium hover:bg-gray-50 flex items-center justify-center gap-2 transition-colors"
         >
           <ScrollText className="w-4 h-4" />
           변경 로그
@@ -516,7 +516,7 @@ export default function SettingsPage() {
             router.push('/login')
             router.refresh()
           }}
-          className="w-full py-3 text-red-500 bg-white border border-red-200 rounded-xl text-sm font-medium hover:bg-red-50 flex items-center justify-center gap-2"
+          className="w-full py-3 text-red-400 card text-sm font-medium hover:bg-red-50 flex items-center justify-center gap-2 transition-colors"
         >
           <LogOut className="w-4 h-4" />
           로그아웃
@@ -525,7 +525,7 @@ export default function SettingsPage() {
 
       {/* 학생 반이동 모달 */}
       {transferClass && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center" onClick={() => setTransferClass(null)}>
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center" onClick={() => setTransferClass(null)}>
           <div className="bg-white w-full sm:max-w-md sm:rounded-xl rounded-t-xl max-h-[80vh] flex flex-col" onClick={e => e.stopPropagation()}>
             <div className="px-5 py-4 border-b flex items-center justify-between shrink-0">
               <div>
@@ -617,7 +617,7 @@ export default function SettingsPage() {
 
       {/* 감사 로그 모달 */}
       {showLogs && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center" onClick={() => setShowLogs(false)}>
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center" onClick={() => setShowLogs(false)}>
           <div className="bg-white w-full sm:max-w-lg sm:rounded-xl rounded-t-xl max-h-[85vh] flex flex-col" onClick={e => e.stopPropagation()}>
             <div className="px-5 py-4 border-b flex items-center justify-between shrink-0">
               <h2 className="font-bold text-sm">변경 로그</h2>

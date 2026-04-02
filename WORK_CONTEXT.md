@@ -6,24 +6,35 @@
 ## 현재 상태: 작업 중
 
 ## 마지막 작업
-- **일시**: 2026-04-01
-- **작업 내용**: 타임존 KST 전환 대응 — toISOString() 버그 수정 + Vercel TZ 환경변수
+- **일시**: 2026-04-02
+- **작업 내용**: 앱 전체 디자인 리팩토링 (거국적)
 - **결과**: 진행 중
 
 ## 진행 중인 작업
-- toISOString().split('T')[0] → getTodayString() 로컬 타임존 헬퍼로 교체 (7곳)
-- Vercel TZ 환경변수: TZ는 예약어라 API로 추가 불가 → 코드에서 처리
+- 앱 전체 UI 디자인 리팩토링
+- 완료: globals.css (디자인 토큰, card 클래스, 배경색, 폰트), Navbar (backdrop-blur, 활성탭 shadow, 모바일 하단바 개선)
+- 진행 예정: Dashboard, Payments, Settings, Finance, Login 페이지 순차 리팩토링
+- Vercel 배포 한도 초과 → 서버에서 빌드+서빙, 내일 Vercel 배포
 
 ## 다음에 할 것
-- 나머지 파일 toISOString 교체 완료 후 커밋+push+배포
+- Dashboard 리디자인 → Payments → Settings → Finance → Login 순서로 진행
+- 완료 후 커밋+push+서버 빌드 서빙
 
-## 세션 로그 (2026-04-01)
+## 세션 로그 (2026-04-02)
 - [시작] 유저(터미널): "CLAUDE.md와 WORK_CONTEXT.md를 다시 읽어서 맥락을 복구해. 세션이 재시작돼서 이전 대화가 날아갔어."
-- Claude: git pull + WORK_CONTEXT.md + memory/brain.md 읽어서 맥락 복구. 현재 상태: 진행 중 작업 없음, 지시 대기.
-- 유저(터미널): "Supabase DB 직접 접속 가능해졌어. 앞으로 DDL이나 마이그레이션 필요하면 초능력자님한테 복붙 시키지 말고 직접 해. 접속 명령: PGPASSWORD=... psql -h db.pasycnvfdotcdzzysqbz.supabase.co ..."
-- Claude: DB 접속 정보 메모리 저장 (reference_supabase_db.md + feedback_direct_db.md).
-- 유저(터미널): "서버 타임존이 UTC에서 Asia/Seoul(KST)로 변경됐어. new Date()가 이제 한국시간 반환함. 혹시 UTC 기준으로 하드코딩한 부분 있으면 확인하고 수정해. 그리고 Vercel 배포 환경에도 TZ=Asia/Seoul 환경변수 추가해야 해."
-- Claude: 탐색 에이전트로 UTC 하드코딩 부분 전체 스캔. toISOString().split('T')[0] 7곳 발견. Vercel TZ 환경변수는 예약어라 추가 불가 → 코드에서 처리. utils.ts에 getTodayString() 헬퍼 추가, 나머지 파일 교체 진행 중.
+- Claude: git pull + WORK_CONTEXT.md + memory/brain.md 읽어서 맥락 복구.
+- 유저(터미널): "Supabase DB 직접 접속 가능해졌어. 앞으로 DDL이나 마이그레이션 필요하면 초능력자님한테 복붙 시키지 말고 직접 해."
+- Claude: DB 접속 정보 메모리 저장.
+- 유저(터미널): "서버 타임존이 UTC에서 Asia/Seoul(KST)로 변경됐어. toISOString 하드코딩 확인+수정해. Vercel에 TZ=Asia/Seoul 추가해."
+- Claude: toISOString().split('T')[0] → getTodayString() 7곳 교체. src/lib/date.ts 신규 생성. Vercel TZ는 예약어라 불가 → 코드에서 대응. 빌드 성공, 커밋+push+배포 완료.
+- 유저(터미널): "/root/shared/bulletin.md 파일이 새로 생겼어. 전 앱 공유 게시판이야. 세션 시작할 때 읽어."
+- Claude: bulletin.md 읽음. 메모리에 reference_bulletin.md 저장. [원비] toISOString() 건 역사 기록.
+- 유저(텔레그램): "원비야 간만이다 디자인스킬써서 앱 전체 리팩토링 한번해 거국적으로"
+- Claude: 앱 전체 UI 분석 에이전트 실행. 10개 항목 개선 계획 텔레그램으로 전달.
+- 유저(텔레그램): "반말하지 말구" / "그리고 배포 안되는거 알지?" / "일단 서버에서 뿌려 리팩토링해서 내일 버셀 열리면 배포하면 되니까"
+- Claude: 존댓말로 전환. Vercel 한도 초과 인지. 서버 빌드+서빙 후 내일 Vercel 배포 계획.
+- 유저(텔레그램): "시작해~"
+- Claude: 리팩토링 시작. globals.css 완료 (디자인토큰, card 클래스, 배경색, 폰트). Navbar 완료 (backdrop-blur, 활성탭 shadow, 모바일 하단바 개선). 다음: Dashboard.
 
 ## 이전 세션 로그 (2026-03-24~03-30)
 - [15:49] 유저(텔레그램): "여기도 이제 되지?"

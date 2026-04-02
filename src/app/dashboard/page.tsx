@@ -65,30 +65,28 @@ export default function DashboardPage() {
   }, [stats.unpaidStudents])
 
   if (loading) return (
-    <div className="animate-pulse">
-      <div className="h-6 bg-gray-200 rounded w-40 mb-2"></div>
-      <div className="h-4 bg-gray-100 rounded w-56 mb-6"></div>
-      <div className="grid grid-cols-2 gap-3 mb-6">
+    <div className="animate-pulse space-y-4">
+      <div className="h-7 bg-gray-200 rounded-lg w-48 mb-1"></div>
+      <div className="h-4 bg-gray-100 rounded w-56 mb-5"></div>
+      <div className="grid grid-cols-2 gap-3">
         {[...Array(4)].map((_, i) => (
-          <div key={i} className="bg-white rounded-xl border p-4">
+          <div key={i} className="card p-5">
             <div className="flex items-center gap-2 mb-3">
-              <div className="w-4 h-4 bg-gray-200 rounded"></div>
-              <div className="h-3 bg-gray-200 rounded w-12"></div>
+              <div className="w-8 h-8 bg-gray-100 rounded-xl"></div>
+              <div className="h-3 bg-gray-100 rounded w-12"></div>
             </div>
-            <div className="h-7 bg-gray-200 rounded w-20"></div>
+            <div className="h-8 bg-gray-100 rounded-lg w-20"></div>
           </div>
         ))}
       </div>
-      <div className="bg-white rounded-xl border p-5">
+      <div className="card p-5">
         <div className="h-4 bg-gray-200 rounded w-28 mb-4"></div>
         <div className="space-y-3">
           {[...Array(5)].map((_, i) => (
-            <div key={i} className="flex items-center gap-3 px-3 py-2">
-              <div className="flex-1">
-                <div className="h-4 bg-gray-200 rounded w-16 mb-1"></div>
-              </div>
+            <div key={i} className="flex items-center gap-3 py-2">
+              <div className="flex-1"><div className="h-4 bg-gray-100 rounded w-16"></div></div>
               <div className="h-4 bg-gray-100 rounded w-20"></div>
-              <div className="h-5 bg-gray-200 rounded-full w-12"></div>
+              <div className="h-6 bg-gray-100 rounded-full w-14"></div>
             </div>
           ))}
         </div>
@@ -97,63 +95,79 @@ export default function DashboardPage() {
   )
 
   if (error) return (
-    <div className="text-center py-12">
-      <p className="text-red-500 mb-4">{error?.message}</p>
-      <button onClick={() => window.location.reload()} className="px-4 py-2 bg-[#1e2d6f] text-white rounded-lg hover:opacity-90">다시 시도</button>
+    <div className="text-center py-16">
+      <p className="text-red-500 mb-4 text-sm">{error?.message}</p>
+      <button onClick={() => window.location.reload()} className="px-5 py-2.5 bg-[#1e2d6f] text-white rounded-xl text-sm font-medium hover:opacity-90 transition-opacity">다시 시도</button>
     </div>
   )
 
   return (
-    <div>
-      <h1 className="text-xl font-bold mb-1">{formatMonth(currentMonth)} 대시보드</h1>
-      <p className="text-sm text-gray-400 mb-6">{new Date().toLocaleDateString('ko-KR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+    <div className="space-y-4">
+      {/* 헤더 */}
+      <div className="mb-2">
+        <h1 className="text-[22px] font-bold tracking-tight mb-0.5">{formatMonth(currentMonth)} 대시보드</h1>
+        <p className="text-sm text-gray-400">{new Date().toLocaleDateString('ko-KR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+      </div>
 
       {/* 요약 카드 */}
-      <div className="grid grid-cols-2 gap-3 mb-6">
-        <div className="bg-white rounded-xl border p-4">
-          <div className="flex items-center gap-2 mb-1">
-            <Users className="w-4 h-4 text-[#1e2d6f]" />
-            <span className="text-xs text-gray-400">재원생</span>
+      <div className="grid grid-cols-2 gap-3">
+        {[
+          {
+            icon: Users, iconBg: 'bg-blue-50', iconColor: 'text-[#1e2d6f]',
+            label: '재원생',
+            value: stats.totalStudents, unit: '명',
+          },
+          {
+            icon: TrendingUp, iconBg: 'bg-emerald-50', iconColor: 'text-emerald-600',
+            label: '납부율',
+            value: stats.paymentRate, unit: '%',
+            sub: `${stats.paidCount}/${stats.totalStudents}명`,
+          },
+          {
+            icon: CreditCard, iconBg: 'bg-blue-50', iconColor: 'text-[#1e2d6f]',
+            label: '수납 / 총원비',
+            value: (stats.totalPaid / 10000).toFixed(0), unit: '만',
+            sub: `/ ${(stats.totalFee / 10000).toFixed(0)}만원`,
+          },
+          {
+            icon: AlertCircle, iconBg: 'bg-red-50', iconColor: 'text-red-500',
+            label: '미납 / 예정',
+            customValue: true,
+          },
+        ].map((card, i) => (
+          <div key={i} className="card p-4 animate-fade-in-up" style={{ animationDelay: `${i * 50}ms` }}>
+            <div className="flex items-center gap-2 mb-2.5">
+              <div className={`w-8 h-8 ${card.iconBg} rounded-xl flex items-center justify-center`}>
+                <card.icon className={`w-4 h-4 ${card.iconColor}`} />
+              </div>
+              <span className="text-xs font-medium text-gray-400">{card.label}</span>
+            </div>
+            {card.customValue ? (
+              <p className="text-3xl font-bold tracking-tight">
+                <span className="text-red-500">{stats.overdueStudents.length}</span>
+                <span className="text-gray-200 font-normal mx-1">/</span>
+                <span className="text-amber-500">{stats.scheduledStudents.length}</span>
+                <span className="text-sm text-gray-400 font-normal ml-0.5">명</span>
+              </p>
+            ) : (
+              <>
+                <p className="text-3xl font-bold tracking-tight">
+                  {card.value}<span className="text-sm text-gray-400 font-normal ml-0.5">{card.unit}</span>
+                </p>
+                {card.sub && <p className="text-xs text-gray-400 mt-0.5">{card.sub}</p>}
+              </>
+            )}
           </div>
-          <p className="text-4xl font-bold tracking-tight">{stats.totalStudents}<span className="text-base text-gray-400 font-normal ml-0.5">명</span></p>
-        </div>
-        <div className="bg-white rounded-xl border p-4">
-          <div className="flex items-center gap-2 mb-1">
-            <TrendingUp className="w-4 h-4 text-green-600" />
-            <span className="text-xs text-gray-400">납부율</span>
-          </div>
-          <p className="text-4xl font-bold tracking-tight">{stats.paymentRate}<span className="text-base text-gray-400 font-normal ml-0.5">%</span></p>
-          <p className="text-xs text-gray-400 mt-0.5">{stats.paidCount}/{stats.totalStudents}명</p>
-        </div>
-        <div className="bg-white rounded-xl border p-4">
-          <div className="flex items-center gap-2 mb-1">
-            <CreditCard className="w-4 h-4 text-[#1e2d6f]" />
-            <span className="text-xs text-gray-400">수납 / 총원비</span>
-          </div>
-          <p className="text-3xl font-bold tracking-tight">{(stats.totalPaid / 10000).toFixed(0)}<span className="text-sm text-gray-400 font-normal ml-0.5">만</span></p>
-          <p className="text-xs text-gray-400 mt-0.5">/ {(stats.totalFee / 10000).toFixed(0)}만원</p>
-        </div>
-        <div className="bg-white rounded-xl border p-4">
-          <div className="flex items-center gap-2 mb-1">
-            <AlertCircle className="w-4 h-4 text-red-500" />
-            <span className="text-xs text-gray-400">미납 / 예정</span>
-          </div>
-          <p className="text-3xl font-bold tracking-tight">
-            <span className="text-red-600">{stats.overdueStudents.length}</span>
-            <span className="text-gray-300 font-normal mx-1">/</span>
-            <span className="text-amber-600">{stats.scheduledStudents.length}</span>
-            <span className="text-base text-gray-400 font-normal ml-0.5">명</span>
-          </p>
-        </div>
+        ))}
       </div>
 
       {/* 납부 기한 임박 */}
       {urgentStudents.length > 0 && (
-        <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 mb-6">
-          <h2 className="text-sm font-bold text-orange-800 mb-2 flex items-center gap-1">
+        <div className="bg-gradient-to-r from-orange-50 to-amber-50 rounded-2xl p-4 border border-orange-100">
+          <h2 className="text-sm font-bold text-orange-800 mb-2.5 flex items-center gap-1.5">
             <AlertCircle className="w-4 h-4" /> 납부 기한 임박 ({urgentStudents.length}명)
           </h2>
-          <div className="space-y-2">
+          <div className="space-y-1">
             {urgentStudents.slice(0, 5).map(s => {
               const fee = getStudentFee(s, s.class)
               const paid = getStudentPaid(s.id)
@@ -162,17 +176,17 @@ export default function DashboardPage() {
                 <Link
                   key={s.id}
                   href={`/students/${s.id}`}
-                  className="flex items-center justify-between text-sm hover:bg-orange-100 active:bg-orange-100 rounded-lg px-2 py-2 -mx-2"
+                  className="flex items-center justify-between text-sm hover:bg-orange-100/50 active:bg-orange-100/50 rounded-xl px-3 py-2.5 -mx-1 transition-colors"
                 >
                   <div>
-                    <span className="font-medium text-orange-900">{s.name}</span>
+                    <span className="font-semibold text-orange-900">{s.name}</span>
                     {s.enrollment_date?.startsWith(currentMonth) && (
-                      <span className="text-[9px] ml-1 px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-500 font-bold">신규</span>
+                      <span className="text-[9px] ml-1.5 px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-600 font-bold">신규</span>
                     )}
-                    <span className="text-orange-600 ml-2 text-xs">{s.class?.name}</span>
+                    <span className="text-orange-500 ml-2 text-xs">{s.class?.name}</span>
                   </div>
-                  <div className="text-xs text-orange-700">
-                    매월 {enrollDay}일 · {(fee - paid).toLocaleString()}원 미납
+                  <div className="text-xs font-medium text-orange-700">
+                    매월 {enrollDay}일 · {(fee - paid).toLocaleString()}원
                   </div>
                 </Link>
               )
@@ -182,18 +196,18 @@ export default function DashboardPage() {
       )}
 
       {/* 미납 학생 목록 */}
-      <div className="bg-white rounded-xl border p-5">
-        <h2 className="font-bold text-sm mb-3">
+      <div className="card p-5">
+        <h2 className="font-bold text-[15px] mb-3">
           미납 학생
-          {stats.overdueStudents.length > 0 && <span className="text-red-600 ml-1">미납 {stats.overdueStudents.length}</span>}
-          {stats.overdueStudents.length > 0 && stats.scheduledStudents.length > 0 && <span className="text-gray-300 mx-1">·</span>}
-          {stats.scheduledStudents.length > 0 && <span className="text-amber-600">예정 {stats.scheduledStudents.length}</span>}
+          {stats.overdueStudents.length > 0 && <span className="text-red-500 ml-1.5">미납 {stats.overdueStudents.length}</span>}
+          {stats.overdueStudents.length > 0 && stats.scheduledStudents.length > 0 && <span className="text-gray-200 mx-1">·</span>}
+          {stats.scheduledStudents.length > 0 && <span className="text-amber-500">예정 {stats.scheduledStudents.length}</span>}
           {stats.unpaidStudents.length === 0 && ' (0명)'}
         </h2>
         {stats.unpaidStudents.length === 0 ? (
-          <p className="text-sm text-gray-400 py-4 text-center">모든 학생이 납부 완료했습니다 🎉</p>
+          <p className="text-sm text-gray-400 py-6 text-center">모든 학생이 납부 완료했습니다</p>
         ) : (
-          <div className="space-y-1">
+          <div className="space-y-0.5">
             {stats.unpaidStudents.map(s => {
               const fee = getStudentFee(s, s.class)
               const paid = getStudentPaid(s.id)
@@ -211,18 +225,18 @@ export default function DashboardPage() {
                 <Link
                   key={s.id}
                   href={`/students/${s.id}`}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 active:bg-gray-50"
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 active:bg-gray-50 transition-colors"
                 >
                   <div className="flex-1 min-w-0">
                     <span className="text-sm font-medium">{s.name}</span>
                     {s.enrollment_date?.startsWith(currentMonth) && (
-                      <span className="text-[9px] ml-1 px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-500 font-bold">신규</span>
+                      <span className="text-[9px] ml-1.5 px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-600 font-bold">신규</span>
                     )}
                     <span className="text-xs text-gray-400 ml-2">{s.class?.name}</span>
                   </div>
-                  <span className="text-xs text-gray-400">{(fee - paid).toLocaleString()}원</span>
+                  <span className="text-xs text-gray-400 tabular-nums">{(fee - paid).toLocaleString()}원</span>
                   <span
-                    className="px-2 py-0.5 rounded-full text-xs font-medium"
+                    className="px-2.5 py-1 rounded-full text-[11px] font-semibold"
                     style={{ backgroundColor: displayColors.bg, color: displayColors.text }}
                     role="status"
                   >
@@ -256,26 +270,26 @@ export default function DashboardPage() {
         const grandPaid = teacherStats.reduce((sum, t) => sum + t.totalPaid, 0)
 
         return (
-          <div className="bg-white rounded-xl border p-5 mb-4">
-            <h2 className="font-bold text-sm mb-3">선생님별 매출</h2>
-            <div className="space-y-2">
+          <div className="card p-5">
+            <h2 className="font-bold text-[15px] mb-3">선생님별 매출</h2>
+            <div className="space-y-0">
               {teacherStats.map(({ teacher, totalFee, totalPaid, studentCount, classCount }) => (
-                <div key={teacher.id} className="flex items-center justify-between py-2 border-b last:border-b-0">
+                <div key={teacher.id} className="flex items-center justify-between py-3 border-b border-gray-50 last:border-b-0">
                   <div>
-                    <span className="text-sm font-medium">{teacher.name}</span>
-                    {teacher.subject && <span className="text-xs text-gray-400 ml-1">({teacher.subject})</span>}
+                    <span className="text-sm font-semibold">{teacher.name}</span>
+                    {teacher.subject && <span className="text-xs text-gray-400 ml-1.5">({teacher.subject})</span>}
                     <span className="text-xs text-gray-400 ml-2">{classCount}반 · {studentCount}명</span>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-medium">{totalFee.toLocaleString()}원</p>
+                    <p className="text-sm font-semibold tabular-nums">{totalFee.toLocaleString()}원</p>
                     <p className="text-xs text-gray-400">수납 {totalPaid.toLocaleString()}원</p>
                   </div>
                 </div>
               ))}
-              <div className="flex items-center justify-between pt-2 border-t font-bold">
-                <span className="text-sm">합계</span>
+              <div className="flex items-center justify-between pt-3 mt-1 border-t border-gray-200">
+                <span className="text-sm font-bold">합계</span>
                 <div className="text-right">
-                  <span className="text-sm">{grandFee.toLocaleString()}원</span>
+                  <span className="text-sm font-bold tabular-nums">{grandFee.toLocaleString()}원</span>
                   <p className="text-xs text-gray-400 font-normal">수납 {grandPaid.toLocaleString()}원</p>
                 </div>
               </div>
@@ -297,21 +311,21 @@ export default function DashboardPage() {
         const maxCount = Math.max(...classData.map(c => c.count), 1)
 
         return (
-          <div className="bg-white rounded-xl border p-5 mb-4">
-            <h2 className="font-bold text-sm mb-4">반별 인원</h2>
+          <div className="card p-5">
+            <h2 className="font-bold text-[15px] mb-4">반별 인원</h2>
             <div className="space-y-2.5">
               {classData.map((c, i) => (
                 <div key={i} className="flex items-center gap-3">
-                  <div className="w-16 text-xs text-gray-600 font-medium truncate shrink-0">{c.name}</div>
-                  <div className="flex-1 h-6 bg-gray-50 rounded-full overflow-hidden relative">
+                  <div className="w-16 text-xs text-gray-500 font-medium truncate shrink-0">{c.name}</div>
+                  <div className="flex-1 h-7 bg-gray-50 rounded-full overflow-hidden relative">
                     <div
-                      className="h-full rounded-full transition-all duration-500"
+                      className="h-full rounded-full transition-all duration-700 ease-out"
                       style={{
-                        width: `${Math.max((c.count / maxCount) * 100, 8)}%`,
-                        background: `linear-gradient(90deg, #1e2d6f, #2d4298)`,
+                        width: `${Math.max((c.count / maxCount) * 100, 10)}%`,
+                        background: `linear-gradient(90deg, #1e2d6f, #3b51b5)`,
                       }}
                     />
-                    <span className="absolute inset-y-0 right-2 flex items-center text-xs font-bold text-gray-500">
+                    <span className="absolute inset-y-0 right-2.5 flex items-center text-xs font-bold text-gray-500">
                       {c.count}명
                     </span>
                   </div>
@@ -324,9 +338,9 @@ export default function DashboardPage() {
 
       {/* 학년별 총액 */}
       {grades.length > 0 && (
-        <div className="bg-white rounded-xl border p-5 mt-4">
-          <h2 className="font-bold text-sm mb-3">학년별 원비 총액</h2>
-          <div className="space-y-2">
+        <div className="card p-5">
+          <h2 className="font-bold text-[15px] mb-3">학년별 원비 총액</h2>
+          <div className="space-y-0">
             {grades.map(grade => {
               const gradeStudents = grade.classes.flatMap(c =>
                 getActiveStudents(c.students ?? [], currentMonth).filter(s => !s.withdrawal_date).map(s => ({ ...s, class: c }))
@@ -336,21 +350,21 @@ export default function DashboardPage() {
               if (gradeStudents.length === 0) return null
 
               return (
-                <div key={grade.id} className="flex items-center justify-between py-2 border-b last:border-b-0">
+                <div key={grade.id} className="flex items-center justify-between py-3 border-b border-gray-50 last:border-b-0">
                   <div>
-                    <span className="text-sm font-medium">{grade.name}</span>
+                    <span className="text-sm font-semibold">{grade.name}</span>
                     <span className="text-xs text-gray-400 ml-2">{gradeStudents.length}명</span>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-medium">{gradeFee.toLocaleString()}원</p>
+                    <p className="text-sm font-semibold tabular-nums">{gradeFee.toLocaleString()}원</p>
                     <p className="text-xs text-gray-400">수납 {gradePaid.toLocaleString()}원</p>
                   </div>
                 </div>
               )
             })}
-            <div className="flex items-center justify-between pt-2 border-t font-bold">
-              <span className="text-sm">합계</span>
-              <span className="text-sm">{stats.totalFee.toLocaleString()}원</span>
+            <div className="flex items-center justify-between pt-3 mt-1 border-t border-gray-200">
+              <span className="text-sm font-bold">합계</span>
+              <span className="text-sm font-bold tabular-nums">{stats.totalFee.toLocaleString()}원</span>
             </div>
           </div>
         </div>

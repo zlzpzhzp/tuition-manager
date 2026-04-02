@@ -54,13 +54,11 @@ export default function FinancePage() {
     `/api/teacher-bonuses?billing_month=${selectedMonth}`, fetcher
   )
 
-  // 추가 폼
   const [addingCategory, setAddingCategory] = useState<'fixed' | 'variable' | null>(null)
   const [newName, setNewName] = useState('')
   const [newAmount, setNewAmount] = useState('')
   const [newMemo, setNewMemo] = useState('')
 
-  // 수정
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editName, setEditName] = useState('')
   const [editAmount, setEditAmount] = useState('')
@@ -71,12 +69,10 @@ export default function FinancePage() {
     setSelectedMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`)
   }
 
-  // 수입 계산
   const totalRevenue = useMemo(() =>
     payments.reduce((sum, p) => sum + p.amount, 0)
   , [payments])
 
-  // 전체 학생 원비 합계
   const totalFee = useMemo(() =>
     grades.flatMap(g =>
       g.classes.flatMap(c =>
@@ -85,7 +81,6 @@ export default function FinancePage() {
     ).reduce((sum, fee) => sum + fee, 0)
   , [grades, selectedMonth])
 
-  // 선생님 급여 자동 계산
   const teacherPayroll = useMemo(() => {
     const paidByStudent = new Map<string, number>()
     for (const p of payments) paidByStudent.set(p.student_id, (paidByStudent.get(p.student_id) ?? 0) + p.amount)
@@ -115,17 +110,14 @@ export default function FinancePage() {
     teacherPayroll.reduce((sum, t) => sum + t.tax, 0)
   , [teacherPayroll])
 
-  // 고정비 / 변동비
   const fixedExpenses = expenses.filter(e => e.category === 'fixed')
   const variableExpenses = expenses.filter(e => e.category === 'variable')
   const totalFixed = fixedExpenses.reduce((sum, e) => sum + e.amount, 0)
   const totalVariable = variableExpenses.reduce((sum, e) => sum + e.amount, 0)
 
-  // 총 지출 & 손익
   const totalExpense = totalTeacherPay + totalTeacherTax + totalFixed + totalVariable
   const profit = totalRevenue - totalExpense
 
-  // CRUD
   const addExpense = async () => {
     if (!newName.trim() || !addingCategory) return
     await safeMutate('/api/expenses', 'POST', {
@@ -156,33 +148,33 @@ export default function FinancePage() {
   }
 
   const renderExpenseSection = (title: string, category: 'fixed' | 'variable', items: Expense[], total: number) => (
-    <div className="bg-white rounded-xl border p-5 mb-4">
+    <div className="card p-5">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="font-bold text-sm">{title}</h2>
-        <span className="text-sm font-medium text-gray-500">{total.toLocaleString()}원</span>
+        <h2 className="font-bold text-[15px]">{title}</h2>
+        <span className="text-sm font-semibold text-gray-400 tabular-nums">{total.toLocaleString()}원</span>
       </div>
 
       {items.length > 0 && (
-        <div className="space-y-1 mb-3">
+        <div className="space-y-0 mb-3">
           {items.map(item => (
-            <div key={item.id} className="flex items-center gap-2 py-1.5 border-b last:border-b-0">
+            <div key={item.id} className="flex items-center gap-2 py-2.5 border-b border-gray-50 last:border-b-0">
               {editingId === item.id ? (
                 <>
-                  <input type="text" value={editName} onChange={e => setEditName(e.target.value)} className="flex-1 px-2 py-1 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1e2d6f]" autoFocus />
-                  <input type="number" value={editAmount} onChange={e => setEditAmount(e.target.value)} onKeyDown={e => e.key === 'Enter' && updateExpense(item.id)} className="w-28 px-2 py-1 border rounded text-sm text-right focus:outline-none focus:ring-2 focus:ring-[#1e2d6f]" />
+                  <input type="text" value={editName} onChange={e => setEditName(e.target.value)} className="flex-1 px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1e2d6f] focus:bg-white" autoFocus />
+                  <input type="number" value={editAmount} onChange={e => setEditAmount(e.target.value)} onKeyDown={e => e.key === 'Enter' && updateExpense(item.id)} className="w-28 px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-right focus:outline-none focus:ring-2 focus:ring-[#1e2d6f] focus:bg-white" />
                   <span className="text-xs text-gray-400">원</span>
-                  <button onClick={() => updateExpense(item.id)} className="text-green-600"><Check className="w-4 h-4" /></button>
-                  <button onClick={() => setEditingId(null)} className="text-gray-400"><X className="w-4 h-4" /></button>
+                  <button onClick={() => updateExpense(item.id)} className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg"><Check className="w-4 h-4" /></button>
+                  <button onClick={() => setEditingId(null)} className="p-1.5 text-gray-400 hover:bg-gray-100 rounded-lg"><X className="w-4 h-4" /></button>
                 </>
               ) : (
                 <>
                   <span className="flex-1 text-sm">{item.name}</span>
                   {item.memo && <span className="text-xs text-gray-400">{item.memo}</span>}
-                  <span className="text-sm font-medium">{item.amount.toLocaleString()}원</span>
-                  <button onClick={() => { setEditingId(item.id); setEditName(item.name); setEditAmount(String(item.amount)) }} className="p-2 -m-1 text-gray-400 hover:text-gray-600">
+                  <span className="text-sm font-semibold tabular-nums">{item.amount.toLocaleString()}원</span>
+                  <button onClick={() => { setEditingId(item.id); setEditName(item.name); setEditAmount(String(item.amount)) }} className="p-2 -m-1 text-gray-300 hover:text-gray-600 transition-colors">
                     <Pencil className="w-4 h-4" />
                   </button>
-                  <button onClick={() => deleteExpense(item.id, item.name)} className="p-2 -m-1 text-gray-400 hover:text-red-500">
+                  <button onClick={() => deleteExpense(item.id, item.name)} className="p-2 -m-1 text-gray-300 hover:text-red-500 transition-colors">
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </>
@@ -195,20 +187,20 @@ export default function FinancePage() {
       {addingCategory === category ? (
         <div className="space-y-2">
           <div className="flex items-center gap-2">
-            <input type="text" value={newName} onChange={e => setNewName(e.target.value)} placeholder="항목명" className="flex-1 px-2 py-1.5 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1e2d6f]" autoFocus />
-            <input type="number" value={newAmount} onChange={e => setNewAmount(e.target.value)} onKeyDown={e => e.key === 'Enter' && addExpense()} placeholder="금액" className="w-28 px-2 py-1.5 border rounded text-sm text-right focus:outline-none focus:ring-2 focus:ring-[#1e2d6f]" />
+            <input type="text" value={newName} onChange={e => setNewName(e.target.value)} placeholder="항목명" className="flex-1 px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1e2d6f] focus:bg-white" autoFocus />
+            <input type="number" value={newAmount} onChange={e => setNewAmount(e.target.value)} onKeyDown={e => e.key === 'Enter' && addExpense()} placeholder="금액" className="w-28 px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-right focus:outline-none focus:ring-2 focus:ring-[#1e2d6f] focus:bg-white" />
             <span className="text-xs text-gray-400">원</span>
           </div>
           <div className="flex items-center gap-2">
-            <input type="text" value={newMemo} onChange={e => setNewMemo(e.target.value)} onKeyDown={e => e.key === 'Enter' && addExpense()} placeholder="비고 (선택)" className="flex-1 px-2 py-1.5 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1e2d6f]" />
-            <button onClick={addExpense} className="text-green-600"><Check className="w-4 h-4" /></button>
-            <button onClick={() => { setAddingCategory(null); setNewName(''); setNewAmount(''); setNewMemo('') }} className="text-gray-400"><X className="w-4 h-4" /></button>
+            <input type="text" value={newMemo} onChange={e => setNewMemo(e.target.value)} onKeyDown={e => e.key === 'Enter' && addExpense()} placeholder="비고 (선택)" className="flex-1 px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1e2d6f] focus:bg-white" />
+            <button onClick={addExpense} className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg"><Check className="w-4 h-4" /></button>
+            <button onClick={() => { setAddingCategory(null); setNewName(''); setNewAmount(''); setNewMemo('') }} className="p-1.5 text-gray-400 hover:bg-gray-100 rounded-lg"><X className="w-4 h-4" /></button>
           </div>
         </div>
       ) : (
         <button
           onClick={() => setAddingCategory(category)}
-          className="flex items-center gap-1 text-sm text-[#1e2d6f] font-medium hover:opacity-70"
+          className="flex items-center gap-1 text-sm text-[#1e2d6f] font-semibold hover:opacity-70 transition-opacity"
         >
           <Plus className="w-4 h-4" /> 항목 추가
         </button>
@@ -219,8 +211,10 @@ export default function FinancePage() {
   if (!authenticated) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] px-4">
-        <div className="bg-white rounded-xl border p-8 w-full max-w-xs text-center">
-          <Lock className="w-10 h-10 text-[#1e2d6f] mx-auto mb-4" />
+        <div className="card-elevated p-8 w-full max-w-xs text-center">
+          <div className="w-14 h-14 bg-gradient-to-br from-[#1e2d6f] to-[#3b51b5] rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-[#1e2d6f]/20">
+            <Lock className="w-6 h-6 text-white" />
+          </div>
           <h1 className="text-lg font-bold mb-1">원장 전용</h1>
           <p className="text-sm text-gray-400 mb-6">PIN 번호를 입력하세요</p>
           <input
@@ -244,14 +238,13 @@ export default function FinancePage() {
             }}
             onKeyDown={e => e.key === 'Enter' && handlePinSubmit()}
             placeholder="••••••"
-            className={`w-full text-center text-2xl tracking-[0.5em] px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1e2d6f] ${pinError ? 'border-red-400' : ''}`}
+            className={`w-full text-center text-2xl tracking-[0.5em] px-4 py-3.5 bg-gray-50 border rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1e2d6f] focus:bg-white transition-all ${pinError ? 'border-red-400 bg-red-50' : 'border-gray-200'}`}
             autoFocus
           />
           {pinError && <p className="text-xs text-red-500 mt-2">PIN이 올바르지 않습니다</p>}
           <button
             onClick={handlePinSubmit}
-            className="w-full mt-4 py-2.5 rounded-lg text-white font-medium text-sm"
-            style={{ backgroundColor: '#1e2d6f' }}
+            className="w-full mt-4 py-3 rounded-xl text-white font-semibold text-sm bg-[#1e2d6f] hover:bg-[#162358] transition-colors active:scale-[0.98]"
           >
             확인
           </button>
@@ -261,74 +254,76 @@ export default function FinancePage() {
   }
 
   return (
-    <div>
+    <div className="space-y-4">
       {/* 월 선택 */}
-      <div className="flex items-center justify-center gap-3 mb-6">
-        <button onClick={() => navigateMonth(-1)} className="p-2 hover:bg-gray-100 rounded-lg">
-          <ChevronLeft className="w-5 h-5" />
+      <div className="flex items-center justify-center gap-4 mb-2">
+        <button onClick={() => navigateMonth(-1)} className="p-2 hover:bg-gray-100 rounded-xl transition-colors">
+          <ChevronLeft className="w-5 h-5 text-gray-500" />
         </button>
-        <h1 className="text-lg font-bold">{formatMonth(selectedMonth)} 재정</h1>
-        <button onClick={() => navigateMonth(1)} className="p-2 hover:bg-gray-100 rounded-lg">
-          <ChevronRight className="w-5 h-5" />
+        <h1 className="text-lg font-bold tracking-tight">{formatMonth(selectedMonth)} 재정</h1>
+        <button onClick={() => navigateMonth(1)} className="p-2 hover:bg-gray-100 rounded-xl transition-colors">
+          <ChevronRight className="w-5 h-5 text-gray-500" />
         </button>
       </div>
 
       {/* 손익 요약 */}
-      <div className="bg-white rounded-xl border p-5 mb-4">
-        <h2 className="font-bold text-sm mb-3">월별 손익 요약</h2>
-        <div className="space-y-2 text-sm">
-          <div className="flex justify-between py-1.5 border-b">
-            <span className="text-gray-400">총 원비 (예정)</span>
-            <span className="font-medium">{totalFee.toLocaleString()}원</span>
+      <div className="card overflow-hidden">
+        <div className="p-5 pb-0">
+          <h2 className="font-bold text-[15px] mb-3">월별 손익 요약</h2>
+          <div className="space-y-0 text-sm">
+            <div className="flex justify-between py-2.5 border-b border-gray-50">
+              <span className="text-gray-400">총 원비 (예정)</span>
+              <span className="font-medium tabular-nums">{totalFee.toLocaleString()}원</span>
+            </div>
+            <div className="flex justify-between py-2.5 border-b border-gray-50">
+              <span className="text-gray-500 font-medium">총 수입 (수납액)</span>
+              <span className="font-bold text-blue-600 tabular-nums">{totalRevenue.toLocaleString()}원</span>
+            </div>
+            <div className="flex justify-between py-2.5 border-b border-gray-50">
+              <span className="text-gray-400">선생님 급여 (실지급)</span>
+              <span className="font-medium text-red-500 tabular-nums">-{totalTeacherPay.toLocaleString()}원</span>
+            </div>
+            <div className="flex justify-between py-2.5 border-b border-gray-50">
+              <span className="text-gray-400">원천징수세 (3.3%)</span>
+              <span className="font-medium text-red-500 tabular-nums">-{totalTeacherTax.toLocaleString()}원</span>
+            </div>
+            <div className="flex justify-between py-2.5 border-b border-gray-50">
+              <span className="text-gray-400">고정비</span>
+              <span className="font-medium text-red-500 tabular-nums">-{totalFixed.toLocaleString()}원</span>
+            </div>
+            <div className="flex justify-between py-2.5">
+              <span className="text-gray-400">변동비</span>
+              <span className="font-medium text-red-500 tabular-nums">-{totalVariable.toLocaleString()}원</span>
+            </div>
           </div>
-          <div className="flex justify-between py-1.5 border-b">
-            <span className="text-gray-400 font-medium">총 수입 (수납액)</span>
-            <span className="font-bold text-blue-600">{totalRevenue.toLocaleString()}원</span>
-          </div>
-          <div className="flex justify-between py-1.5 border-b">
-            <span className="text-gray-400">선생님 급여 (실지급)</span>
-            <span className="font-medium text-red-500">-{totalTeacherPay.toLocaleString()}원</span>
-          </div>
-          <div className="flex justify-between py-1.5 border-b">
-            <span className="text-gray-400">원천징수세 (3.3%)</span>
-            <span className="font-medium text-red-500">-{totalTeacherTax.toLocaleString()}원</span>
-          </div>
-          <div className="flex justify-between py-1.5 border-b">
-            <span className="text-gray-400">고정비</span>
-            <span className="font-medium text-red-500">-{totalFixed.toLocaleString()}원</span>
-          </div>
-          <div className="flex justify-between py-1.5 border-b">
-            <span className="text-gray-400">변동비</span>
-            <span className="font-medium text-red-500">-{totalVariable.toLocaleString()}원</span>
-          </div>
-          <div className="flex justify-between py-2 mt-1 bg-gray-50 -mx-5 px-5 rounded-b-xl">
-            <span className="font-bold">순이익</span>
-            <span className={`font-bold text-lg ${profit >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
-              {profit >= 0 ? '+' : ''}{profit.toLocaleString()}원
-            </span>
-          </div>
+        </div>
+        <div className={`flex justify-between items-center py-4 px-5 mt-2 ${profit >= 0 ? 'bg-blue-50' : 'bg-red-50'}`}>
+          <span className="font-bold text-sm">순이익</span>
+          <span className={`font-bold text-xl tabular-nums ${profit >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+            {profit >= 0 ? '+' : ''}{profit.toLocaleString()}원
+          </span>
         </div>
       </div>
 
       {/* 선생님 급여 자동 계산 */}
-      <div className="bg-white rounded-xl border p-5 mb-4">
+      <div className="card p-5">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="font-bold text-sm">선생님 급여</h2>
-          <span className="text-sm font-medium text-gray-500">총 {(totalTeacherPay + totalTeacherTax).toLocaleString()}원</span>
+          <h2 className="font-bold text-[15px]">선생님 급여</h2>
+          <span className="text-sm font-semibold text-gray-400 tabular-nums">총 {(totalTeacherPay + totalTeacherTax).toLocaleString()}원</span>
         </div>
         {teacherPayroll.length === 0 ? (
-          <p className="text-sm text-gray-400 text-center py-2">이번 달 선생님 급여가 없습니다</p>
+          <p className="text-sm text-gray-400 text-center py-3">이번 달 선생님 급여가 없습니다</p>
         ) : (
-          <div className="space-y-1">
+          <div className="space-y-0">
             {teacherPayroll.map(({ teacher, bonus, gross, tax, net }) => (
-              <div key={teacher.id} className="flex items-center justify-between py-1.5 border-b last:border-b-0">
+              <div key={teacher.id} className="flex items-center justify-between py-2.5 border-b border-gray-50 last:border-b-0">
                 <div>
-                  <span className="text-sm font-medium">{teacher.name}</span>
-                  <span className="text-xs text-gray-400 ml-1">({teacher.pay_ratio ?? 40}%)</span>
-                  {bonus > 0 && <span className="text-xs text-green-600 ml-1">+보너스 {bonus.toLocaleString()}</span>}
+                  <span className="text-sm font-semibold">{teacher.name}</span>
+                  <span className="text-xs text-gray-400 ml-1.5">({teacher.pay_ratio ?? 40}%)</span>
+                  {bonus > 0 && <span className="text-xs text-emerald-600 ml-1.5">+보너스 {bonus.toLocaleString()}</span>}
                 </div>
                 <div className="text-right">
-                  <p className="text-sm font-medium">{net.toLocaleString()}원</p>
+                  <p className="text-sm font-semibold tabular-nums">{net.toLocaleString()}원</p>
                   <p className="text-[10px] text-gray-400">세전 {gross.toLocaleString()} / 세금 {tax.toLocaleString()}</p>
                 </div>
               </div>
