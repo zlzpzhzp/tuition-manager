@@ -8,7 +8,7 @@ import type { Class, Student, Teacher } from '@/types'
 import { DAY_LABELS, parseClassDays } from '@/types'
 import { getActiveStudents, safeMutate, safeFetch, useGrades, revalidateGrades, useTeachers, revalidateTeachers } from '@/lib/utils'
 
-const SUBJECT_COLORS = ['bg-blue-100 text-blue-700', 'bg-green-100 text-green-700', 'bg-purple-100 text-purple-700', 'bg-orange-100 text-orange-700', 'bg-pink-100 text-pink-700', 'bg-teal-100 text-teal-700', 'bg-yellow-100 text-yellow-700', 'bg-red-100 text-red-700']
+const SUBJECT_COLORS = ['bg-[#0d2847] text-[#4dabf7]', 'bg-[#0d3320] text-[#00e676]', 'bg-[#2a1a3e] text-[#b388ff]', 'bg-[#332200] text-[#ffab00]', 'bg-[#3d1530] text-[#ff80ab]', 'bg-[#0d3333] text-[#00e5ff]', 'bg-[#333300] text-[#eeff41]', 'bg-[#3d1519] text-[#ff5252]']
 
 type GradeWithClasses = import('@/types').Grade & { classes: (Class & { students?: Student[] })[] }
 
@@ -516,7 +516,7 @@ export default function SettingsPage() {
             router.push('/login')
             router.refresh()
           }}
-          className="w-full py-3 text-red-400 card text-sm font-medium hover:bg-red-50 flex items-center justify-center gap-2 transition-colors"
+          className="w-full py-3 text-[#ff5252] card text-sm font-medium hover:bg-[#3d1519] flex items-center justify-center gap-2 transition-colors"
         >
           <LogOut className="w-4 h-4" />
           로그아웃
@@ -633,7 +633,7 @@ export default function SettingsPage() {
               ) : (
                 <div className="space-y-2">
                   {logs.map(log => {
-                    const actionColor = log.action === 'create' ? 'text-green-600 bg-green-50' : log.action === 'delete' ? 'text-red-600 bg-red-50' : 'text-blue-600 bg-blue-50'
+                    const actionColor = log.action === 'create' ? 'text-[#00e676] bg-[#0d3320]' : log.action === 'delete' ? 'text-[#ff5252] bg-[#3d1519]' : 'text-[#4dabf7] bg-[#0d2847]'
                     const actionLabel = log.action === 'create' ? '생성' : log.action === 'delete' ? '삭제' : '수정'
                     const date = new Date(log.created_at)
                     const timeStr = `${date.getMonth() + 1}/${date.getDate()} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
