@@ -60,6 +60,7 @@ export default function PaymentsPage() {
     startX: number; startY: number; currentX: number
     id: string; el: HTMLElement
     decided: boolean; isHorizontal: boolean
+    baseOffset: number; wasOpen: boolean
   } | null>(null)
   const wasSwiped = useRef(false)
 
@@ -214,14 +215,21 @@ export default function PaymentsPage() {
     fetchData()
   }
 
-  // ─── Swipe handlers ──────────────────────────────────────────
+  // ─── Swipe handlers (swipe-action-guide.md 기반) ──────────────
+  const SPRING = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+  const EDIT_W = 150  // 오른쪽 수정 패널 너비
+  const DISCUSS_W = 96 // 왼쪽 DISCUSS 영역 너비
+
   const handleTouchStart = (e: React.TouchEvent, studentId: string) => {
     if (expandedStudentId) return
     const touch = e.touches[0]
     const el = e.currentTarget as HTMLElement
+    // baseOffset: 이미 열린 상태면 현재 위치에서 시작 (가이드 핵심 #2)
+    const baseOffset = swipeOpenId === studentId ? -EDIT_W : 0
     touchRef.current = {
       startX: touch.clientX, startY: touch.clientY, currentX: touch.clientX,
       id: studentId, el, decided: false, isHorizontal: false,
+      baseOffset, wasOpen: swipeOpenId === studentId,
     }
   }
 
@@ -241,22 +249,46 @@ export default function PaymentsPage() {
     }
     if (!touchRef.current.isHorizontal) return
 
-    // sqrt 감쇠: 임계값 넘으면 고무줄처럼 저항감 (쫀득한 느낌 핵심)
-    let x = dx
-    if (x < -150) x = -150 - Math.sqrt(Math.abs(dx + 150)) * 2
-    else if (x > 80) x = 80 + Math.sqrt(dx - 80) * 3
+    // baseOffset + 드래그 거리 = 실제 위치 (가이드 핵심: 열린 상태에서도 자유 드래그)
+    const baseOffset = touchRef.current.baseOffset ?? 0
+    let raw = baseOffset + dx
 
-    // 드래그 중엔 애니메이션 끔 — 1:1 추적
+    // sqrt 감쇠: 임계값 넘으면 고무줄처럼 저항감
+    if (raw < -EDIT_W) raw = -EDIT_W - Math.sqrt(Math.abs(raw + EDIT_W)) * 2
+    else if (raw > DISCUSS_W) raw = DISCUSS_W + Math.sqrt(raw - DISCUSS_W) * 2
+
+    // 드래그 중엔 애니메이션 끔 — 1:1 추적 (DOM 직접 조작, setState 금지)
     touchRef.current.el.style.transition = 'none'
-    touchRef.current.el.style.transform = `translateX(${x}px)`
+    touchRef.current.el.style.transform = `translateX(${raw}px)`
+
+    // 닫는 중 버튼 늘어남 효과 (가이드 핵심 #4: 열 때는 금지, 닫을 때만)
+    const wasOpen = touchRef.current.wasOpen
+    if (wasOpen && raw < -EDIT_W) {
+      const panel = touchRef.current.el.parentElement?.querySelector('[data-edit-panel]') as HTMLElement | null
+      if (panel) {
+        panel.style.transition = 'none'
+        panel.style.width = `${Math.abs(raw)}px`
+      }
+    }
   }
 
   const handleTouchEnd = () => {
     if (!touchRef.current) return
     const { el, id, isHorizontal, startX, currentX } = touchRef.current
     const dx = currentX - startX
+    const baseOffset = touchRef.current.baseOffset ?? 0
+    const wasOpen = touchRef.current.wasOpen
+    const finalPos = baseOffset + dx
+
     // 스프링 애니메이션으로 복원 (쫀득한 바운스)
-    el.style.transition = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+    el.style.transition = SPRING
+
+    // 버튼 패널 스프링 복원
+    const panel = el.parentElement?.querySelector('[data-edit-panel]') as HTMLElement | null
+    if (panel) {
+      panel.style.transition = `width 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)`
+      panel.style.width = ''
+    }
 
     if (isHorizontal && Math.abs(dx) > 10) {
       wasSwiped.current = true
@@ -264,27 +296,43 @@ export default function PaymentsPage() {
     }
 
     if (isHorizontal) {
-      if (dx > 60) {
+      // 토글 닫기: 열린 상태에서 같은 방향(좌) 다시 밀면 닫기 (가이드 핵심 #3)
+      if (wasOpen && dx < -30) {
+        el.style.transform = 'translateX(0)'
+        setSwipeOpenId(null)
+      }
+      // 토글 닫기: 열린 상태에서 반대 방향(우)으로 밀어서 닫기
+      else if (wasOpen && finalPos > -60) {
+        el.style.transform = 'translateX(0)'
+        setSwipeOpenId(null)
+      }
+      // 우로 밀기 → DISCUSS 토글
+      else if (!wasOpen && dx > 60) {
         toggleDiscuss(id)
         el.style.transform = 'translateX(0)'
         if (swipeOpenId === id) setSwipeOpenId(null)
-      } else if (dx < -60) {
+      }
+      // 좌로 밀기 → 수정 패널 열기
+      else if (!wasOpen && dx < -60) {
+        // 다른 열린 아이템 먼저 닫기 (가이드 핵심 #5)
         if (swipeOpenId && swipeOpenId !== id) {
           const prevEl = document.querySelector(`[data-swipe-row="${swipeOpenId}"]`) as HTMLElement | null
-          if (prevEl) { prevEl.style.transition = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)'; prevEl.style.transform = 'translateX(0)' }
+          if (prevEl) { prevEl.style.transition = SPRING; prevEl.style.transform = 'translateX(0)' }
         }
-        el.style.transform = 'translateX(-150px)'
+        el.style.transform = `translateX(-${EDIT_W}px)`
         const student = allStudents.find(s => s.id === id)
         if (student) {
           setSwipeOpenId(id)
           setEditFeeValue(String(Math.round(getStudentFee(student, student.class) / 10000)))
           setEditDueDayValue(String(getDueDay(student)))
         }
-      } else {
-        el.style.transform = swipeOpenId === id ? 'translateX(-150px)' : 'translateX(0)'
+      }
+      // 임계값 미달 → 원위치
+      else {
+        el.style.transform = wasOpen ? `translateX(-${EDIT_W}px)` : 'translateX(0)'
       }
     } else {
-      el.style.transform = swipeOpenId === id ? 'translateX(-150px)' : 'translateX(0)'
+      el.style.transform = wasOpen ? `translateX(-${EDIT_W}px)` : 'translateX(0)'
     }
     touchRef.current = null
   }
@@ -292,7 +340,7 @@ export default function PaymentsPage() {
   const closeSwipeEdit = () => {
     if (swipeOpenId) {
       const el = document.querySelector(`[data-swipe-row="${swipeOpenId}"]`) as HTMLElement | null
-      if (el) { el.style.transition = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)'; el.style.transform = 'translateX(0)' }
+      if (el) { el.style.transition = SPRING; el.style.transform = 'translateX(0)' }
       setSwipeOpenId(null)
     }
   }
@@ -769,7 +817,7 @@ export default function PaymentsPage() {
                           </div>
 
                           {/* 오른쪽 수정 패널 */}
-                          <div className="absolute inset-y-0 right-0 w-[150px] flex items-center gap-1.5 px-2 bg-violet-50" onClick={e => e.stopPropagation()}>
+                          <div data-edit-panel className="absolute inset-y-0 right-0 w-[150px] flex items-center gap-1.5 px-2 bg-violet-50" onClick={e => e.stopPropagation()}>
                             <div className="flex flex-col items-center">
                               <label htmlFor={`dueday-${student.id}`} className="text-[8px] text-violet-400 mb-0.5 font-medium">결제일</label>
                               <input
@@ -803,7 +851,7 @@ export default function PaymentsPage() {
                             onTouchStart={e => handleTouchStart(e, student.id)}
                             onTouchMove={handleTouchMove}
                             onTouchEnd={handleTouchEnd}
-                            style={isSwipeOpen ? { transform: 'translateX(-150px)', transition: 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)' } : undefined}
+                            style={isSwipeOpen ? { transform: `translateX(-${EDIT_W}px)`, transition: SPRING } : undefined}
                           >
                             <div className={`flex items-center gap-2 px-4 ${hasMemo && !isExpanded ? 'pt-1.5 pb-0.5' : 'py-1.5'} ${
                               status === 'unpaid' && !isExpanded && !withdrawn ? 'cursor-pointer active:bg-gray-50' : ''
