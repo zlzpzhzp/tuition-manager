@@ -44,15 +44,15 @@ export default function StudentModal({ student, grades, defaultClassId, onSave, 
 
   return (
     <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center" onClick={onClose}>
-      <div className="bg-white w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl max-h-[85vh] overflow-y-auto animate-fade-in-up" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+      <div className="bg-[#212126] w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl max-h-[85vh] overflow-y-auto animate-fade-in-up" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[#2c2c33]">
           <h2 className="text-lg font-bold tracking-tight">{student ? '학생 수정' : '학생 등록'}</h2>
-          <button onClick={onClose} className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"><X className="w-5 h-5" /></button>
+          <button onClick={onClose} className="p-1.5 text-[#5e5e6e] hover:text-[#8b8b9a] hover:bg-[#36363e] rounded-lg transition-colors"><X className="w-5 h-5" /></button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">이름 *</label>
+            <label className="block text-sm font-medium text-[#c0c0cc] mb-1">이름 *</label>
             <input
               type="text"
               value={name}
@@ -64,7 +64,7 @@ export default function StudentModal({ student, grades, defaultClassId, onSave, 
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">반</label>
+            <label className="block text-sm font-medium text-[#c0c0cc] mb-1">반</label>
             <select
               value={classId}
               onChange={e => setClassId(e.target.value)}
@@ -84,7 +84,7 @@ export default function StudentModal({ student, grades, defaultClassId, onSave, 
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">첫 등원일 *</label>
+            <label className="block text-sm font-medium text-[#c0c0cc] mb-1">첫 등원일 *</label>
             <input
               type="date"
               value={enrollmentDate}
@@ -96,7 +96,7 @@ export default function StudentModal({ student, grades, defaultClassId, onSave, 
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">학생 연락처</label>
+              <label className="block text-sm font-medium text-[#c0c0cc] mb-1">학생 연락처</label>
               <input
                 type="tel"
                 value={phone}
@@ -108,7 +108,7 @@ export default function StudentModal({ student, grades, defaultClassId, onSave, 
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">학부모 연락처</label>
+              <label className="block text-sm font-medium text-[#c0c0cc] mb-1">학부모 연락처</label>
               <input
                 type="tel"
                 value={parentPhone}
@@ -122,8 +122,8 @@ export default function StudentModal({ student, grades, defaultClassId, onSave, 
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              개별 원비 <span className="text-gray-400 font-normal">(비워두면 반 기본 원비 적용)</span>
+            <label className="block text-sm font-medium text-[#c0c0cc] mb-1">
+              개별 원비 <span className="text-[#5e5e6e] font-normal">(비워두면 반 기본 원비 적용)</span>
             </label>
             <div className="flex items-center gap-2">
               <input
@@ -133,12 +133,12 @@ export default function StudentModal({ student, grades, defaultClassId, onSave, 
                 placeholder="반 기본 원비 사용"
                 className="flex-1 px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3182f6]"
               />
-              <span className="text-sm text-gray-400">원</span>
+              <span className="text-sm text-[#5e5e6e]">원</span>
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">메모</label>
+            <label className="block text-sm font-medium text-[#c0c0cc] mb-1">메모</label>
             <textarea
               value={memo}
               onChange={e => setMemo(e.target.value)}

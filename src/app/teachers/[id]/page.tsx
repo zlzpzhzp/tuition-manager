@@ -290,7 +290,7 @@ export default function TeacherDetailPage({ params }: { params: Promise<{ id: st
   if (!teacher) return (
     <div className="animate-pulse">
       <div className="h-6 bg-gray-200 rounded w-32 mb-4"></div>
-      <div className="h-40 bg-gray-100 rounded-xl"></div>
+      <div className="h-40 bg-[#36363e] rounded-xl"></div>
     </div>
   )
 
@@ -298,48 +298,48 @@ export default function TeacherDetailPage({ params }: { params: Promise<{ id: st
     <div>
       {/* 헤더 */}
       <div className="flex items-center gap-3 mb-4">
-        <button onClick={() => router.back()} className="p-1 text-gray-400 hover:text-gray-600">
+        <button onClick={() => router.back()} className="p-1 text-[#5e5e6e] hover:text-[#8b8b9a]">
           <ChevronLeft className="w-5 h-5" />
         </button>
         <div>
           <h1 className="text-xl font-bold">{teacher.name}</h1>
-          {teacher.subject && <p className="text-xs text-gray-400">{teacher.subject}</p>}
+          {teacher.subject && <p className="text-xs text-[#5e5e6e]">{teacher.subject}</p>}
         </div>
       </div>
 
       {/* 월 선택 */}
       <div className="flex items-center justify-center gap-3 mb-6">
-        <button onClick={() => navigateMonth(-1)} className="p-2 hover:bg-gray-100 rounded-lg">
+        <button onClick={() => navigateMonth(-1)} className="p-2 hover:bg-[#36363e] rounded-lg">
           <ChevronLeft className="w-5 h-5" />
         </button>
         <span className="text-lg font-bold">{formatMonth(selectedMonth)}</span>
-        <button onClick={() => navigateMonth(1)} className="p-2 hover:bg-gray-100 rounded-lg">
+        <button onClick={() => navigateMonth(1)} className="p-2 hover:bg-[#36363e] rounded-lg">
           <ChevronRight className="w-5 h-5" />
         </button>
       </div>
 
       {/* 급여명세서 */}
-      <div className="bg-white rounded-xl border p-5 mb-4">
+      <div className="bg-[#212126] rounded-xl border p-5 mb-4">
         <h2 className="font-bold text-sm mb-4">급여명세서</h2>
         <div className="space-y-2 text-sm">
           <div className="flex justify-between py-1.5 border-b">
-            <span className="text-gray-400">담당 반</span>
+            <span className="text-[#5e5e6e]">담당 반</span>
             <span className="font-medium">{teacherClasses.length}개 ({teacherStudents.length}명)</span>
           </div>
           <div className="flex justify-between py-1.5 border-b">
-            <span className="text-gray-400">총 원비</span>
+            <span className="text-[#5e5e6e]">총 원비</span>
             <span className="font-medium">{payroll.totalFee.toLocaleString()}원</span>
           </div>
           <div className="flex justify-between py-1.5 border-b">
-            <span className="text-gray-400">수납액</span>
+            <span className="text-[#5e5e6e]">수납액</span>
             <span className="font-medium">{payroll.totalPaid.toLocaleString()}원</span>
           </div>
           <div className="flex justify-between items-center py-1.5 border-b">
             <div className="flex items-center gap-1">
-              <span className="text-gray-400">선생님 배분</span>
+              <span className="text-[#5e5e6e]">선생님 배분</span>
               {editingRatio ? (
                 <span className="flex items-center gap-1">
-                  <span className="text-gray-400">(</span>
+                  <span className="text-[#5e5e6e]">(</span>
                   <input
                     type="number"
                     value={ratioInput}
@@ -348,9 +348,9 @@ export default function TeacherDetailPage({ params }: { params: Promise<{ id: st
                     className="w-12 px-1 py-0.5 border rounded text-sm text-center focus:outline-none focus:ring-2 focus:ring-[#1e2d6f]"
                     min={0} max={100} autoFocus
                   />
-                  <span className="text-gray-400">%)</span>
+                  <span className="text-[#5e5e6e]">%)</span>
                   <button onClick={saveRatio} className="text-green-600"><Check className="w-3.5 h-3.5" /></button>
-                  <button onClick={() => setEditingRatio(false)} className="text-gray-400"><X className="w-3.5 h-3.5" /></button>
+                  <button onClick={() => setEditingRatio(false)} className="text-[#5e5e6e]"><X className="w-3.5 h-3.5" /></button>
                 </span>
               ) : (
                 <button
@@ -366,17 +366,17 @@ export default function TeacherDetailPage({ params }: { params: Promise<{ id: st
 
           {/* 보너스 */}
           <div className="flex justify-between items-center py-1.5 border-b">
-            <span className="text-gray-400">보너스</span>
+            <span className="text-[#5e5e6e]">보너스</span>
             <span className="font-medium text-green-600">+{payroll.totalBonus.toLocaleString()}원</span>
           </div>
           {bonuses.length > 0 && (
             <div className="pl-2 space-y-1 pb-1">
               {bonuses.map(b => (
-                <div key={b.id} className="flex items-center justify-between text-xs text-gray-500">
+                <div key={b.id} className="flex items-center justify-between text-xs text-[#8b8b9a]">
                   <span>{b.memo || '보너스'}</span>
                   <div className="flex items-center gap-1">
                     <span>+{b.amount.toLocaleString()}원</span>
-                    <button onClick={() => deleteBonus(b.id)} className="p-0.5 text-gray-300 hover:text-red-400">
+                    <button onClick={() => deleteBonus(b.id)} className="p-0.5 text-[#5e5e6e] hover:text-red-400">
                       <Trash2 className="w-3 h-3" />
                     </button>
                   </div>
@@ -404,7 +404,7 @@ export default function TeacherDetailPage({ params }: { params: Promise<{ id: st
                 className="w-24 px-2 py-1 border rounded text-sm text-right focus:outline-none focus:ring-2 focus:ring-[#1e2d6f]"
               />
               <button onClick={addBonus} className="text-green-600"><Check className="w-4 h-4" /></button>
-              <button onClick={() => setAddingBonus(false)} className="text-gray-400"><X className="w-4 h-4" /></button>
+              <button onClick={() => setAddingBonus(false)} className="text-[#5e5e6e]"><X className="w-4 h-4" /></button>
             </div>
           ) : (
             <button
@@ -416,14 +416,14 @@ export default function TeacherDetailPage({ params }: { params: Promise<{ id: st
           )}
 
           <div className="flex justify-between py-1.5 border-b">
-            <span className="text-gray-400">세전 합계</span>
+            <span className="text-[#5e5e6e]">세전 합계</span>
             <span className="font-bold">{payroll.grossPay.toLocaleString()}원</span>
           </div>
           <div className="flex justify-between py-1.5 border-b">
-            <span className="text-gray-400">원천징수 (3.3%)</span>
+            <span className="text-[#5e5e6e]">원천징수 (3.3%)</span>
             <span className="font-medium text-red-500">-{payroll.tax.toLocaleString()}원</span>
           </div>
-          <div className="flex justify-between py-2 mt-1 bg-gray-50 -mx-5 px-5 rounded-b-xl">
+          <div className="flex justify-between py-2 mt-1 bg-[#2c2c33] -mx-5 px-5 rounded-b-xl">
             <span className="font-bold">실수령액</span>
             <span className="font-bold text-lg text-[#1e2d6f]">{payroll.netPay.toLocaleString()}원</span>
           </div>
@@ -433,7 +433,7 @@ export default function TeacherDetailPage({ params }: { params: Promise<{ id: st
       {/* PDF 다운로드 버튼 */}
       <button
         onClick={downloadPayslipPDF}
-        className="w-full py-3 mb-4 text-[#1e2d6f] bg-white border border-[#1e2d6f] rounded-xl text-sm font-medium hover:bg-[#f0f2f8] flex items-center justify-center gap-2"
+        className="w-full py-3 mb-4 text-[#1e2d6f] bg-[#212126] border border-[#1e2d6f] rounded-xl text-sm font-medium hover:bg-[#f0f2f8] flex items-center justify-center gap-2"
       >
         <Download className="w-4 h-4" />
         급여명세서 PDF 다운로드
@@ -441,26 +441,26 @@ export default function TeacherDetailPage({ params }: { params: Promise<{ id: st
 
       {/* 반별 학생 상세 */}
       {classDetails.map(({ cls, students, sessionCount, days, clsFee, clsPaid }) => (
-        <div key={cls.id} className="bg-white rounded-xl border mb-4 overflow-hidden">
-          <div className="px-4 py-3 bg-gray-50 border-b">
+        <div key={cls.id} className="bg-[#212126] rounded-xl border mb-4 overflow-hidden">
+          <div className="px-4 py-3 bg-[#2c2c33] border-b">
             <div className="flex items-center justify-between">
               <div>
                 <span className="text-sm font-bold">{cls.name}</span>
-                <span className="text-xs text-gray-400 ml-2">{students.length}명</span>
+                <span className="text-xs text-[#5e5e6e] ml-2">{students.length}명</span>
               </div>
               <div className="text-right">
-                <p className="text-sm font-medium">{clsPaid.toLocaleString()} <span className="text-xs text-gray-400">/ {clsFee.toLocaleString()}원</span></p>
+                <p className="text-sm font-medium">{clsPaid.toLocaleString()} <span className="text-xs text-[#5e5e6e]">/ {clsFee.toLocaleString()}원</span></p>
               </div>
             </div>
             {(days || sessionCount) && (
               <div className="flex gap-3 mt-1">
                 {days && (
-                  <span className="text-[11px] text-gray-400">
+                  <span className="text-[11px] text-[#5e5e6e]">
                     수업요일: {days.map(d => DAY_LABELS[d]).join(', ')}
                   </span>
                 )}
                 {sessionCount != null && (
-                  <span className="text-[11px] text-gray-400">
+                  <span className="text-[11px] text-[#5e5e6e]">
                     이번달 {sessionCount}회
                   </span>
                 )}
@@ -486,12 +486,12 @@ export default function TeacherDetailPage({ params }: { params: Promise<{ id: st
                 </div>
                 <div className="text-right">
                   <span className="text-sm font-medium">{s.paid.toLocaleString()}</span>
-                  <span className="text-xs text-gray-400"> / {s.fee.toLocaleString()}원</span>
+                  <span className="text-xs text-[#5e5e6e]"> / {s.fee.toLocaleString()}원</span>
                 </div>
               </div>
             ))}
             {students.length === 0 && (
-              <p className="text-xs text-gray-400 text-center py-3">학생이 없습니다</p>
+              <p className="text-xs text-[#5e5e6e] text-center py-3">학생이 없습니다</p>
             )}
           </div>
         </div>

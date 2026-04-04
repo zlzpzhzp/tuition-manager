@@ -46,7 +46,7 @@ export default function DatePickerPopup({ inlineDate, onDateChange, position, on
       <div className="fixed inset-0 z-40" onClick={onClose} />
       <div
         ref={popupRef}
-        className="fixed z-50 bg-white border rounded-lg shadow-lg p-2"
+        className="fixed z-50 bg-[#212126] border rounded-lg shadow-lg p-2"
         style={{ top: adjustedTop, left: position.left, width: '220px' }}
         role="dialog"
         aria-label="날짜 선택"
@@ -55,7 +55,7 @@ export default function DatePickerPopup({ inlineDate, onDateChange, position, on
           <button
             type="button"
             onClick={() => navigateMonth(-1)}
-            className="text-gray-400 hover:text-gray-600 text-xs p-0.5"
+            className="text-[#5e5e6e] hover:text-[#8b8b9a] text-xs p-0.5"
             aria-label="이전 달"
           >
             ◀
@@ -64,7 +64,7 @@ export default function DatePickerPopup({ inlineDate, onDateChange, position, on
           <button
             type="button"
             onClick={() => navigateMonth(1)}
-            className="text-gray-400 hover:text-gray-600 text-xs p-0.5"
+            className="text-[#5e5e6e] hover:text-[#8b8b9a] text-xs p-0.5"
             aria-label="다음 달"
           >
             ▶
@@ -72,7 +72,7 @@ export default function DatePickerPopup({ inlineDate, onDateChange, position, on
         </div>
         <div className="grid grid-cols-7 gap-0 text-center">
           {['일', '월', '화', '수', '목', '금', '토'].map(d => (
-            <span key={d} className="text-[9px] text-gray-400 py-0.5">{d}</span>
+            <span key={d} className="text-[9px] text-[#5e5e6e] py-0.5">{d}</span>
           ))}
           {cells.map((day, i) => (
             <button
@@ -88,7 +88,7 @@ export default function DatePickerPopup({ inlineDate, onDateChange, position, on
               className={`text-[11px] py-1 rounded ${
                 !day ? '' :
                 day === selDate.getDate() ? 'bg-[#3182f6] text-white font-bold' :
-                'hover:bg-gray-100 text-gray-700'
+                'hover:bg-[#36363e] text-[#c0c0cc]'
               }`}
               aria-label={day ? `${month + 1}월 ${day}일` : undefined}
             >

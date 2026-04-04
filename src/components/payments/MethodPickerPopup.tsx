@@ -15,7 +15,7 @@ export default function MethodPickerPopup({ currentMethod, onMethodChange, posit
     <>
       <div className="fixed inset-0 z-40" onClick={onClose} />
       <div
-        className="fixed z-50 bg-white border rounded-lg shadow-lg overflow-hidden min-w-[90px]"
+        className="fixed z-50 bg-[#212126] border rounded-lg shadow-lg overflow-hidden min-w-[90px]"
         style={{ top: position.top, right: position.right }}
         role="listbox"
         aria-label="결제수단 선택"
@@ -27,8 +27,8 @@ export default function MethodPickerPopup({ currentMethod, onMethodChange, posit
             onClick={() => { onMethodChange(val); onClose() }}
             role="option"
             aria-selected={currentMethod === val}
-            className={`block w-full text-left px-3 py-2 text-xs font-medium hover:bg-gray-50 whitespace-nowrap ${
-              currentMethod === val ? 'text-[#3730A3] bg-indigo-50' : 'text-gray-600'
+            className={`block w-full text-left px-3 py-2 text-xs font-medium hover:bg-[#2c2c33] whitespace-nowrap ${
+              currentMethod === val ? 'text-[#3730A3] bg-indigo-50' : 'text-[#8b8b9a]'
             }`}
           >
             {label}

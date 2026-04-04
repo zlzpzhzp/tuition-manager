@@ -28,12 +28,12 @@ export default function Navbar() {
   return (
     <>
       {/* 데스크톱 상단 */}
-      <nav className="bg-white border-b border-gray-100 sticky top-0 z-40">
+      <nav className="sticky top-0 z-40" style={{ background: '#212126', borderBottom: '1px solid #2c2c33' }}>
         <div className="max-w-4xl mx-auto px-5">
           <div className="flex items-center justify-between h-14">
             <Link href="/dashboard" className="flex items-center gap-2.5" aria-label="홈으로 이동">
               <Image src="/icons/icon-192x192.png" alt="원비관리" width={28} height={28} className="rounded-lg" />
-              <span className="text-[17px] font-bold text-[#191f28] tracking-tight">원비관리</span>
+              <span className="text-[17px] font-bold text-[#ececec] tracking-tight">원비관리</span>
             </Link>
             <div className="flex items-center gap-1">
               <div className="hidden sm:flex gap-1">
@@ -49,7 +49,7 @@ export default function Navbar() {
                       className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all
                         ${active
                           ? 'bg-[#3182f6] text-white'
-                          : 'text-[#8b95a1] hover:text-[#333d4b] hover:bg-[#f2f3f6]'}`}
+                          : 'text-[#8b8b9a] hover:text-[#ececec] hover:bg-[#2c2c33]'}`}
                     >
                       <Icon className="w-4 h-4" />
                       {label}
@@ -63,7 +63,7 @@ export default function Navbar() {
                 className={`p-2.5 rounded-xl transition-all ${
                   isActive('/finance')
                     ? 'bg-[#3182f6] text-white'
-                    : 'text-[#8b95a1] hover:text-[#333d4b] hover:bg-[#f2f3f6]'
+                    : 'text-[#8b8b9a] hover:text-[#ececec] hover:bg-[#2c2c33]'
                 }`}
               >
                 <Wallet className="w-5 h-5" />
@@ -74,7 +74,7 @@ export default function Navbar() {
       </nav>
 
       {/* 모바일 하단 */}
-      <div className="fixed bottom-0 left-0 right-0 sm:hidden z-50 bg-white border-t border-[#eaebee]">
+      <div className="fixed bottom-0 left-0 right-0 sm:hidden z-50" style={{ background: '#212126', borderTop: '1px solid #2c2c33' }}>
         <div className="flex">
           {navItems.map(({ href, label, icon: Icon }, idx) => {
             const active = isActive(href)
@@ -87,8 +87,8 @@ export default function Navbar() {
                 onClick={() => setDirection(idx > currentIdx ? 'left' : idx < currentIdx ? 'right' : 'none')}
                 className="flex-1 flex flex-col items-center justify-center py-2 gap-0.5 relative"
               >
-                <Icon className="w-[22px] h-[22px]" style={{ color: active ? '#3182f6' : '#b0b8c1' }} />
-                <span className="text-[10px] font-bold" style={{ color: active ? '#3182f6' : '#b0b8c1' }}>{label}</span>
+                <Icon className="w-[22px] h-[22px]" style={{ color: active ? '#3182f6' : '#5e5e6e' }} />
+                <span className="text-[10px] font-bold" style={{ color: active ? '#3182f6' : '#5e5e6e' }}>{label}</span>
               </Link>
             )
           })}

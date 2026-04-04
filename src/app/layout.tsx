@@ -12,7 +12,7 @@ const geist = Geist({ subsets: ["latin"] });
 const notoSansKR = Noto_Sans_KR({ subsets: ["latin"], weight: ["300", "400", "500"], variable: "--font-noto" });
 
 export const viewport: Viewport = {
-  themeColor: '#ffffff',
+  themeColor: '#17171c',
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,

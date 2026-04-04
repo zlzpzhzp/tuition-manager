@@ -249,11 +249,11 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
   if (aiFilterIds !== null) {
     return (
       <div className="fixed right-3 z-[60]" style={{ top: '38%' }}>
-        <div className="flex items-center gap-1.5 bg-white text-[#7c3aed] pl-2 pr-1.5 py-1.5 rounded-full shadow-[0_2px_12px_rgba(0,0,0,0.15)] border border-gray-100">
+        <div className="flex items-center gap-1.5 bg-[#212126] text-[#7c3aed] pl-2 pr-1.5 py-1.5 rounded-full shadow-[0_2px_12px_rgba(0,0,0,0.15)] border border-[#2c2c33]">
           <FairyIcon size={14} color="#7c3aed" />
           <span className="text-[10px] font-medium max-w-[100px] truncate">{aiFilterDesc}</span>
-          <button onClick={handleClear} className="p-0.5 hover:bg-gray-100 rounded-full ml-0.5" aria-label="필터 해제">
-            <X className="w-3.5 h-3.5 text-gray-400" />
+          <button onClick={handleClear} className="p-0.5 hover:bg-[#36363e] rounded-full ml-0.5" aria-label="필터 해제">
+            <X className="w-3.5 h-3.5 text-[#5e5e6e]" />
           </button>
         </div>
       </div>
@@ -351,7 +351,7 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
             }}
             disabled={open && loading}
             className={`shrink-0 flex items-center justify-center rounded-full disabled:opacity-50 ${
-              open ? 'bg-white/15 text-white' : ''
+              open ? 'bg-[#212126]/15 text-white' : ''
             }`}
             style={{ width: BTN, height: BTN }}
             aria-label={open ? 'AI 필터 실행' : 'AI 필터 열기'}

@@ -556,7 +556,7 @@ export default function PaymentsPage() {
         <div key={gi} className="mb-4">
           <div className="h-4 bg-gray-200 rounded w-20 mb-2 ml-1"></div>
           <div className="card overflow-hidden">
-            <div className="px-4 py-2.5 bg-gray-50/70 border-b border-gray-100"><div className="h-3 bg-gray-200 rounded w-24"></div></div>
+            <div className="px-4 py-2.5 bg-[#2c2c33]/70 border-b border-[#2c2c33]"><div className="h-3 bg-gray-200 rounded w-24"></div></div>
             {[...Array(4)].map((_, si) => (
               <div key={si} className="flex items-center gap-2 px-4 py-3">
                 <div className="h-4 bg-gray-200 rounded w-14 flex-1"></div>
@@ -579,7 +579,7 @@ export default function PaymentsPage() {
   return (
     <div ref={containerRef} onClick={() => { if (swipeOpenId) closeSwipeEdit() }}>
       {/* 월 네비게이션 — sticky 고정 (iOS 대응: -top-6으로 main py-6 상쇄) */}
-      <div className="sticky -top-6 z-30 bg-[#f7f8fa] -mx-4 px-4 pt-6 pb-1">
+      <div className="sticky -top-6 z-30 bg-[#17171c] -mx-4 px-4 pt-6 pb-1">
         {/* Pull-to-refresh 인디케이터 */}
         <div
           className="flex items-center justify-center overflow-hidden transition-all duration-200 ease-out"
@@ -588,22 +588,22 @@ export default function PaymentsPage() {
           <div className={`transition-transform duration-200 ${isRefreshing ? 'animate-spin' : ''}`}
             style={{ transform: `rotate(${Math.min(pullDistance / PULL_THRESHOLD, 1) * 360}deg)` }}
           >
-            <svg className="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <svg className="w-6 h-6 text-[#5e5e6e]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
           </div>
         </div>
         <div className="flex items-center justify-center gap-3 mb-1">
-          <button onClick={() => navigateMonth(-1)} className="p-2 hover:bg-gray-100 rounded-lg" aria-label="이전 달">
+          <button onClick={() => navigateMonth(-1)} className="p-2 hover:bg-[#36363e] rounded-lg" aria-label="이전 달">
             <ChevronLeft className="w-7 h-7" />
           </button>
           <h1 className="font-extrabold tracking-tight text-center">
             <span className="text-[2.6rem] sm:text-[3.2rem] leading-none">{selectedMonth.split('-')[0]}</span>
-            <span className="text-[1.8rem] sm:text-[2.2rem] text-gray-600">년 </span>
+            <span className="text-[1.8rem] sm:text-[2.2rem] text-[#8b8b9a]">년 </span>
             <span className="text-5xl sm:text-6xl">{parseInt(selectedMonth.split('-')[1])}</span>
-            <span className="text-[1.8rem] sm:text-[2.2rem] text-gray-600">월</span>
+            <span className="text-[1.8rem] sm:text-[2.2rem] text-[#8b8b9a]">월</span>
           </h1>
-          <button onClick={() => navigateMonth(1)} className="p-2 hover:bg-gray-100 rounded-lg" aria-label="다음 달">
+          <button onClick={() => navigateMonth(1)} className="p-2 hover:bg-[#36363e] rounded-lg" aria-label="다음 달">
             <ChevronRight className="w-7 h-7" />
           </button>
         </div>
@@ -615,7 +615,7 @@ export default function PaymentsPage() {
               a.download = ''
               a.click()
             }}
-            className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+            className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs text-[#5e5e6e] hover:text-[#8b8b9a] hover:bg-[#36363e] transition-colors"
           >
             <Download className="w-3 h-3" />
             <span>내보내기</span>
@@ -662,7 +662,7 @@ export default function PaymentsPage() {
         return (
           <div key={subject} className="mb-6">
             <div className="flex items-center mb-2 px-1">
-              <h2 className="text-sm font-semibold text-gray-500">{subject}</h2>
+              <h2 className="text-sm font-semibold text-[#8b8b9a]">{subject}</h2>
               <div className="flex-1" />
             </div>
             <div className="space-y-2">
@@ -708,8 +708,8 @@ export default function PaymentsPage() {
                       onClick={toggleGradeExpand}
                       className="flex items-center gap-0.5 active:opacity-70"
                     >
-                      <ChevronRight className={`w-3.5 h-3.5 text-gray-400 transition-transform ${isGradeExpanded ? 'rotate-90' : ''}`} />
-                      <span className="text-xs text-gray-400">{gradeName}</span>
+                      <ChevronRight className={`w-3.5 h-3.5 text-[#5e5e6e] transition-transform ${isGradeExpanded ? 'rotate-90' : ''}`} />
+                      <span className="text-xs text-[#5e5e6e]">{gradeName}</span>
                     </button>
                     <div className="flex-1" />
                     {showFilter && (
@@ -728,7 +728,7 @@ export default function PaymentsPage() {
                         className={`px-2.5 py-0.5 rounded-full text-xs font-medium transition-colors ${
                           showUnpaidOnly
                             ? 'bg-red-100 text-red-700'
-                            : 'bg-gray-100 text-gray-500'
+                            : 'bg-[#36363e] text-[#8b8b9a]'
                         }`}
                       >
                         {showUnpaidOnly ? '미납' : '전체'}
@@ -762,16 +762,16 @@ export default function PaymentsPage() {
                 return (
                   <div key={cls.id}>
                     <div
-                      className="px-4 py-2.5 bg-gray-50/70 border-b border-gray-100 flex items-center cursor-pointer active:bg-gray-100 select-none"
+                      className="px-4 py-2.5 bg-[#2c2c33]/70 border-b border-[#2c2c33] flex items-center cursor-pointer active:bg-[#36363e] select-none"
                       onClick={() => toggleClass(cls.id)}
                     >
-                      <span className="text-sm font-medium text-gray-600">{cls.name}</span>
-                      <span className="text-xs text-gray-400 ml-1">{cls.monthly_fee > 0 ? `${cls.monthly_fee.toLocaleString()}원` : ''}</span>
-                      <span className="text-xs text-gray-400 ml-2">{paidCount}/{students.length}</span>
+                      <span className="text-sm font-medium text-[#8b8b9a]">{cls.name}</span>
+                      <span className="text-xs text-[#5e5e6e] ml-1">{cls.monthly_fee > 0 ? `${cls.monthly_fee.toLocaleString()}원` : ''}</span>
+                      <span className="text-xs text-[#5e5e6e] ml-2">{paidCount}/{students.length}</span>
                       <span className="flex-1" />
                       <button
                         onClick={(e) => { e.stopPropagation(); handleAddStudent(cls.id) }}
-                        className="p-0.5 text-gray-400 hover:text-[#3182f6] transition-colors"
+                        className="p-0.5 text-[#5e5e6e] hover:text-[#3182f6] transition-colors"
                         aria-label={`${cls.name}에 학생 추가`}
                       >
                         <Plus className="w-3.5 h-3.5" />
@@ -813,7 +813,7 @@ export default function PaymentsPage() {
                         <div key={student.id} className="relative overflow-hidden">
                           {/* 왼쪽 스와이프 액션 */}
                           <div className={`absolute inset-y-0 left-0 w-24 flex items-center justify-center ${hasDiscuss ? 'bg-gray-300' : 'bg-rose-200'}`}>
-                            <span className={`font-bold text-xs ${hasDiscuss ? 'text-gray-500' : 'text-rose-500'}`}>{hasDiscuss ? '해제' : 'DISCUSS'}</span>
+                            <span className={`font-bold text-xs ${hasDiscuss ? 'text-[#8b8b9a]' : 'text-rose-500'}`}>{hasDiscuss ? '해제' : 'DISCUSS'}</span>
                           </div>
 
                           {/* 오른쪽 수정 패널 */}
@@ -825,7 +825,7 @@ export default function PaymentsPage() {
                                 type="number"
                                 value={isSwipeOpen ? editDueDayValue : ''}
                                 onChange={e => setEditDueDayValue(e.target.value)}
-                                className="w-10 px-1 py-1 text-xs border border-violet-200 rounded-lg text-center bg-white focus:outline-none focus:ring-1 focus:ring-violet-300"
+                                className="w-10 px-1 py-1 text-xs border border-violet-200 rounded-lg text-center bg-[#212126] focus:outline-none focus:ring-1 focus:ring-violet-300"
                                 min={1} max={31}
                               />
                             </div>
@@ -836,7 +836,7 @@ export default function PaymentsPage() {
                                 type="number"
                                 value={isSwipeOpen ? editFeeValue : ''}
                                 onChange={e => setEditFeeValue(e.target.value)}
-                                className="w-12 px-1 py-1 text-xs border border-violet-200 rounded-lg text-center bg-white focus:outline-none focus:ring-1 focus:ring-violet-300"
+                                className="w-12 px-1 py-1 text-xs border border-violet-200 rounded-lg text-center bg-[#212126] focus:outline-none focus:ring-1 focus:ring-violet-300"
                               />
                             </div>
                             <button onClick={() => handleSaveEdit(student.id)} className="p-1.5 bg-violet-400 hover:bg-violet-500 text-white rounded-full shrink-0 shadow-sm transition-colors" aria-label="저장">
@@ -847,14 +847,14 @@ export default function PaymentsPage() {
                           {/* 메인 콘텐츠 */}
                           <div
                             data-swipe-row={student.id}
-                            className="relative bg-white z-10"
+                            className="relative bg-[#212126] z-10"
                             onTouchStart={e => handleTouchStart(e, student.id)}
                             onTouchMove={handleTouchMove}
                             onTouchEnd={handleTouchEnd}
                             style={isSwipeOpen ? { transform: `translateX(-${EDIT_W}px)`, transition: SPRING } : undefined}
                           >
                             <div className={`flex items-center gap-2 px-4 ${hasMemo && !isExpanded ? 'pt-1.5 pb-0.5' : 'py-1.5'} ${
-                              status === 'unpaid' && !isExpanded && !withdrawn ? 'cursor-pointer active:bg-gray-50' : ''
+                              status === 'unpaid' && !isExpanded && !withdrawn ? 'cursor-pointer active:bg-[#2c2c33]' : ''
                             } ${withdrawn ? 'opacity-60' : ''}`}
                               onClick={status === 'unpaid' && !isExpanded && !withdrawn ? () => handleExpand(student.id) : undefined}
                             >
@@ -866,7 +866,7 @@ export default function PaymentsPage() {
                                 className="flex-1 min-w-0"
                                 onClick={e => { if (wasSwiped.current) e.preventDefault(); e.stopPropagation() }}
                               >
-                                <span className={`text-sm font-medium ${withdrawn ? 'line-through decoration-red-500 decoration-2 text-gray-400' : ''}`}>{student.name}</span>
+                                <span className={`text-sm font-medium ${withdrawn ? 'line-through decoration-red-500 decoration-2 text-[#5e5e6e]' : ''}`}>{student.name}</span>
                                 {withdrawn && <span className="text-[10px] text-red-400 ml-1.5">퇴원</span>}
                                 {!withdrawn && student.enrollment_date?.startsWith(selectedMonth) && (
                                   <span className="text-[9px] ml-1.5 px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-500 font-bold">신규</span>
@@ -957,7 +957,7 @@ export default function PaymentsPage() {
                                     const { otherMethod } = decodePaymentMemo(p.memo)
                                     const methodLabel = otherMethod || PAYMENT_METHOD_LABELS[p.method as keyof typeof PAYMENT_METHOD_LABELS]
                                     return (
-                                      <span className="text-[10px] text-gray-400 whitespace-nowrap">
+                                      <span className="text-[10px] text-[#5e5e6e] whitespace-nowrap">
                                         {parseInt(selectedMonth.split('-')[1])}/{getDueDay(student)} {methodLabel}
                                       </span>
                                     )
@@ -986,8 +986,8 @@ export default function PaymentsPage() {
                             {!isExpanded && hasMemo && (
                               <div className="flex justify-end px-4 pb-1">
                                 <div className="text-right">
-                                  {cleanMemo && <p className="text-[11px] text-gray-500 leading-tight">{cleanMemo}</p>}
-                                  {prevMemo && <p className="text-[11px] text-gray-400 leading-tight">지난달: {prevMemo}</p>}
+                                  {cleanMemo && <p className="text-[11px] text-[#8b8b9a] leading-tight">{cleanMemo}</p>}
+                                  {prevMemo && <p className="text-[11px] text-[#5e5e6e] leading-tight">지난달: {prevMemo}</p>}
                                 </div>
                               </div>
                             )}
@@ -1030,7 +1030,7 @@ export default function PaymentsPage() {
       })}
 
       {allStudents.length === 0 && (
-        <div className="text-center py-12 text-gray-400">등록된 학생이 없습니다</div>
+        <div className="text-center py-12 text-[#5e5e6e]">등록된 학생이 없습니다</div>
       )}
 
       {showPaymentModal && selectedStudentId && (

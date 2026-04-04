@@ -2,25 +2,24 @@
 
 @theme {
   --color-primary: #3182f6;
-  --color-primary-light: #e8f3ff;
+  --color-primary-light: #1a3a5c;
   --color-accent: #c8c5be;
 }
 
 :root {
-  --background: #f7f8fa;
-  --foreground: #191f28;
+  --background: #17171c;
+  --foreground: #ececec;
   --toss-blue: #3182f6;
   --toss-red: #f04452;
   --toss-green: #00c853;
   --toss-orange: #ff8800;
-  --toss-gray-50: #f7f8fa;
-  --toss-gray-100: #f2f3f6;
-  --toss-gray-200: #eaebee;
-  --toss-gray-400: #b0b8c1;
-  --toss-gray-500: #8b95a1;
-  --toss-gray-600: #6b7684;
-  --toss-gray-800: #333d4b;
-  --toss-gray-900: #191f28;
+  --surface: #212126;
+  --surface-2: #2c2c33;
+  --surface-3: #36363e;
+  --text-primary: #ececec;
+  --text-secondary: #8b8b9a;
+  --text-tertiary: #5e5e6e;
+  --border: #2c2c33;
 }
 
 @theme inline {
@@ -30,26 +29,26 @@
 }
 
 body {
-  background: var(--toss-gray-50);
-  color: var(--toss-gray-900);
+  background: var(--background);
+  color: var(--text-primary);
   font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   letter-spacing: -0.02em;
 }
 
-/* ─── Toss Card System ─── */
+/* ─── Dark Card System ─── */
 .card {
-  background: #fff;
+  background: var(--surface);
   border-radius: 20px;
   border: none;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  box-shadow: none;
 }
 .card-elevated {
-  background: #fff;
+  background: var(--surface);
   border-radius: 20px;
   border: none;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
 }
 
 /* ─── Animations ─── */
