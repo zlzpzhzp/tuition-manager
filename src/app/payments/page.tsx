@@ -240,16 +240,23 @@ export default function PaymentsPage() {
       return
     }
     if (!touchRef.current.isHorizontal) return
-    const clamped = Math.max(-160, Math.min(100, dx))
-    touchRef.current.el.style.transform = `translateX(${clamped}px)`
+
+    // sqrt 감쇠: 임계값 넘으면 고무줄처럼 저항감 (쫀득한 느낌 핵심)
+    let x = dx
+    if (x < -150) x = -150 - Math.sqrt(Math.abs(dx + 150)) * 2
+    else if (x > 80) x = 80 + Math.sqrt(dx - 80) * 3
+
+    // 드래그 중엔 애니메이션 끔 — 1:1 추적
     touchRef.current.el.style.transition = 'none'
+    touchRef.current.el.style.transform = `translateX(${x}px)`
   }
 
   const handleTouchEnd = () => {
     if (!touchRef.current) return
     const { el, id, isHorizontal, startX, currentX } = touchRef.current
     const dx = currentX - startX
-    el.style.transition = 'transform 0.3s ease'
+    // 스프링 애니메이션으로 복원 (쫀득한 바운스)
+    el.style.transition = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
 
     if (isHorizontal && Math.abs(dx) > 10) {
       wasSwiped.current = true
@@ -264,7 +271,7 @@ export default function PaymentsPage() {
       } else if (dx < -60) {
         if (swipeOpenId && swipeOpenId !== id) {
           const prevEl = document.querySelector(`[data-swipe-row="${swipeOpenId}"]`) as HTMLElement | null
-          if (prevEl) { prevEl.style.transition = 'transform 0.3s ease'; prevEl.style.transform = 'translateX(0)' }
+          if (prevEl) { prevEl.style.transition = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)'; prevEl.style.transform = 'translateX(0)' }
         }
         el.style.transform = 'translateX(-150px)'
         const student = allStudents.find(s => s.id === id)
@@ -285,7 +292,7 @@ export default function PaymentsPage() {
   const closeSwipeEdit = () => {
     if (swipeOpenId) {
       const el = document.querySelector(`[data-swipe-row="${swipeOpenId}"]`) as HTMLElement | null
-      if (el) { el.style.transition = 'transform 0.3s ease'; el.style.transform = 'translateX(0)' }
+      if (el) { el.style.transition = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)'; el.style.transform = 'translateX(0)' }
       setSwipeOpenId(null)
     }
   }
@@ -796,7 +803,7 @@ export default function PaymentsPage() {
                             onTouchStart={e => handleTouchStart(e, student.id)}
                             onTouchMove={handleTouchMove}
                             onTouchEnd={handleTouchEnd}
-                            style={isSwipeOpen ? { transform: 'translateX(-150px)', transition: 'transform 0.3s ease' } : undefined}
+                            style={isSwipeOpen ? { transform: 'translateX(-150px)', transition: 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)' } : undefined}
                           >
                             <div className={`flex items-center gap-2 px-4 ${hasMemo && !isExpanded ? 'pt-1.5 pb-0.5' : 'py-1.5'} ${
                               status === 'unpaid' && !isExpanded && !withdrawn ? 'cursor-pointer active:bg-gray-50' : ''

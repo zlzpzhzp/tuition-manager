@@ -6,19 +6,15 @@
 ## 현재 상태: 작업 중
 
 ## 마지막 작업
-- **일시**: 2026-04-02
-- **작업 내용**: 앱 전체 디자인 리팩토링 (거국적)
+- **일시**: 2026-04-04
+- **작업 내용**: 스와이프 스프링 애니메이션 적용 (swipe-action-guide.md 기반)
 - **결과**: 진행 중
 
 ## 진행 중인 작업
-- 앱 전체 UI 디자인 리팩토링
-- 완료: globals.css (디자인 토큰, card 클래스, 배경색, 폰트), Navbar (backdrop-blur, 활성탭 shadow, 모바일 하단바 개선)
-- 진행 예정: Dashboard, Payments, Settings, Finance, Login 페이지 순차 리팩토링
-- Vercel 배포 한도 초과 → 서버에서 빌드+서빙, 내일 Vercel 배포
+- 납부탭 스와이프에 쫀득한 스프링 애니메이션 적용 (sqrt 감쇠 + cubic-bezier 바운스)
 
 ## 다음에 할 것
-- Dashboard 리디자인 → Payments → Settings → Finance → Login 순서로 진행
-- 완료 후 커밋+push+서버 빌드 서빙
+- 빌드 확인 후 커밋+push+Vercel 배포
 
 ## 세션 로그 (2026-04-02)
 - [시작] 유저(터미널): "CLAUDE.md와 WORK_CONTEXT.md를 다시 읽어서 맥락을 복구해. 세션이 재시작돼서 이전 대화가 날아갔어."
@@ -34,7 +30,12 @@
 - 유저(텔레그램): "반말하지 말구" / "그리고 배포 안되는거 알지?" / "일단 서버에서 뿌려 리팩토링해서 내일 버셀 열리면 배포하면 되니까"
 - Claude: 존댓말로 전환. Vercel 한도 초과 인지. 서버 빌드+서빙 후 내일 Vercel 배포 계획.
 - 유저(텔레그램): "시작해~"
-- Claude: 리팩토링 시작. globals.css 완료 (디자인토큰, card 클래스, 배경색, 폰트). Navbar 완료 (backdrop-blur, 활성탭 shadow, 모바일 하단바 개선). 다음: Dashboard.
+- Claude: 리팩토링 시작. globals.css → Navbar → Dashboard → Login → Finance → Settings → Payments → PaymentModal → StudentModal 순서로 전체 리팩토링 완료. 빌드 성공, 커밋+push, 서버 3001 빌드+서빙 중.
+- 유저(텔레그램): "주소줘" → Claude: http://38.45.67.77:3001 → "접속안되는데?" → IPv6 바인딩 문제, 0.0.0.0으로 재시작 → "로그인안되는데" → secure 쿠키 문제(HTTP에서 설정 불가), VERCEL 환경변수 기반으로 수정 → "뭐 바뀐게 전혀 없는데?" → 캐시 문제 + 미묘한 변경이라 안 느껴지는 것. 더 과감한 방향 제안.
+- 유저(텔레그램): "좀 바뀐것 같기도해" → Claude: 더 확 바뀌는 옵션 제안 (색상테마/다크모드/레이아웃 등)
+- (2026-04-03) 유저(터미널): "Next.js 보안 취약점 2건 발견. 16.1.6→16.2.2로 업데이트해" → Claude: npm install next@latest, 빌드 확인, 커밋+push+Vercel 배포 완료.
+- 유저(텔레그램): "야 다시 버셀열렸다" / "푸쉬해" → Claude: 이미 배포 완료(READY) 상태 보고.
+- (2026-04-04) 유저(텔레그램): "업로더한테 잘 구현된 좌우에서 밀기 모션 프롬프트 받아 왔으니까 너도 그 기능 있는 곳에 다 적용해" → Claude: swipe-action-guide.md 읽음. 납부탭 스와이프에 핵심 3가지 적용 (1:1 추적은 기존, sqrt 감쇠 추가, cubic-bezier 스프링 바운스 적용).
 
 ## 이전 세션 로그 (2026-03-24~03-30)
 - [15:49] 유저(텔레그램): "여기도 이제 되지?"
