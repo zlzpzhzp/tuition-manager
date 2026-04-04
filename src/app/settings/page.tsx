@@ -8,7 +8,7 @@ import type { Class, Student, Teacher } from '@/types'
 import { DAY_LABELS, parseClassDays } from '@/types'
 import { getActiveStudents, safeMutate, safeFetch, useGrades, revalidateGrades, useTeachers, revalidateTeachers } from '@/lib/utils'
 
-const SUBJECT_COLORS = ['bg-[#15253d] text-[#60a5fa]', 'bg-[#132e1f] text-[#4ade80]', 'bg-[#251a35] text-[#a78bfa]', 'bg-[#332200] text-[#f59e0b]', 'bg-[#331428] text-[#f472b6]', 'bg-[#122e2e] text-[#22d3ee]', 'bg-[#2e2e10] text-[#facc15]', 'bg-[#331418] text-[#f87171]']
+const SUBJECT_COLORS = ['bg-[#1c2d45] text-[#5b9cf5]', 'bg-[#1a3328] text-[#34d399]', 'bg-[#2a1e3a] text-[#9b82e8]', 'bg-[#332200] text-[#e5a731]', 'bg-[#351c2d] text-[#d96a9e]', 'bg-[#1a3232] text-[#3cbfcf]', 'bg-[#302e1a] text-[#d4b032]', 'bg-[#351c20] text-[#e8656d]']
 
 type GradeWithClasses = import('@/types').Grade & { classes: (Class & { students?: Student[] })[] }
 
@@ -516,7 +516,7 @@ export default function SettingsPage() {
             router.push('/login')
             router.refresh()
           }}
-          className="w-full py-3 text-[#f87171] card text-sm font-medium hover:bg-[#331418] flex items-center justify-center gap-2 transition-colors"
+          className="w-full py-3 text-[#e8656d] card text-sm font-medium hover:bg-[#351c20] flex items-center justify-center gap-2 transition-colors"
         >
           <LogOut className="w-4 h-4" />
           로그아웃
@@ -633,7 +633,7 @@ export default function SettingsPage() {
               ) : (
                 <div className="space-y-2">
                   {logs.map(log => {
-                    const actionColor = log.action === 'create' ? 'text-[#4ade80] bg-[#132e1f]' : log.action === 'delete' ? 'text-[#f87171] bg-[#331418]' : 'text-[#60a5fa] bg-[#15253d]'
+                    const actionColor = log.action === 'create' ? 'text-[#34d399] bg-[#1a3328]' : log.action === 'delete' ? 'text-[#e8656d] bg-[#351c20]' : 'text-[#5b9cf5] bg-[#1c2d45]'
                     const actionLabel = log.action === 'create' ? '생성' : log.action === 'delete' ? '삭제' : '수정'
                     const date = new Date(log.created_at)
                     const timeStr = `${date.getMonth() + 1}/${date.getDate()} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`

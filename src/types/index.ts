@@ -87,9 +87,9 @@ export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
 }
 
 export const PAYMENT_STATUS_COLORS: Record<PaymentStatus, { bg: string; text: string }> = {
-  paid: { bg: '#132e1f', text: '#4ade80' },
-  partial: { bg: '#2e2510', text: '#f59e0b' },
-  unpaid: { bg: '#331418', text: '#f87171' },
+  paid: { bg: '#1a3328', text: '#34d399' },
+  partial: { bg: '#302a1a', text: '#e5a731' },
+  unpaid: { bg: '#351c20', text: '#e8656d' },
 }
 
 export function getStudentFee(student: Student, cls?: Class | null): number {

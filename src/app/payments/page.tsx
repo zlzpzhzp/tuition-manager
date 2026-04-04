@@ -727,7 +727,7 @@ export default function PaymentsPage() {
                         }}
                         className={`px-2.5 py-0.5 rounded-full text-xs font-medium transition-colors ${
                           showUnpaidOnly
-                            ? 'bg-[#331418] text-[#f87171]'
+                            ? 'bg-[#351c20] text-[#e8656d]'
                             : 'bg-[#36363e] text-[#8b8b9a]'
                         }`}
                       >
@@ -788,7 +788,7 @@ export default function PaymentsPage() {
                       const paid = studentPayments.reduce((s, p) => s + p.amount, 0)
                       const status = getPaymentStatus(paid, fee)
                       const scheduled = status === 'unpaid' && checkScheduled(student, selectedMonth)
-                      const displayColors = scheduled ? { bg: '#2e2510', text: '#f59e0b' } : PAYMENT_STATUS_COLORS[status]
+                      const displayColors = scheduled ? { bg: '#302a1a', text: '#e5a731' } : PAYMENT_STATUS_COLORS[status]
                       let displayLabel = ''
                       if (status === 'unpaid') {
                         displayLabel = getUnpaidLabelText(student, selectedMonth, student.payment_due_day ?? undefined)
@@ -859,7 +859,7 @@ export default function PaymentsPage() {
                               onClick={status === 'unpaid' && !isExpanded && !withdrawn ? () => handleExpand(student.id) : undefined}
                             >
                               {hasDiscuss && (
-                                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-[#331418] text-[#f87171] font-bold shrink-0">DISCUSS</span>
+                                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-[#351c20] text-[#e8656d] font-bold shrink-0">DISCUSS</span>
                               )}
                               <Link
                                 href={`/students/${student.id}`}
@@ -869,7 +869,7 @@ export default function PaymentsPage() {
                                 <span className={`text-sm font-medium ${withdrawn ? 'line-through decoration-red-500 decoration-2 text-[#5e5e6e]' : ''}`}>{student.name}</span>
                                 {withdrawn && <span className="text-[10px] text-red-400 ml-1.5">퇴원</span>}
                                 {!withdrawn && student.enrollment_date?.startsWith(selectedMonth) && (
-                                  <span className="text-[9px] ml-1.5 px-1.5 py-0.5 rounded-full bg-[#15253d] text-[#60a5fa] font-bold">신규</span>
+                                  <span className="text-[9px] ml-1.5 px-1.5 py-0.5 rounded-full bg-[#1c2d45] text-[#5b9cf5] font-bold">신규</span>
                                 )}
                                 {hasDiscuss && student.memo && (
                                   <p className="text-[11px] text-rose-500 font-medium leading-tight">
@@ -923,7 +923,7 @@ export default function PaymentsPage() {
                                       onClick={() => handleInlineSubmit(student.id, fee)}
                                       disabled={!!inlineSuccess || !!inlineSubmitting}
                                       className={`fan-item px-2.5 py-0.5 rounded-full text-xs font-medium transition-all duration-300 ${
-                                        isSuccess ? 'bg-green-500 text-white scale-110' : isSubmitting ? 'bg-green-300 text-white scale-100' : 'bg-[#132e1f] text-[#4ade80] hover:opacity-80'
+                                        isSuccess ? 'bg-green-500 text-white scale-110' : isSubmitting ? 'bg-green-300 text-white scale-100' : 'bg-[#1a3328] text-[#34d399] hover:opacity-80'
                                       }`}
                                       aria-label="납부 처리"
                                     >
@@ -999,13 +999,13 @@ export default function PaymentsPage() {
                                   value={discussMemoValue}
                                   onChange={e => setDiscussMemoValue(e.target.value)}
                                   placeholder="사유 입력 (예: 수강료 조정 논의)"
-                                  className="flex-1 px-2.5 py-1.5 rounded-lg text-xs border border-[#5e3038] focus:outline-none focus:ring-1 focus:ring-[#f87171] bg-[#2a1518]"
+                                  className="flex-1 px-2.5 py-1.5 rounded-lg text-xs border border-[#5e3038] focus:outline-none focus:ring-1 focus:ring-[#e8656d] bg-[#2a1518]"
                                   autoFocus
                                   onKeyDown={e => { if (e.key === 'Enter') saveDiscussMemo(student.id) }}
                                 />
                                 <button
                                   onClick={() => saveDiscussMemo(student.id)}
-                                  className="px-3 py-1.5 rounded-lg text-xs font-medium bg-[#331418] text-[#f87171] hover:bg-[#5e2028] transition-colors shrink-0"
+                                  className="px-3 py-1.5 rounded-lg text-xs font-medium bg-[#351c20] text-[#e8656d] hover:bg-[#5e2028] transition-colors shrink-0"
                                 >
                                   저장
                                 </button>

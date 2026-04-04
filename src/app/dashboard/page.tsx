@@ -138,7 +138,7 @@ export default function DashboardPage() {
                   <div className="flex items-center gap-2">
                     <span className="text-[15px] font-semibold text-[#ececec]">{s.name}</span>
                     {s.enrollment_date?.startsWith(currentMonth) && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-[#15253d] text-[#60a5fa] font-bold">신규</span>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-[#1c2d45] text-[#5b9cf5] font-bold">신규</span>
                     )}
                     <span className="text-[13px] text-[#5e5e6e]">{s.class?.name}</span>
                   </div>
@@ -167,7 +167,7 @@ export default function DashboardPage() {
               const status = getPaymentStatus(paid, fee)
               const scheduled = status === 'unpaid' && isPaymentScheduled(s, currentMonth)
               const displayColors = scheduled
-                ? { bg: '#2e2510', text: '#f59e0b' }
+                ? { bg: '#302a1a', text: '#e5a731' }
                 : PAYMENT_STATUS_COLORS[status]
               const dueDay = getPaymentDueDay(s)
               const month = parseInt(currentMonth.split('-')[1])
@@ -180,7 +180,7 @@ export default function DashboardPage() {
                   <div className="flex-1 min-w-0">
                     <span className="text-[15px] font-semibold text-[#ececec]">{s.name}</span>
                     {s.enrollment_date?.startsWith(currentMonth) && (
-                      <span className="text-[10px] ml-1.5 px-1.5 py-0.5 rounded-md bg-[#15253d] text-[#60a5fa] font-bold">신규</span>
+                      <span className="text-[10px] ml-1.5 px-1.5 py-0.5 rounded-md bg-[#1c2d45] text-[#5b9cf5] font-bold">신규</span>
                     )}
                     <span className="text-[13px] text-[#5e5e6e] ml-2">{s.class?.name}</span>
                   </div>
