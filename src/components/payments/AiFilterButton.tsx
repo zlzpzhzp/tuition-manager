@@ -272,7 +272,7 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
             <polygon
               key={p.id}
               points={starPoints(p.x, p.y, p.size, p.size * 0.4)}
-              fill={`rgba(124,58,237,${opacity * 0.45})`}
+              fill={`rgba(255,255,255,${opacity * 0.5})`}
             />
           )
         })}
@@ -358,7 +358,7 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
           >
             {open
               ? (loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />)
-              : <FairyIcon size={28} color="#7c3aed" />
+              : <FairyIcon size={28} color="white" />
             }
           </button>
         </div>
