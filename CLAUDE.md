@@ -1,4 +1,5 @@
 # Claude 작업 지침
+@/root/.claude/projects/-root-amnesia-manager/memory/apps/tuition.md
 @/root/shared/bulletin.md
 
 ## 텔레그램 알림 규칙

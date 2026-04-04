@@ -1,14 +1,26 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #1e2d6f;
-  --color-primary-light: #eef0f7;
+  --color-primary: #3182f6;
+  --color-primary-light: #e8f3ff;
   --color-accent: #c8c5be;
 }
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f7f8fa;
+  --foreground: #191f28;
+  --toss-blue: #3182f6;
+  --toss-red: #f04452;
+  --toss-green: #00c853;
+  --toss-orange: #ff8800;
+  --toss-gray-50: #f7f8fa;
+  --toss-gray-100: #f2f3f6;
+  --toss-gray-200: #eaebee;
+  --toss-gray-400: #b0b8c1;
+  --toss-gray-500: #8b95a1;
+  --toss-gray-600: #6b7684;
+  --toss-gray-800: #333d4b;
+  --toss-gray-900: #191f28;
 }
 
 @theme inline {
@@ -18,25 +30,26 @@
 }
 
 body {
-  background: #f5f6fa;
-  color: var(--foreground);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--toss-gray-50);
+  color: var(--toss-gray-900);
+  font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.02em;
 }
 
-/* ─── Card System ─── */
+/* ─── Toss Card System ─── */
 .card {
   background: #fff;
-  border-radius: 16px;
-  border: 1px solid rgba(0,0,0,0.04);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02);
+  border-radius: 20px;
+  border: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
 .card-elevated {
   background: #fff;
-  border-radius: 16px;
-  border: 1px solid rgba(0,0,0,0.04);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
+  border-radius: 20px;
+  border: none;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
 }
 
 /* ─── Animations ─── */
@@ -53,13 +66,13 @@ body {
   to { opacity: 1; }
 }
 @keyframes fade-in-up {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: translateY(0); }
 }
 .animate-slide-in-right { animation: slide-in-right 0.15s ease-out; }
 .animate-slide-in-left { animation: slide-in-left 0.15s ease-out; }
 .animate-fade-in { animation: fade-in 0.12s ease-out; }
-.animate-fade-in-up { animation: fade-in-up 0.25s ease-out; }
+.animate-fade-in-up { animation: fade-in-up 0.3s ease-out; }
 
 @keyframes checkBounce {
   0% { transform: scale(0); opacity: 0; }

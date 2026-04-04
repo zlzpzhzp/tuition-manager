@@ -129,7 +129,7 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
                           type="button"
                           onClick={() => setEditMethod(val)}
                           className={`px-2 py-1 rounded text-[11px] font-medium border transition-colors ${
-                            editMethod === val ? 'bg-[#1e2d6f] text-white border-[#1e2d6f]' : 'bg-white text-gray-600 border-gray-300'
+                            editMethod === val ? 'bg-[#3182f6] text-white border-[#3182f6]' : 'bg-white text-gray-600 border-gray-300'
                           }`}
                         >
                           {label}
@@ -159,7 +159,7 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
                 ) : (
                   <button
                     onClick={() => setEditingMethod(true)}
-                    className="font-medium hover:text-[#1e2d6f] hover:underline transition-colors"
+                    className="font-medium hover:text-[#3182f6] hover:underline transition-colors"
                   >
                     {PAYMENT_METHOD_LABELS[editMethod]}
                   </button>
@@ -173,7 +173,7 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
                       type="date"
                       value={editDate}
                       onChange={e => setEditDate(e.target.value)}
-                      className="px-2 py-1 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1e2d6f]"
+                      className="px-2 py-1 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3182f6]"
                     />
                     <button
                       onClick={async () => {
@@ -198,7 +198,7 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
                 ) : (
                   <button
                     onClick={() => setEditingDate(true)}
-                    className="font-medium hover:text-[#1e2d6f] hover:underline transition-colors"
+                    className="font-medium hover:text-[#3182f6] hover:underline transition-colors"
                   >
                     {payment.payment_date}
                   </button>
@@ -224,7 +224,7 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
                     type="text"
                     value={editMemo}
                     onChange={e => setEditMemo(e.target.value)}
-                    className="flex-1 px-2 py-1 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1e2d6f]"
+                    className="flex-1 px-2 py-1 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3182f6]"
                     placeholder="특이사항이 있으면 입력하세요"
                     autoFocus
                   />
@@ -232,7 +232,7 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
               ) : (
                 <button
                   onClick={() => setEditingMemo(true)}
-                  className="text-sm font-medium text-right max-w-[60%] hover:text-[#1e2d6f] hover:underline transition-colors text-gray-400"
+                  className="text-sm font-medium text-right max-w-[60%] hover:text-[#3182f6] hover:underline transition-colors text-gray-400"
                 >
                   {payment.memo || '탭하여 입력'}
                 </button>
@@ -298,7 +298,7 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
                 type="month"
                 value={billingMonth}
                 onChange={e => setBillingMonth(e.target.value)}
-                className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1e2d6f]"
+                className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3182f6]"
               />
             </div>
 
@@ -309,7 +309,7 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
                   type="number"
                   value={amount}
                   onChange={e => setAmount(e.target.value)}
-                  className="flex-1 px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1e2d6f]"
+                  className="flex-1 px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3182f6]"
                   required
                   autoFocus
                 />
@@ -326,7 +326,7 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
                     type="button"
                     onClick={() => setMethod(val)}
                     className={`py-2 rounded-lg text-xs font-medium border transition-colors ${
-                      method === val ? 'bg-[#1e2d6f] text-white border-[#1e2d6f]' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
+                      method === val ? 'bg-[#3182f6] text-white border-[#3182f6]' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
                     }`}
                   >
                     {label}
@@ -367,7 +367,7 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
                 type="date"
                 value={paymentDate}
                 onChange={e => setPaymentDate(e.target.value)}
-                className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1e2d6f]"
+                className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3182f6]"
               />
             </div>
 
@@ -377,7 +377,7 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
                 type="text"
                 value={memo}
                 onChange={e => setMemo(e.target.value)}
-                className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1e2d6f]"
+                className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3182f6]"
                 placeholder="특이사항이 있으면 입력하세요"
               />
             </div>
@@ -388,7 +388,7 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
               className={`w-full py-3 rounded-lg font-medium text-sm transition-all duration-500 flex items-center justify-center gap-2 ${
                 showSuccess
                   ? 'bg-green-500 text-white scale-105'
-                  : 'bg-[#1e2d6f] text-white hover:opacity-90'
+                  : 'bg-[#3182f6] text-white hover:opacity-90'
               }`}
             >
               {showSuccess ? (

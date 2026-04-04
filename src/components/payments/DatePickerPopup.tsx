@@ -87,7 +87,7 @@ export default function DatePickerPopup({ inlineDate, onDateChange, position, on
               }}
               className={`text-[11px] py-1 rounded ${
                 !day ? '' :
-                day === selDate.getDate() ? 'bg-[#1e2d6f] text-white font-bold' :
+                day === selDate.getDate() ? 'bg-[#3182f6] text-white font-bold' :
                 'hover:bg-gray-100 text-gray-700'
               }`}
               aria-label={day ? `${month + 1}월 ${day}일` : undefined}

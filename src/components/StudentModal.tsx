@@ -57,7 +57,7 @@ export default function StudentModal({ student, grades, defaultClassId, onSave, 
               type="text"
               value={name}
               onChange={e => setName(e.target.value)}
-              className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1e2d6f]"
+              className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3182f6]"
               required
               autoFocus
             />
@@ -68,7 +68,7 @@ export default function StudentModal({ student, grades, defaultClassId, onSave, 
             <select
               value={classId}
               onChange={e => setClassId(e.target.value)}
-              className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1e2d6f]"
+              className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3182f6]"
             >
               <option value="">반 선택</option>
               {grades.map(g => (
@@ -89,7 +89,7 @@ export default function StudentModal({ student, grades, defaultClassId, onSave, 
               type="date"
               value={enrollmentDate}
               onChange={e => setEnrollmentDate(e.target.value)}
-              className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1e2d6f]"
+              className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3182f6]"
               required
             />
           </div>
@@ -104,7 +104,7 @@ export default function StudentModal({ student, grades, defaultClassId, onSave, 
                 placeholder="010-0000-0000"
                 pattern="^[\d\-]*$"
                 title="숫자와 하이픈만 입력 가능합니다"
-                className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1e2d6f]"
+                className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3182f6]"
               />
             </div>
             <div>
@@ -116,7 +116,7 @@ export default function StudentModal({ student, grades, defaultClassId, onSave, 
                 placeholder="010-0000-0000"
                 pattern="^[\d\-]*$"
                 title="숫자와 하이픈만 입력 가능합니다"
-                className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1e2d6f]"
+                className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3182f6]"
               />
             </div>
           </div>
@@ -131,7 +131,7 @@ export default function StudentModal({ student, grades, defaultClassId, onSave, 
                 value={customFee}
                 onChange={e => setCustomFee(e.target.value)}
                 placeholder="반 기본 원비 사용"
-                className="flex-1 px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1e2d6f]"
+                className="flex-1 px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3182f6]"
               />
               <span className="text-sm text-gray-400">원</span>
             </div>
@@ -143,13 +143,13 @@ export default function StudentModal({ student, grades, defaultClassId, onSave, 
               value={memo}
               onChange={e => setMemo(e.target.value)}
               rows={2}
-              className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1e2d6f] resize-none"
+              className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3182f6] resize-none"
             />
           </div>
 
           <button
             type="submit"
-            className="w-full py-2.5 bg-[#1e2d6f] text-white rounded-lg font-medium text-sm hover:opacity-90"
+            className="w-full py-2.5 bg-[#3182f6] text-white rounded-lg font-medium text-sm hover:opacity-90"
           >
             {student ? '수정' : '등록'}
           </button>

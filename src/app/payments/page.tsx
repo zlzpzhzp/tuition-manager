@@ -572,14 +572,14 @@ export default function PaymentsPage() {
   if (error) return (
     <div className="text-center py-12">
       <p className="text-red-500 mb-4">{error?.message || '데이터 로딩 실패'}</p>
-      <button onClick={fetchData} className="px-4 py-2 bg-[#1e2d6f] text-white rounded-lg hover:opacity-90">다시 시도</button>
+      <button onClick={fetchData} className="px-4 py-2 bg-[#3182f6] text-white rounded-lg hover:opacity-90">다시 시도</button>
     </div>
   )
 
   return (
     <div ref={containerRef} onClick={() => { if (swipeOpenId) closeSwipeEdit() }}>
       {/* 월 네비게이션 — sticky 고정 (iOS 대응: -top-6으로 main py-6 상쇄) */}
-      <div className="sticky -top-6 z-30 bg-[#f5f6fa] -mx-4 px-4 pt-6 pb-1">
+      <div className="sticky -top-6 z-30 bg-[#f7f8fa] -mx-4 px-4 pt-6 pb-1">
         {/* Pull-to-refresh 인디케이터 */}
         <div
           className="flex items-center justify-center overflow-hidden transition-all duration-200 ease-out"
@@ -632,7 +632,7 @@ export default function PaymentsPage() {
             localStorage.setItem(`payment_memo_${selectedMonth}`, e.target.value)
           }}
           placeholder="메모..."
-          className="w-full px-4 py-3 text-sm card resize-none focus:outline-none focus:ring-2 focus:ring-[#1e2d6f] placeholder-gray-300"
+          className="w-full px-4 py-3 text-sm card resize-none focus:outline-none focus:ring-2 focus:ring-[#3182f6] placeholder-gray-300"
           rows={3}
         />
       </div>
@@ -771,7 +771,7 @@ export default function PaymentsPage() {
                       <span className="flex-1" />
                       <button
                         onClick={(e) => { e.stopPropagation(); handleAddStudent(cls.id) }}
-                        className="p-0.5 text-gray-400 hover:text-[#1e2d6f] transition-colors"
+                        className="p-0.5 text-gray-400 hover:text-[#3182f6] transition-colors"
                         aria-label={`${cls.name}에 학생 추가`}
                       >
                         <Plus className="w-3.5 h-3.5" />
@@ -935,7 +935,7 @@ export default function PaymentsPage() {
                                     </button>
                                     <button
                                       onClick={() => handleOpenModal(student.id, fee)}
-                                      className="fan-item p-1 text-[#1e2d6f] hover:opacity-70"
+                                      className="fan-item p-1 text-[#3182f6] hover:opacity-70"
                                       aria-label="상세 납부 기록"
                                     >
                                       <ClipboardList className="w-3.5 h-3.5" />

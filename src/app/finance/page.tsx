@@ -160,8 +160,8 @@ export default function FinancePage() {
             <div key={item.id} className="flex items-center gap-2 py-2.5 border-b border-gray-50 last:border-b-0">
               {editingId === item.id ? (
                 <>
-                  <input type="text" value={editName} onChange={e => setEditName(e.target.value)} className="flex-1 px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1e2d6f] focus:bg-white" autoFocus />
-                  <input type="number" value={editAmount} onChange={e => setEditAmount(e.target.value)} onKeyDown={e => e.key === 'Enter' && updateExpense(item.id)} className="w-28 px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-right focus:outline-none focus:ring-2 focus:ring-[#1e2d6f] focus:bg-white" />
+                  <input type="text" value={editName} onChange={e => setEditName(e.target.value)} className="flex-1 px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3182f6] focus:bg-white" autoFocus />
+                  <input type="number" value={editAmount} onChange={e => setEditAmount(e.target.value)} onKeyDown={e => e.key === 'Enter' && updateExpense(item.id)} className="w-28 px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-right focus:outline-none focus:ring-2 focus:ring-[#3182f6] focus:bg-white" />
                   <span className="text-xs text-gray-400">원</span>
                   <button onClick={() => updateExpense(item.id)} className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg"><Check className="w-4 h-4" /></button>
                   <button onClick={() => setEditingId(null)} className="p-1.5 text-gray-400 hover:bg-gray-100 rounded-lg"><X className="w-4 h-4" /></button>
@@ -187,12 +187,12 @@ export default function FinancePage() {
       {addingCategory === category ? (
         <div className="space-y-2">
           <div className="flex items-center gap-2">
-            <input type="text" value={newName} onChange={e => setNewName(e.target.value)} placeholder="항목명" className="flex-1 px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1e2d6f] focus:bg-white" autoFocus />
-            <input type="number" value={newAmount} onChange={e => setNewAmount(e.target.value)} onKeyDown={e => e.key === 'Enter' && addExpense()} placeholder="금액" className="w-28 px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-right focus:outline-none focus:ring-2 focus:ring-[#1e2d6f] focus:bg-white" />
+            <input type="text" value={newName} onChange={e => setNewName(e.target.value)} placeholder="항목명" className="flex-1 px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3182f6] focus:bg-white" autoFocus />
+            <input type="number" value={newAmount} onChange={e => setNewAmount(e.target.value)} onKeyDown={e => e.key === 'Enter' && addExpense()} placeholder="금액" className="w-28 px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-right focus:outline-none focus:ring-2 focus:ring-[#3182f6] focus:bg-white" />
             <span className="text-xs text-gray-400">원</span>
           </div>
           <div className="flex items-center gap-2">
-            <input type="text" value={newMemo} onChange={e => setNewMemo(e.target.value)} onKeyDown={e => e.key === 'Enter' && addExpense()} placeholder="비고 (선택)" className="flex-1 px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1e2d6f] focus:bg-white" />
+            <input type="text" value={newMemo} onChange={e => setNewMemo(e.target.value)} onKeyDown={e => e.key === 'Enter' && addExpense()} placeholder="비고 (선택)" className="flex-1 px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3182f6] focus:bg-white" />
             <button onClick={addExpense} className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg"><Check className="w-4 h-4" /></button>
             <button onClick={() => { setAddingCategory(null); setNewName(''); setNewAmount(''); setNewMemo('') }} className="p-1.5 text-gray-400 hover:bg-gray-100 rounded-lg"><X className="w-4 h-4" /></button>
           </div>
@@ -200,7 +200,7 @@ export default function FinancePage() {
       ) : (
         <button
           onClick={() => setAddingCategory(category)}
-          className="flex items-center gap-1 text-sm text-[#1e2d6f] font-semibold hover:opacity-70 transition-opacity"
+          className="flex items-center gap-1 text-sm text-[#3182f6] font-semibold hover:opacity-70 transition-opacity"
         >
           <Plus className="w-4 h-4" /> 항목 추가
         </button>
@@ -212,7 +212,7 @@ export default function FinancePage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] px-4">
         <div className="card-elevated p-8 w-full max-w-xs text-center">
-          <div className="w-14 h-14 bg-gradient-to-br from-[#1e2d6f] to-[#3b51b5] rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-[#1e2d6f]/20">
+          <div className="w-14 h-14 bg-gradient-to-br from-[#3182f6] to-[#1b64da] rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-[#3182f6]/20">
             <Lock className="w-6 h-6 text-white" />
           </div>
           <h1 className="text-lg font-bold mb-1">원장 전용</h1>
@@ -238,13 +238,13 @@ export default function FinancePage() {
             }}
             onKeyDown={e => e.key === 'Enter' && handlePinSubmit()}
             placeholder="••••••"
-            className={`w-full text-center text-2xl tracking-[0.5em] px-4 py-3.5 bg-gray-50 border rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1e2d6f] focus:bg-white transition-all ${pinError ? 'border-red-400 bg-red-50' : 'border-gray-200'}`}
+            className={`w-full text-center text-2xl tracking-[0.5em] px-4 py-3.5 bg-gray-50 border rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3182f6] focus:bg-white transition-all ${pinError ? 'border-red-400 bg-red-50' : 'border-gray-200'}`}
             autoFocus
           />
           {pinError && <p className="text-xs text-red-500 mt-2">PIN이 올바르지 않습니다</p>}
           <button
             onClick={handlePinSubmit}
-            className="w-full mt-4 py-3 rounded-xl text-white font-semibold text-sm bg-[#1e2d6f] hover:bg-[#162358] transition-colors active:scale-[0.98]"
+            className="w-full mt-4 py-3 rounded-xl text-white font-semibold text-sm bg-[#3182f6] hover:bg-[#1b64da] transition-colors active:scale-[0.98]"
           >
             확인
           </button>

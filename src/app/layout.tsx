@@ -12,7 +12,7 @@ const geist = Geist({ subsets: ["latin"] });
 const notoSansKR = Noto_Sans_KR({ subsets: ["latin"], weight: ["300", "400", "500"], variable: "--font-noto" });
 
 export const viewport: Viewport = {
-  themeColor: '#1e2d6f',
+  themeColor: '#ffffff',
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
@@ -62,7 +62,7 @@ export default async function RootLayout({
 
   return (
     <html lang="ko">
-      <body className={`${geist.className} ${notoSansKR.variable} bg-gray-50 min-h-screen`}>
+      <body className={`${geist.className} ${notoSansKR.variable} min-h-screen`}>
         <SWRProvider fallback={fallback}>
           <NavDirectionProvider>
             <ServiceWorkerRegistration />
