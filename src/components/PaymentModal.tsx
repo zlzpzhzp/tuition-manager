@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { motion } from 'framer-motion'
 import { X, Trash2, AlertTriangle, Check } from 'lucide-react'
 import type { Payment, PaymentMethod } from '@/types'
 import { PAYMENT_METHOD_LABELS } from '@/types'
@@ -88,10 +89,19 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
   }
 
   return (
-    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center" onClick={onClose}>
-      <div
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.15 }}
+      className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center"
+      onClick={onClose}
+    >
+      <motion.div
         ref={modalRef}
-        className="bg-[#212126] w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl max-h-[85vh] overflow-y-auto animate-fade-in-up"
+        initial={{ opacity: 0, y: 60, scale: 0.97 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ type: 'spring', stiffness: 340, damping: 28 }}
+        className="bg-[#212126] w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl max-h-[85vh] overflow-y-auto"
         onClick={e => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-5 py-4 border-b border-[#2c2c33]">
@@ -400,7 +410,7 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
             </button>
           </form>
         )}
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   )
 }

@@ -6,6 +6,8 @@ import { Users, CreditCard, AlertCircle, TrendingUp } from 'lucide-react'
 import type { Payment, GradeWithClasses, Teacher } from '@/types'
 import { getStudentFee, getPaymentStatus, PAYMENT_STATUS_LABELS, PAYMENT_STATUS_COLORS } from '@/types'
 import { getPaymentDueDay, isPaymentScheduled, getActiveStudents, getCurrentMonth, formatMonth, useGrades, usePayments, useTeachers } from '@/lib/utils'
+import { DashboardSkeleton } from '@/components/Skeleton'
+import { FadeInUp, StaggerContainer, StaggerItem } from '@/components/motion'
 
 export default function DashboardPage() {
   const currentMonth = getCurrentMonth()
@@ -60,15 +62,7 @@ export default function DashboardPage() {
     })
   }, [stats.unpaidStudents])
 
-  if (loading) return (
-    <div className="animate-pulse space-y-5">
-      <div className="h-8 bg-[#2c2c33] rounded-xl w-52"></div>
-      <div className="h-5 bg-[#212126] rounded-lg w-40"></div>
-      <div className="grid grid-cols-2 gap-3 mt-4">
-        {[...Array(4)].map((_, i) => <div key={i} className="card p-6"><div className="h-10 bg-[#2c2c33] rounded-xl w-20"></div></div>)}
-      </div>
-    </div>
-  )
+  if (loading) return <DashboardSkeleton />
 
   if (error) return (
     <div className="text-center py-20">
@@ -85,31 +79,31 @@ export default function DashboardPage() {
       </div>
 
       {/* 요약 카드 */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className="card p-5 animate-fade-in-up" style={{ animationDelay: '0ms' }}>
+      <StaggerContainer className="grid grid-cols-2 gap-3">
+        <StaggerItem className="card p-5">
           <div className="flex items-center gap-1.5 mb-3">
             <Users className="w-4 h-4 text-[#3182f6]" />
             <span className="text-[13px] text-[#5e5e6e] font-medium">재원생</span>
           </div>
           <p className="text-[32px] font-extrabold text-[#ececec] leading-none tracking-tight">{stats.totalStudents}<span className="text-[15px] font-medium text-[#5e5e6e] ml-0.5">명</span></p>
-        </div>
-        <div className="card p-5 animate-fade-in-up" style={{ animationDelay: '50ms' }}>
+        </StaggerItem>
+        <StaggerItem className="card p-5">
           <div className="flex items-center gap-1.5 mb-3">
             <TrendingUp className="w-4 h-4 text-[#00c853]" />
             <span className="text-[13px] text-[#5e5e6e] font-medium">납부율</span>
           </div>
           <p className="text-[32px] font-extrabold text-[#ececec] leading-none tracking-tight">{stats.paymentRate}<span className="text-[15px] font-medium text-[#5e5e6e] ml-0.5">%</span></p>
           <p className="text-[13px] text-[#5e5e6e] mt-1">{stats.paidCount}/{stats.totalStudents}명 완료</p>
-        </div>
-        <div className="card p-5 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
+        </StaggerItem>
+        <StaggerItem className="card p-5">
           <div className="flex items-center gap-1.5 mb-3">
             <CreditCard className="w-4 h-4 text-[#3182f6]" />
             <span className="text-[13px] text-[#5e5e6e] font-medium">수납액</span>
           </div>
           <p className="text-[28px] font-extrabold text-[#ececec] leading-none tracking-tight">{(stats.totalPaid / 10000).toFixed(0)}<span className="text-[14px] font-medium text-[#5e5e6e] ml-0.5">만원</span></p>
           <p className="text-[13px] text-[#5e5e6e] mt-1">/ {(stats.totalFee / 10000).toFixed(0)}만원</p>
-        </div>
-        <div className="card p-5 animate-fade-in-up" style={{ animationDelay: '150ms' }}>
+        </StaggerItem>
+        <StaggerItem className="card p-5">
           <div className="flex items-center gap-1.5 mb-3">
             <AlertCircle className="w-4 h-4 text-[#f04452]" />
             <span className="text-[13px] text-[#5e5e6e] font-medium">미납</span>
@@ -118,12 +112,12 @@ export default function DashboardPage() {
             <p className="text-[28px] font-extrabold text-[#f04452] leading-none tracking-tight">{stats.overdueStudents.length}</p>
             <p className="text-[13px] text-[#5e5e6e]">예정 {stats.scheduledStudents.length}</p>
           </div>
-        </div>
-      </div>
+        </StaggerItem>
+      </StaggerContainer>
 
       {/* 납부 기한 임박 */}
       {urgentStudents.length > 0 && (
-        <div className="card p-5" style={{ background: '#2a2018' }}>
+        <FadeInUp delay={0.15} className="card p-5" style={{ background: '#2a2018' }}>
           <h2 className="text-[15px] font-bold text-[#ff8800] mb-3 flex items-center gap-1.5">
             <AlertCircle className="w-4 h-4" /> 납부 기한 임박
           </h2>
@@ -147,11 +141,11 @@ export default function DashboardPage() {
               )
             })}
           </div>
-        </div>
+        </FadeInUp>
       )}
 
       {/* 미납 학생 목록 */}
-      <div className="card p-5">
+      <FadeInUp delay={0.2} className="card p-5">
         <div className="flex items-center gap-2 mb-4">
           <h2 className="text-[17px] font-bold text-[#ececec]">미납 학생</h2>
           {stats.overdueStudents.length > 0 && <span className="text-[13px] font-bold text-[#f04452]">{stats.overdueStudents.length}</span>}
@@ -193,7 +187,7 @@ export default function DashboardPage() {
             })}
           </div>
         )}
-      </div>
+      </FadeInUp>
 
       {/* 선생님별 매출 */}
       {teachers.length > 0 && grades.length > 0 && (() => {
@@ -210,7 +204,7 @@ export default function DashboardPage() {
         const grandFee = teacherStats.reduce((sum, t) => sum + t.totalFee, 0)
         const grandPaid = teacherStats.reduce((sum, t) => sum + t.totalPaid, 0)
         return (
-          <div className="card p-5">
+          <FadeInUp delay={0.25} className="card p-5">
             <h2 className="text-[17px] font-bold text-[#ececec] mb-4">선생님별 매출</h2>
             {teacherStats.map(({ teacher, totalFee, totalPaid, studentCount, classCount }) => (
               <div key={teacher.id} className="flex items-center justify-between py-3.5 border-b border-[#2c2c33] last:border-b-0">
@@ -231,7 +225,7 @@ export default function DashboardPage() {
                 <p className="text-[12px] text-[#5e5e6e]">수납 {grandPaid.toLocaleString()}</p>
               </div>
             </div>
-          </div>
+          </FadeInUp>
         )
       })()}
 
@@ -244,7 +238,7 @@ export default function DashboardPage() {
         ).filter(c => c.count > 0)
         const maxCount = Math.max(...classData.map(c => c.count), 1)
         return (
-          <div className="card p-5">
+          <FadeInUp delay={0.3} className="card p-5">
             <h2 className="text-[17px] font-bold text-[#ececec] mb-5">반별 인원</h2>
             <div className="space-y-3">
               {classData.map((c, i) => (
@@ -257,13 +251,13 @@ export default function DashboardPage() {
                 </div>
               ))}
             </div>
-          </div>
+          </FadeInUp>
         )
       })()}
 
       {/* 학년별 총액 */}
       {grades.length > 0 && (
-        <div className="card p-5">
+        <FadeInUp delay={0.35} className="card p-5">
           <h2 className="text-[17px] font-bold text-[#ececec] mb-4">학년별 원비</h2>
           {grades.map(grade => {
             const gradeStudents = grade.classes.flatMap(c =>
@@ -289,7 +283,7 @@ export default function DashboardPage() {
             <span className="text-[15px] font-bold text-[#ececec]">합계</span>
             <span className="text-[15px] font-bold text-[#ececec] tabular-nums">{stats.totalFee.toLocaleString()}원</span>
           </div>
-        </div>
+        </FadeInUp>
       )}
     </div>
   )

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { motion } from 'framer-motion'
 import { X } from 'lucide-react'
 import type { Student, Grade, Class } from '@/types'
 import { getTodayString } from '@/lib/utils'
@@ -43,8 +44,20 @@ export default function StudentModal({ student, grades, defaultClassId, onSave, 
   }
 
   return (
-    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center" onClick={onClose}>
-      <div className="bg-[#212126] w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl max-h-[85vh] overflow-y-auto animate-fade-in-up" onClick={e => e.stopPropagation()}>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.15 }}
+      className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 60, scale: 0.97 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ type: 'spring', stiffness: 340, damping: 28 }}
+        className="bg-[#212126] w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl max-h-[85vh] overflow-y-auto"
+        onClick={e => e.stopPropagation()}
+      >
         <div className="flex items-center justify-between px-5 py-4 border-b border-[#2c2c33]">
           <h2 className="text-lg font-bold tracking-tight">{student ? '학생 수정' : '학생 등록'}</h2>
           <button onClick={onClose} className="p-1.5 text-[#5e5e6e] hover:text-[#8b8b9a] hover:bg-[#36363e] rounded-lg transition-colors"><X className="w-5 h-5" /></button>
@@ -154,7 +167,7 @@ export default function StudentModal({ student, grades, defaultClassId, onSave, 
             {student ? '수정' : '등록'}
           </button>
         </form>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   )
 }

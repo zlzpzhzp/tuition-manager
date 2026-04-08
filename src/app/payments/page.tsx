@@ -12,6 +12,8 @@ import MethodPickerPopup from '@/components/payments/MethodPickerPopup'
 import AiFilterButton from '@/components/payments/AiFilterButton'
 import { getPrevMonth, getPaymentDueDay, isPaymentScheduled, getUnpaidLabelText, getActiveStudents, isWithdrawnStudent, safeMutate, decodePaymentMemo, useGrades, usePayments, revalidateGrades, revalidatePayments, getTodayString } from '@/lib/utils'
 import { METHOD_OPTIONS_SHORT } from '@/lib/constants'
+import { PaymentsSkeleton } from '@/components/Skeleton'
+import { motion, AnimatePresence } from 'framer-motion'
 
 export default function PaymentsPage() {
   const today = getTodayString()
@@ -545,29 +547,7 @@ export default function PaymentsPage() {
   }
 
   // ─── Render ───────────────────────────────────────────────────
-  if (loading) return (
-    <div className="animate-pulse">
-      <div className="flex items-center justify-center gap-3 mb-3">
-        <div className="w-10 h-10 bg-gray-200 rounded-lg"></div>
-        <div className="h-10 bg-gray-200 rounded w-56 sm:w-72"></div>
-        <div className="w-10 h-10 bg-gray-200 rounded-lg"></div>
-      </div>
-      {[...Array(2)].map((_, gi) => (
-        <div key={gi} className="mb-4">
-          <div className="h-4 bg-gray-200 rounded w-20 mb-2 ml-1"></div>
-          <div className="card overflow-hidden">
-            <div className="px-4 py-2.5 bg-[#2c2c33]/70 border-b border-[#2c2c33]"><div className="h-3 bg-gray-200 rounded w-24"></div></div>
-            {[...Array(4)].map((_, si) => (
-              <div key={si} className="flex items-center gap-2 px-4 py-3">
-                <div className="h-4 bg-gray-200 rounded w-14 flex-1"></div>
-                <div className="h-5 bg-gray-200 rounded-full w-16"></div>
-              </div>
-            ))}
-          </div>
-        </div>
-      ))}
-    </div>
-  )
+  if (loading) return <PaymentsSkeleton />
 
   if (error) return (
     <div className="text-center py-12">
@@ -581,18 +561,32 @@ export default function PaymentsPage() {
       {/* 월 네비게이션 — sticky 고정 (iOS 대응: -top-6으로 main py-6 상쇄) */}
       <div className="sticky -top-6 z-30 bg-[#17171c] -mx-4 px-4 pt-6 pb-1">
         {/* Pull-to-refresh 인디케이터 */}
-        <div
-          className="flex items-center justify-center overflow-hidden transition-all duration-200 ease-out"
-          style={{ height: pullDistance > 0 ? `${pullDistance}px` : '0px' }}
-        >
-          <div className={`transition-transform duration-200 ${isRefreshing ? 'animate-spin' : ''}`}
-            style={{ transform: `rotate(${Math.min(pullDistance / PULL_THRESHOLD, 1) * 360}deg)` }}
-          >
-            <svg className="w-6 h-6 text-[#5e5e6e]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-          </div>
-        </div>
+        <AnimatePresence>
+          {pullDistance > 0 && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: pullDistance, opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              className="flex items-center justify-center overflow-hidden"
+            >
+              <motion.div
+                animate={{
+                  rotate: isRefreshing ? 360 : (pullDistance / PULL_THRESHOLD) * 360,
+                  scale: pullDistance >= PULL_THRESHOLD ? 1.15 : 0.9,
+                }}
+                transition={isRefreshing
+                  ? { rotate: { duration: 0.8, repeat: Infinity, ease: 'linear' } }
+                  : { type: 'spring', stiffness: 200, damping: 15 }
+                }
+              >
+                <svg className="w-6 h-6 text-[#5e5e6e]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
         <div className="flex items-center justify-center gap-3 mb-1">
           <button onClick={() => navigateMonth(-1)} className="p-2 hover:bg-[#36363e] rounded-lg" aria-label="이전 달">
             <ChevronLeft className="w-7 h-7" />
