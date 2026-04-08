@@ -13,7 +13,7 @@ import AiFilterButton from '@/components/payments/AiFilterButton'
 import { getPrevMonth, getPaymentDueDay, isPaymentScheduled, getUnpaidLabelText, getActiveStudents, isWithdrawnStudent, safeMutate, decodePaymentMemo, useGrades, usePayments, revalidateGrades, revalidatePayments, getTodayString } from '@/lib/utils'
 import { METHOD_OPTIONS_SHORT } from '@/lib/constants'
 import { PaymentsSkeleton } from '@/components/Skeleton'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, LayoutGroup } from 'framer-motion'
 
 export default function PaymentsPage() {
   const today = getTodayString()
@@ -702,7 +702,9 @@ export default function PaymentsPage() {
                       onClick={toggleGradeExpand}
                       className="flex items-center gap-0.5 active:opacity-70"
                     >
-                      <ChevronRight className={`w-3.5 h-3.5 text-[#5e5e6e] transition-transform ${isGradeExpanded ? 'rotate-90' : ''}`} />
+                      <motion.div animate={{ rotate: isGradeExpanded ? 90 : 0 }} transition={{ type: 'spring', stiffness: 300, damping: 25 }}>
+                        <ChevronRight className="w-3.5 h-3.5 text-[#5e5e6e]" />
+                      </motion.div>
                       <span className="text-xs text-[#5e5e6e]">{gradeName}</span>
                     </button>
                     <div className="flex-1" />
@@ -771,12 +773,16 @@ export default function PaymentsPage() {
                         <Plus className="w-3.5 h-3.5" />
                       </button>
                     </div>
-                    <div
-                      className="grid transition-[grid-template-rows] duration-300 ease-in-out overflow-hidden"
-                      style={{ gridTemplateRows: isClassExpanded ? '1fr' : '0fr' }}
+                    <AnimatePresence initial={false}>
+                    {isClassExpanded && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                      style={{ overflow: 'hidden' }}
                     >
-                    <div className="min-h-0">
-                    {students.map(student => {
+                    {students.map((student, studentIdx) => {
                       const fee = getStudentFee(student, cls)
                       const studentPayments = getStudentPayments(student.id)
                       const paid = studentPayments.reduce((s, p) => s + p.amount, 0)
@@ -1009,8 +1015,9 @@ export default function PaymentsPage() {
                         </div>
                       )
                     })}
-                    </div>
-                    </div>
+                    </motion.div>
+                    )}
+                    </AnimatePresence>
                   </div>
                 )
               })}

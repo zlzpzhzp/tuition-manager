@@ -37,18 +37,41 @@ body {
   letter-spacing: -0.02em;
 }
 
+/* ─── GPU Acceleration ─── */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
 /* ─── Dark Card System ─── */
 .card {
   background: var(--surface);
   border-radius: 20px;
   border: none;
   box-shadow: none;
+  will-change: transform;
+  transform: translateZ(0);
 }
 .card-elevated {
   background: var(--surface);
   border-radius: 20px;
   border: none;
   box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+/* ─── Smooth Scrolling ─── */
+html {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ─── Active Press Feedback ─── */
+button, a, [role="button"] {
+  transition: transform 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.15s ease;
+}
+button:active, a:active, [role="button"]:active {
+  transform: scale(0.97);
 }
 
 /* ─── Animations ─── */

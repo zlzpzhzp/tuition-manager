@@ -7,7 +7,8 @@ import type { Payment, GradeWithClasses, Teacher } from '@/types'
 import { getStudentFee, getPaymentStatus, PAYMENT_STATUS_LABELS, PAYMENT_STATUS_COLORS } from '@/types'
 import { getPaymentDueDay, isPaymentScheduled, getActiveStudents, getCurrentMonth, formatMonth, useGrades, usePayments, useTeachers } from '@/lib/utils'
 import { DashboardSkeleton } from '@/components/Skeleton'
-import { FadeInUp, StaggerContainer, StaggerItem } from '@/components/motion'
+import { motion } from 'framer-motion'
+import { FadeInUp, StaggerContainer, StaggerItem, AnimatedNumber } from '@/components/motion'
 
 export default function DashboardPage() {
   const currentMonth = getCurrentMonth()
@@ -85,14 +86,14 @@ export default function DashboardPage() {
             <Users className="w-4 h-4 text-[#3182f6]" />
             <span className="text-[13px] text-[#5e5e6e] font-medium">재원생</span>
           </div>
-          <p className="text-[32px] font-extrabold text-[#ececec] leading-none tracking-tight">{stats.totalStudents}<span className="text-[15px] font-medium text-[#5e5e6e] ml-0.5">명</span></p>
+          <p className="text-[32px] font-extrabold text-[#ececec] leading-none tracking-tight"><AnimatedNumber value={stats.totalStudents} /><span className="text-[15px] font-medium text-[#5e5e6e] ml-0.5">명</span></p>
         </StaggerItem>
         <StaggerItem className="card p-5">
           <div className="flex items-center gap-1.5 mb-3">
             <TrendingUp className="w-4 h-4 text-[#00c853]" />
             <span className="text-[13px] text-[#5e5e6e] font-medium">납부율</span>
           </div>
-          <p className="text-[32px] font-extrabold text-[#ececec] leading-none tracking-tight">{stats.paymentRate}<span className="text-[15px] font-medium text-[#5e5e6e] ml-0.5">%</span></p>
+          <p className="text-[32px] font-extrabold text-[#ececec] leading-none tracking-tight"><AnimatedNumber value={stats.paymentRate} /><span className="text-[15px] font-medium text-[#5e5e6e] ml-0.5">%</span></p>
           <p className="text-[13px] text-[#5e5e6e] mt-1">{stats.paidCount}/{stats.totalStudents}명 완료</p>
         </StaggerItem>
         <StaggerItem className="card p-5">
@@ -100,7 +101,7 @@ export default function DashboardPage() {
             <CreditCard className="w-4 h-4 text-[#3182f6]" />
             <span className="text-[13px] text-[#5e5e6e] font-medium">수납액</span>
           </div>
-          <p className="text-[28px] font-extrabold text-[#ececec] leading-none tracking-tight">{(stats.totalPaid / 10000).toFixed(0)}<span className="text-[14px] font-medium text-[#5e5e6e] ml-0.5">만원</span></p>
+          <p className="text-[28px] font-extrabold text-[#ececec] leading-none tracking-tight"><AnimatedNumber value={Math.round(stats.totalPaid / 10000)} /><span className="text-[14px] font-medium text-[#5e5e6e] ml-0.5">만원</span></p>
           <p className="text-[13px] text-[#5e5e6e] mt-1">/ {(stats.totalFee / 10000).toFixed(0)}만원</p>
         </StaggerItem>
         <StaggerItem className="card p-5">
@@ -109,7 +110,7 @@ export default function DashboardPage() {
             <span className="text-[13px] text-[#5e5e6e] font-medium">미납</span>
           </div>
           <div className="flex items-baseline gap-2">
-            <p className="text-[28px] font-extrabold text-[#f04452] leading-none tracking-tight">{stats.overdueStudents.length}</p>
+            <p className="text-[28px] font-extrabold text-[#f04452] leading-none tracking-tight"><AnimatedNumber value={stats.overdueStudents.length} /></p>
             <p className="text-[13px] text-[#5e5e6e]">예정 {stats.scheduledStudents.length}</p>
           </div>
         </StaggerItem>
@@ -169,20 +170,27 @@ export default function DashboardPage() {
                 ? `${month}/${dueDay} ${scheduled ? '예정' : '미납'}`
                 : PAYMENT_STATUS_LABELS[status]
               return (
-                <Link key={s.id} href={`/students/${s.id}`}
-                  className="flex items-center gap-3 py-3.5 border-b border-[#2c2c33] last:border-b-0 hover:bg-[#2c2c33] -mx-2 px-2 rounded-xl transition-colors">
-                  <div className="flex-1 min-w-0">
-                    <span className="text-[15px] font-semibold text-[#ececec]">{s.name}</span>
-                    {s.enrollment_date?.startsWith(currentMonth) && (
-                      <span className="text-[10px] ml-1.5 px-1.5 py-0.5 rounded-md bg-[#1c2d45] text-[#5b9cf5] font-bold">신규</span>
-                    )}
-                    <span className="text-[13px] text-[#5e5e6e] ml-2">{s.class?.name}</span>
-                  </div>
-                  <span className="text-[13px] text-[#5e5e6e] tabular-nums">{(fee - paid).toLocaleString()}원</span>
-                  <span className="px-2.5 py-1 rounded-lg text-[12px] font-bold" style={{ backgroundColor: displayColors.bg, color: displayColors.text }}>
-                    {displayLabel}
-                  </span>
-                </Link>
+                <motion.div
+                  key={s.id}
+                  initial={{ opacity: 0, x: -8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 28, delay: Math.min(stats.unpaidStudents.indexOf(s) * 0.03, 0.3) }}
+                >
+                  <Link href={`/students/${s.id}`}
+                    className="flex items-center gap-3 py-3.5 border-b border-[#2c2c33] last:border-b-0 hover:bg-[#2c2c33] -mx-2 px-2 rounded-xl transition-colors">
+                    <div className="flex-1 min-w-0">
+                      <span className="text-[15px] font-semibold text-[#ececec]">{s.name}</span>
+                      {s.enrollment_date?.startsWith(currentMonth) && (
+                        <span className="text-[10px] ml-1.5 px-1.5 py-0.5 rounded-md bg-[#1c2d45] text-[#5b9cf5] font-bold">신규</span>
+                      )}
+                      <span className="text-[13px] text-[#5e5e6e] ml-2">{s.class?.name}</span>
+                    </div>
+                    <span className="text-[13px] text-[#5e5e6e] tabular-nums">{(fee - paid).toLocaleString()}원</span>
+                    <span className="px-2.5 py-1 rounded-lg text-[12px] font-bold" style={{ backgroundColor: displayColors.bg, color: displayColors.text }}>
+                      {displayLabel}
+                    </span>
+                  </Link>
+                </motion.div>
               )
             })}
           </div>
@@ -245,7 +253,13 @@ export default function DashboardPage() {
                 <div key={i} className="flex items-center gap-3">
                   <div className="w-16 text-[13px] text-[#8b8b9a] font-medium truncate shrink-0">{c.name}</div>
                   <div className="flex-1 h-8 bg-[#2c2c33] rounded-xl overflow-hidden relative">
-                    <div className="h-full rounded-xl transition-all duration-700" style={{ width: `${Math.max((c.count / maxCount) * 100, 10)}%`, background: '#3182f6' }} />
+                    <motion.div
+                      className="h-full rounded-xl"
+                      initial={{ width: 0 }}
+                      animate={{ width: `${Math.max((c.count / maxCount) * 100, 10)}%` }}
+                      transition={{ type: 'spring', stiffness: 80, damping: 20, delay: i * 0.05 }}
+                      style={{ background: '#3182f6' }}
+                    />
                     <span className="absolute inset-y-0 right-3 flex items-center text-[13px] font-bold text-[#8b8b9a]">{c.count}</span>
                   </div>
                 </div>

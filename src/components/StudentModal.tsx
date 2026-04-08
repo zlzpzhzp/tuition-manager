@@ -47,17 +47,31 @@ export default function StudentModal({ student, grades, defaultClassId, onSave, 
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ duration: 0.15 }}
-      className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center"
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2 }}
+      className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center"
       onClick={onClose}
     >
       <motion.div
-        initial={{ opacity: 0, y: 60, scale: 0.97 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ type: 'spring', stiffness: 340, damping: 28 }}
+        initial={{ y: '100%' }}
+        animate={{ y: 0 }}
+        exit={{ y: '100%' }}
+        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+        drag="y"
+        dragConstraints={{ top: 0 }}
+        dragElastic={0.2}
+        onDragEnd={(_, info) => {
+          if (info.offset.y > 100 || info.velocity.y > 500) {
+            onClose()
+          }
+        }}
         className="bg-[#212126] w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl max-h-[85vh] overflow-y-auto"
         onClick={e => e.stopPropagation()}
       >
+        {/* 드래그 핸들 */}
+        <div className="flex justify-center pt-3 pb-1 sm:hidden cursor-grab active:cursor-grabbing">
+          <div className="w-10 h-1 rounded-full bg-[#5e5e6e]" />
+        </div>
         <div className="flex items-center justify-between px-5 py-4 border-b border-[#2c2c33]">
           <h2 className="text-lg font-bold tracking-tight">{student ? '학생 수정' : '학생 등록'}</h2>
           <button onClick={onClose} className="p-1.5 text-[#5e5e6e] hover:text-[#8b8b9a] hover:bg-[#36363e] rounded-lg transition-colors"><X className="w-5 h-5" /></button>

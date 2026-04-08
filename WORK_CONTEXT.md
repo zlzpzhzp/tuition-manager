@@ -6,8 +6,8 @@
 ## 현재 상태: 완료
 
 ## 마지막 작업
-- **일시**: 2026-04-06
-- **작업 내용**: 토스급 부드러운 UI/UX 적용 (Framer Motion)
+- **일시**: 2026-04-08
+- **작업 내용**: 토스급 부드러운 UI/UX 2차 개선
 - **결과**: 완료
 
 ## 진행 중인 작업
@@ -15,6 +15,17 @@
 
 ## 다음에 할 것
 없음 (유저 지시 대기)
+
+## 세션 로그 (2026-04-08)
+- 유저(텔레그램): "야 너는왜 토스앱처럼 부드럽지 않냐고 그랬더니 이랬어 너도 해봐" — Framer Motion, CSS will-change, GPU 가속, View Transitions API, PWA 관련 조언 전달.
+- Claude: 토스급 UI/UX 2차 개선 시작.
+  1. motion.tsx에 AnimatedNumber(숫자 카운터 스프링), CollapsibleSection(접기/펼치기), DraggableBottomSheet(드래그 닫기 바텀시트), ListItem(순차 등장) 컴포넌트 추가. TapScale에 whileHover 추가.
+  2. Navbar.tsx — 모바일 하단 네비에 슬라이딩 인디케이터(상단 파란 바) + 활성 아이콘 살짝 위로 올라가는 스프링 + 데스크톱 네비에 layoutId 기반 슬라이딩 필 추가.
+  3. Dashboard — 요약 카드 4개의 숫자를 AnimatedNumber(스프링 카운터)로 교체. 미납 학생 리스트에 순차 등장 애니메이션(x:-8→0, 0.03초 딜레이). 반별 인원 프로그레스 바에 스프링 width 애니메이션.
+  4. PaymentModal/StudentModal — 드래그로 닫기(drag="y", 100px 또는 velocity 500 초과 시 닫힘) + 드래그 핸들 바(모바일) 추가. 바텀시트 스프링 전환(y:'100%'→0).
+  5. 납부탭 — 반 접기/펼치기를 CSS grid transition → Framer Motion AnimatePresence(height 스프링)로 교체. 학년 펼치기 화살표 회전도 motion.div 스프링으로. LayoutGroup import.
+  6. globals.css — GPU 가속(*에 tap-highlight 제거), card에 will-change+translateZ(0), smooth scrolling, button/a 누름 피드백(active:scale(0.97)).
+  빌드 성공, 커밋+push+배포.
 
 ## 세션 로그 (2026-04-06)
 - 유저(터미널): "토스급 부드러운 UI/UX 적용. Framer Motion 설치, 페이지 전환, 스켈레톤, 마이크로 인터랙션, pull-to-refresh, CSS GPU 가속. 페이지 전환부터 시작."
