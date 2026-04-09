@@ -1,4 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createHmac } from 'crypto'
+
+function verifyToken(token: string): boolean {
+  const dotIdx = token.indexOf('.')
+  if (dotIdx < 0) return false
+  try {
+    const payload = token.slice(0, dotIdx)
+    const signature = token.slice(dotIdx + 1)
+    const adminId = Buffer.from(payload, 'base64url').toString('utf-8')
+    if (!adminId || !adminId.trim()) return false
+    const secret = process.env.SESSION_SECRET || 'tuition-dev-secret-local-only'
+    const expected = createHmac('sha256', secret).update(adminId).digest('base64url')
+    return signature === expected
+  } catch {
+    return false
+  }
+}
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
@@ -18,7 +35,7 @@ export function middleware(request: NextRequest) {
   }
 
   const token = request.cookies.get('auth_token')?.value
-  if (token !== 'authenticated') {
+  if (!token || !verifyToken(token)) {
     const loginUrl = new URL('/login', request.url)
     return NextResponse.redirect(loginUrl)
   }
