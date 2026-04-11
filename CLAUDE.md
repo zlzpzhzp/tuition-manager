@@ -1,4 +1,5 @@
 # Claude 작업 지침
+@/root/shared/textbook-database.md
 @/root/.claude/projects/-root-amnesia-manager/memory/apps/tuition.md
 @/root/shared/bulletin.md
 
@@ -13,9 +14,9 @@
 - 다음 세션에서 맥락을 정확하게 이어가기 위함
 
 ## 메모리 시스템 (memory/)
-- **세션 시작 시**: `memory/brain.md`를 읽어서 전체 맥락 파악
-- **작업 중**: 중요 작업 완료 시 `memory/brain.md`의 "최근 작업" 섹션 갱신
-- **세션 종료 시**: `memory/brain.md`에 세션 요약 추가, `memory/sessions/`에 세션 파일 생성
+- **세션 시작 시**: `WORK_CONTEXT.md`를 읽어서 전체 맥락 파악
+- **작업 중**: 중요 작업 완료 시 `WORK_CONTEXT.md`의 "최근 작업" 섹션 갱신
+- **세션 종료 시**: `WORK_CONTEXT.md`에 세션 요약 추가, `memory/sessions/`에 세션 파일 생성
 - brain.md는 500줄 이내 유지. 오래된 세션은 한 줄로 압축
 
 ## 작업 컨텍스트 시스템
@@ -64,3 +65,11 @@
 - `npx eslint src/` 로 린트 에러 먼저 확인하고 수정
 - TypeScript 에러는 `npx tsc --noEmit`으로 확인
 - 린트 에러 발견 시 물어보지 말고 바로 수정
+
+
+# 대화 아카이빙 (필수)
+세션 종료 시 이번 세션의 대화 전문을 memory/conversations/conversation_YYYY-MM-DD.md에 저장하라.
+- 텔레그램 메시지 + 터미널 작업 내용 포함
+- 파일 상단에 키워드 5~10개 추출: `키워드: A, B, C, ...`
+- 같은 날짜 파일이 있으면 아래에 추가
+- 이것은 아카이브용이라 평소에 읽지 않음. 검색 시에만 사용.

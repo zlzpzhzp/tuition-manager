@@ -111,25 +111,25 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
             onClose()
           }
         }}
-        className="bg-[#212126] w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl max-h-[85vh] overflow-y-auto"
+        className="bg-surface w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl max-h-[85vh] overflow-y-auto"
         onClick={e => e.stopPropagation()}
       >
         {/* 드래그 핸들 */}
         <div className="flex justify-center pt-3 pb-1 sm:hidden cursor-grab active:cursor-grabbing">
-          <div className="w-10 h-1 rounded-full bg-[#5e5e6e]" />
+          <div className="w-10 h-1 rounded-full bg-tertiary" />
         </div>
-        <div className="flex items-center justify-between px-5 py-4 border-b border-[#2c2c33]">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-default">
           <h2 className="text-lg font-bold tracking-tight">{payment ? '납부 정보' : '납부'}</h2>
-          <button onClick={onClose} className="p-1.5 text-[#5e5e6e] hover:text-[#8b8b9a] hover:bg-[#36363e] rounded-lg transition-colors"><X className="w-5 h-5" /></button>
+          <button onClick={onClose} className="p-1.5 text-tertiary hover:text-secondary hover:bg-elevated rounded-lg transition-colors"><X className="w-5 h-5" /></button>
         </div>
 
         {/* 이전달 비고 알림 */}
         {prevMemo && (
-          <div className="mx-5 mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg flex gap-2">
-            <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+          <div className="mx-5 mt-4 p-3 bg-[var(--orange-dim)] border border-[var(--orange)] rounded-lg flex gap-2">
+            <AlertTriangle className="w-4 h-4 text-warning shrink-0 mt-0.5" />
             <div>
-              <p className="text-xs font-medium text-amber-800">지난달 비고</p>
-              <p className="text-xs text-amber-700 mt-0.5">{prevMemo}</p>
+              <p className="text-xs font-medium text-warning">지난달 비고</p>
+              <p className="text-xs text-warning mt-0.5">{prevMemo}</p>
             </div>
           </div>
         )}
@@ -137,13 +137,13 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
         {/* 기존 납부 정보 확인 모드 */}
         {payment && !showConfirmDelete ? (
           <div className="p-5 space-y-4">
-            <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-center">
-              <p className="text-green-800 font-bold text-lg">{payment.amount.toLocaleString()}원</p>
-              <p className="text-green-600 text-sm mt-1">납부완료</p>
+            <div className="bg-[var(--green-dim)] border border-[var(--paid-text)] rounded-xl p-4 text-center">
+              <p className="text-[var(--paid-text)] font-bold text-lg">{payment.amount.toLocaleString()}원</p>
+              <p className="text-[var(--paid-text)] text-sm mt-1">납부완료</p>
             </div>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between items-center py-2 border-b">
-                <span className="text-[#5e5e6e]">납부 방법</span>
+                <span className="text-tertiary">납부 방법</span>
                 {editingMethod ? (
                   <div className="flex items-center gap-1.5">
                     <div className="flex gap-1">
@@ -153,7 +153,7 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
                           type="button"
                           onClick={() => setEditMethod(val)}
                           className={`px-2 py-1 rounded text-[11px] font-medium border transition-colors ${
-                            editMethod === val ? 'bg-[#3182f6] text-white border-[#3182f6]' : 'bg-[#212126] text-[#8b8b9a] border-gray-300'
+                            editMethod === val ? 'bg-[var(--blue)] text-white border-[#3182f6]' : 'bg-surface text-secondary border-gray-300'
                           }`}
                         >
                           {label}
@@ -167,14 +167,14 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
                         }
                         setEditingMethod(false)
                       }}
-                      className="p-1 text-green-600 hover:text-green-700"
+                      className="p-1 text-[var(--paid-text)] hover:text-green-700"
                       aria-label="저장"
                     >
                       <Check className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => { setEditingMethod(false); setEditMethod(payment.method as PaymentMethod) }}
-                      className="p-1 text-[#5e5e6e] hover:text-[#8b8b9a]"
+                      className="p-1 text-tertiary hover:text-secondary"
                       aria-label="취소"
                     >
                       <X className="w-4 h-4" />
@@ -183,21 +183,21 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
                 ) : (
                   <button
                     onClick={() => setEditingMethod(true)}
-                    className="font-medium hover:text-[#3182f6] hover:underline transition-colors"
+                    className="font-medium hover:text-brand hover:underline transition-colors"
                   >
                     {PAYMENT_METHOD_LABELS[editMethod]}
                   </button>
                 )}
               </div>
               <div className="flex justify-between items-center py-2 border-b">
-                <span className="text-[#5e5e6e]">납부일</span>
+                <span className="text-tertiary">납부일</span>
                 {editingDate ? (
                   <div className="flex items-center gap-1.5">
                     <input
                       type="date"
                       value={editDate}
                       onChange={e => setEditDate(e.target.value)}
-                      className="px-2 py-1 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3182f6]"
+                      className="px-2 py-1 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
                     />
                     <button
                       onClick={async () => {
@@ -206,14 +206,14 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
                         }
                         setEditingDate(false)
                       }}
-                      className="p-1 text-green-600 hover:text-green-700"
+                      className="p-1 text-[var(--paid-text)] hover:text-green-700"
                       aria-label="저장"
                     >
                       <Check className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => { setEditingDate(false); setEditDate(payment.payment_date) }}
-                      className="p-1 text-[#5e5e6e] hover:text-[#8b8b9a]"
+                      className="p-1 text-tertiary hover:text-secondary"
                       aria-label="취소"
                     >
                       <X className="w-4 h-4" />
@@ -222,33 +222,33 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
                 ) : (
                   <button
                     onClick={() => setEditingDate(true)}
-                    className="font-medium hover:text-[#3182f6] hover:underline transition-colors"
+                    className="font-medium hover:text-brand hover:underline transition-colors"
                   >
                     {payment.payment_date}
                   </button>
                 )}
               </div>
               <div className="flex justify-between py-2 border-b">
-                <span className="text-[#5e5e6e]">해당 월</span>
+                <span className="text-tertiary">해당 월</span>
                 <span className="font-medium">{payment.billing_month}</span>
               </div>
               {payment.cash_receipt && (
                 <div className="flex justify-between py-2 border-b">
-                  <span className="text-[#5e5e6e]">현금영수증</span>
+                  <span className="text-tertiary">현금영수증</span>
                   <span className="font-medium">{payment.cash_receipt === 'issued' ? '발행완료' : '미발행'}</span>
                 </div>
               )}
             </div>
 
             <div className="flex justify-between items-center py-2">
-              <span className="text-sm text-[#5e5e6e] shrink-0">비고</span>
+              <span className="text-sm text-tertiary shrink-0">비고</span>
               {editingMemo ? (
                 <div className="flex items-center gap-1.5 flex-1 ml-4">
                   <input
                     type="text"
                     value={editMemo}
                     onChange={e => setEditMemo(e.target.value)}
-                    className="flex-1 px-2 py-1 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3182f6]"
+                    className="flex-1 px-2 py-1 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
                     placeholder="특이사항이 있으면 입력하세요"
                     autoFocus
                   />
@@ -256,7 +256,7 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
               ) : (
                 <button
                   onClick={() => setEditingMemo(true)}
-                  className="text-sm font-medium text-right max-w-[60%] hover:text-[#3182f6] hover:underline transition-colors text-[#5e5e6e]"
+                  className="text-sm font-medium text-right max-w-[60%] hover:text-brand hover:underline transition-colors text-tertiary"
                 >
                   {payment.memo || '탭하여 입력'}
                 </button>
@@ -274,8 +274,8 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
               }}
               className={`w-full py-3 rounded-lg font-medium text-sm transition-all duration-500 flex items-center justify-center gap-2 ${
                 showConfirmSuccess
-                  ? 'bg-green-500 text-white scale-105'
-                  : 'bg-green-50 border border-green-300 text-green-700 hover:bg-green-100'
+                  ? 'bg-[var(--green)] text-white scale-105'
+                  : 'bg-[var(--green-dim)] border border-[var(--green)] text-[var(--paid-text)] hover:bg-[var(--green-dim)]'
               }`}
             >
               {showConfirmSuccess ? (
@@ -302,13 +302,13 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
             <div className="flex gap-3">
               <button
                 onClick={() => setShowConfirmDelete(false)}
-                className="flex-1 py-2.5 border rounded-lg font-medium text-sm text-[#8b8b9a] hover:bg-[#2c2c33]"
+                className="flex-1 py-2.5 border rounded-lg font-medium text-sm text-secondary hover:bg-surface-hover"
               >
                 돌아가기
               </button>
               <button
                 onClick={handleDelete}
-                className="flex-1 py-2.5 bg-red-600 text-white rounded-lg font-medium text-sm hover:bg-red-700"
+                className="flex-1 py-2.5 bg-[var(--red)] text-white rounded-lg font-medium text-sm hover:bg-[#d93a47]"
               >
                 삭제
               </button>
@@ -317,32 +317,32 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
         ) : (
           <form onSubmit={handleSubmit} className="p-5 space-y-4">
             <div>
-              <label className="block text-sm font-medium text-[#c0c0cc] mb-1">해당 월</label>
+              <label className="block text-sm font-medium text-label mb-1">해당 월</label>
               <input
                 type="month"
                 value={billingMonth}
                 onChange={e => setBillingMonth(e.target.value)}
-                className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3182f6]"
+                className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-[#c0c0cc] mb-1">납부 금액 *</label>
+              <label className="block text-sm font-medium text-label mb-1">납부 금액 *</label>
               <div className="flex items-center gap-2">
                 <input
                   type="number"
                   value={amount}
                   onChange={e => setAmount(e.target.value)}
-                  className="flex-1 px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3182f6]"
+                  className="flex-1 px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
                   required
                   autoFocus
                 />
-                <span className="text-sm text-[#5e5e6e]">원</span>
+                <span className="text-sm text-tertiary">원</span>
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-[#c0c0cc] mb-1">납부 방법</label>
+              <label className="block text-sm font-medium text-label mb-1">납부 방법</label>
               <div className="grid grid-cols-4 gap-1.5">
                 {METHOD_OPTIONS.map(([val, label]) => (
                   <button
@@ -350,7 +350,7 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
                     type="button"
                     onClick={() => setMethod(val)}
                     className={`py-2 rounded-lg text-xs font-medium border transition-colors ${
-                      method === val ? 'bg-[#3182f6] text-white border-[#3182f6]' : 'bg-[#212126] text-[#8b8b9a] border-gray-300 hover:bg-[#2c2c33]'
+                      method === val ? 'bg-[var(--blue)] text-white border-[#3182f6]' : 'bg-surface text-secondary border-gray-300 hover:bg-surface-hover'
                     }`}
                   >
                     {label}
@@ -361,13 +361,13 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
 
             {needsCashReceipt && (
               <div>
-                <label className="block text-sm font-medium text-[#c0c0cc] mb-1">현금영수증</label>
+                <label className="block text-sm font-medium text-label mb-1">현금영수증</label>
                 <div className="flex gap-2">
                   <button
                     type="button"
                     onClick={() => setCashReceipt('issued')}
                     className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-colors ${
-                      cashReceipt === 'issued' ? 'bg-green-600 text-white border-green-600' : 'bg-[#212126] text-[#8b8b9a] border-gray-300 hover:bg-[#2c2c33]'
+                      cashReceipt === 'issued' ? 'bg-green-600 text-white border-green-600' : 'bg-surface text-secondary border-gray-300 hover:bg-surface-hover'
                     }`}
                   >
                     발행완료
@@ -376,7 +376,7 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
                     type="button"
                     onClick={() => setCashReceipt('pending')}
                     className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-colors ${
-                      cashReceipt === 'pending' ? 'bg-orange-500 text-white border-orange-500' : 'bg-[#212126] text-[#8b8b9a] border-gray-300 hover:bg-[#2c2c33]'
+                      cashReceipt === 'pending' ? 'bg-orange-500 text-white border-orange-500' : 'bg-surface text-secondary border-gray-300 hover:bg-surface-hover'
                     }`}
                   >
                     미발행
@@ -386,22 +386,22 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
             )}
 
             <div>
-              <label className="block text-sm font-medium text-[#c0c0cc] mb-1">납부일</label>
+              <label className="block text-sm font-medium text-label mb-1">납부일</label>
               <input
                 type="date"
                 value={paymentDate}
                 onChange={e => setPaymentDate(e.target.value)}
-                className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3182f6]"
+                className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-[#c0c0cc] mb-1">비고</label>
+              <label className="block text-sm font-medium text-label mb-1">비고</label>
               <input
                 type="text"
                 value={memo}
                 onChange={e => setMemo(e.target.value)}
-                className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3182f6]"
+                className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
                 placeholder="특이사항이 있으면 입력하세요"
               />
             </div>
@@ -411,8 +411,8 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
               disabled={showSuccess}
               className={`w-full py-3 rounded-lg font-medium text-sm transition-all duration-500 flex items-center justify-center gap-2 ${
                 showSuccess
-                  ? 'bg-green-500 text-white scale-105'
-                  : 'bg-[#3182f6] text-white hover:opacity-90'
+                  ? 'bg-[var(--green)] text-white scale-105'
+                  : 'bg-[var(--blue)] text-white hover:opacity-90'
               }`}
             >
               {showSuccess ? (

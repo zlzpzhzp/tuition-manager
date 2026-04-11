@@ -46,12 +46,12 @@ export default function Navbar() {
   return (
     <>
       {/* 데스크톱 상단 */}
-      <nav className="sticky top-0 z-40" style={{ background: '#212126', borderBottom: '1px solid #2c2c33' }}>
+      <nav className="sticky top-0 z-40" style={{ background: 'var(--bg-card)', borderBottom: '1px solid var(--border)' }}>
         <div className="max-w-4xl mx-auto px-5">
           <div className="flex items-center justify-between h-14">
             <Link href="/dashboard" className="flex items-center gap-2.5" aria-label="홈으로 이동">
               <Image src="/icons/icon-192x192.png" alt="원비관리" width={28} height={28} className="rounded-lg" />
-              <span className="text-[17px] font-bold text-[#ececec] tracking-tight">원비관리</span>
+              <span className="text-[17px] font-bold text-primary tracking-tight">원비관리</span>
             </Link>
             <div className="flex items-center gap-1">
               <div className="hidden sm:flex gap-1 relative">
@@ -66,12 +66,12 @@ export default function Navbar() {
                       className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-colors relative z-10
                         ${active
                           ? 'text-white'
-                          : 'text-[#8b8b9a] hover:text-[#ececec]'}`}
+                          : 'text-secondary hover:text-primary'}`}
                     >
                       {active && (
                         <motion.div
                           layoutId="desktop-nav-pill"
-                          className="absolute inset-0 bg-[#3182f6] rounded-xl"
+                          className="absolute inset-0 bg-[var(--blue)] rounded-xl"
                           transition={{ type: 'spring', stiffness: 400, damping: 30 }}
                           style={{ zIndex: -1 }}
                         />
@@ -87,8 +87,8 @@ export default function Navbar() {
                 aria-label="재정"
                 className={`p-2.5 rounded-xl transition-all ${
                   isActive('/finance')
-                    ? 'bg-[#3182f6] text-white'
-                    : 'text-[#8b8b9a] hover:text-[#ececec] hover:bg-[#2c2c33]'
+                    ? 'bg-[var(--blue)] text-white'
+                    : 'text-secondary hover:text-primary hover:bg-surface-hover'
                 }`}
               >
                 <Wallet className="w-5 h-5" />
@@ -99,11 +99,11 @@ export default function Navbar() {
       </nav>
 
       {/* 모바일 하단 */}
-      <div className="fixed bottom-0 left-0 right-0 sm:hidden z-50" style={{ background: '#212126', borderTop: '1px solid #2c2c33' }}>
+      <div className="fixed bottom-0 left-0 right-0 sm:hidden z-50" style={{ background: 'var(--bg-card)', borderTop: '1px solid var(--border)' }}>
         {/* 슬라이딩 인디케이터 */}
         {activeIdx >= 0 && (
           <motion.div
-            className="absolute top-0 h-[2px] bg-[#3182f6] rounded-full"
+            className="absolute top-0 h-[2px] bg-[var(--blue)] rounded-full"
             animate={{ left: indicatorStyle.left, width: indicatorStyle.width }}
             transition={{ type: 'spring', stiffness: 400, damping: 30 }}
           />
@@ -123,11 +123,11 @@ export default function Navbar() {
                   animate={{ scale: active ? 1 : 0.9, y: active ? -2 : 0 }}
                   transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                 >
-                  <Icon className="w-[22px] h-[22px]" style={{ color: active ? '#3182f6' : '#5e5e6e' }} />
+                  <Icon className="w-[22px] h-[22px]" style={{ color: active ? 'var(--blue)' : 'var(--text-4)' }} />
                 </motion.div>
                 <motion.span
                   className="text-[10px] font-bold"
-                  animate={{ color: active ? '#3182f6' : '#5e5e6e', scale: active ? 1.05 : 1 }}
+                  animate={{ color: active ? 'var(--blue)' : 'var(--text-4)', scale: active ? 1.05 : 1 }}
                   transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                 >
                   {label}

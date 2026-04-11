@@ -65,37 +65,37 @@ export default function StudentModal({ student, grades, defaultClassId, onSave, 
             onClose()
           }
         }}
-        className="bg-[#212126] w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl max-h-[85vh] overflow-y-auto"
+        className="bg-surface w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl max-h-[85vh] overflow-y-auto"
         onClick={e => e.stopPropagation()}
       >
         {/* 드래그 핸들 */}
         <div className="flex justify-center pt-3 pb-1 sm:hidden cursor-grab active:cursor-grabbing">
-          <div className="w-10 h-1 rounded-full bg-[#5e5e6e]" />
+          <div className="w-10 h-1 rounded-full bg-tertiary" />
         </div>
-        <div className="flex items-center justify-between px-5 py-4 border-b border-[#2c2c33]">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-default">
           <h2 className="text-lg font-bold tracking-tight">{student ? '학생 수정' : '학생 등록'}</h2>
-          <button onClick={onClose} className="p-1.5 text-[#5e5e6e] hover:text-[#8b8b9a] hover:bg-[#36363e] rounded-lg transition-colors"><X className="w-5 h-5" /></button>
+          <button onClick={onClose} className="p-1.5 text-tertiary hover:text-secondary hover:bg-elevated rounded-lg transition-colors"><X className="w-5 h-5" /></button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-[#c0c0cc] mb-1">이름 *</label>
+            <label className="block text-sm font-medium text-label mb-1">이름 *</label>
             <input
               type="text"
               value={name}
               onChange={e => setName(e.target.value)}
-              className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3182f6]"
+              className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
               required
               autoFocus
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-[#c0c0cc] mb-1">반</label>
+            <label className="block text-sm font-medium text-label mb-1">반</label>
             <select
               value={classId}
               onChange={e => setClassId(e.target.value)}
-              className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3182f6]"
+              className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
             >
               <option value="">반 선택</option>
               {grades.map(g => (
@@ -111,19 +111,19 @@ export default function StudentModal({ student, grades, defaultClassId, onSave, 
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-[#c0c0cc] mb-1">첫 등원일 *</label>
+            <label className="block text-sm font-medium text-label mb-1">첫 등원일 *</label>
             <input
               type="date"
               value={enrollmentDate}
               onChange={e => setEnrollmentDate(e.target.value)}
-              className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3182f6]"
+              className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
               required
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-[#c0c0cc] mb-1">학생 연락처</label>
+              <label className="block text-sm font-medium text-label mb-1">학생 연락처</label>
               <input
                 type="tel"
                 value={phone}
@@ -131,11 +131,11 @@ export default function StudentModal({ student, grades, defaultClassId, onSave, 
                 placeholder="010-0000-0000"
                 pattern="^[\d\-]*$"
                 title="숫자와 하이픈만 입력 가능합니다"
-                className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3182f6]"
+                className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#c0c0cc] mb-1">학부모 연락처</label>
+              <label className="block text-sm font-medium text-label mb-1">학부모 연락처</label>
               <input
                 type="tel"
                 value={parentPhone}
@@ -143,14 +143,14 @@ export default function StudentModal({ student, grades, defaultClassId, onSave, 
                 placeholder="010-0000-0000"
                 pattern="^[\d\-]*$"
                 title="숫자와 하이픈만 입력 가능합니다"
-                className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3182f6]"
+                className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-[#c0c0cc] mb-1">
-              개별 원비 <span className="text-[#5e5e6e] font-normal">(비워두면 반 기본 원비 적용)</span>
+            <label className="block text-sm font-medium text-label mb-1">
+              개별 원비 <span className="text-tertiary font-normal">(비워두면 반 기본 원비 적용)</span>
             </label>
             <div className="flex items-center gap-2">
               <input
@@ -158,25 +158,25 @@ export default function StudentModal({ student, grades, defaultClassId, onSave, 
                 value={customFee}
                 onChange={e => setCustomFee(e.target.value)}
                 placeholder="반 기본 원비 사용"
-                className="flex-1 px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3182f6]"
+                className="flex-1 px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
               />
-              <span className="text-sm text-[#5e5e6e]">원</span>
+              <span className="text-sm text-tertiary">원</span>
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-[#c0c0cc] mb-1">메모</label>
+            <label className="block text-sm font-medium text-label mb-1">메모</label>
             <textarea
               value={memo}
               onChange={e => setMemo(e.target.value)}
               rows={2}
-              className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3182f6] resize-none"
+              className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)] resize-none"
             />
           </div>
 
           <button
             type="submit"
-            className="w-full py-2.5 bg-[#3182f6] text-white rounded-lg font-medium text-sm hover:opacity-90"
+            className="w-full py-2.5 bg-[var(--blue)] text-white rounded-lg font-medium text-sm hover:opacity-90"
           >
             {student ? '수정' : '등록'}
           </button>
