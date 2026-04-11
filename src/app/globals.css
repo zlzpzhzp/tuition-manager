@@ -28,6 +28,10 @@
   --font-sans: var(--font-geist-sans);
 }
 
+html {
+  background: var(--background);
+}
+
 body {
   background: var(--background);
   color: var(--text-primary);

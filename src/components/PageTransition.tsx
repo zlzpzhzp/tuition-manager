@@ -1,7 +1,7 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
-import { useEffect, useState, createContext, useContext, useRef } from 'react'
+import { useEffect, useState, createContext, useContext } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 
 type Direction = 'left' | 'right' | 'none'
@@ -36,11 +36,6 @@ export default function PageTransition({ children }: { children: React.ReactNode
   const { direction } = useNavDirection()
   const prefersReducedMotion = useReducedMotion()
   const [key, setKey] = useState(pathname)
-  const dirRef = useRef(direction)
-
-  useEffect(() => {
-    dirRef.current = direction
-  }, [direction])
 
   useEffect(() => {
     setKey(pathname)
@@ -50,14 +45,14 @@ export default function PageTransition({ children }: { children: React.ReactNode
     return <div>{children}</div>
   }
 
-  const xOffset = dirRef.current === 'left' ? 60 : dirRef.current === 'right' ? -60 : 0
-  const hasSlide = dirRef.current !== 'none'
+  const xOffset = direction === 'left' ? 60 : direction === 'right' ? -60 : 0
+  const hasSlide = direction !== 'none'
 
   return (
     <motion.div
       key={key}
       initial={{
-        opacity: 0,
+        opacity: hasSlide ? 0.4 : 0.6,
         x: xOffset,
         scale: hasSlide ? 0.97 : 1,
       }}
