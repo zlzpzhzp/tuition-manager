@@ -1,23 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createHmac } from 'crypto'
 
-function verifyToken(token: string): boolean {
+async function verifyToken(token: string): Promise<boolean> {
   const dotIdx = token.indexOf('.')
   if (dotIdx < 0) return false
   try {
     const payload = token.slice(0, dotIdx)
     const signature = token.slice(dotIdx + 1)
-    const adminId = Buffer.from(payload, 'base64url').toString('utf-8')
+    const adminId = atob(payload.replace(/-/g, '+').replace(/_/g, '/'))
     if (!adminId || !adminId.trim()) return false
     const secret = process.env.SESSION_SECRET || 'tuition-dev-secret-local-only'
-    const expected = createHmac('sha256', secret).update(adminId).digest('base64url')
+    const enc = new TextEncoder()
+    const key = await crypto.subtle.importKey('raw', enc.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'])
+    const sig = await crypto.subtle.sign('HMAC', key, enc.encode(adminId))
+    const expected = btoa(String.fromCharCode(...new Uint8Array(sig))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
     return signature === expected
   } catch {
     return false
   }
 }
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // 로그인 페이지, API 로그인, 정적 파일은 통과
@@ -35,7 +37,7 @@ export function middleware(request: NextRequest) {
   }
 
   const token = request.cookies.get('auth_token')?.value
-  if (!token || !verifyToken(token)) {
+  if (!token || !(await verifyToken(token))) {
     const loginUrl = new URL('/login', request.url)
     return NextResponse.redirect(loginUrl)
   }

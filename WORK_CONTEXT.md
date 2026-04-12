@@ -17,6 +17,14 @@
 ## 다음에 할 것
 - 디자인 리팩토링 방향 확정 후 구현
 
+## 세션 로그 (2026-04-12)
+- 유저(텔레그램): "로그인안돼"
+- Claude: Vercel에 ADMIN_ID/ADMIN_PASSWORD 환경변수 누락 확인. 추가+재배포. API 200 성공 확인.
+- 유저(텔레그램): "아직안됨"
+- Claude: Set-Cookie 정상. 대시보드 접근 시 307→/login 리다이렉트. SESSION_SECRET 환경변수도 누락 → 추가+재배포. 여전히 307.
+- 유저(텔레그램): "토큰 잘못 받은거 같은데"
+- Claude: 미들웨어가 Node.js crypto import → Vercel Edge Runtime에서 작동 불가. Web Crypto API로 교체 (crypto.subtle.importKey+sign). 빌드 성공, 배포 중.
+
 ## 세션 로그 (2026-04-11)
 - 유저(텔레그램): "토튼이 대량 남았다 앱의 디자인 퀄리티를 대폭끌어 올리는 리팩토링을 진행해보도록 하여라"
 - Claude: 브레인스토밍 스킬 사용. 전체 UI/UX 감사 에이전트 실행 (200+ 하드코딩 색상, 일관성 없는 타이포/간격, developer-built 문제 파악). 방향성 질문 (A: 디자인시스템 먼저 / B: 페이지별 / C: 컴포넌트 먼저) 제시.
