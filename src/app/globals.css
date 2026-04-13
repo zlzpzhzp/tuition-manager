@@ -114,16 +114,12 @@ body {
   border-radius: var(--radius-xl);
   border: none;
   box-shadow: none;
-  will-change: transform;
-  transform: translateZ(0);
 }
 .card-elevated {
   background: var(--bg-card);
   border-radius: var(--radius-xl);
   border: none;
   box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-  will-change: transform;
-  transform: translateZ(0);
 }
 
 /* ─── Semantic Utility Classes ─── */

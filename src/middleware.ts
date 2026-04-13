@@ -1,5 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+let cachedKey: CryptoKey | null = null
+let cachedSecret: string | null = null
+
+async function getHmacKey(): Promise<CryptoKey> {
+  const secret = process.env.SESSION_SECRET || 'tuition-dev-secret-local-only'
+  if (cachedKey && cachedSecret === secret) return cachedKey
+  cachedSecret = secret
+  cachedKey = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'])
+  return cachedKey
+}
+
 async function verifyToken(token: string): Promise<boolean> {
   const dotIdx = token.indexOf('.')
   if (dotIdx < 0) return false
@@ -8,10 +19,8 @@ async function verifyToken(token: string): Promise<boolean> {
     const signature = token.slice(dotIdx + 1)
     const adminId = atob(payload.replace(/-/g, '+').replace(/_/g, '/'))
     if (!adminId || !adminId.trim()) return false
-    const secret = process.env.SESSION_SECRET || 'tuition-dev-secret-local-only'
-    const enc = new TextEncoder()
-    const key = await crypto.subtle.importKey('raw', enc.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'])
-    const sig = await crypto.subtle.sign('HMAC', key, enc.encode(adminId))
+    const key = await getHmacKey()
+    const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(adminId))
     const expected = btoa(String.fromCharCode(...new Uint8Array(sig))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
     return signature === expected
   } catch {

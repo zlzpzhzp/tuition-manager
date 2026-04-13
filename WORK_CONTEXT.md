@@ -17,6 +17,12 @@
 ## 다음에 할 것
 - 디자인 리팩토링 방향 확정 후 구현
 
+## 세션 로그 (2026-04-13)
+- 유저(터미널): "/simplify 돌려서 코드 품질 정리하라는 지시"
+- Claude: /simplify 실행. 3개 리뷰 에이전트 병렬 실행 (코드 재사용/품질/효율).
+  발견: 1) 미들웨어 CryptoKey 매 요청 재생성 → 캐싱 추가. 2) .card에 will-change 상시 → 제거. 3) CSS 클래스 Tailwind 충돌 가능성 인지(점진 수정). 4) .input/.btn 유틸리티 미사용(점진 적용).
+  수정: middleware.ts CryptoKey 캐싱, globals.css will-change 제거. 빌드+커밋+배포.
+
 ## 세션 로그 (2026-04-12)
 - 유저(텔레그램): "로그인안돼"
 - Claude: Vercel에 ADMIN_ID/ADMIN_PASSWORD 환경변수 누락 확인. 추가+재배포. API 200 성공 확인.
