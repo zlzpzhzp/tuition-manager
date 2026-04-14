@@ -51,7 +51,7 @@ export default function Navbar() {
           <div className="flex items-center justify-between h-14">
             <Link href="/dashboard" className="flex items-center gap-2.5" aria-label="홈으로 이동">
               <Image src="/icons/icon-192x192.png" alt="원비관리" width={28} height={28} className="rounded-lg" />
-              <span className="text-[17px] font-bold text-primary tracking-tight">원비관리</span>
+              <span className="text-[17px] font-bold text-[var(--text-1)] tracking-tight">원비관리</span>
             </Link>
             <div className="flex items-center gap-1">
               <div className="hidden sm:flex gap-1 relative">
@@ -66,7 +66,7 @@ export default function Navbar() {
                       className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-colors relative z-10
                         ${active
                           ? 'text-white'
-                          : 'text-secondary hover:text-primary'}`}
+                          : 'text-[var(--text-3)] hover:text-[var(--text-1)]'}`}
                     >
                       {active && (
                         <motion.div
@@ -88,7 +88,7 @@ export default function Navbar() {
                 className={`p-2.5 rounded-xl transition-all ${
                   isActive('/finance')
                     ? 'bg-[var(--blue)] text-white'
-                    : 'text-secondary hover:text-primary hover:bg-surface-hover'
+                    : 'text-[var(--text-3)] hover:text-[var(--text-1)] hover:bg-[var(--bg-card-hover)]'
                 }`}
               >
                 <Wallet className="w-5 h-5" />

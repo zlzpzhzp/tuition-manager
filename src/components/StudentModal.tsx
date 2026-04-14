@@ -65,21 +65,21 @@ export default function StudentModal({ student, grades, defaultClassId, onSave, 
             onClose()
           }
         }}
-        className="bg-surface w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl max-h-[85vh] overflow-y-auto"
+        className="bg-[var(--bg-card)] w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl max-h-[85vh] overflow-y-auto"
         onClick={e => e.stopPropagation()}
       >
         {/* 드래그 핸들 */}
         <div className="flex justify-center pt-3 pb-1 sm:hidden cursor-grab active:cursor-grabbing">
-          <div className="w-10 h-1 rounded-full bg-tertiary" />
+          <div className="w-10 h-1 rounded-full bg-[var(--text-4)]" />
         </div>
-        <div className="flex items-center justify-between px-5 py-4 border-b border-default">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)]">
           <h2 className="text-lg font-bold tracking-tight">{student ? '학생 수정' : '학생 등록'}</h2>
-          <button onClick={onClose} className="p-1.5 text-tertiary hover:text-secondary hover:bg-elevated rounded-lg transition-colors"><X className="w-5 h-5" /></button>
+          <button onClick={onClose} className="p-1.5 text-[var(--text-4)] hover:text-[var(--text-3)] hover:bg-[var(--bg-elevated)] rounded-lg transition-colors"><X className="w-5 h-5" /></button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-label mb-1">이름 *</label>
+            <label className="block text-sm font-medium text-[var(--text-2)] mb-1">이름 *</label>
             <input
               type="text"
               value={name}
@@ -91,7 +91,7 @@ export default function StudentModal({ student, grades, defaultClassId, onSave, 
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-label mb-1">반</label>
+            <label className="block text-sm font-medium text-[var(--text-2)] mb-1">반</label>
             <select
               value={classId}
               onChange={e => setClassId(e.target.value)}
@@ -111,7 +111,7 @@ export default function StudentModal({ student, grades, defaultClassId, onSave, 
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-label mb-1">첫 등원일 *</label>
+            <label className="block text-sm font-medium text-[var(--text-2)] mb-1">첫 등원일 *</label>
             <input
               type="date"
               value={enrollmentDate}
@@ -123,7 +123,7 @@ export default function StudentModal({ student, grades, defaultClassId, onSave, 
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-label mb-1">학생 연락처</label>
+              <label className="block text-sm font-medium text-[var(--text-2)] mb-1">학생 연락처</label>
               <input
                 type="tel"
                 value={phone}
@@ -135,7 +135,7 @@ export default function StudentModal({ student, grades, defaultClassId, onSave, 
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-label mb-1">학부모 연락처</label>
+              <label className="block text-sm font-medium text-[var(--text-2)] mb-1">학부모 연락처</label>
               <input
                 type="tel"
                 value={parentPhone}
@@ -149,8 +149,8 @@ export default function StudentModal({ student, grades, defaultClassId, onSave, 
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-label mb-1">
-              개별 원비 <span className="text-tertiary font-normal">(비워두면 반 기본 원비 적용)</span>
+            <label className="block text-sm font-medium text-[var(--text-2)] mb-1">
+              개별 원비 <span className="text-[var(--text-4)] font-normal">(비워두면 반 기본 원비 적용)</span>
             </label>
             <div className="flex items-center gap-2">
               <input
@@ -160,12 +160,12 @@ export default function StudentModal({ student, grades, defaultClassId, onSave, 
                 placeholder="반 기본 원비 사용"
                 className="flex-1 px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
               />
-              <span className="text-sm text-tertiary">원</span>
+              <span className="text-sm text-[var(--text-4)]">원</span>
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-label mb-1">메모</label>
+            <label className="block text-sm font-medium text-[var(--text-2)] mb-1">메모</label>
             <textarea
               value={memo}
               onChange={e => setMemo(e.target.value)}
