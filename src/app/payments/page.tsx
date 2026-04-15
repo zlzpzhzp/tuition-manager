@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef, useMemo, useEffect } from 'react'
 import Link from 'next/link'
-import { ChevronLeft, ChevronRight, Check, ClipboardList, Download, Plus } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Check, ClipboardList, Download, Plus, Send } from 'lucide-react'
 import type { Student, Payment, PaymentMethod, GradeWithClasses } from '@/types'
 import { getStudentFee, getPaymentStatus, PAYMENT_STATUS_LABELS, PAYMENT_STATUS_COLORS, PAYMENT_METHOD_LABELS } from '@/types'
 import PaymentModal from '@/components/PaymentModal'
@@ -13,6 +13,7 @@ import AiFilterButton from '@/components/payments/AiFilterButton'
 import { getPrevMonth, getPaymentDueDay, isPaymentScheduled, getUnpaidLabelText, getActiveStudents, isWithdrawnStudent, safeMutate, decodePaymentMemo, useGrades, usePayments, revalidateGrades, revalidatePayments, getTodayString } from '@/lib/utils'
 import { METHOD_OPTIONS_SHORT } from '@/lib/constants'
 import { PaymentsSkeleton } from '@/components/Skeleton'
+import BillSendModal from '@/components/BillSendModal'
 import { motion, AnimatePresence } from 'framer-motion'
 
 export default function PaymentsPage() {
@@ -69,6 +70,9 @@ export default function PaymentsPage() {
   // 학생 추가 모달
   const [showStudentModal, setShowStudentModal] = useState(false)
   const [addStudentClassId, setAddStudentClassId] = useState<string | null>(null)
+
+  // 청구서 발송 모달
+  const [billSendTarget, setBillSendTarget] = useState<{ studentId: string; studentName: string; phone: string; amount: number } | null>(null)
 
   // 반 접기/펼치기 (기본: 접힘)
   const [expandedClasses, setExpandedClasses] = useState<Set<string>>(new Set())
@@ -934,6 +938,17 @@ export default function PaymentsPage() {
                                       ) : '납부'}
                                     </button>
                                     <button
+                                      onClick={() => {
+                                        const parentPhone = student.parent_phone || student.phone || ''
+                                        setBillSendTarget({ studentId: student.id, studentName: student.name, phone: parentPhone, amount: fee })
+                                      }}
+                                      className="fan-item p-1 text-[var(--orange)] hover:opacity-70"
+                                      aria-label="청구서 발송"
+                                      title="카톡 청구서 발송"
+                                    >
+                                      <Send className="w-3.5 h-3.5" />
+                                    </button>
+                                    <button
                                       onClick={() => handleOpenModal(student.id, fee)}
                                       className="fan-item p-1 text-[var(--blue)] hover:opacity-70"
                                       aria-label="상세 납부 기록"
@@ -1073,6 +1088,18 @@ export default function PaymentsPage() {
           defaultClassId={addStudentClassId}
           onSave={handleSaveStudent}
           onClose={() => setShowStudentModal(false)}
+        />
+      )}
+
+      {billSendTarget && (
+        <BillSendModal
+          studentId={billSendTarget.studentId}
+          studentName={billSendTarget.studentName}
+          phone={billSendTarget.phone}
+          amount={billSendTarget.amount}
+          billingMonth={selectedMonth}
+          onClose={() => setBillSendTarget(null)}
+          onSuccess={fetchData}
         />
       )}
 
