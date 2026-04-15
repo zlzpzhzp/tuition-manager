@@ -1,0 +1,127 @@
+import { createHash } from 'crypto'
+
+const BASE_URL = process.env.PAYSSAM_API_URL || 'https://stg.paymint.co.kr/partner'
+const API_KEY = () => process.env.PAYSSAM_API_KEY || ''
+const MEMBER = () => process.env.PAYSSAM_MEMBER || 'dminstitute'
+const MERCHANT = () => process.env.PAYSSAM_MERCHANT || 'dminstitute'
+const CALLBACK_URL = () => process.env.PAYSSAM_CALLBACK_URL || 'https://tuition.dminstitute.co/api/payssam/callback'
+
+function generateHash(...parts: string[]): string {
+  return createHash('sha256').update(parts.join(',')).digest('hex')
+}
+
+function generateBillId(studentId: string): string {
+  const ts = Date.now().toString(36)
+  return `7018101625-${studentId.slice(0, 6)}${ts}`.slice(0, 20)
+}
+
+interface SendBillParams {
+  studentName: string
+  phone: string
+  amount: number
+  productName: string
+  message?: string
+  billIssuer?: string
+  expireDate?: string
+}
+
+interface PaySsamResponse {
+  code: string
+  msg: string
+  [key: string]: unknown
+}
+
+async function callApi(uri: string, body: Record<string, unknown>): Promise<PaySsamResponse> {
+  const res = await fetch(`${BASE_URL}${uri}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', charset: 'UTF-8' },
+    body: JSON.stringify(body),
+  })
+  return res.json()
+}
+
+// 2.1 청구서 발송
+export async function sendBill(params: SendBillParams) {
+  const billId = generateBillId(params.phone)
+  const hash = generateHash(billId, params.phone, String(params.amount))
+
+  const body = {
+    apikey: API_KEY(),
+    member: MEMBER(),
+    merchant: MERCHANT(),
+    bill: {
+      bill_issuer: params.billIssuer || '디엠학원',
+      bill_id: billId,
+      product_nm: params.productName,
+      message: params.message || `${params.studentName} ${params.productName}`,
+      member_nm: params.studentName,
+      phone: params.phone.replace(/-/g, ''),
+      price: String(params.amount),
+      hash,
+      expire_dt: params.expireDate || getExpireDate(),
+      callbackURL: CALLBACK_URL(),
+    },
+  }
+
+  const result = await callApi('/if/bill/send', body)
+  return { ...result, bill_id: billId }
+}
+
+// 2.3 결제 취소
+export async function cancelBill(billId: string, amount: number) {
+  const hash = generateHash(billId, String(amount))
+  return callApi('/if/bill/cancel', {
+    apikey: API_KEY(),
+    member: MEMBER(),
+    merchant: MERCHANT(),
+    bill_id: billId,
+    price: String(amount),
+    hash,
+  })
+}
+
+// 2.4 청구서 파기
+export async function destroyBill(billId: string, amount: number) {
+  const hash = generateHash(billId, String(amount))
+  return callApi('/if/bill/destroy', {
+    apikey: API_KEY(),
+    member: MEMBER(),
+    merchant: MERCHANT(),
+    bill_id: billId,
+    price: String(amount),
+    hash,
+  })
+}
+
+// 2.5 결제 상태 조회
+export async function readBill(billId: string) {
+  return callApi('/if/bill/read', {
+    apikey: API_KEY(),
+    member: MEMBER(),
+    merchant: MERCHANT(),
+    bill_id: billId,
+  })
+}
+
+// 2.9 재발송
+export async function resendBill(billId: string) {
+  return callApi('/if/bill/resend', {
+    apikey: API_KEY(),
+    member: MEMBER(),
+    merchant: MERCHANT(),
+    bill_id: billId,
+  })
+}
+
+// 2.7 쌤포인트 잔액 조회
+export async function getRemainPoints() {
+  return callApi('/if/read/remain_count', {
+    apikey: API_KEY(),
+  })
+}
+
+function getExpireDate(): string {
+  const d = new Date()
+  d.setDate(d.getDate() + 30)
+  return d.toISOString().split('T')[0]
+}

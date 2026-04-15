@@ -1,4 +1,4 @@
-export type PaymentMethod = 'remote' | 'card' | 'transfer' | 'cash' | 'other'
+export type PaymentMethod = 'remote' | 'card' | 'transfer' | 'cash' | 'payssam' | 'other'
 
 export interface Teacher {
   id: string
@@ -68,10 +68,11 @@ export interface Payment {
 export type PaymentStatus = 'paid' | 'partial' | 'unpaid'
 
 export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
-  remote: '결제선생',
+  remote: '비대면',
   card: '카드결제',
   transfer: '계좌이체',
   cash: '현금',
+  payssam: '결제선생',
   other: '기타',
 }
 
