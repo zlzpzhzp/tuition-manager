@@ -35,15 +35,13 @@ export default function PaymentsPage() {
   // 인라인 납부 폼
   const [expandedStudentId, setExpandedStudentId] = useState<string | null>(null)
   const [inlineDate, setInlineDate] = useState(today)
-  const [inlineMethod, setInlineMethod] = useState<PaymentMethod>('remote')
+  const [inlineMethod, setInlineMethod] = useState<PaymentMethod>('payssam')
   const [inlineSuccess, setInlineSuccess] = useState<string | null>(null)
   const [inlineSubmitting, setInlineSubmitting] = useState<string | null>(null)
   const [inlineSlideOut, setInlineSlideOut] = useState<string | null>(null)
   const [showMethodPicker, setShowMethodPicker] = useState(false)
   const [inlineMemo, setInlineMemo] = useState('')
   const [showDatePicker, setShowDatePicker] = useState(false)
-  const [datePickerPos, setDatePickerPos] = useState({ top: 0, left: 0 })
-  const [methodPickerPos, setMethodPickerPos] = useState({ top: 0, right: 0 })
   const dateButtonRef = useRef<HTMLButtonElement>(null)
   const methodButtonRef = useRef<HTMLButtonElement>(null)
 
@@ -376,7 +374,7 @@ export default function PaymentsPage() {
     setExpandedStudentId(studentId)
     setInlineDate(today)
     const prevPayment = prevPayments.find(p => p.student_id === studentId)
-    setInlineMethod(prevPayment?.method as PaymentMethod || 'remote')
+    setInlineMethod(prevPayment?.method as PaymentMethod || 'payssam')
     setShowMethodPicker(false)
     setShowDatePicker(false)
     setInlineMemo('')
@@ -555,7 +553,7 @@ export default function PaymentsPage() {
 
   if (error) return (
     <div className="text-center py-12">
-      <p className="text-red-500 mb-4">{error?.message || '데이터 로딩 실패'}</p>
+      <p className="text-[var(--red)] mb-4">{error?.message || '데이터 로딩 실패'}</p>
       <button onClick={fetchData} className="px-4 py-2 bg-[var(--blue)] text-white rounded-lg hover:opacity-90">다시 시도</button>
     </div>
   )
@@ -630,7 +628,7 @@ export default function PaymentsPage() {
             localStorage.setItem(`payment_memo_${selectedMonth}`, e.target.value)
           }}
           placeholder="메모..."
-          className="w-full px-4 py-3 text-sm card resize-none focus:outline-none focus:ring-2 focus:ring-[var(--blue)] placeholder-gray-300"
+          className="w-full px-4 py-3 text-sm card resize-none focus:outline-none focus:ring-2 focus:ring-[var(--blue)] placeholder-[var(--text-4)]"
           rows={3}
         />
       </div>
@@ -816,8 +814,8 @@ export default function PaymentsPage() {
                       return (
                         <div key={student.id} className="relative overflow-hidden">
                           {/* 왼쪽 스와이프 액션 */}
-                          <div className={`absolute inset-y-0 left-0 w-24 flex items-center justify-center ${hasDiscuss ? 'bg-gray-300' : 'bg-rose-200'}`}>
-                            <span className={`font-bold text-xs ${hasDiscuss ? 'text-[var(--text-3)]' : 'text-rose-500'}`}>{hasDiscuss ? '해제' : 'DISCUSS'}</span>
+                          <div className={`absolute inset-y-0 left-0 w-24 flex items-center justify-center ${hasDiscuss ? 'bg-[var(--bg-elevated)]' : 'bg-[var(--red-dim)]'}`}>
+                            <span className={`font-bold text-xs ${hasDiscuss ? 'text-[var(--text-3)]' : 'text-[var(--red)]'}`}>{hasDiscuss ? '해제' : 'DISCUSS'}</span>
                           </div>
 
                           {/* 오른쪽 수정 패널 */}
@@ -843,7 +841,7 @@ export default function PaymentsPage() {
                                 className="w-12 px-1 py-1 text-xs border border-[var(--border)] rounded-lg text-center bg-[var(--bg-card)] focus:outline-none focus:ring-1 focus:ring-[var(--blue)]"
                               />
                             </div>
-                            <button onClick={() => handleSaveEdit(student.id)} className="p-1.5 bg-[var(--blue)] hover:bg-[#2970dd] text-white rounded-full shrink-0 shadow-sm transition-colors" aria-label="저장">
+                            <button onClick={() => handleSaveEdit(student.id)} className="p-1.5 bg-[var(--blue)] hover:opacity-80 text-white rounded-full shrink-0 shadow-sm transition-opacity" aria-label="저장">
                               <Check className="w-3.5 h-3.5" />
                             </button>
                           </div>
@@ -871,12 +869,15 @@ export default function PaymentsPage() {
                                 onClick={e => { if (wasSwiped.current) e.preventDefault(); e.stopPropagation() }}
                               >
                                 <span className={`text-sm font-medium ${withdrawn ? 'line-through decoration-red-500 decoration-2 text-[var(--text-4)]' : ''}`}>{student.name}</span>
-                                {withdrawn && <span className="text-[10px] text-red-400 ml-1.5">퇴원</span>}
+                                {!withdrawn && !student.parent_phone && (
+                                  <span className="text-[9px] ml-1 px-1 py-0.5 rounded-full bg-[var(--orange-dim)] text-[var(--orange)] font-bold" title="보호자 연락처 미등록">📵</span>
+                                )}
+                                {withdrawn && <span className="text-[10px] text-[var(--red)] ml-1.5">퇴원</span>}
                                 {!withdrawn && student.enrollment_date?.startsWith(selectedMonth) && (
                                   <span className="text-[9px] ml-1.5 px-1.5 py-0.5 rounded-full bg-[var(--blue-bg)] text-[var(--blue)] font-bold">신규</span>
                                 )}
                                 {hasDiscuss && student.memo && (
-                                  <p className="text-[11px] text-rose-500 font-medium leading-tight">
+                                  <p className="text-[11px] text-[var(--red)] font-medium leading-tight">
                                     {student.memo}
                                   </p>
                                 )}
@@ -893,14 +894,10 @@ export default function PaymentsPage() {
                                       ref={dateButtonRef}
                                       type="button"
                                       onClick={() => {
-                                        if (!showDatePicker && dateButtonRef.current) {
-                                          const rect = dateButtonRef.current.getBoundingClientRect()
-                                          setDatePickerPos({ top: rect.bottom + 4, left: Math.max(8, rect.left) })
-                                        }
                                         setShowDatePicker(!showDatePicker)
                                         setShowMethodPicker(false)
                                       }}
-                                      className="fan-item px-2 py-0.5 rounded-full text-xs font-medium bg-[#FEF3C7] text-[#92400E] whitespace-nowrap"
+                                      className="fan-item px-2 py-0.5 rounded-full text-xs font-medium bg-[var(--orange-dim)] text-[var(--orange)] whitespace-nowrap"
                                       aria-label="결제일 선택"
                                     >
                                       {(() => { const d = new Date(inlineDate); return `${d.getMonth()+1}/${d.getDate()}` })()}
@@ -910,24 +907,19 @@ export default function PaymentsPage() {
                                       ref={methodButtonRef}
                                       type="button"
                                       onClick={() => {
-                                        if (!showMethodPicker && methodButtonRef.current) {
-                                          const rect = methodButtonRef.current.getBoundingClientRect()
-                                          setMethodPickerPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right })
-                                        }
                                         setShowMethodPicker(!showMethodPicker)
                                         setShowDatePicker(false)
                                       }}
-                                      className="fan-item px-2 py-0.5 rounded-full text-xs font-medium bg-[#E0E7FF] text-[#3730A3] flex items-center gap-0.5 whitespace-nowrap"
+                                      className="fan-item px-2 py-0.5 rounded-full text-xs font-medium bg-[var(--blue-dim)] text-[var(--blue)] whitespace-nowrap"
                                       aria-label="결제수단 선택"
                                     >
                                       {METHOD_OPTIONS_SHORT.find(([v]) => v === inlineMethod)?.[1]}
-                                      <span className="text-[9px] opacity-50">▼</span>
                                     </button>
                                     <button
                                       onClick={() => handleInlineSubmit(student.id, fee)}
                                       disabled={!!inlineSuccess || !!inlineSubmitting}
                                       className={`fan-item px-2.5 py-0.5 rounded-full text-xs font-medium transition-all duration-300 ${
-                                        isSuccess ? 'bg-green-500 text-white scale-110' : isSubmitting ? 'bg-green-300 text-white scale-100' : 'bg-[var(--green-dim)] text-[var(--paid-text)] hover:opacity-80'
+                                        isSuccess ? 'bg-[var(--green)] text-white scale-110' : isSubmitting ? 'bg-[var(--green)] text-white opacity-60 scale-100' : 'bg-[var(--green-dim)] text-[var(--paid-text)] hover:opacity-80'
                                       }`}
                                       aria-label="납부 처리"
                                     >
@@ -961,7 +953,7 @@ export default function PaymentsPage() {
                                     value={inlineMemo}
                                     onChange={e => setInlineMemo(e.target.value)}
                                     placeholder="비고"
-                                    className="fan-item w-full px-2.5 py-1 rounded-lg text-xs border border-gray-300 focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                                    className="fan-item w-full px-2.5 py-1 rounded-lg text-xs border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-1)] focus:outline-none focus:ring-1 focus:ring-[var(--blue)] placeholder-[var(--text-4)]"
                                     aria-label="비고 입력"
                                   />
                                 </div>
@@ -1020,7 +1012,7 @@ export default function PaymentsPage() {
                                 />
                                 <button
                                   onClick={() => saveDiscussMemo(student.id)}
-                                  className="px-3 py-1.5 rounded-lg text-xs font-medium bg-[var(--red-dim)] text-[var(--unpaid-text)] hover:bg-[#5e2028] transition-colors shrink-0"
+                                  className="px-3 py-1.5 rounded-lg text-xs font-medium bg-[var(--red-dim)] text-[var(--unpaid-text)] hover:opacity-80 transition-opacity shrink-0"
                                 >
                                   저장
                                 </button>
@@ -1064,23 +1056,6 @@ export default function PaymentsPage() {
         />
       )}
 
-      {showDatePicker && (
-        <DatePickerPopup
-          inlineDate={inlineDate}
-          onDateChange={setInlineDate}
-          position={datePickerPos}
-          onClose={() => setShowDatePicker(false)}
-        />
-      )}
-
-      {showMethodPicker && (
-        <MethodPickerPopup
-          currentMethod={inlineMethod}
-          onMethodChange={setInlineMethod}
-          position={methodPickerPos}
-          onClose={() => setShowMethodPicker(false)}
-        />
-      )}
 
       {showStudentModal && (
         <StudentModal
@@ -1100,6 +1075,24 @@ export default function PaymentsPage() {
           billingMonth={selectedMonth}
           onClose={() => setBillSendTarget(null)}
           onSuccess={fetchData}
+        />
+      )}
+
+      {showDatePicker && (
+        <DatePickerPopup
+          inlineDate={inlineDate}
+          onDateChange={setInlineDate}
+          onClose={() => setShowDatePicker(false)}
+          anchorRef={dateButtonRef}
+        />
+      )}
+
+      {showMethodPicker && (
+        <MethodPickerPopup
+          currentMethod={inlineMethod}
+          onMethodChange={setInlineMethod}
+          onClose={() => setShowMethodPicker(false)}
+          anchorRef={methodButtonRef}
         />
       )}
 

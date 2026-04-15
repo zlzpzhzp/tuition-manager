@@ -84,7 +84,7 @@ export default function StudentModal({ student, grades, defaultClassId, onSave, 
               type="text"
               value={name}
               onChange={e => setName(e.target.value)}
-              className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
+              className="w-full px-3 py-2 border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-1)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
               required
               autoFocus
             />
@@ -95,7 +95,7 @@ export default function StudentModal({ student, grades, defaultClassId, onSave, 
             <select
               value={classId}
               onChange={e => setClassId(e.target.value)}
-              className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
+              className="w-full px-3 py-2 border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-1)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
             >
               <option value="">반 선택</option>
               {grades.map(g => (
@@ -116,7 +116,7 @@ export default function StudentModal({ student, grades, defaultClassId, onSave, 
               type="date"
               value={enrollmentDate}
               onChange={e => setEnrollmentDate(e.target.value)}
-              className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
+              className="w-full px-3 py-2 border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-1)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
               required
             />
           </div>
@@ -131,7 +131,7 @@ export default function StudentModal({ student, grades, defaultClassId, onSave, 
                 placeholder="010-0000-0000"
                 pattern="^[\d\-]*$"
                 title="숫자와 하이픈만 입력 가능합니다"
-                className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
+                className="w-full px-3 py-2 border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-1)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
               />
             </div>
             <div>
@@ -143,7 +143,7 @@ export default function StudentModal({ student, grades, defaultClassId, onSave, 
                 placeholder="010-0000-0000"
                 pattern="^[\d\-]*$"
                 title="숫자와 하이픈만 입력 가능합니다"
-                className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
+                className="w-full px-3 py-2 border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-1)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
               />
             </div>
           </div>

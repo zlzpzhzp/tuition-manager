@@ -1,27 +1,32 @@
 'use client'
 
 import { useRef, useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 
 interface Props {
   inlineDate: string
   onDateChange: (date: string) => void
-  position: { top: number; left: number }
   onClose: () => void
+  anchorRef: React.RefObject<HTMLElement | null>
 }
 
-export default function DatePickerPopup({ inlineDate, onDateChange, position, onClose }: Props) {
+export default function DatePickerPopup({ inlineDate, onDateChange, onClose, anchorRef }: Props) {
   const popupRef = useRef<HTMLDivElement>(null)
-  const [adjustedTop, setAdjustedTop] = useState(position.top)
+  const [pos, setPos] = useState({ top: 0, left: 0 })
 
   useEffect(() => {
-    if (popupRef.current) {
-      const rect = popupRef.current.getBoundingClientRect()
-      const viewportHeight = window.innerHeight
-      if (rect.bottom > viewportHeight - 10) {
-        setAdjustedTop(position.top - (rect.bottom - viewportHeight) - 20)
-      }
+    if (anchorRef.current) {
+      const rect = anchorRef.current.getBoundingClientRect()
+      let top = rect.bottom + 4
+      let left = Math.max(8, rect.left)
+      // 화면 밖으로 나가면 위로
+      if (top + 280 > window.innerHeight) top = rect.top - 280
+      // 왼쪽 밖으로 나가면 조정
+      if (left + 220 > window.innerWidth) left = window.innerWidth - 228
+      setPos({ top, left })
     }
-  }, [position.top])
+  }, [anchorRef])
+
   const selDate = new Date(inlineDate)
   const year = selDate.getFullYear()
   const month = selDate.getMonth()
@@ -41,13 +46,13 @@ export default function DatePickerPopup({ inlineDate, onDateChange, position, on
     )
   }
 
-  return (
+  return createPortal(
     <>
-      <div className="fixed inset-0 z-40" onClick={onClose} />
+      <div className="fixed inset-0 z-[60]" onClick={onClose} />
       <div
         ref={popupRef}
-        className="fixed z-50 bg-[#212126] border rounded-lg shadow-lg p-2"
-        style={{ top: adjustedTop, left: position.left, width: '220px' }}
+        className="fixed z-[61] bg-[var(--bg-card)] border border-[var(--border)] rounded-lg shadow-xl p-2"
+        style={{ top: pos.top, left: pos.left, width: '220px' }}
         role="dialog"
         aria-label="날짜 선택"
       >
@@ -55,16 +60,16 @@ export default function DatePickerPopup({ inlineDate, onDateChange, position, on
           <button
             type="button"
             onClick={() => navigateMonth(-1)}
-            className="text-[#5e5e6e] hover:text-[#8b8b9a] text-xs p-0.5"
+            className="text-[var(--text-4)] hover:text-[var(--text-3)] text-xs p-0.5"
             aria-label="이전 달"
           >
             ◀
           </button>
-          <span className="text-xs font-medium">{year}년 {month + 1}월</span>
+          <span className="text-xs font-medium text-[var(--text-1)]">{year}년 {month + 1}월</span>
           <button
             type="button"
             onClick={() => navigateMonth(1)}
-            className="text-[#5e5e6e] hover:text-[#8b8b9a] text-xs p-0.5"
+            className="text-[var(--text-4)] hover:text-[var(--text-3)] text-xs p-0.5"
             aria-label="다음 달"
           >
             ▶
@@ -72,7 +77,7 @@ export default function DatePickerPopup({ inlineDate, onDateChange, position, on
         </div>
         <div className="grid grid-cols-7 gap-0 text-center">
           {['일', '월', '화', '수', '목', '금', '토'].map(d => (
-            <span key={d} className="text-[9px] text-[#5e5e6e] py-0.5">{d}</span>
+            <span key={d} className="text-[9px] text-[var(--text-4)] py-0.5">{d}</span>
           ))}
           {cells.map((day, i) => (
             <button
@@ -87,8 +92,8 @@ export default function DatePickerPopup({ inlineDate, onDateChange, position, on
               }}
               className={`text-[11px] py-1 rounded ${
                 !day ? '' :
-                day === selDate.getDate() ? 'bg-[#3182f6] text-white font-bold' :
-                'hover:bg-[#36363e] text-[#c0c0cc]'
+                day === selDate.getDate() ? 'bg-[var(--blue)] text-white font-bold' :
+                'hover:bg-[var(--bg-elevated)] text-[var(--text-2)]'
               }`}
               aria-label={day ? `${month + 1}월 ${day}일` : undefined}
             >
@@ -97,6 +102,7 @@ export default function DatePickerPopup({ inlineDate, onDateChange, position, on
           ))}
         </div>
       </div>
-    </>
+    </>,
+    document.body
   )
 }
