@@ -1161,6 +1161,24 @@ export default function PaymentsPage() {
                                       </span>
                                     )
                                   })()}
+                                  {status !== 'unpaid' ? (
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); handleOpenModal(student.id, fee) }}
+                                      className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap cursor-pointer hover:opacity-80 transition-opacity"
+                                      style={{ backgroundColor: displayColors.bg, color: displayColors.text }}
+                                      role="status"
+                                    >
+                                      {displayLabel}
+                                    </button>
+                                  ) : (
+                                    <span
+                                      className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap"
+                                      style={{ backgroundColor: displayColors.bg, color: displayColors.text }}
+                                      role="status"
+                                    >
+                                      {displayLabel}
+                                    </span>
+                                  )}
                                   {!withdrawn && (student.parent_phone || student.phone) && (() => {
                                     const billStatus = getBillStatus(student.id)
                                     const bill = billByStudent.get(student.id)
@@ -1197,24 +1215,6 @@ export default function PaymentsPage() {
                                       </button>
                                     )
                                   })()}
-                                  {status !== 'unpaid' ? (
-                                    <button
-                                      onClick={(e) => { e.stopPropagation(); handleOpenModal(student.id, fee) }}
-                                      className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap cursor-pointer hover:opacity-80 transition-opacity"
-                                      style={{ backgroundColor: displayColors.bg, color: displayColors.text }}
-                                      role="status"
-                                    >
-                                      {displayLabel}
-                                    </button>
-                                  ) : (
-                                    <span
-                                      className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap"
-                                      style={{ backgroundColor: displayColors.bg, color: displayColors.text }}
-                                      role="status"
-                                    >
-                                      {displayLabel}
-                                    </span>
-                                  )}
                                 </>
                               )}
                             </div>
