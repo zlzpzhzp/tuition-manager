@@ -63,7 +63,7 @@ export default async function RootLayout({
   return (
     <html lang="ko">
       <head>
-        <style dangerouslySetInnerHTML={{ __html: `html,body{background:#17171c;color:#ececec;margin:0;font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Pretendard',sans-serif}a{color:#3182f6;text-decoration:none}` }} />
+        <style dangerouslySetInnerHTML={{ __html: `html,body{background:#17171c;color:#ececec;margin:0;font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Pretendard',sans-serif}` }} />
       </head>
       <body className={`${geist.className} ${notoSansKR.variable} min-h-screen`}>
         <SWRProvider fallback={fallback}>
