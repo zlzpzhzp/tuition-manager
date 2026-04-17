@@ -144,33 +144,6 @@ export default function PaymentsPage() {
     setSelectedMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`)
   }
 
-  // 좌우 스와이프로 월 변경
-  const swipeStart = useRef<{ x: number; y: number; time: number } | null>(null)
-
-  useEffect(() => {
-    const onTouchStart = (e: TouchEvent) => {
-      swipeStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, time: Date.now() }
-    }
-    const onTouchEnd = (e: TouchEvent) => {
-      if (!swipeStart.current) return
-      const dx = e.changedTouches[0].clientX - swipeStart.current.x
-      const dy = e.changedTouches[0].clientY - swipeStart.current.y
-      const dt = Date.now() - swipeStart.current.time
-      swipeStart.current = null
-      if (Math.abs(dx) < 60 || Math.abs(dy) > Math.abs(dx)) return
-      // 아주 빠르게 밀기(200ms 이내) = 월 변경, 느리게 = 원래 스와이프 기능
-      if (dt > 200) return
-      if (dx < 0) navigateMonth(1)
-      else navigateMonth(-1)
-    }
-    document.addEventListener('touchstart', onTouchStart, { passive: true })
-    document.addEventListener('touchend', onTouchEnd)
-    return () => {
-      document.removeEventListener('touchstart', onTouchStart)
-      document.removeEventListener('touchend', onTouchEnd)
-    }
-  })
-
   const getStudentPayments = useCallback((studentId: string) =>
     paymentsByStudentId.get(studentId) ?? []
   , [paymentsByStudentId])
