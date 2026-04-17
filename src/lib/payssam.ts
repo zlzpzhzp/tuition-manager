@@ -83,6 +83,10 @@ export async function sendBill(params: SendBillParams) {
 
 // 2.3 결제 취소
 export async function cancelBill(billId: string, amount: number) {
+  if (TEST_MODE) {
+    console.log('[PaySsam] 🔒 테스트 모드 — 결제 취소 차단됨:', billId, amount)
+    return { code: '0000', msg: '테스트 모드: 실제 취소되지 않았습니다' }
+  }
   const hash = generateHash(billId, String(amount))
   return callApi('/if/bill/cancel', {
     apikey: API_KEY(),
@@ -96,6 +100,10 @@ export async function cancelBill(billId: string, amount: number) {
 
 // 2.4 청구서 파기
 export async function destroyBill(billId: string, amount: number) {
+  if (TEST_MODE) {
+    console.log('[PaySsam] 🔒 테스트 모드 — 청구서 파기 차단됨:', billId, amount)
+    return { code: '0000', msg: '테스트 모드: 실제 파기되지 않았습니다' }
+  }
   const hash = generateHash(billId, String(amount))
   return callApi('/if/bill/destroy', {
     apikey: API_KEY(),
@@ -109,6 +117,10 @@ export async function destroyBill(billId: string, amount: number) {
 
 // 2.5 결제 상태 조회
 export async function readBill(billId: string) {
+  if (TEST_MODE) {
+    console.log('[PaySsam] 🔒 테스트 모드 — 상태 조회 차단됨:', billId)
+    return { code: 'TEST', msg: '테스트 모드' }
+  }
   return callApi('/if/bill/read', {
     apikey: API_KEY(),
     member: MEMBER(),
@@ -119,6 +131,10 @@ export async function readBill(billId: string) {
 
 // 2.9 재발송
 export async function resendBill(billId: string) {
+  if (TEST_MODE) {
+    console.log('[PaySsam] 🔒 테스트 모드 — 재발송 차단됨:', billId)
+    return { code: 'TEST', msg: '테스트 모드: 실제 재발송되지 않았습니다' }
+  }
   return callApi('/if/bill/resend', {
     apikey: API_KEY(),
     member: MEMBER(),
