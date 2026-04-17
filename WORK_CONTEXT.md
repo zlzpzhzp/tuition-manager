@@ -6,7 +6,21 @@
 ## 현재 상태: 진행 중
 
 ## 마지막 작업
-- **일시**: 2026-04-18 02:00 (진행 중)
+- **일시**: 2026-04-18 03:40 (완료)
+- **작업 내용**: 납부 탭에 결제선생 기능 완전 통합 (6-point spec)
+  - **청구서 4단계 상태 표시**: 학생행의 종이비행기가 bill_status에 따라 색상 변함
+    - unsent(미발송) = 회색 / sent(발송됨) = 주황 / paid(결제완료) = 초록 / cancelled(취소) = 빨강
+    - 탭 시 상태별로 BillSendModal 또는 BillActionModal 오픈
+  - **BillActionModal 신규 생성** (`src/components/BillActionModal.tsx`)
+    - 발송됨 → 청구서 파기 / 결제완료 → 결제 취소 (환불)
+    - 확인 2단계 + 성공/실패 피드백
+  - **통합 필터**: 전체/미납/1일/첫째주/둘째주/셋째주/넷째주 (`passesFilter` 헬퍼)
+    - 우측 드롭다운 하나로 통합, 주차 필터는 결제일 기준 Sun~Sat 범위
+  - **반 헤더 일괄발송 버튼**: 반별 eligible(미발송+전화번호+수강료>0) 개수 표시, 500ms 간격 순차발송, 진행도(n/total)/중단 지원
+  - **Navbar TEST 배지**: 결제선생 탭 배너 제거하고 "원비관리" 타이틀 옆에 초소형 배지
+  - 파일: `src/app/payments/page.tsx`, `src/components/BillActionModal.tsx`, `src/components/Navbar.tsx`
+
+- **일시**: 2026-04-18 02:00 (이전)
 - **작업 내용**: 테스트모드 표시 이동 — 결제선생 탭 배너 제거 + Navbar 원비관리 타이틀 옆에 작게
 - **직전**: 2026-04-17 22:48 — 결제선생 탭 상단 sticky 메모장 추가 + 불필요한 sticky 제거 (msg 528)
   - 상단에 textarea 메모 (기본 3줄, 스크롤 시 1줄 축소, 탭 시 내용만큼 펼쳐짐)

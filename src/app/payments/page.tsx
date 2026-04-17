@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef, useMemo, useEffect } from 'react'
 import Link from 'next/link'
-import { ChevronLeft, ChevronRight, Check, ChevronDown, ClipboardList, Download, Plus, Send } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Check, ChevronDown, ClipboardList, Download, Plus, Send, Loader2 } from 'lucide-react'
 import type { Student, Payment, PaymentMethod, GradeWithClasses } from '@/types'
 import { getStudentFee, getPaymentStatus, PAYMENT_STATUS_LABELS, PAYMENT_STATUS_COLORS, PAYMENT_METHOD_LABELS } from '@/types'
 import PaymentModal from '@/components/PaymentModal'
@@ -14,7 +14,37 @@ import { getPrevMonth, getPaymentDueDay, isPaymentScheduled, getUnpaidLabelText,
 import { METHOD_OPTIONS_SHORT } from '@/lib/constants'
 import { PaymentsSkeleton } from '@/components/Skeleton'
 import BillSendModal from '@/components/BillSendModal'
+import BillActionModal from '@/components/BillActionModal'
 import { motion, AnimatePresence } from 'framer-motion'
+import useSWR from 'swr'
+
+interface BillRecord {
+  id: string
+  student_id: string
+  bill_id: string
+  amount: number
+  billing_month: string
+  phone: string
+  status: string
+  short_url?: string
+  sent_at: string
+}
+
+type BillStatus = 'unsent' | 'sent' | 'paid' | 'cancelled'
+
+type PaymentFilter = 'all' | 'unpaid' | 'day1' | 'week1' | 'week2' | 'week3' | 'week4'
+
+const FILTER_LABELS: Record<PaymentFilter, string> = {
+  all: '전체',
+  unpaid: '미납',
+  day1: '1일',
+  week1: '첫째주',
+  week2: '둘째주',
+  week3: '셋째주',
+  week4: '넷째주',
+}
+
+const WEEK_KEYS: PaymentFilter[] = ['day1', 'week1', 'week2', 'week3', 'week4']
 
 export default function PaymentsPage() {
   const today = getTodayString()
@@ -70,6 +100,33 @@ export default function PaymentsPage() {
 
   // 청구서 발송 모달
   const [billSendTarget, setBillSendTarget] = useState<{ studentId: string; studentName: string; phone: string; amount: number } | null>(null)
+  const [billActionTarget, setBillActionTarget] = useState<{ studentId: string; studentName: string; billId: string; amount: number; status: 'sent' | 'paid' | 'cancelled' } | null>(null)
+
+  // 청구서 현황 (결제선생 발송/결제/취소 상태)
+  const { data: bills = [], mutate: mutateBills } = useSWR<BillRecord[]>(
+    `/api/billing?month=${selectedMonth}`,
+    (url: string) => fetch(url).then(r => r.json()),
+    { refreshInterval: 30000 }
+  )
+  const billByStudent = useMemo(() => {
+    const map = new Map<string, BillRecord>()
+    // bills are sorted by sent_at desc; keep the most recent (first encounter wins)
+    for (const b of bills) if (!map.has(b.student_id)) map.set(b.student_id, b)
+    return map
+  }, [bills])
+  const getBillStatus = useCallback((studentId: string): BillStatus => {
+    const bill = billByStudent.get(studentId)
+    if (!bill) return 'unsent'
+    if (bill.status === 'paid') return 'paid'
+    if (bill.status === 'cancelled' || bill.status === 'destroyed') return 'cancelled'
+    return 'sent'
+  }, [billByStudent])
+
+  // ─── 청구서 일괄발송 ───────────────────────────────────────────
+  const [batchSending, setBatchSending] = useState<string | null>(null)
+  const [batchProgress, setBatchProgress] = useState<{ done: number; total: number } | null>(null)
+  const [cancellingBatch, setCancellingBatch] = useState(false)
+  const cancelBatchRef = useRef(false)
 
   // 반 접기/펼치기 (기본: 접힘)
   const [expandedClasses, setExpandedClasses] = useState<Set<string>>(new Set())
@@ -81,11 +138,34 @@ export default function PaymentsPage() {
     })
   }
 
-  // 미납 필터
-  const [showUnpaidOnly, setShowUnpaidOnly] = useState(false)
+  // 통합 필터 (전체/미납/1일/첫째주~넷째주)
+  const [paymentFilter, setPaymentFilter] = useState<PaymentFilter>('all')
   const [filterOpen, setFilterOpen] = useState(false)
   const filterRef = useRef<HTMLDivElement>(null)
   const [monthMemo, setMonthMemo] = useState('')
+
+  // Sun~Sat 기준 주차 범위 (billing page와 동일)
+  const weekRanges = useMemo(() => {
+    const [y, m] = selectedMonth.split('-').map(Number)
+    const firstDay = new Date(y, m - 1, 1)
+    const lastDay = new Date(y, m, 0).getDate()
+    const firstDow = firstDay.getDay()
+    const week1EndDay = Math.min(1 + (6 - firstDow), lastDay)
+    const week1: [number, number] = [2, week1EndDay]
+    const w2s = week1EndDay + 1
+    const w2e = Math.min(w2s + 6, lastDay)
+    const w3s = w2e + 1
+    const w3e = Math.min(w3s + 6, lastDay)
+    const w4s = w3e + 1
+    const w4e = lastDay
+    return {
+      day1: [1, 1] as [number, number],
+      week1,
+      week2: [w2s, w2e] as [number, number],
+      week3: [w3s, w3e] as [number, number],
+      week4: [w4s, w4e] as [number, number],
+    }
+  }, [selectedMonth])
 
   // 월별 메모 로드
   useEffect(() => {
@@ -169,6 +249,72 @@ export default function PaymentsPage() {
     return isPaymentScheduled(student, month, student.payment_due_day ?? undefined)
   }
 
+  // ─── 통합 필터 ──────────────────────────────────────────────
+  const passesFilter = useCallback((s: Student, cls: ClassWithStudents): boolean => {
+    if (paymentFilter === 'all') return true
+    if (paymentFilter === 'unpaid') {
+      const paid = (paymentsByStudentId.get(s.id) ?? []).reduce((sum, p) => sum + p.amount, 0)
+      const status = getPaymentStatus(paid, getStudentFee(s, cls))
+      if (status === 'paid') return false
+      if (status === 'unpaid' && isPaymentScheduled(s, selectedMonth, s.payment_due_day ?? undefined)) return false
+      return true
+    }
+    // week filters
+    const due = s.payment_due_day ?? getPaymentDueDay(s)
+    if (!due) return false
+    const [start, end] = weekRanges[paymentFilter]
+    if (start > end) return false
+    return due >= start && due <= end
+  }, [paymentFilter, paymentsByStudentId, selectedMonth, weekRanges])
+
+  const sendOneBill = useCallback(async (student: Student, cls: ClassWithStudents) => {
+    const phone = student.parent_phone || student.phone || ''
+    const fee = getStudentFee(student, cls)
+    if (!phone || fee <= 0) return
+    await safeMutate('/api/payssam/send', 'POST', {
+      studentId: student.id,
+      studentName: student.name,
+      phone: phone.replace(/-/g, ''),
+      amount: fee,
+      productName: `${selectedMonth.replace('-', '년 ')}월 수업료`,
+      billingMonth: selectedMonth,
+    })
+  }, [selectedMonth])
+
+  const sendClassBatch = useCallback(async (cls: ClassWithStudents) => {
+    const classStudents = getActiveStudents(cls.students ?? [], selectedMonth).filter(s => passesFilter(s, cls))
+    const eligible = classStudents.filter(s => {
+      const phone = s.parent_phone || s.phone || ''
+      const fee = getStudentFee(s, cls)
+      return phone && fee > 0 && !billByStudent.has(s.id)
+    })
+    if (eligible.length === 0) return
+
+    cancelBatchRef.current = false
+    setCancellingBatch(false)
+    setBatchSending(cls.id)
+    setBatchProgress({ done: 0, total: eligible.length })
+
+    for (let i = 0; i < eligible.length; i++) {
+      if (cancelBatchRef.current) break
+      await sendOneBill(eligible[i], cls)
+      setBatchProgress({ done: i + 1, total: eligible.length })
+      if (cancelBatchRef.current) break
+      if (i < eligible.length - 1) await new Promise(r => setTimeout(r, 500))
+    }
+
+    setBatchSending(null)
+    setBatchProgress(null)
+    setCancellingBatch(false)
+    cancelBatchRef.current = false
+    mutateBills()
+  }, [selectedMonth, passesFilter, billByStudent, sendOneBill, mutateBills])
+
+  const cancelBatch = useCallback(() => {
+    cancelBatchRef.current = true
+    setCancellingBatch(true)
+  }, [])
+
   // ─── Visible sections (스크롤 아코디언용) ───────────────────────
   type SectionRef = { key: string; classIds: string[] }
   const visibleSections = useMemo<SectionRef[]>(() => {
@@ -179,15 +325,7 @@ export default function PaymentsPage() {
         for (const cls of gcs) {
           const active = getActiveStudents(cls.students ?? [], selectedMonth)
           let students = aiFilterIds ? active.filter(s => aiFilterIds.has(s.id)) : active
-          if (showUnpaidOnly) {
-            students = students.filter(s => {
-              const paid = (paymentsByStudentId.get(s.id) ?? []).reduce((sum, p) => sum + p.amount, 0)
-              const status = getPaymentStatus(paid, getStudentFee(s, cls))
-              if (status === 'paid') return false
-              if (status === 'unpaid' && isPaymentScheduled(s, selectedMonth, s.payment_due_day ?? undefined)) return false
-              return true
-            })
-          }
+          students = students.filter(s => passesFilter(s, cls))
           if (students.length > 0) classIds.push(cls.id)
         }
         if (classIds.length === 0) continue
@@ -195,7 +333,7 @@ export default function PaymentsPage() {
       }
     }
     return list
-  }, [subjectGradeGroups, selectedMonth, aiFilterIds, showUnpaidOnly, paymentsByStudentId])
+  }, [subjectGradeGroups, selectedMonth, aiFilterIds, passesFilter])
 
   // 기본: 보이는 반 전부 펼침 (새 반 등장 시 추가만, 사용자 접음은 유지)
   useEffect(() => {
@@ -635,18 +773,20 @@ export default function PaymentsPage() {
           </button>
         </div>
 
-        {/* 미납 필터 — 우측 드롭다운 */}
+        {/* 통합 필터 — 전체/미납/1일/첫째주~넷째주 */}
         <div className="flex justify-end mt-2 mb-1">
           <div ref={filterRef} className="relative">
             <button
               onClick={() => setFilterOpen(v => !v)}
               className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-                showUnpaidOnly
+                paymentFilter === 'unpaid'
                   ? 'bg-[var(--red-dim)] text-[var(--unpaid-text)]'
-                  : 'bg-[var(--bg-elevated)] text-[var(--text-2)] hover:bg-[var(--bg-card-hover)]'
+                  : paymentFilter !== 'all'
+                    ? 'bg-[var(--blue-dim)] text-[var(--blue)]'
+                    : 'bg-[var(--bg-elevated)] text-[var(--text-2)] hover:bg-[var(--bg-card-hover)]'
               }`}
             >
-              <span>{showUnpaidOnly ? '미납' : '전체'}</span>
+              <span>{FILTER_LABELS[paymentFilter]}</span>
               <ChevronDown className="w-3 h-3 opacity-60" />
             </button>
             <AnimatePresence>
@@ -656,22 +796,25 @@ export default function PaymentsPage() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -4 }}
                   transition={{ duration: 0.15 }}
-                  className="absolute right-0 top-full mt-1 min-w-[120px] rounded-xl border border-[var(--border)] bg-[var(--bg-card)] shadow-xl z-40 overflow-hidden"
+                  className="absolute right-0 top-full mt-1 min-w-[140px] rounded-xl border border-[var(--border)] bg-[var(--bg-card)] shadow-xl z-40 overflow-hidden"
                 >
-                  {[
-                    { key: false, label: '전체' },
-                    { key: true, label: '미납' },
-                  ].map(({ key, label }) => {
-                    const active = showUnpaidOnly === key
+                  {(['all', 'unpaid', ...WEEK_KEYS] as PaymentFilter[]).map((key) => {
+                    const active = paymentFilter === key
+                    const isWeek = WEEK_KEYS.includes(key)
+                    const range = isWeek ? weekRanges[key as Exclude<PaymentFilter, 'all' | 'unpaid'>] : null
+                    const rangeLabel = range
+                      ? range[0] > range[1] ? '-' : range[0] === range[1] ? `${range[0]}일` : `${range[0]}~${range[1]}`
+                      : ''
                     return (
                       <button
-                        key={label}
-                        onClick={() => { setShowUnpaidOnly(key); setFilterOpen(false) }}
-                        className={`w-full flex items-center px-3 py-2 text-xs font-medium transition-colors ${
+                        key={key}
+                        onClick={() => { setPaymentFilter(key); setFilterOpen(false) }}
+                        className={`w-full flex items-center justify-between px-3 py-2 text-xs font-medium transition-colors ${
                           active ? 'bg-[var(--blue)]/20 text-[var(--blue)]' : 'text-[var(--text-2)] hover:bg-[var(--bg-elevated)]'
                         }`}
                       >
-                        {label}
+                        <span>{FILTER_LABELS[key]}</span>
+                        {rangeLabel && <span className="text-[10px] opacity-60 ml-2">{rangeLabel}</span>}
                       </button>
                     )
                   })}
@@ -704,15 +847,7 @@ export default function PaymentsPage() {
             let students = aiFilterIds
               ? getActiveStudents(cls.students ?? [], selectedMonth).filter(s => aiFilterIds.has(s.id))
               : getActiveStudents(cls.students ?? [], selectedMonth)
-            if (showUnpaidOnly) {
-              students = students.filter(s => {
-                const paid = (paymentsByStudentId.get(s.id) ?? []).reduce((sum, p) => sum + p.amount, 0)
-                const status = getPaymentStatus(paid, getStudentFee(s, cls))
-                if (status === 'paid') return false
-                if (status === 'unpaid' && checkScheduled(s, selectedMonth)) return false
-                return true
-              })
-            }
+            students = students.filter(s => passesFilter(s, cls))
             return students.length > 0
           })
         )
@@ -731,15 +866,7 @@ export default function PaymentsPage() {
                 let students = aiFilterIds
                   ? getActiveStudents(cls.students ?? [], selectedMonth).filter(s => aiFilterIds.has(s.id))
                   : getActiveStudents(cls.students ?? [], selectedMonth)
-                if (showUnpaidOnly) {
-                  students = students.filter(s => {
-                    const paid = (paymentsByStudentId.get(s.id) ?? []).reduce((sum, p) => sum + p.amount, 0)
-                    const status = getPaymentStatus(paid, getStudentFee(s, cls))
-                    if (status === 'paid') return false
-                    if (status === 'unpaid' && checkScheduled(s, selectedMonth)) return false
-                    return true
-                  })
-                }
+                students = students.filter(s => passesFilter(s, cls))
                 return students.length > 0
               })
               if (!hasGradeStudents) return null
@@ -776,15 +903,7 @@ export default function PaymentsPage() {
                   {gradeClasses.map(cls => {
                 const allClassStudents = getActiveStudents(cls.students ?? [], selectedMonth)
                 let students = aiFilterIds ? allClassStudents.filter(s => aiFilterIds.has(s.id)) : allClassStudents
-                if (showUnpaidOnly) {
-                  students = students.filter(s => {
-                    const paid = (paymentsByStudentId.get(s.id) ?? []).reduce((sum, p) => sum + p.amount, 0)
-                    const status = getPaymentStatus(paid, getStudentFee(s, cls))
-                    if (status === 'paid') return false
-                    if (status === 'unpaid' && checkScheduled(s, selectedMonth)) return false
-                    return true
-                  })
-                }
+                students = students.filter(s => passesFilter(s, cls))
                 // 결제일 오름차순 정렬
                 students = [...students].sort((a, b) => getDueDay(a) - getDueDay(b))
 
@@ -806,6 +925,42 @@ export default function PaymentsPage() {
                       <span className="text-xs text-[var(--text-4)] ml-1">{cls.monthly_fee > 0 ? `${cls.monthly_fee.toLocaleString()}원` : ''}</span>
                       <span className="text-xs text-[var(--text-4)] ml-2">{paidCount}/{students.length}</span>
                       <span className="flex-1" />
+                      {(() => {
+                        const eligibleCount = students.filter(s => {
+                          const phone = s.parent_phone || s.phone || ''
+                          const fee = getStudentFee(s, cls)
+                          return phone && fee > 0 && !billByStudent.has(s.id)
+                        }).length
+                        const isBatchSending = batchSending === cls.id
+                        if (isBatchSending && batchProgress) {
+                          return (
+                            <div className="flex items-center gap-1.5 mr-1" onClick={e => e.stopPropagation()}>
+                              <Loader2 className="w-3 h-3 animate-spin text-[var(--orange)]" />
+                              <span className="text-[10px] font-bold text-[var(--orange)] tabular-nums">{batchProgress.done}/{batchProgress.total}</span>
+                              <button
+                                onClick={cancelBatch}
+                                disabled={cancellingBatch}
+                                className="px-1.5 py-0.5 rounded-md bg-[var(--red-dim)] text-[var(--red)] text-[10px] font-bold hover:opacity-80 disabled:opacity-50"
+                              >
+                                {cancellingBatch ? '중단중' : '중단'}
+                              </button>
+                            </div>
+                          )
+                        }
+                        if (eligibleCount === 0) return null
+                        return (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); sendClassBatch(cls) }}
+                            disabled={!!batchSending}
+                            className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[var(--orange-dim)] text-[var(--orange)] hover:opacity-80 disabled:opacity-40 mr-1"
+                            aria-label={`${cls.name} 일괄 청구서 발송`}
+                            title={`미발송 ${eligibleCount}명 일괄 발송`}
+                          >
+                            <Send className="w-3 h-3" />
+                            <span>일괄 {eligibleCount}</span>
+                          </button>
+                        )
+                      })()}
                       <button
                         onClick={(e) => { e.stopPropagation(); handleAddStudent(cls.id) }}
                         className="p-0.5 text-[var(--text-4)] hover:text-[var(--blue)] transition-colors"
@@ -998,6 +1153,42 @@ export default function PaymentsPage() {
                                       </span>
                                     )
                                   })()}
+                                  {!withdrawn && (student.parent_phone || student.phone) && (() => {
+                                    const billStatus = getBillStatus(student.id)
+                                    const bill = billByStudent.get(student.id)
+                                    const styles: Record<BillStatus, { fg: string; bg: string; title: string }> = {
+                                      unsent:    { fg: 'var(--text-4)',    bg: 'var(--bg-elevated)', title: '카톡 청구서 발송' },
+                                      sent:      { fg: 'var(--orange)',    bg: 'var(--orange-dim)',  title: '발송됨 — 탭하여 파기' },
+                                      paid:      { fg: 'var(--paid-text)', bg: 'var(--green-dim)',   title: '결제완료 — 탭하여 취소' },
+                                      cancelled: { fg: 'var(--red)',       bg: 'var(--red-dim)',     title: '취소됨 — 탭하여 재발송' },
+                                    }
+                                    const s = styles[billStatus]
+                                    return (
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation()
+                                          if ((billStatus === 'sent' || billStatus === 'paid') && bill) {
+                                            setBillActionTarget({
+                                              studentId: student.id,
+                                              studentName: student.name,
+                                              billId: bill.bill_id,
+                                              amount: bill.amount,
+                                              status: billStatus,
+                                            })
+                                          } else {
+                                            const parentPhone = student.parent_phone || student.phone || ''
+                                            setBillSendTarget({ studentId: student.id, studentName: student.name, phone: parentPhone, amount: fee })
+                                          }
+                                        }}
+                                        className="p-1 rounded-lg transition-colors shrink-0 hover:opacity-80"
+                                        style={{ color: s.fg, background: s.bg }}
+                                        aria-label={s.title}
+                                        title={s.title}
+                                      >
+                                        <Send className="w-3.5 h-3.5" />
+                                      </button>
+                                    )
+                                  })()}
                                   {status !== 'unpaid' ? (
                                     <button
                                       onClick={(e) => { e.stopPropagation(); handleOpenModal(student.id, fee) }}
@@ -1083,7 +1274,18 @@ export default function PaymentsPage() {
           amount={billSendTarget.amount}
           billingMonth={selectedMonth}
           onClose={() => setBillSendTarget(null)}
-          onSuccess={fetchData}
+          onSuccess={() => { fetchData(); mutateBills() }}
+        />
+      )}
+
+      {billActionTarget && (
+        <BillActionModal
+          studentName={billActionTarget.studentName}
+          billId={billActionTarget.billId}
+          amount={billActionTarget.amount}
+          status={billActionTarget.status}
+          onClose={() => setBillActionTarget(null)}
+          onSuccess={() => { fetchData(); mutateBills() }}
         />
       )}
 
