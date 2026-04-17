@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { motion } from 'framer-motion'
 import { X, Send, AlertTriangle, Check, Loader2 } from 'lucide-react'
 
@@ -21,6 +22,9 @@ export default function BillSendModal({ studentName, studentId, phone, amount, b
   const [errorMsg, setErrorMsg] = useState('')
   const [billId, setBillId] = useState('')
   const [shortUrl, setShortUrl] = useState('')
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => { setMounted(true) }, [])
 
   // 전화번호 유효성 검사
   const cleanPhone = phone.replace(/-/g, '')
@@ -93,7 +97,9 @@ export default function BillSendModal({ studentName, studentId, phone, amount, b
     return `${y}년 ${parseInt(mo)}월`
   }
 
-  return (
+  if (!mounted) return null
+
+  const modal = (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -241,4 +247,6 @@ export default function BillSendModal({ studentName, studentId, phone, amount, b
       </motion.div>
     </motion.div>
   )
+
+  return createPortal(modal, document.body)
 }

@@ -773,56 +773,6 @@ export default function PaymentsPage() {
           </button>
         </div>
 
-        {/* 통합 필터 — 전체/미납/1일/첫째주~넷째주 */}
-        <div className="flex justify-end mt-2 mb-1">
-          <div ref={filterRef} className="relative">
-            <button
-              onClick={() => setFilterOpen(v => !v)}
-              className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-                paymentFilter === 'unpaid'
-                  ? 'bg-[var(--red-dim)] text-[var(--unpaid-text)]'
-                  : paymentFilter !== 'all'
-                    ? 'bg-[var(--blue-dim)] text-[var(--blue)]'
-                    : 'bg-[var(--bg-elevated)] text-[var(--text-2)] hover:bg-[var(--bg-card-hover)]'
-              }`}
-            >
-              <span>{FILTER_LABELS[paymentFilter]}</span>
-              <ChevronDown className="w-3 h-3 opacity-60" />
-            </button>
-            <AnimatePresence>
-              {filterOpen && (
-                <motion.div
-                  initial={{ opacity: 0, y: -4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -4 }}
-                  transition={{ duration: 0.15 }}
-                  className="absolute right-0 top-full mt-1 min-w-[140px] rounded-xl border border-[var(--border)] bg-[var(--bg-card)] shadow-xl z-40 overflow-hidden"
-                >
-                  {(['all', 'unpaid', ...WEEK_KEYS] as PaymentFilter[]).map((key) => {
-                    const active = paymentFilter === key
-                    const isWeek = WEEK_KEYS.includes(key)
-                    const range = isWeek ? weekRanges[key as Exclude<PaymentFilter, 'all' | 'unpaid'>] : null
-                    const rangeLabel = range
-                      ? range[0] > range[1] ? '-' : range[0] === range[1] ? `${range[0]}일` : `${range[0]}~${range[1]}`
-                      : ''
-                    return (
-                      <button
-                        key={key}
-                        onClick={() => { setPaymentFilter(key); setFilterOpen(false) }}
-                        className={`w-full flex items-center justify-between px-3 py-2 text-xs font-medium transition-colors ${
-                          active ? 'bg-[var(--blue)]/20 text-[var(--blue)]' : 'text-[var(--text-2)] hover:bg-[var(--bg-elevated)]'
-                        }`}
-                      >
-                        <span>{FILTER_LABELS[key]}</span>
-                        {rangeLabel && <span className="text-[10px] opacity-60 ml-2">{rangeLabel}</span>}
-                      </button>
-                    )
-                  })}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        </div>
       </div>
 
       {/* 월별 메모 */}
@@ -837,6 +787,60 @@ export default function PaymentsPage() {
           className="w-full px-4 py-3 text-sm card resize-none focus:outline-none focus:ring-2 focus:ring-[var(--blue)] placeholder-[var(--text-4)]"
           rows={3}
         />
+      </div>
+
+      {/* 통합 필터 — 학년 레이블(중1)과 같은 Y좌표, 스크롤해도 따라다님 */}
+      <div
+        className="sticky z-30 pointer-events-none flex justify-end -mx-4 px-5 py-1.5 mb-1"
+        style={{ top: 'var(--grade-sticky-top, 140px)' }}
+      >
+        <div ref={filterRef} className="relative pointer-events-auto">
+          <button
+            onClick={() => setFilterOpen(v => !v)}
+            className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold transition-colors shadow-sm ${
+              paymentFilter === 'unpaid'
+                ? 'bg-[var(--red-dim)] text-[var(--unpaid-text)]'
+                : paymentFilter !== 'all'
+                  ? 'bg-[var(--blue-dim)] text-[var(--blue)]'
+                  : 'bg-[var(--bg-elevated)] text-[var(--text-2)] hover:bg-[var(--bg-card-hover)]'
+            }`}
+          >
+            <span>{FILTER_LABELS[paymentFilter]}</span>
+            <ChevronDown className="w-3 h-3 opacity-60" />
+          </button>
+          <AnimatePresence>
+            {filterOpen && (
+              <motion.div
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.15 }}
+                className="absolute right-0 top-full mt-1 min-w-[140px] rounded-xl border border-[var(--border)] bg-[var(--bg-card)] shadow-xl overflow-hidden"
+              >
+                {(['all', 'unpaid', ...WEEK_KEYS] as PaymentFilter[]).map((key) => {
+                  const active = paymentFilter === key
+                  const isWeek = WEEK_KEYS.includes(key)
+                  const range = isWeek ? weekRanges[key as Exclude<PaymentFilter, 'all' | 'unpaid'>] : null
+                  const rangeLabel = range
+                    ? range[0] > range[1] ? '-' : range[0] === range[1] ? `${range[0]}일` : `${range[0]}~${range[1]}`
+                    : ''
+                  return (
+                    <button
+                      key={key}
+                      onClick={() => { setPaymentFilter(key); setFilterOpen(false) }}
+                      className={`w-full flex items-center justify-between px-3 py-2 text-xs font-medium transition-colors ${
+                        active ? 'bg-[var(--blue)]/20 text-[var(--blue)]' : 'text-[var(--text-2)] hover:bg-[var(--bg-elevated)]'
+                      }`}
+                    >
+                      <span>{FILTER_LABELS[key]}</span>
+                      {rangeLabel && <span className="text-[10px] opacity-60 ml-2">{rangeLabel}</span>}
+                    </button>
+                  )
+                })}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
 
       {/* 과목별 → 학년별 납부 현황 */}

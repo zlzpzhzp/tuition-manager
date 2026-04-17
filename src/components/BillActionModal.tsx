@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { motion } from 'framer-motion'
 import { X, Trash2, Undo2, AlertTriangle, Check, Loader2 } from 'lucide-react'
 
@@ -19,6 +20,9 @@ export default function BillActionModal({ studentName, billId, amount, status, o
   const [state, setState] = useState<ActionState>('idle')
   const [errorMsg, setErrorMsg] = useState('')
   const [successLabel, setSuccessLabel] = useState('')
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => { setMounted(true) }, [])
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => { if (e.key === 'Escape' && state !== 'submitting') onClose() }
@@ -58,7 +62,9 @@ export default function BillActionModal({ studentName, billId, amount, status, o
   const canDestroy = status === 'sent'   // 미결제 발송 상태만 파기
   const canCancel = status === 'paid'    // 결제완료만 취소
 
-  return (
+  if (!mounted) return null
+
+  const modal = (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -192,4 +198,6 @@ export default function BillActionModal({ studentName, billId, amount, status, o
       </motion.div>
     </motion.div>
   )
+
+  return createPortal(modal, document.body)
 }
