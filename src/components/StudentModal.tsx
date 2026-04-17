@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { motion } from 'framer-motion'
 import { X } from 'lucide-react'
 import type { Student, Grade, Class } from '@/types'
@@ -43,7 +44,9 @@ export default function StudentModal({ student, grades, defaultClassId, onSave, 
     })
   }
 
-  return (
+  if (typeof document === 'undefined') return null
+
+  return createPortal(
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -182,6 +185,7 @@ export default function StudentModal({ student, grades, defaultClassId, onSave, 
           </button>
         </form>
       </motion.div>
-    </motion.div>
+    </motion.div>,
+    document.body
   )
 }

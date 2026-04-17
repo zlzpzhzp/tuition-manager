@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { motion } from 'framer-motion'
 import { X, Trash2, AlertTriangle, Check } from 'lucide-react'
 import type { Payment, PaymentMethod } from '@/types'
@@ -88,7 +89,9 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
     }
   }
 
-  return (
+  if (typeof document === 'undefined') return null
+
+  return createPortal(
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -425,6 +428,7 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
           </form>
         )}
       </motion.div>
-    </motion.div>
+    </motion.div>,
+    document.body
   )
 }
