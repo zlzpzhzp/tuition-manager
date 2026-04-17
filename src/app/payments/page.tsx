@@ -136,6 +136,14 @@ export default function PaymentsPage() {
     return map
   }, [payments])
 
+  const prevMemoByStudentId = useMemo(() => {
+    const map = new Map<string, string | null>()
+    for (const p of prevPayments) {
+      if (!map.has(p.student_id)) map.set(p.student_id, p.memo || null)
+    }
+    return map
+  }, [prevPayments])
+
   // ─── Helpers ──────────────────────────────────────────────────
   const navigateMonth = (delta: number) => {
     const [y, m] = selectedMonth.split('-').map(Number)
@@ -147,10 +155,9 @@ export default function PaymentsPage() {
     paymentsByStudentId.get(studentId) ?? []
   , [paymentsByStudentId])
 
-  const getPrevMemo = useCallback((studentId: string): string | null => {
-    const prev = prevPayments.find(p => p.student_id === studentId)
-    return prev?.memo || null
-  }, [prevPayments])
+  const getPrevMemo = useCallback((studentId: string): string | null =>
+    prevMemoByStudentId.get(studentId) ?? null
+  , [prevMemoByStudentId])
 
   const getDueDay = useCallback((student: Student): number =>
     student.payment_due_day ?? getPaymentDueDay(student)
