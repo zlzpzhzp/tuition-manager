@@ -55,8 +55,7 @@ export default function PaymentsPage() {
 
   // 스와이프
   const [swipeOpenId, setSwipeOpenId] = useState<string | null>(null)
-  const [editFeeValue, setEditFeeValue] = useState('')
-  const [editDueDayValue, setEditDueDayValue] = useState('')
+  const [editMemoValue, setEditMemoValue] = useState('')
   const touchRef = useRef<{
     startX: number; startY: number; currentX: number
     id: string; el: HTMLElement
@@ -162,33 +161,10 @@ export default function PaymentsPage() {
   }
 
   // ─── Discuss ────────────────────────────────────────────────
-  const [discussInputId, setDiscussInputId] = useState<string | null>(null)
-  const [discussMemoValue, setDiscussMemoValue] = useState('')
-
   const toggleDiscuss = async (id: string) => {
     const student = allStudents.find(s => s.id === id)
     if (!student) return
-    if (student.has_discuss) {
-      // 해제: discuss off + memo 제거
-      await safeMutate(`/api/students/${id}`, 'PUT', { has_discuss: false, memo: null })
-      setDiscussInputId(null)
-      fetchData()
-    } else {
-      // 켜기: discuss on + 이유 입력 칸 열기
-      await safeMutate(`/api/students/${id}`, 'PUT', { has_discuss: true })
-      fetchData()
-      setDiscussInputId(id)
-      setDiscussMemoValue('')
-    }
-  }
-
-  const saveDiscussMemo = async (id: string) => {
-    if (!discussMemoValue.trim()) {
-      setDiscussInputId(null)
-      return
-    }
-    await safeMutate(`/api/students/${id}`, 'PUT', { memo: discussMemoValue.trim() })
-    setDiscussInputId(null)
+    await safeMutate(`/api/students/${id}`, 'PUT', { has_discuss: !student.has_discuss })
     fetchData()
   }
 
@@ -289,7 +265,7 @@ export default function PaymentsPage() {
         el.style.transform = 'translateX(0)'
         if (swipeOpenId === id) setSwipeOpenId(null)
       }
-      // 좌로 밀기 → 수정 패널 열기
+      // 좌로 밀기 → 비고 패널 열기
       else if (!wasOpen && dx < -60) {
         // 다른 열린 아이템 먼저 닫기 (가이드 핵심 #5)
         if (swipeOpenId && swipeOpenId !== id) {
@@ -300,8 +276,7 @@ export default function PaymentsPage() {
         const student = allStudents.find(s => s.id === id)
         if (student) {
           setSwipeOpenId(id)
-          setEditFeeValue(String(Math.round(getStudentFee(student, student.class) / 10000)))
-          setEditDueDayValue(String(getDueDay(student)))
+          setEditMemoValue(student.memo ?? '')
         }
       }
       // 임계값 미달 → 원위치
@@ -323,18 +298,9 @@ export default function PaymentsPage() {
   }
 
   const handleSaveEdit = async (studentId: string) => {
-    const feeNum = parseFloat(editFeeValue)
-    const dayNum = parseInt(editDueDayValue)
-
-    const updates: Record<string, unknown> = {}
-    if (!isNaN(feeNum) && feeNum >= 0) updates.custom_fee = Math.round(feeNum * 10000)
-    if (!isNaN(dayNum) && dayNum >= 1 && dayNum <= 31) updates.payment_due_day = dayNum
-
-    if (Object.keys(updates).length > 0) {
-      const { error } = await safeMutate(`/api/students/${studentId}`, 'PUT', updates)
-      if (error) { alert('수정 실패'); return }
-    }
-
+    const memo = editMemoValue.trim() || null
+    const { error } = await safeMutate(`/api/students/${studentId}`, 'PUT', { memo })
+    if (error) { alert('저장 실패'); return }
     closeSwipeEdit()
     await fetchData()
   }
@@ -791,29 +757,16 @@ export default function PaymentsPage() {
                             <span className={`font-bold text-xs ${hasDiscuss ? 'text-[var(--text-3)]' : 'text-[var(--red)]'}`}>{hasDiscuss ? '해제' : 'DISCUSS'}</span>
                           </div>
 
-                          {/* 오른쪽 수정 패널 */}
+                          {/* 오른쪽 비고 패널 */}
                           <div data-edit-panel className="absolute inset-y-0 right-0 w-[150px] flex items-center gap-1.5 px-2 bg-[var(--bg-elevated)]" onClick={e => e.stopPropagation()}>
-                            <div className="flex flex-col items-center">
-                              <label htmlFor={`dueday-${student.id}`} className="text-[8px] text-[var(--text-3)] mb-0.5 font-medium">결제일</label>
-                              <input
-                                id={`dueday-${student.id}`}
-                                type="number"
-                                value={isSwipeOpen ? editDueDayValue : ''}
-                                onChange={e => setEditDueDayValue(e.target.value)}
-                                className="w-10 px-1 py-1 text-xs border border-[var(--border)] rounded-lg text-center bg-[var(--bg-card)] focus:outline-none focus:ring-1 focus:ring-[var(--blue)]"
-                                min={1} max={31}
-                              />
-                            </div>
-                            <div className="flex flex-col items-center">
-                              <label htmlFor={`fee-${student.id}`} className="text-[8px] text-[var(--text-3)] mb-0.5 font-medium">원비(만)</label>
-                              <input
-                                id={`fee-${student.id}`}
-                                type="number"
-                                value={isSwipeOpen ? editFeeValue : ''}
-                                onChange={e => setEditFeeValue(e.target.value)}
-                                className="w-12 px-1 py-1 text-xs border border-[var(--border)] rounded-lg text-center bg-[var(--bg-card)] focus:outline-none focus:ring-1 focus:ring-[var(--blue)]"
-                              />
-                            </div>
+                            <input
+                              type="text"
+                              value={isSwipeOpen ? editMemoValue : ''}
+                              onChange={e => setEditMemoValue(e.target.value)}
+                              placeholder="비고"
+                              className="flex-1 min-w-0 px-2 py-1 text-xs border border-[var(--border)] rounded-lg bg-[var(--bg-card)] focus:outline-none focus:ring-1 focus:ring-[var(--blue)]"
+                              onKeyDown={e => { if (e.key === 'Enter') handleSaveEdit(student.id) }}
+                            />
                             <button onClick={() => handleSaveEdit(student.id)} className="p-1.5 bg-[var(--blue)] hover:opacity-80 text-white rounded-full shrink-0 shadow-sm transition-opacity" aria-label="저장">
                               <Check className="w-3.5 h-3.5" />
                             </button>
@@ -852,8 +805,8 @@ export default function PaymentsPage() {
                                 {!withdrawn && student.enrollment_date?.startsWith(selectedMonth) && (
                                   <span className="text-[9px] ml-1.5 px-1.5 py-0.5 rounded-full bg-[var(--blue-bg)] text-[var(--blue)] font-bold">신규</span>
                                 )}
-                                {hasDiscuss && student.memo && (
-                                  <p className="text-[11px] text-[var(--red)] font-medium leading-tight">
+                                {student.memo && (
+                                  <p className={`text-[11px] font-medium leading-tight ${hasDiscuss ? 'text-[var(--red)]' : 'text-[var(--text-3)]'}`}>
                                     {student.memo}
                                   </p>
                                 )}
@@ -972,26 +925,6 @@ export default function PaymentsPage() {
                                   {cleanMemo && <p className="text-[11px] text-[var(--text-3)] leading-tight">{cleanMemo}</p>}
                                   {prevMemo && <p className="text-[11px] text-[var(--text-4)] leading-tight">지난달: {prevMemo}</p>}
                                 </div>
-                              </div>
-                            )}
-                            {/* DISCUSS 설정 후 이유 입력 칸 */}
-                            {discussInputId === student.id && (
-                              <div className="px-4 pb-2 flex gap-1.5">
-                                <input
-                                  type="text"
-                                  value={discussMemoValue}
-                                  onChange={e => setDiscussMemoValue(e.target.value)}
-                                  placeholder="사유 입력 (예: 수강료 조정 논의)"
-                                  className="flex-1 px-2.5 py-1.5 rounded-lg text-xs border border-[var(--border)] focus:outline-none focus:ring-1 focus:ring-[var(--red)] bg-[var(--red-dim)]"
-                                  autoFocus
-                                  onKeyDown={e => { if (e.key === 'Enter') saveDiscussMemo(student.id) }}
-                                />
-                                <button
-                                  onClick={() => saveDiscussMemo(student.id)}
-                                  className="px-3 py-1.5 rounded-lg text-xs font-medium bg-[var(--red-dim)] text-[var(--unpaid-text)] hover:opacity-80 transition-opacity shrink-0"
-                                >
-                                  저장
-                                </button>
                               </div>
                             )}
                           </div>
