@@ -872,7 +872,10 @@ export default function PaymentsPage() {
                                 {!withdrawn && !student.parent_phone && (
                                   <span className="text-[9px] ml-1 px-1 py-0.5 rounded-full bg-[var(--orange-dim)] text-[var(--orange)] font-bold" title="보호자 연락처 미등록">📵</span>
                                 )}
-                                {withdrawn && <span className="text-[10px] text-[var(--red)] ml-1.5">퇴원</span>}
+                                {withdrawn && student.withdrawal_date && (() => {
+                                  const d = new Date(student.withdrawal_date)
+                                  return <span className="text-[10px] text-[var(--red)] ml-1.5">퇴원 {d.getMonth() + 1}/{d.getDate()}</span>
+                                })()}
                                 {!withdrawn && student.enrollment_date?.startsWith(selectedMonth) && (
                                   <span className="text-[9px] ml-1.5 px-1.5 py-0.5 rounded-full bg-[var(--blue-bg)] text-[var(--blue)] font-bold">신규</span>
                                 )}
