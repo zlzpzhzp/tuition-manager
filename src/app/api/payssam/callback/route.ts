@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { timingSafeEqual } from 'crypto'
 import { supabase } from '@/lib/supabase'
+import { getTodayString } from '@/lib/date'
 
 function verifyApiKey(received: unknown): boolean {
   const expected = process.env.PAYSSAM_API_KEY
@@ -77,7 +78,7 @@ export async function POST(request: NextRequest) {
             student_id: billData.student_id,
             amount: parseInt(appr_price) || billData.amount,
             method: 'payssam',
-            payment_date: new Date().toISOString().split('T')[0],
+            payment_date: getTodayString(),
             billing_month: billData.billing_month,
             memo: `결제선생 자동수납 (${appr_pay_type || 'card'})`,
           })
