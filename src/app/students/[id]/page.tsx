@@ -60,7 +60,7 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
       alert(`삭제 실패: ${error}`)
       return
     }
-    router.push('/students')
+    router.push('/payments')
   }
 
   const handleWithdraw = async () => {
