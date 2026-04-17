@@ -6,12 +6,15 @@
 ## 현재 상태: 진행 중
 
 ## 마지막 작업
-- **일시**: 2026-04-17 15:10
-- **작업 내용**:
-  1. 4월 청구 명단 종이↔앱 동기화 (전 학년) — 반 이동, 퇴원일 변경, 일괄 납부기록 입력
-  2. 납부탭 스와이프 월이동 기능 제거 (유저 요청)
-- **파일**: src/app/payments/page.tsx (147-172 삭제), DB 직접 수정
-- **결과**: 빌드 OK, 커밋/배포 대기
+- **일시**: 2026-04-17 16:00
+- **작업 내용**: 코드베이스 리뷰 + Critical/High 수정
+  1. REVIEW_2026-04-17.md 작성 (C:4/H:8/M:14/L:8)
+  2. 스와이프 좌측 편집을 비고 입력으로 전환
+  3. C1 PaySsam 콜백 apikey 검증 / C3 SESSION_SECRET fallback 제거 / C4 validMethods payssam 추가
+  4. H1 requireAdminSession 가드 / H2 로그인 timingSafeEqual / H4 prevMemo Map 캐싱
+  5. H6 unsafe casts nullish 가드 / H7 AI Filter prompt payssam / H8 callback toISOString 수정
+- **스킵**: C2(service_role 전환), H3(Gemini rate limit), H5(pull-to-refresh 훅 분리) — 구조적/인프라 필요
+- **결과**: 커밋 9건, Vercel 프로덕션 배포 완료
 
 ## 진행 중인 작업
 - 없음
