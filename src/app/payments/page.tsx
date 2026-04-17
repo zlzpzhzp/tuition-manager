@@ -380,6 +380,25 @@ export default function PaymentsPage() {
     return () => document.removeEventListener('mousedown', onClick)
   }, [filterOpen])
 
+  // 학생 행 펼침 시 자동 스크롤 — 우측 아이콘(Send/Mail/수납)이 화면 밖으로 밀리지 않게
+  useEffect(() => {
+    if (!expandedStudentId) return
+    const timer = setTimeout(() => {
+      const el = document.querySelector(`[data-student-row="${expandedStudentId}"]`) as HTMLElement | null
+      if (!el) return
+      const rect = el.getBoundingClientRect()
+      const viewportH = window.innerHeight
+      const isMobile = !window.matchMedia('(min-width: 640px)').matches
+      const bottomNavH = isMobile ? 80 : 0
+      const desiredBottom = viewportH - bottomNavH
+      const margin = 8
+      if (rect.bottom > desiredBottom) {
+        window.scrollBy({ top: rect.bottom - desiredBottom + margin, behavior: 'smooth' })
+      }
+    }, 120)
+    return () => clearTimeout(timer)
+  }, [expandedStudentId])
+
   // ─── Discuss ────────────────────────────────────────────────
   const toggleDiscuss = async (id: string) => {
     const student = allStudents.find(s => s.id === id)
@@ -1014,7 +1033,7 @@ export default function PaymentsPage() {
                       const withdrawn = isWithdrawnStudent(student)
 
                       return (
-                        <div key={student.id} className="relative overflow-hidden">
+                        <div key={student.id} data-student-row={student.id} className="relative overflow-hidden">
                           {/* 왼쪽 스와이프 액션 */}
                           <div className={`absolute inset-y-0 left-0 w-24 flex items-center justify-center ${hasDiscuss ? 'bg-[var(--bg-elevated)]' : 'bg-[var(--red-dim)]'}`}>
                             <span className={`font-bold text-xs ${hasDiscuss ? 'text-[var(--text-3)]' : 'text-[var(--red)]'}`}>{hasDiscuss ? '해제' : 'DISCUSS'}</span>

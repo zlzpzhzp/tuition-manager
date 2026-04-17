@@ -6,17 +6,19 @@
 ## 현재 상태: 진행 중
 
 ## 마지막 작업
-- **일시**: 2026-04-18 (현재) — 납부탭 청구서 상태별 아이콘 구현 중
-  - **요청 (msg 580)**: "미발송=회색 비행기 / 발송=편지모양 / 열어보면=열린편지모양 / 납부=수납 동그라미 / 색상은 알아서"
-  - 이미지 참고: Mail(envelope) 아이콘 + "수납" 파란 rounded-square 뱃지
-  - **제약**: 페이민트 API는 bill read-tracking 없음(appr_state F/W/C/D만) → "열린편지" 상태는 구현 불가, 유저에게 보고 필요
-  - **작업**: `src/app/payments/page.tsx` line 1182-1214 styles map + Send 아이콘 → 상태별 분기
-    - unsent → Send (gray, 유지)
-    - sent → Mail (주황)
-    - paid → "수납" 파란 pill (텍스트 뱃지)
-    - cancelled → Send (red, 유지)
-  - Mail import 추가 완료 (line 5)
-  - 다음: 버튼 JSX 블록 상태별 분기, 빌드+커밋+푸시+:3001 재시작+Vercel 배포
+- **일시**: 2026-04-18 (진행) — 납부탭 학생 행 펼침 시 자동 스크롤 (msg 593)
+  - **문제**: 학생 행 "결제" 탭하면 인라인 폼이 펼쳐지는데, 맨 오른쪽 아이콘(Send/Mail/수납)이 화면 밖으로 밀려 수동 스크롤 필요
+  - **원인**: `handleExpand`는 state만 바꾸고 스크롤 조정 없음. 모바일 하단 nav(~80px)가 겹침
+  - **수정**: `src/app/payments/page.tsx`
+    - line 1017 row wrapper에 `data-student-row={student.id}` 추가
+    - expandedStudentId 변경 시 useEffect — 120ms 딜레이 후 getBoundingClientRect로 bottom이 viewport - 80px(모바일) 위로 오도록 `window.scrollBy({ behavior: 'smooth' })`
+  - 다음: 빌드 → 커밋 → 푸시 → :3001 재시작 → Vercel 배포 → 텔레그램 보고
+
+- **일시**: 2026-04-18 (완료) — 납부탭 청구서 상태별 아이콘 (커밋 da8cd22)
+  - **요청 (msg 580)**: "미발송=회색 비행기 / 발송=편지모양 / 열어보면=열린편지모양 / 납부=수납 동그라미"
+  - **제약**: 페이민트 API v1.2.5 spec 전체 확인(20p) — read-tracking 없음(appr_state F/W/C/D만). "열린편지" 구현 불가, 유저에게 설명 후 3상태로 합의
+  - **구현**: `src/app/payments/page.tsx` 1182-1224 styles map + 상태별 아이콘 분기
+    - unsent → Send (gray)  /  sent → Mail (주황)  /  paid → "수납" 파란 pill  /  cancelled → Send (red)
 
 - **일시**: 2026-04-18 04:20 (완료)
 - **작업 내용**: 결제선생 탭 모니터링 대시보드로 전면 개편
