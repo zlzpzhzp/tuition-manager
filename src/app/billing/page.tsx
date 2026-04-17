@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useMemo, useCallback, useRef } from 'react'
-import { ChevronLeft, ChevronRight, Send, Check, Loader2, Square } from 'lucide-react'
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
+import { ChevronLeft, ChevronRight, ChevronDown, Send, Check, Loader2, Square } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { Student, GradeWithClasses } from '@/types'
 import { getStudentFee } from '@/types'
@@ -25,6 +25,15 @@ type WeekFilter = 'all' | 'day1' | 'week1' | 'week2' | 'week3' | 'week4'
 type ClassWithStudents = GradeWithClasses['classes'][number]
 type StudentWithClass = Student & { class: ClassWithStudents }
 
+const FILTER_LABELS: Record<WeekFilter, string> = {
+  all: '전체',
+  day1: '1일',
+  week1: '첫째주',
+  week2: '둘째주',
+  week3: '셋째주',
+  week4: '넷째주',
+}
+
 export default function BillingPage() {
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const now = new Date()
@@ -32,6 +41,8 @@ export default function BillingPage() {
   })
   const [weekFilter, setWeekFilter] = useState<WeekFilter>('all')
   const [expandedClasses, setExpandedClasses] = useState<Set<string>>(new Set())
+  const [showFilter, setShowFilter] = useState(false)
+  const filterRef = useRef<HTMLDivElement>(null)
 
   const { data: grades = [], isLoading: gradesLoading } = useGrades<GradeWithClasses[]>()
   const { data: bills = [], mutate: mutateBills } = useSWR<BillRecord[]>(
@@ -66,23 +77,21 @@ export default function BillingPage() {
     })
   }
 
-  // 선택 월 기준 Sun~Sat 주차 범위
+  // Sun~Sat 기준 주차 범위
   const weekRanges = useMemo(() => {
     const [y, m] = selectedMonth.split('-').map(Number)
     const firstDay = new Date(y, m - 1, 1)
     const lastDay = new Date(y, m, 0).getDate()
-    const firstDow = firstDay.getDay() // 0=Sun, 6=Sat
+    const firstDow = firstDay.getDay()
 
-    // 1일이 포함된 주의 토요일
     const week1EndDay = Math.min(1 + (6 - firstDow), lastDay)
-    // 첫째주는 1일 제외 2일부터 시작 (1일은 별도 버튼)
     const week1: [number, number] = [2, week1EndDay]
     const w2s = week1EndDay + 1
     const w2e = Math.min(w2s + 6, lastDay)
     const w3s = w2e + 1
     const w3e = Math.min(w3s + 6, lastDay)
     const w4s = w3e + 1
-    const w4e = lastDay // 5주차 있으면 4주차에 병합
+    const w4e = lastDay
 
     return {
       day1: [1, 1] as [number, number],
@@ -111,7 +120,6 @@ export default function BillingPage() {
     return map
   }, [bills])
 
-  // 과목 → 학년 → 반 그룹핑 (납부 페이지와 동일)
   const subjectGradeGroups = useMemo(() => {
     const subjectMap = new Map<string, Map<string, { gradeName: string; classes: ClassWithStudents[] }>>()
     grades.forEach(grade => {
@@ -135,6 +143,20 @@ export default function BillingPage() {
     return [...filtered].sort((a, b) => getDueDay(a) - getDueDay(b))
   }, [selectedMonth, matchesWeekFilter, getDueDay])
 
+  // 표시될 섹션만 남긴 flat 목록 (스크롤 관찰용)
+  type SectionRef = { key: string; classIds: string[] }
+  const visibleSections = useMemo<SectionRef[]>(() => {
+    const list: SectionRef[] = []
+    for (const { subject, grades: sgs } of subjectGradeGroups) {
+      for (const { gradeId, classes: gcs } of sgs) {
+        const visible = gcs.filter(c => getFilteredStudents(c).length > 0)
+        if (visible.length === 0) continue
+        list.push({ key: `${subject}__${gradeId}`, classIds: visible.map(c => c.id) })
+      }
+    }
+    return list
+  }, [subjectGradeGroups, getFilteredStudents])
+
   const allVisibleStudents = useMemo<StudentWithClass[]>(() =>
     grades.flatMap(g => g.classes.flatMap(c =>
       getFilteredStudents(c as ClassWithStudents).map(s => ({ ...s, class: c as ClassWithStudents }))
@@ -146,6 +168,64 @@ export default function BillingPage() {
     const paid = allVisibleStudents.filter(s => billByStudent.get(s.id)?.status === 'paid').length
     return { total, sent, paid, unsent: total - sent }
   }, [allVisibleStudents, billByStudent])
+
+  // 첫 화면: 1학년(첫 섹션) 펼침
+  const initializedKeyRef = useRef<string | null>(null)
+  useEffect(() => {
+    if (visibleSections.length === 0) return
+    const firstKey = visibleSections[0].key
+    if (initializedKeyRef.current === firstKey) return
+    initializedKeyRef.current = firstKey
+    setExpandedClasses(new Set(visibleSections[0].classIds))
+  }, [visibleSections])
+
+  // 스크롤 방향 추적 + 다음 섹션 자동 전환 (스크롤 다운 한정)
+  const scrollDirRef = useRef<'up' | 'down'>('down')
+  const lastScrollYRef = useRef(0)
+  useEffect(() => {
+    const onScroll = () => {
+      const y = window.scrollY
+      if (Math.abs(y - lastScrollYRef.current) > 4) {
+        scrollDirRef.current = y > lastScrollYRef.current ? 'down' : 'up'
+      }
+      lastScrollYRef.current = y
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
+  useEffect(() => {
+    if (visibleSections.length === 0) return
+    const byKey = new Map(visibleSections.map(s => [s.key, s.classIds]))
+    // 스티키 헤더(~22%) 바로 아래 5% 영역을 감지 존으로 사용
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (scrollDirRef.current !== 'down') return
+        const hits = entries.filter(e => e.isIntersecting).sort(
+          (a, b) => a.boundingClientRect.top - b.boundingClientRect.top
+        )
+        if (hits.length === 0) return
+        const key = hits[0].target.getAttribute('data-section-key')
+        if (!key) return
+        const classIds = byKey.get(key)
+        if (!classIds) return
+        setExpandedClasses(new Set(classIds))
+      },
+      { rootMargin: '-22% 0px -73% 0px', threshold: 0 }
+    )
+    document.querySelectorAll('[data-section-key]').forEach(el => observer.observe(el))
+    return () => observer.disconnect()
+  }, [visibleSections])
+
+  // 필터 드롭다운 외부 클릭 닫기
+  useEffect(() => {
+    if (!showFilter) return
+    const onClick = (e: MouseEvent) => {
+      if (filterRef.current && !filterRef.current.contains(e.target as Node)) setShowFilter(false)
+    }
+    document.addEventListener('mousedown', onClick)
+    return () => document.removeEventListener('mousedown', onClick)
+  }, [showFilter])
 
   const sendBill = useCallback(async (student: StudentWithClass) => {
     const phone = student.parent_phone || student.phone || ''
@@ -206,11 +286,6 @@ export default function BillingPage() {
     setCancelling(true)
   }, [])
 
-  const formatMonth = (m: string) => {
-    const [y, mo] = m.split('-')
-    return `${y}년 ${parseInt(mo)}월`
-  }
-
   const getBillStatus = (studentId: string): 'unsent' | 'sent' | 'paid' | 'cancelled' => {
     const bill = billByStudent.get(studentId)
     if (!bill) return 'unsent'
@@ -230,14 +305,7 @@ export default function BillingPage() {
     return <div className="flex items-center justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-[var(--text-4)]" /></div>
   }
 
-  const filterButtons: Array<{ key: WeekFilter; label: string }> = [
-    { key: 'all', label: '전체' },
-    { key: 'day1', label: '1일' },
-    { key: 'week1', label: '첫째주' },
-    { key: 'week2', label: '둘째주' },
-    { key: 'week3', label: '셋째주' },
-    { key: 'week4', label: '넷째주' },
-  ]
+  const filterOrder: WeekFilter[] = ['all', 'day1', 'week1', 'week2', 'week3', 'week4']
 
   const formatRange = (r: [number, number]) =>
     r[0] > r[1] ? '-' : r[0] === r[1] ? `${r[0]}일` : `${r[0]}~${r[1]}`
@@ -254,14 +322,19 @@ export default function BillingPage() {
         </div>
       )}
 
-      <div className="sticky -top-6 z-30 bg-[var(--bg)] -mx-4 px-4 pt-6 pb-3">
-        <div className="flex items-center justify-between">
-          <button onClick={() => navigateMonth(-1)} className="p-2 hover:bg-[var(--bg-card-hover)] rounded-lg transition-colors">
-            <ChevronLeft className="w-5 h-5 text-[var(--text-3)]" />
+      <div className="sticky -top-6 z-30 bg-[var(--bg)] -mx-4 px-4 pt-6 pb-1">
+        <div className="flex items-center justify-center gap-3 mb-1">
+          <button onClick={() => navigateMonth(-1)} className="p-2 hover:bg-[var(--bg-elevated)] rounded-lg" aria-label="이전 달">
+            <ChevronLeft className="w-7 h-7" />
           </button>
-          <h2 className="text-lg font-bold tracking-tight">{formatMonth(selectedMonth)}</h2>
-          <button onClick={() => navigateMonth(1)} className="p-2 hover:bg-[var(--bg-card-hover)] rounded-lg transition-colors">
-            <ChevronRight className="w-5 h-5 text-[var(--text-3)]" />
+          <h1 className="font-extrabold tracking-tight text-center">
+            <span className="text-[2.6rem] sm:text-[3.2rem] leading-none">{selectedMonth.split('-')[0]}</span>
+            <span className="text-[1.8rem] sm:text-[2.2rem] text-[var(--text-3)]">년 </span>
+            <span className="text-5xl sm:text-6xl">{parseInt(selectedMonth.split('-')[1])}</span>
+            <span className="text-[1.8rem] sm:text-[2.2rem] text-[var(--text-3)]">월</span>
+          </h1>
+          <button onClick={() => navigateMonth(1)} className="p-2 hover:bg-[var(--bg-elevated)] rounded-lg" aria-label="다음 달">
+            <ChevronRight className="w-7 h-7" />
           </button>
         </div>
 
@@ -284,34 +357,57 @@ export default function BillingPage() {
           </div>
         </div>
 
-        <div className="flex gap-1.5 mt-3 overflow-x-auto -mx-1 px-1" style={{ scrollbarWidth: 'none' }}>
-          {filterButtons.map(({ key, label }) => {
-            const active = weekFilter === key
-            const range = key !== 'all' ? weekRanges[key as Exclude<WeekFilter, 'all'>] : null
-            const disabled = range ? !isRangeValid(range) : false
-            return (
-              <button
-                key={key}
-                onClick={() => { if (!disabled) setWeekFilter(key) }}
-                disabled={disabled}
-                className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${
-                  active
-                    ? 'bg-[var(--blue)] text-white'
-                    : disabled
-                    ? 'bg-[var(--bg-elevated)] text-[var(--text-4)] opacity-40 cursor-not-allowed'
-                    : 'bg-[var(--bg-elevated)] text-[var(--text-3)] hover:bg-[var(--bg-card-hover)]'
-                }`}
-              >
-                {label}
-                {range && isRangeValid(range) && key !== 'day1' && (
-                  <span className="ml-1 opacity-70 text-[10px] font-normal">{formatRange(range)}</span>
-                )}
-              </button>
-            )
-          })}
+        {/* 결제일 필터 — 우측 드롭다운 */}
+        <div className="flex justify-end mt-2.5 mb-1">
+          <div ref={filterRef} className="relative">
+            <button
+              onClick={() => setShowFilter(v => !v)}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold bg-[var(--bg-elevated)] text-[var(--text-2)] hover:bg-[var(--bg-card-hover)] transition-colors"
+            >
+              <span>{FILTER_LABELS[weekFilter]}</span>
+              <ChevronDown className="w-3 h-3 opacity-60" />
+            </button>
+            <AnimatePresence>
+              {showFilter && (
+                <motion.div
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute right-0 top-full mt-1 min-w-[140px] rounded-xl border border-[var(--border)] bg-[var(--bg-card)] shadow-xl z-40 overflow-hidden"
+                >
+                  {filterOrder.map((key) => {
+                    const range = key !== 'all' ? weekRanges[key as Exclude<WeekFilter, 'all'>] : null
+                    const disabled = range ? !isRangeValid(range) : false
+                    const active = weekFilter === key
+                    return (
+                      <button
+                        key={key}
+                        onClick={() => { if (!disabled) { setWeekFilter(key); setShowFilter(false) } }}
+                        disabled={disabled}
+                        className={`w-full flex items-center justify-between px-3 py-2 text-xs font-medium transition-colors ${
+                          active
+                            ? 'bg-[var(--blue)]/20 text-[var(--blue)]'
+                            : disabled
+                            ? 'text-[var(--text-4)] opacity-40 cursor-not-allowed'
+                            : 'text-[var(--text-2)] hover:bg-[var(--bg-elevated)]'
+                        }`}
+                      >
+                        <span>{FILTER_LABELS[key]}</span>
+                        {range && isRangeValid(range) && key !== 'day1' && (
+                          <span className="text-[10px] opacity-60 ml-3">{formatRange(range)}</span>
+                        )}
+                      </button>
+                    )
+                  })}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       </div>
 
+      <div className="mt-2">
       {subjectGradeGroups.map(({ subject, grades: subjectGrades }) => {
         const hasVisible = subjectGrades.some(({ classes: gcs }) =>
           gcs.some(c => getFilteredStudents(c).length > 0)
@@ -325,25 +421,22 @@ export default function BillingPage() {
             </div>
             <div className="space-y-2">
               {subjectGrades.map(({ gradeId, gradeName, classes: gradeClasses }) => {
-                const hasGrade = gradeClasses.some(c => getFilteredStudents(c).length > 0)
-                if (!hasGrade) return null
+                const visibleClasses = gradeClasses.filter(c => getFilteredStudents(c).length > 0)
+                if (visibleClasses.length === 0) return null
 
-                const gradeClassIds = gradeClasses.filter(c => getFilteredStudents(c).length > 0).map(c => c.id)
-                const isGradeExpanded = gradeClassIds.length > 0 && gradeClassIds.every(id => expandedClasses.has(id))
+                const gradeClassIds = visibleClasses.map(c => c.id)
+                const isGradeExpanded = gradeClassIds.every(id => expandedClasses.has(id))
                 const toggleGradeExpand = () => {
                   setExpandedClasses(prev => {
                     const next = new Set(prev)
-                    if (isGradeExpanded) {
-                      gradeClassIds.forEach(id => next.delete(id))
-                    } else {
-                      gradeClassIds.forEach(id => next.add(id))
-                    }
+                    if (isGradeExpanded) gradeClassIds.forEach(id => next.delete(id))
+                    else gradeClassIds.forEach(id => next.add(id))
                     return next
                   })
                 }
 
                 return (
-                  <div key={gradeId}>
+                  <div key={gradeId} data-section-key={`${subject}__${gradeId}`}>
                     <div className="flex items-center mb-1 px-1">
                       <button onClick={toggleGradeExpand} className="flex items-center gap-0.5 active:opacity-70">
                         <motion.div animate={{ rotate: isGradeExpanded ? 90 : 0 }} transition={{ type: 'spring', stiffness: 300, damping: 25 }}>
@@ -353,10 +446,8 @@ export default function BillingPage() {
                       </button>
                     </div>
                     <div className="card overflow-hidden">
-                      {gradeClasses.map(cls => {
+                      {visibleClasses.map(cls => {
                         const filteredStudents = getFilteredStudents(cls)
-                        if (filteredStudents.length === 0) return null
-
                         const studentsWithClass: StudentWithClass[] = filteredStudents.map(s => ({ ...s, class: cls }))
                         const sentCount = studentsWithClass.filter(s => billByStudent.has(s.id)).length
                         const paidCount = studentsWithClass.filter(s => billByStudent.get(s.id)?.status === 'paid').length
@@ -479,6 +570,7 @@ export default function BillingPage() {
           </div>
         )
       })}
+      </div>
 
       {stats.total === 0 && (
         <div className="text-center py-12 text-[var(--text-4)]">

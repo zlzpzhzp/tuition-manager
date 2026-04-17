@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef, useMemo, useEffect } from 'react'
 import Link from 'next/link'
-import { ChevronLeft, ChevronRight, Check, ClipboardList, Download, Plus, Send } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Check, ChevronDown, ClipboardList, Download, Plus, Send } from 'lucide-react'
 import type { Student, Payment, PaymentMethod, GradeWithClasses } from '@/types'
 import { getStudentFee, getPaymentStatus, PAYMENT_STATUS_LABELS, PAYMENT_STATUS_COLORS, PAYMENT_METHOD_LABELS } from '@/types'
 import PaymentModal from '@/components/PaymentModal'
@@ -83,6 +83,8 @@ export default function PaymentsPage() {
 
   // 미납 필터
   const [showUnpaidOnly, setShowUnpaidOnly] = useState(false)
+  const [filterOpen, setFilterOpen] = useState(false)
+  const filterRef = useRef<HTMLDivElement>(null)
   const [monthMemo, setMonthMemo] = useState('')
 
   // 월별 메모 로드
@@ -166,6 +168,91 @@ export default function PaymentsPage() {
   function checkScheduled(student: Student, month: string): boolean {
     return isPaymentScheduled(student, month, student.payment_due_day ?? undefined)
   }
+
+  // ─── Visible sections (스크롤 아코디언용) ───────────────────────
+  type SectionRef = { key: string; classIds: string[] }
+  const visibleSections = useMemo<SectionRef[]>(() => {
+    const list: SectionRef[] = []
+    for (const { subject, grades: sgs } of subjectGradeGroups) {
+      for (const { gradeId, classes: gcs } of sgs) {
+        const classIds: string[] = []
+        for (const cls of gcs) {
+          const active = getActiveStudents(cls.students ?? [], selectedMonth)
+          let students = aiFilterIds ? active.filter(s => aiFilterIds.has(s.id)) : active
+          if (showUnpaidOnly) {
+            students = students.filter(s => {
+              const paid = (paymentsByStudentId.get(s.id) ?? []).reduce((sum, p) => sum + p.amount, 0)
+              const status = getPaymentStatus(paid, getStudentFee(s, cls))
+              if (status === 'paid') return false
+              if (status === 'unpaid' && isPaymentScheduled(s, selectedMonth, s.payment_due_day ?? undefined)) return false
+              return true
+            })
+          }
+          if (students.length > 0) classIds.push(cls.id)
+        }
+        if (classIds.length === 0) continue
+        list.push({ key: `${subject}__${gradeId}`, classIds })
+      }
+    }
+    return list
+  }, [subjectGradeGroups, selectedMonth, aiFilterIds, showUnpaidOnly, paymentsByStudentId])
+
+  // 첫 화면: 1학년(첫 섹션) 펼침
+  const initializedKeyRef = useRef<string | null>(null)
+  useEffect(() => {
+    if (visibleSections.length === 0) return
+    const firstKey = visibleSections[0].key
+    if (initializedKeyRef.current === firstKey) return
+    initializedKeyRef.current = firstKey
+    setExpandedClasses(new Set(visibleSections[0].classIds))
+  }, [visibleSections])
+
+  // 스크롤 방향 추적 + 다음 섹션 자동 전환 (스크롤 다운 한정)
+  const scrollDirRef = useRef<'up' | 'down'>('down')
+  const lastScrollYRef = useRef(0)
+  useEffect(() => {
+    const onScroll = () => {
+      const y = window.scrollY
+      if (Math.abs(y - lastScrollYRef.current) > 4) {
+        scrollDirRef.current = y > lastScrollYRef.current ? 'down' : 'up'
+      }
+      lastScrollYRef.current = y
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
+  useEffect(() => {
+    if (visibleSections.length === 0) return
+    const byKey = new Map(visibleSections.map(s => [s.key, s.classIds]))
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (scrollDirRef.current !== 'down') return
+        const hits = entries.filter(e => e.isIntersecting).sort(
+          (a, b) => a.boundingClientRect.top - b.boundingClientRect.top
+        )
+        if (hits.length === 0) return
+        const key = hits[0].target.getAttribute('data-section-key')
+        if (!key) return
+        const classIds = byKey.get(key)
+        if (!classIds) return
+        setExpandedClasses(new Set(classIds))
+      },
+      { rootMargin: '-22% 0px -73% 0px', threshold: 0 }
+    )
+    document.querySelectorAll('[data-section-key]').forEach(el => observer.observe(el))
+    return () => observer.disconnect()
+  }, [visibleSections])
+
+  // 필터 드롭다운 외부 클릭 닫기
+  useEffect(() => {
+    if (!filterOpen) return
+    const onClick = (e: MouseEvent) => {
+      if (filterRef.current && !filterRef.current.contains(e.target as Node)) setFilterOpen(false)
+    }
+    document.addEventListener('mousedown', onClick)
+    return () => document.removeEventListener('mousedown', onClick)
+  }, [filterOpen])
 
   // ─── Discuss ────────────────────────────────────────────────
   const toggleDiscuss = async (id: string) => {
@@ -563,6 +650,52 @@ export default function PaymentsPage() {
             <span>내보내기</span>
           </button>
         </div>
+
+        {/* 미납 필터 — 우측 드롭다운 */}
+        <div className="flex justify-end mt-2 mb-1">
+          <div ref={filterRef} className="relative">
+            <button
+              onClick={() => setFilterOpen(v => !v)}
+              className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+                showUnpaidOnly
+                  ? 'bg-[var(--red-dim)] text-[var(--unpaid-text)]'
+                  : 'bg-[var(--bg-elevated)] text-[var(--text-2)] hover:bg-[var(--bg-card-hover)]'
+              }`}
+            >
+              <span>{showUnpaidOnly ? '미납' : '전체'}</span>
+              <ChevronDown className="w-3 h-3 opacity-60" />
+            </button>
+            <AnimatePresence>
+              {filterOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute right-0 top-full mt-1 min-w-[120px] rounded-xl border border-[var(--border)] bg-[var(--bg-card)] shadow-xl z-40 overflow-hidden"
+                >
+                  {[
+                    { key: false, label: '전체' },
+                    { key: true, label: '미납' },
+                  ].map(({ key, label }) => {
+                    const active = showUnpaidOnly === key
+                    return (
+                      <button
+                        key={label}
+                        onClick={() => { setShowUnpaidOnly(key); setFilterOpen(false) }}
+                        className={`w-full flex items-center px-3 py-2 text-xs font-medium transition-colors ${
+                          active ? 'bg-[var(--blue)]/20 text-[var(--blue)]' : 'text-[var(--text-2)] hover:bg-[var(--bg-elevated)]'
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    )
+                  })}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
       </div>
 
       {/* 월별 메모 */}
@@ -580,7 +713,7 @@ export default function PaymentsPage() {
       </div>
 
       {/* 과목별 → 학년별 납부 현황 */}
-      {subjectGradeGroups.map(({ subject, grades: subjectGrades }, groupIndex) => {
+      {subjectGradeGroups.map(({ subject, grades: subjectGrades }) => {
         // 과목 전체에 표시할 학생이 있는지 확인
         const hasVisibleStudents = subjectGrades.some(({ classes: gradeClasses }) =>
           gradeClasses.some(cls => {
@@ -608,7 +741,7 @@ export default function PaymentsPage() {
               <div className="flex-1" />
             </div>
             <div className="space-y-2">
-            {(() => { let isFirstVisibleGrade = groupIndex === 0; return subjectGrades.map(({ gradeId, gradeName, classes: gradeClasses }) => {
+            {subjectGrades.map(({ gradeId, gradeName, classes: gradeClasses }) => {
               // 이 학년에 표시할 학생이 있는지
               const hasGradeStudents = gradeClasses.some(cls => {
                 let students = aiFilterIds
@@ -627,24 +760,20 @@ export default function PaymentsPage() {
               })
               if (!hasGradeStudents) return null
 
-              const showFilter = isFirstVisibleGrade
-              if (isFirstVisibleGrade) isFirstVisibleGrade = false
-
               const gradeClassIds = gradeClasses.map(c => c.id)
               const isGradeExpanded = gradeClassIds.every(id => expandedClasses.has(id))
 
               const toggleGradeExpand = () => {
-                setExpandedClasses(() => {
-                  const next = new Set<string>()
-                  if (!isGradeExpanded) {
-                    gradeClassIds.forEach(id => next.add(id))
-                  }
+                setExpandedClasses(prev => {
+                  const next = new Set(prev)
+                  if (isGradeExpanded) gradeClassIds.forEach(id => next.delete(id))
+                  else gradeClassIds.forEach(id => next.add(id))
                   return next
                 })
               }
 
               return (
-                <div key={gradeId}>
+                <div key={gradeId} data-section-key={`${subject}__${gradeId}`}>
                   <div className="flex items-center mb-1 px-1">
                     <button
                       onClick={toggleGradeExpand}
@@ -656,28 +785,6 @@ export default function PaymentsPage() {
                       <span className="text-xs text-[var(--text-4)]">{gradeName}</span>
                     </button>
                     <div className="flex-1" />
-                    {showFilter && (
-                      <button
-                        onClick={() => {
-                          setShowUnpaidOnly(prev => {
-                            if (!prev) {
-                              const allClassIds = new Set(grades.flatMap(g => g.classes.map(c => c.id)))
-                              setExpandedClasses(allClassIds)
-                            } else {
-                              setExpandedClasses(new Set())
-                            }
-                            return !prev
-                          })
-                        }}
-                        className={`px-2.5 py-0.5 rounded-full text-xs font-medium transition-colors ${
-                          showUnpaidOnly
-                            ? 'bg-[var(--red-dim)] text-[var(--unpaid-text)]'
-                            : 'bg-[var(--bg-elevated)] text-[var(--text-3)]'
-                        }`}
-                      >
-                        {showUnpaidOnly ? '미납' : '전체'}
-                      </button>
-                    )}
                   </div>
                   <div className="card overflow-hidden">
                   {gradeClasses.map(cls => {
@@ -947,7 +1054,7 @@ export default function PaymentsPage() {
                   </div>
                 </div>
               )
-            }) })()}
+            })}
             </div>
           </div>
         )
