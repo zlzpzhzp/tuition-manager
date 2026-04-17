@@ -222,10 +222,11 @@ export default function PaymentsPage() {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  const lastSnappedKeyRef = useRef<string | null>(null)
+  const lastHitKeyRef = useRef<string | null>(null)
   useEffect(() => {
     if (visibleSections.length === 0) return
     const byKey = new Map(visibleSections.map(s => [s.key, s.classIds]))
+    // 스티키 헤더 바로 아래(15~20%)에서 감지 → 섹션 상단이 최상단에 닿을 때 펴짐
     const observer = new IntersectionObserver(
       (entries) => {
         if (scrollDirRef.current !== 'down') return
@@ -238,9 +239,15 @@ export default function PaymentsPage() {
         if (!key) return
         const classIds = byKey.get(key)
         if (!classIds) return
-        if (lastSnappedKeyRef.current === key) return
-        lastSnappedKeyRef.current = key
-        setExpandedClasses(new Set(classIds))
+        if (lastHitKeyRef.current === key) return
+        lastHitKeyRef.current = key
+        // 이전 섹션 상태 유지(위로 스크롤했을 때 접히지 않도록 + 스크롤 위치 안정)
+        setExpandedClasses(prev => {
+          const next = new Set(prev)
+          classIds.forEach(id => next.add(id))
+          return next
+        })
+        // 최상단에 딱 맞게 스냅: 스티키 헤더 바로 아래로
         requestAnimationFrame(() => {
           const stickyEl = document.querySelector('[data-sticky-header]') as HTMLElement | null
           const stickyH = stickyEl?.getBoundingClientRect().height ?? 140
@@ -249,7 +256,7 @@ export default function PaymentsPage() {
           window.scrollTo({ top: targetY, behavior: 'smooth' })
         })
       },
-      { rootMargin: '-22% 0px -73% 0px', threshold: 0 }
+      { rootMargin: '-15% 0px -80% 0px', threshold: 0 }
     )
     document.querySelectorAll('[data-section-key]').forEach(el => observer.observe(el))
     return () => observer.disconnect()

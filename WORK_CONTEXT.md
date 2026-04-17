@@ -6,12 +6,14 @@
 ## 현재 상태: 진행 중
 
 ## 마지막 작업
-- **일시**: 2026-04-17 21:45 (진행 중)
-- **작업 내용**: 자동 펼침 시 스크롤 스냅 — 두 탭 모두
-  - IO 콜백에서 auto-expand 트리거 시 target 학년을 sticky 헤더 바로 아래로 스냅 (smooth)
-  - lastSnappedKeyRef로 같은 섹션 재스냅 방지
-  - sticky div에 `data-sticky-header` 태그 → 런타임에 getBoundingClientRect로 높이 측정
-  - requestAnimationFrame으로 expand 렌더 후 계산 → targetY = scrollY + rect.top - stickyH - 4
+- **일시**: 2026-04-17 21:55 (진행 중)
+- **작업 내용**: 스크롤 스냅 안정화 + 결제선생 탭 pull-to-refresh 추가
+  - 이전 스냅이 실패한 원인: 이전 섹션 collapse 애니메이션이 스크롤 대상의 document Y좌표를 이동시켜 snap overshoot
+  - 수정: 스크롤 다운 시 이전 섹션 state를 제거하지 않고 누적(add only) → 대상 섹션의 절대 위치가 안정 → snap 정확히 최상단에 붙음
+  - 트리거 위치도 스티키 헤더 바로 아래(15~20% 밴드)로 이동 → snap 거리 최소화
+  - billing 페이지에도 payments와 동일한 pull-to-refresh 구현 (mutateGrades + mutateBills)
+
+- **직전(21:45)**: 자동 펼침 시 스크롤 스냅 시도 — collapse 충돌로 실패 (이번에 수정)
 
 - **직전(21:30)**: 납부/결제선생 탭 공통 UI 통일 — 두 탭 모두 동일 패턴 적용
   - 년월 타이틀 크기 통일 (font-extrabold, 2.6/3.2rem 년, 5xl/6xl 월)

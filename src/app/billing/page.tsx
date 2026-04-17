@@ -44,7 +44,7 @@ export default function BillingPage() {
   const [showFilter, setShowFilter] = useState(false)
   const filterRef = useRef<HTMLDivElement>(null)
 
-  const { data: grades = [], isLoading: gradesLoading } = useGrades<GradeWithClasses[]>()
+  const { data: grades = [], isLoading: gradesLoading, mutate: mutateGrades } = useGrades<GradeWithClasses[]>()
   const { data: bills = [], mutate: mutateBills } = useSWR<BillRecord[]>(
     `/api/billing?month=${selectedMonth}`,
     (url: string) => fetch(url).then(r => r.json()),
@@ -194,11 +194,11 @@ export default function BillingPage() {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  const lastSnappedKeyRef = useRef<string | null>(null)
+  const lastHitKeyRef = useRef<string | null>(null)
   useEffect(() => {
     if (visibleSections.length === 0) return
     const byKey = new Map(visibleSections.map(s => [s.key, s.classIds]))
-    // 스티키 헤더(~22%) 바로 아래 5% 영역을 감지 존으로 사용
+    // 스티키 헤더 바로 아래(15~20%)에서 감지 → 섹션 상단이 최상단에 닿을 때 펴짐
     const observer = new IntersectionObserver(
       (entries) => {
         if (scrollDirRef.current !== 'down') return
@@ -211,9 +211,15 @@ export default function BillingPage() {
         if (!key) return
         const classIds = byKey.get(key)
         if (!classIds) return
-        if (lastSnappedKeyRef.current === key) return
-        lastSnappedKeyRef.current = key
-        setExpandedClasses(new Set(classIds))
+        if (lastHitKeyRef.current === key) return
+        lastHitKeyRef.current = key
+        // 이전 섹션 상태 유지(위로 스크롤했을 때 접히지 않도록 + 스크롤 위치 안정)
+        setExpandedClasses(prev => {
+          const next = new Set(prev)
+          classIds.forEach(id => next.add(id))
+          return next
+        })
+        // 최상단에 딱 맞게 스냅: 스티키 헤더 바로 아래로
         requestAnimationFrame(() => {
           const stickyEl = document.querySelector('[data-sticky-header]') as HTMLElement | null
           const stickyH = stickyEl?.getBoundingClientRect().height ?? 140
@@ -222,7 +228,7 @@ export default function BillingPage() {
           window.scrollTo({ top: targetY, behavior: 'smooth' })
         })
       },
-      { rootMargin: '-22% 0px -73% 0px', threshold: 0 }
+      { rootMargin: '-15% 0px -80% 0px', threshold: 0 }
     )
     document.querySelectorAll('[data-section-key]').forEach(el => observer.observe(el))
     return () => observer.disconnect()
@@ -237,6 +243,62 @@ export default function BillingPage() {
     document.addEventListener('mousedown', onClick)
     return () => document.removeEventListener('mousedown', onClick)
   }, [showFilter])
+
+  // ─── Pull-to-refresh ──────────────────────────────────────
+  const [pullDistance, setPullDistance] = useState(0)
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  const pullRef = useRef<{ startY: number; pulling: boolean } | null>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const PULL_THRESHOLD = 60
+
+  const handlePullStart = useCallback((e: TouchEvent) => {
+    if (isRefreshing) return
+    const scrollTop = window.scrollY || document.documentElement.scrollTop
+    if (scrollTop > 0) return
+    pullRef.current = { startY: e.touches[0].clientY, pulling: false }
+  }, [isRefreshing])
+
+  const handlePullMove = useCallback((e: TouchEvent) => {
+    if (!pullRef.current || isRefreshing) return
+    const dy = e.touches[0].clientY - pullRef.current.startY
+    if (dy > 0) {
+      pullRef.current.pulling = true
+      const distance = Math.min(120, dy * 0.4)
+      setPullDistance(distance)
+    } else {
+      pullRef.current.pulling = false
+      setPullDistance(0)
+    }
+  }, [isRefreshing])
+
+  const handlePullEnd = useCallback(async () => {
+    if (!pullRef.current?.pulling || isRefreshing) {
+      pullRef.current = null
+      return
+    }
+    pullRef.current = null
+    if (pullDistance >= PULL_THRESHOLD) {
+      setIsRefreshing(true)
+      setPullDistance(40)
+      await Promise.all([mutateGrades(), mutateBills()])
+      await new Promise(r => setTimeout(r, 500))
+      setIsRefreshing(false)
+    }
+    setPullDistance(0)
+  }, [pullDistance, isRefreshing, mutateGrades, mutateBills])
+
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    el.addEventListener('touchstart', handlePullStart, { passive: true })
+    el.addEventListener('touchmove', handlePullMove, { passive: true })
+    el.addEventListener('touchend', handlePullEnd)
+    return () => {
+      el.removeEventListener('touchstart', handlePullStart)
+      el.removeEventListener('touchmove', handlePullMove)
+      el.removeEventListener('touchend', handlePullEnd)
+    }
+  }, [handlePullStart, handlePullMove, handlePullEnd])
 
   const sendBill = useCallback(async (student: StudentWithClass) => {
     const phone = student.parent_phone || student.phone || ''
@@ -322,7 +384,7 @@ export default function BillingPage() {
     r[0] > r[1] ? '-' : r[0] === r[1] ? `${r[0]}일` : `${r[0]}~${r[1]}`
 
   return (
-    <div>
+    <div ref={containerRef}>
       {isTestMode && (
         <div className="flex items-center gap-2 px-4 py-2 mb-2 rounded-xl bg-[var(--orange-dim)] border border-[var(--orange)]">
           <span className="text-base">🔒</span>
@@ -334,6 +396,33 @@ export default function BillingPage() {
       )}
 
       <div data-sticky-header className="sticky -top-6 z-30 bg-[var(--bg)] -mx-4 px-4 pt-6 pb-1">
+        {/* Pull-to-refresh 인디케이터 */}
+        <AnimatePresence>
+          {pullDistance > 0 && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: pullDistance, opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              className="flex items-center justify-center overflow-hidden"
+            >
+              <motion.div
+                animate={{
+                  rotate: isRefreshing ? 360 : (pullDistance / PULL_THRESHOLD) * 360,
+                  scale: pullDistance >= PULL_THRESHOLD ? 1.15 : 0.9,
+                }}
+                transition={isRefreshing
+                  ? { rotate: { duration: 0.8, repeat: Infinity, ease: 'linear' } }
+                  : { type: 'spring', stiffness: 200, damping: 15 }
+                }
+              >
+                <svg className="w-6 h-6 text-[var(--text-4)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
         <div className="flex items-center justify-center gap-3 mb-1">
           <button onClick={() => navigateMonth(-1)} className="p-2 hover:bg-[var(--bg-elevated)] rounded-lg" aria-label="이전 달">
             <ChevronLeft className="w-7 h-7" />
