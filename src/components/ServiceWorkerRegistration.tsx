@@ -4,19 +4,13 @@ import { useEffect } from 'react'
 
 export default function ServiceWorkerRegistration() {
   useEffect(() => {
-    if ('serviceWorker' in navigator) {
-      // Force clear all old caches and re-register
-      caches.keys().then(keys => {
-        keys.forEach(key => {
-          if (key !== 'tuition-manager-v2') caches.delete(key)
-        })
-      })
-      navigator.serviceWorker.getRegistrations().then(registrations => {
-        registrations.forEach(reg => reg.unregister())
-      }).then(() => {
-        navigator.serviceWorker.register('/sw.js')
-      })
-    }
+    if (!('serviceWorker' in navigator)) return
+    // Kill-switch: nuke any existing SW + all caches. Older SW versions
+    // cached HTML and served stale, unstyled pages on iOS Safari.
+    caches.keys().then((keys) => keys.forEach((k) => caches.delete(k)))
+    navigator.serviceWorker.getRegistrations().then((regs) => {
+      regs.forEach((r) => r.unregister())
+    })
   }, [])
   return null
 }

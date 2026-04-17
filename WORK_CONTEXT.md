@@ -6,15 +6,13 @@
 ## 현재 상태: 진행 중
 
 ## 마지막 작업
-- **일시**: 2026-04-17 16:00
-- **작업 내용**: 코드베이스 리뷰 + Critical/High 수정
-  1. REVIEW_2026-04-17.md 작성 (C:4/H:8/M:14/L:8)
-  2. 스와이프 좌측 편집을 비고 입력으로 전환
-  3. C1 PaySsam 콜백 apikey 검증 / C3 SESSION_SECRET fallback 제거 / C4 validMethods payssam 추가
-  4. H1 requireAdminSession 가드 / H2 로그인 timingSafeEqual / H4 prevMemo Map 캐싱
-  5. H6 unsafe casts nullish 가드 / H7 AI Filter prompt payssam / H8 callback toISOString 수정
-- **스킵**: C2(service_role 전환), H3(Gemini rate limit), H5(pull-to-refresh 훅 분리) — 구조적/인프라 필요
-- **결과**: 커밋 9건, Vercel 프로덕션 배포 완료
+- **일시**: 2026-04-17 17:30
+- **작업 내용**: iOS Safari 첫화면 깨짐(흰화면+텍스트만) 긴급 수정
+  - 원인 추정: Service Worker가 HTML까지 캐싱 → 배포 후 stale HTML이 구버전 CSS 번들을 참조하며 안 먹힘
+  - 조치: public/sw.js를 kill-switch로 변경 (activate 시 전체 캐시 삭제 + self.unregister + 클라이언트 리로드)
+  - ServiceWorkerRegistration.tsx도 재등록하지 않도록 수정 (기존 SW만 unregister)
+- **직전 작업**: 코드베이스 리뷰 + Critical/High 수정 (C:4/H:8/M:14/L:8 중 C1/C3/C4/H1/H2/H4/H6/H7/H8 수정. C2/H3/H5 스킵)
+- **결과**: 커밋 9건 + SW 킬스위치 커밋 예정
 
 ## 진행 중인 작업
 - 없음
