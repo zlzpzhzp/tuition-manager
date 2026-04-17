@@ -1,5 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { timingSafeEqual } from 'crypto'
 import { supabase } from '@/lib/supabase'
+
+function verifyApiKey(received: unknown): boolean {
+  const expected = process.env.PAYSSAM_API_KEY
+  if (!expected) {
+    console.error('[PaySsam Callback] PAYSSAM_API_KEY 환경변수 미설정')
+    return false
+  }
+  if (typeof received !== 'string' || !received) return false
+  const a = Buffer.from(received)
+  const b = Buffer.from(expected)
+  if (a.length !== b.length) return false
+  try {
+    return timingSafeEqual(a, b)
+  } catch {
+    return false
+  }
+}
 
 // 2.2 승인동기화 — 페이민트 → 우리 서버
 // 결제 완료 시 페이민트가 이 URL로 결과를 전달
@@ -7,6 +25,11 @@ export async function POST(request: NextRequest) {
   try {
     const data = await request.json()
     const { apikey, bill_id, appr_state, appr_price, appr_pay_type, appr_dt, appr_num } = data
+
+    if (!verifyApiKey(apikey)) {
+      console.warn('[PaySsam Callback] apikey 검증 실패', { bill_id })
+      return NextResponse.json({ code: '9999', msg: '인증 실패' }, { status: 401 })
+    }
 
     console.log('[PaySsam Callback]', JSON.stringify({ bill_id, appr_state, appr_price, appr_pay_type }))
 
