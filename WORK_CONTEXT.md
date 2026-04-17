@@ -6,8 +6,15 @@
 ## 현재 상태: 진행 중
 
 ## 마지막 작업
-- **일시**: 2026-04-17 21:55 (진행 중)
-- **작업 내용**: 스크롤 스냅 안정화 + 결제선생 탭 pull-to-refresh 추가
+- **일시**: 2026-04-17 22:05 (진행 중)
+- **작업 내용**: 모두 펼침 + 학년 헤더 스티키 catch
+  - IO 기반 자동 펼침/스냅 로직 전부 제거 (scrollDirRef/lastScrollY/lastHitKey 등)
+  - 기본 상태: visibleSections의 전체 classIds를 누적 expand (사용자 접음은 유지)
+  - 학년 헤더를 position: sticky로 변환, top은 `--grade-sticky-top` CSS 변수
+  - 스티키 월 헤더 높이를 ResizeObserver로 실시간 측정 → CSS 변수에 주입
+  - 결과: 스크롤 시 각 학년 헤더가 월 헤더 바로 아래에서 한번씩 catch되며 스르륵 지나감
+
+- **직전(21:55)**: 스크롤 스냅 안정화 + 결제선생 탭 pull-to-refresh 추가
   - 이전 스냅이 실패한 원인: 이전 섹션 collapse 애니메이션이 스크롤 대상의 document Y좌표를 이동시켜 snap overshoot
   - 수정: 스크롤 다운 시 이전 섹션 state를 제거하지 않고 누적(add only) → 대상 섹션의 절대 위치가 안정 → snap 정확히 최상단에 붙음
   - 트리거 위치도 스티키 헤더 바로 아래(15~20% 밴드)로 이동 → snap 거리 최소화

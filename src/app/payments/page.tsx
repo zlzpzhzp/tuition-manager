@@ -197,70 +197,36 @@ export default function PaymentsPage() {
     return list
   }, [subjectGradeGroups, selectedMonth, aiFilterIds, showUnpaidOnly, paymentsByStudentId])
 
-  // 첫 화면: 1학년(첫 섹션) 펼침
-  const initializedKeyRef = useRef<string | null>(null)
+  // 기본: 보이는 반 전부 펼침 (새 반 등장 시 추가만, 사용자 접음은 유지)
   useEffect(() => {
-    if (visibleSections.length === 0) return
-    const firstKey = visibleSections[0].key
-    if (initializedKeyRef.current === firstKey) return
-    initializedKeyRef.current = firstKey
-    setExpandedClasses(new Set(visibleSections[0].classIds))
+    const allIds = visibleSections.flatMap(s => s.classIds)
+    if (allIds.length === 0) return
+    setExpandedClasses(prev => {
+      const next = new Set(prev)
+      allIds.forEach(id => next.add(id))
+      return next
+    })
   }, [visibleSections])
 
-  // 스크롤 방향 추적 + 다음 섹션 자동 전환 (스크롤 다운 한정)
-  const scrollDirRef = useRef<'up' | 'down'>('down')
-  const lastScrollYRef = useRef(0)
+  // 스티키 헤더 높이를 CSS 변수로 주입 → 학년 헤더가 그 아래로 스틱
   useEffect(() => {
-    const onScroll = () => {
-      const y = window.scrollY
-      if (Math.abs(y - lastScrollYRef.current) > 4) {
-        scrollDirRef.current = y > lastScrollYRef.current ? 'down' : 'up'
-      }
-      lastScrollYRef.current = y
+    const update = () => {
+      const el = document.querySelector('[data-sticky-header]') as HTMLElement | null
+      if (!el) return
+      const h = el.getBoundingClientRect().height
+      document.documentElement.style.setProperty('--grade-sticky-top', `${Math.max(0, h - 24)}px`)
     }
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
+    update()
+    const el = document.querySelector('[data-sticky-header]')
+    const ro = el ? new ResizeObserver(update) : null
+    if (el && ro) ro.observe(el)
+    window.addEventListener('resize', update)
+    return () => {
+      ro?.disconnect()
+      window.removeEventListener('resize', update)
+      document.documentElement.style.removeProperty('--grade-sticky-top')
+    }
   }, [])
-
-  const lastHitKeyRef = useRef<string | null>(null)
-  useEffect(() => {
-    if (visibleSections.length === 0) return
-    const byKey = new Map(visibleSections.map(s => [s.key, s.classIds]))
-    // 스티키 헤더 바로 아래(15~20%)에서 감지 → 섹션 상단이 최상단에 닿을 때 펴짐
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (scrollDirRef.current !== 'down') return
-        const hits = entries.filter(e => e.isIntersecting).sort(
-          (a, b) => a.boundingClientRect.top - b.boundingClientRect.top
-        )
-        if (hits.length === 0) return
-        const target = hits[0].target as HTMLElement
-        const key = target.getAttribute('data-section-key')
-        if (!key) return
-        const classIds = byKey.get(key)
-        if (!classIds) return
-        if (lastHitKeyRef.current === key) return
-        lastHitKeyRef.current = key
-        // 이전 섹션 상태 유지(위로 스크롤했을 때 접히지 않도록 + 스크롤 위치 안정)
-        setExpandedClasses(prev => {
-          const next = new Set(prev)
-          classIds.forEach(id => next.add(id))
-          return next
-        })
-        // 최상단에 딱 맞게 스냅: 스티키 헤더 바로 아래로
-        requestAnimationFrame(() => {
-          const stickyEl = document.querySelector('[data-sticky-header]') as HTMLElement | null
-          const stickyH = stickyEl?.getBoundingClientRect().height ?? 140
-          const rect = target.getBoundingClientRect()
-          const targetY = window.scrollY + rect.top - stickyH - 4
-          window.scrollTo({ top: targetY, behavior: 'smooth' })
-        })
-      },
-      { rootMargin: '-15% 0px -80% 0px', threshold: 0 }
-    )
-    document.querySelectorAll('[data-section-key]').forEach(el => observer.observe(el))
-    return () => observer.disconnect()
-  }, [visibleSections])
 
   // 필터 드롭다운 외부 클릭 닫기
   useEffect(() => {
@@ -792,7 +758,10 @@ export default function PaymentsPage() {
 
               return (
                 <div key={gradeId} data-section-key={`${subject}__${gradeId}`}>
-                  <div className="flex items-center mb-1 px-1">
+                  <div
+                    className="sticky z-20 bg-[var(--bg)] -mx-4 px-5 py-1.5 mb-1"
+                    style={{ top: 'var(--grade-sticky-top, 140px)' }}
+                  >
                     <button
                       onClick={toggleGradeExpand}
                       className="flex items-center gap-0.5 active:opacity-70"
@@ -802,7 +771,6 @@ export default function PaymentsPage() {
                       </motion.div>
                       <span className="text-xs text-[var(--text-4)]">{gradeName}</span>
                     </button>
-                    <div className="flex-1" />
                   </div>
                   <div className="card overflow-hidden">
                   {gradeClasses.map(cls => {
