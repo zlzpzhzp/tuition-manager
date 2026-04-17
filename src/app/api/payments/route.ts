@@ -20,7 +20,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const body = await request.json()
 
-  const validMethods = ['remote', 'card', 'transfer', 'cash', 'other']
+  const validMethods = ['card', 'transfer', 'cash', 'payssam', 'remote', 'other']
   const validationError = validateInput([
     rules.required('student_id', body.student_id),
     rules.nonNegativeNumber('amount', body.amount),

@@ -7,7 +7,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   const { id } = await params
   const body = await request.json()
 
-  const validMethods = ['remote', 'card', 'transfer', 'cash', 'other']
+  const validMethods = ['card', 'transfer', 'cash', 'payssam', 'remote', 'other']
   const validationError = validateInput([
     rules.nonNegativeNumber('amount', body.amount),
     rules.optionalDate('payment_date', body.payment_date),
