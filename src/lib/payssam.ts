@@ -1,5 +1,9 @@
 import { createHash } from 'crypto'
 
+// ⚠️ 테스트 모드 — 실제 발송 차단
+// 초능력자님이 "실제 적용하자"고 할 때까지 절대 false로 바꾸지 말 것
+const TEST_MODE = true
+
 const BASE_URL = process.env.PAYSSAM_API_URL || 'https://stg.paymint.co.kr/partner'
 const API_KEY = () => process.env.PAYSSAM_API_KEY || ''
 const MEMBER = () => process.env.PAYSSAM_MEMBER || 'dminstitute'
@@ -10,9 +14,9 @@ function generateHash(...parts: string[]): string {
   return createHash('sha256').update(parts.join(',')).digest('hex')
 }
 
-function generateBillId(studentId: string): string {
+function generateBillId(): string {
   const ts = Date.now().toString(36)
-  return `7018101625-${studentId.slice(0, 6)}${ts}`.slice(0, 20)
+  return `DM-${ts}`.slice(0, 20)
 }
 
 interface SendBillParams {
@@ -40,9 +44,19 @@ async function callApi(uri: string, body: Record<string, unknown>): Promise<PayS
   return res.json()
 }
 
+// 테스트 모드 확인용
+export function isTestMode(): boolean {
+  return TEST_MODE
+}
+
 // 2.1 청구서 발송
 export async function sendBill(params: SendBillParams) {
-  const billId = generateBillId(params.phone)
+  if (TEST_MODE) {
+    console.log('[PaySsam] 🔒 테스트 모드 — 실제 발송 차단됨:', params.studentName, params.amount)
+    return { code: 'TEST', msg: '테스트 모드: 실제 발송되지 않았습니다', bill_id: `TEST-${Date.now().toString(36)}` }
+  }
+
+  const billId = generateBillId()
   const hash = generateHash(billId, params.phone, String(params.amount))
 
   const body = {

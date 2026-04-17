@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, CreditCard, Wallet, Settings } from 'lucide-react'
+import { LayoutDashboard, CreditCard, Send, Settings, Wallet } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { useNavDirection } from './PageTransition'
@@ -11,6 +11,7 @@ import { useNavDirection } from './PageTransition'
 const navItems = [
   { href: '/dashboard', label: '대시보드', icon: LayoutDashboard },
   { href: '/payments', label: '납부', icon: CreditCard },
+  { href: '/billing', label: '결제선생', icon: Send },
   { href: '/settings', label: '설정', icon: Settings },
 ]
 
