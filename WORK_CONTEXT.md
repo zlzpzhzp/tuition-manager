@@ -6,13 +6,17 @@
 ## 현재 상태: 진행 중
 
 ## 마지막 작업
-- **일시**: 2026-04-17 17:30
-- **작업 내용**: iOS Safari 첫화면 깨짐(흰화면+텍스트만) 긴급 수정
-  - 원인 추정: Service Worker가 HTML까지 캐싱 → 배포 후 stale HTML이 구버전 CSS 번들을 참조하며 안 먹힘
-  - 조치: public/sw.js를 kill-switch로 변경 (activate 시 전체 캐시 삭제 + self.unregister + 클라이언트 리로드)
-  - ServiceWorkerRegistration.tsx도 재등록하지 않도록 수정 (기존 SW만 unregister)
-- **직전 작업**: 코드베이스 리뷰 + Critical/High 수정 (C:4/H:8/M:14/L:8 중 C1/C3/C4/H1/H2/H4/H6/H7/H8 수정. C2/H3/H5 스킵)
-- **결과**: 커밋 9건 + SW 킬스위치 커밋 예정
+- **일시**: 2026-04-17 18:50
+- **작업 내용**: 데스크톱 네비 활성탭이 텍스트를 덮는 문제 수정
+  - framer-motion layoutId 애니메이션이 transform 사용 → 새 stacking context → pill의 z-index:-1 무효화
+  - 아이콘+라벨을 `relative z-10` span으로 감싸 pill 위로 올림 (Navbar.tsx)
+- **직전 작업(17:30)**: iOS Safari 흰화면 긴급 수정
+  - 진짜 원인: 터널(tuition.dminstitute.co)이 가리키는 로컬 :3001 서버가 stale build → CSS chunk 500 → 언스타일
+  - 조치: rm -rf .next + 재빌드 + next start 재기동
+  - 부가 안전망: sw.js 킬스위치 배포, layout.tsx에 인라인 크리티컬 CSS 추가
+  - 메모리: project_tunnel_vs_vercel.md 기록 (다음부터 Vercel 우회 X, 로컬부터 점검)
+- **직전직전(16:00)**: 코드베이스 리뷰 + Critical/High 수정 (C1/C3/C4/H1/H2/H4/H6/H7/H8)
+- **결과**: 네비 수정 커밋+푸시+배포 진행
 
 ## 진행 중인 작업
 - 없음
