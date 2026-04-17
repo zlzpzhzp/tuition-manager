@@ -28,6 +28,7 @@ interface BillRecord {
   status: string
   short_url?: string
   sent_at: string
+  is_regular_tuition?: boolean
 }
 
 type BillStatus = 'unsent' | 'sent' | 'paid' | 'cancelled'
@@ -110,8 +111,11 @@ export default function PaymentsPage() {
   )
   const billByStudent = useMemo(() => {
     const map = new Map<string, BillRecord>()
-    // bills are sorted by sent_at desc; keep the most recent (first encounter wins)
-    for (const b of bills) if (!map.has(b.student_id)) map.set(b.student_id, b)
+    // 정규 원비 청구서만 고려 (비정규 결제는 결제선생 탭에서만 다룸)
+    for (const b of bills) {
+      if (b.is_regular_tuition === false) continue
+      if (!map.has(b.student_id)) map.set(b.student_id, b)
+    }
     return map
   }, [bills])
   const getBillStatus = useCallback((studentId: string): BillStatus => {
