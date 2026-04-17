@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useMemo, useCallback } from 'react'
-import { ChevronLeft, ChevronRight, Send, Check, Loader2 } from 'lucide-react'
+import { useState, useMemo, useCallback, useRef } from 'react'
+import { ChevronLeft, ChevronRight, Send, Check, Loader2, Square } from 'lucide-react'
 import type { Student, GradeWithClasses } from '@/types'
 import { getStudentFee } from '@/types'
 import { useGrades, safeMutate, getActiveStudents } from '@/lib/utils'
@@ -40,7 +40,10 @@ export default function BillingPage() {
   // Sending states
   const [sendingIds, setSendingIds] = useState<Set<string>>(new Set())
   const [batchSending, setBatchSending] = useState<number | null>(null)
+  const [batchProgress, setBatchProgress] = useState<{ done: number; total: number } | null>(null)
+  const [cancelling, setCancelling] = useState(false)
   const [results, setResults] = useState<Map<string, { ok: boolean; msg: string }>>(new Map())
+  const cancelBatchRef = useRef(false)
 
   const navigateMonth = (delta: number) => {
     const [y, m] = selectedMonth.split('-').map(Number)
@@ -122,16 +125,29 @@ export default function BillingPage() {
     })
 
     if (eligible.length === 0) return
+    cancelBatchRef.current = false
+    setCancelling(false)
     setBatchSending(day)
+    setBatchProgress({ done: 0, total: eligible.length })
 
-    for (const s of eligible) {
-      await sendBill(s)
-      // Small delay between sends
-      await new Promise(r => setTimeout(r, 500))
+    for (let i = 0; i < eligible.length; i++) {
+      if (cancelBatchRef.current) break
+      await sendBill(eligible[i])
+      setBatchProgress({ done: i + 1, total: eligible.length })
+      if (cancelBatchRef.current) break
+      if (i < eligible.length - 1) await new Promise(r => setTimeout(r, 500))
     }
 
     setBatchSending(null)
+    setBatchProgress(null)
+    setCancelling(false)
+    cancelBatchRef.current = false
   }, [billByStudent, sendBill])
+
+  const cancelBatch = useCallback(() => {
+    cancelBatchRef.current = true
+    setCancelling(true)
+  }, [])
 
   const formatMonth = (m: string) => {
     const [y, mo] = m.split('-')
@@ -223,16 +239,24 @@ export default function BillingPage() {
                   <span className="text-sm font-bold">{day === 0 ? '미지정' : `${day}일`}</span>
                   <span className="text-xs text-[var(--text-4)]">{students.length}명</span>
                 </div>
-                {!allSent && eligible.length > 0 && (
+                {!allSent && eligible.length > 0 && !isBatching && (
                   <button
                     onClick={() => sendBatch(day, students)}
-                    disabled={isBatching}
-                    className="flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-[var(--blue)] text-white hover:opacity-90 disabled:opacity-50 transition-opacity"
+                    className="flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-[var(--blue)] text-white hover:opacity-90 transition-opacity"
                   >
-                    {isBatching ? (
-                      <><Loader2 className="w-3 h-3 animate-spin" /> 발송 중...</>
+                    <Send className="w-3 h-3" /> 일괄 발송 ({eligible.length})
+                  </button>
+                )}
+                {isBatching && (
+                  <button
+                    onClick={cancelBatch}
+                    disabled={cancelling}
+                    className="flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-[var(--red)] text-white hover:opacity-90 disabled:opacity-60 transition-opacity"
+                  >
+                    {cancelling ? (
+                      <><Loader2 className="w-3 h-3 animate-spin" /> 중단 중...</>
                     ) : (
-                      <><Send className="w-3 h-3" /> 일괄 발송 ({eligible.length})</>
+                      <><Square className="w-3 h-3" fill="currentColor" /> 중단 ({batchProgress?.done ?? 0}/{batchProgress?.total ?? 0})</>
                     )}
                   </button>
                 )}
