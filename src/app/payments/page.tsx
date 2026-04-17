@@ -222,6 +222,7 @@ export default function PaymentsPage() {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
+  const lastSnappedKeyRef = useRef<string | null>(null)
   useEffect(() => {
     if (visibleSections.length === 0) return
     const byKey = new Map(visibleSections.map(s => [s.key, s.classIds]))
@@ -232,11 +233,21 @@ export default function PaymentsPage() {
           (a, b) => a.boundingClientRect.top - b.boundingClientRect.top
         )
         if (hits.length === 0) return
-        const key = hits[0].target.getAttribute('data-section-key')
+        const target = hits[0].target as HTMLElement
+        const key = target.getAttribute('data-section-key')
         if (!key) return
         const classIds = byKey.get(key)
         if (!classIds) return
+        if (lastSnappedKeyRef.current === key) return
+        lastSnappedKeyRef.current = key
         setExpandedClasses(new Set(classIds))
+        requestAnimationFrame(() => {
+          const stickyEl = document.querySelector('[data-sticky-header]') as HTMLElement | null
+          const stickyH = stickyEl?.getBoundingClientRect().height ?? 140
+          const rect = target.getBoundingClientRect()
+          const targetY = window.scrollY + rect.top - stickyH - 4
+          window.scrollTo({ top: targetY, behavior: 'smooth' })
+        })
       },
       { rootMargin: '-22% 0px -73% 0px', threshold: 0 }
     )
@@ -594,7 +605,7 @@ export default function PaymentsPage() {
   return (
     <div ref={containerRef} onClick={() => { if (swipeOpenId) closeSwipeEdit() }}>
       {/* 월 네비게이션 — sticky 고정 (iOS 대응: -top-6으로 main py-6 상쇄) */}
-      <div className="sticky -top-6 z-30 bg-[var(--bg)] -mx-4 px-4 pt-6 pb-1">
+      <div data-sticky-header className="sticky -top-6 z-30 bg-[var(--bg)] -mx-4 px-4 pt-6 pb-1">
         {/* Pull-to-refresh 인디케이터 */}
         <AnimatePresence>
           {pullDistance > 0 && (

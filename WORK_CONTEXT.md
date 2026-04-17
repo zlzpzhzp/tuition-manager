@@ -6,8 +6,14 @@
 ## 현재 상태: 진행 중
 
 ## 마지막 작업
-- **일시**: 2026-04-17 21:30 (진행 중)
-- **작업 내용**: 납부/결제선생 탭 공통 UI 통일 — 두 탭 모두 동일 패턴 적용
+- **일시**: 2026-04-17 21:45 (진행 중)
+- **작업 내용**: 자동 펼침 시 스크롤 스냅 — 두 탭 모두
+  - IO 콜백에서 auto-expand 트리거 시 target 학년을 sticky 헤더 바로 아래로 스냅 (smooth)
+  - lastSnappedKeyRef로 같은 섹션 재스냅 방지
+  - sticky div에 `data-sticky-header` 태그 → 런타임에 getBoundingClientRect로 높이 측정
+  - requestAnimationFrame으로 expand 렌더 후 계산 → targetY = scrollY + rect.top - stickyH - 4
+
+- **직전(21:30)**: 납부/결제선생 탭 공통 UI 통일 — 두 탭 모두 동일 패턴 적용
   - 년월 타이틀 크기 통일 (font-extrabold, 2.6/3.2rem 년, 5xl/6xl 월)
   - 필터를 우측 드롭다운으로 이동 (결제선생=주차필터, 납부=미납/전체)
   - 첫 화면 자동 펼침: visibleSections[0]의 classIds → initializedKeyRef로 1회만 트리거
