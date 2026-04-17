@@ -180,26 +180,49 @@ export default function BillingPage() {
     })
   }, [visibleSections])
 
-  // 스티키 헤더 높이를 CSS 변수로 주입 → 학년 헤더가 그 아래로 스틱
+  // ─── Memo (스크롤 연동 상단 고정) ───────────────────────────
+  const [memo, setMemo] = useState('')
+  const [memoFocused, setMemoFocused] = useState(false)
+  const [memoScrolled, setMemoScrolled] = useState(false)
+  const memoRef = useRef<HTMLTextAreaElement>(null)
+
+  // 로드
   useEffect(() => {
-    const update = () => {
-      const el = document.querySelector('[data-sticky-header]') as HTMLElement | null
-      if (!el) return
-      const h = el.getBoundingClientRect().height
-      // -top-6 offset(24px) 차감
-      document.documentElement.style.setProperty('--grade-sticky-top', `${Math.max(0, h - 24)}px`)
-    }
-    update()
-    const el = document.querySelector('[data-sticky-header]')
-    const ro = el ? new ResizeObserver(update) : null
-    if (el && ro) ro.observe(el)
-    window.addEventListener('resize', update)
-    return () => {
-      ro?.disconnect()
-      window.removeEventListener('resize', update)
-      document.documentElement.style.removeProperty('--grade-sticky-top')
-    }
+    try {
+      const s = localStorage.getItem('billing_memo')
+      if (s) setMemo(s)
+    } catch {}
   }, [])
+  // 저장(디바운스)
+  useEffect(() => {
+    const t = setTimeout(() => {
+      try { localStorage.setItem('billing_memo', memo) } catch {}
+    }, 300)
+    return () => clearTimeout(t)
+  }, [memo])
+
+  // 스크롤 감지
+  useEffect(() => {
+    const onScroll = () => setMemoScrolled(window.scrollY > 30)
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
+  const MEMO_LINE = 22
+  const MEMO_PAD = 16
+  const [memoContentHeight, setMemoContentHeight] = useState(3 * MEMO_LINE)
+
+  useEffect(() => {
+    if (memoFocused && memoRef.current) {
+      setMemoContentHeight(Math.max(3 * MEMO_LINE, memoRef.current.scrollHeight))
+    }
+  }, [memoFocused, memo])
+
+  const memoHeight = memoScrolled && !memoFocused
+    ? MEMO_LINE + MEMO_PAD                                      // 1줄
+    : memoFocused
+      ? memoContentHeight + MEMO_PAD                            // 포커스 시 내용만큼
+      : 3 * MEMO_LINE + MEMO_PAD                                // 기본 3줄
 
   // 필터 드롭다운 외부 클릭 닫기
   useEffect(() => {
@@ -362,34 +385,49 @@ export default function BillingPage() {
         </div>
       )}
 
-      <div data-sticky-header className="sticky -top-6 z-30 bg-[var(--bg)] -mx-4 px-4 pt-6 pb-1">
-        {/* Pull-to-refresh 인디케이터 */}
-        <AnimatePresence>
-          {pullDistance > 0 && (
+      {/* Sticky Memo — 스크롤해도 상단 고정, 3줄→1줄 축소, 탭하면 펼침 */}
+      <div className="sticky -top-6 z-30 bg-[var(--bg)] -mx-4 px-4 pt-6 pb-2">
+        <textarea
+          ref={memoRef}
+          value={memo}
+          onChange={e => setMemo(e.target.value)}
+          onFocus={() => setMemoFocused(true)}
+          onBlur={() => setMemoFocused(false)}
+          placeholder="메모..."
+          className="w-full resize-none bg-[var(--bg-elevated)] rounded-xl px-3 py-2 text-sm text-[var(--text-1)] placeholder:text-[var(--text-4)] focus:outline-none focus:ring-1 focus:ring-[var(--blue)] overflow-hidden leading-[22px]"
+          style={{ height: memoHeight, transition: 'height 0.2s ease-out' }}
+        />
+      </div>
+
+      {/* Pull-to-refresh 인디케이터 */}
+      <AnimatePresence>
+        {pullDistance > 0 && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: pullDistance, opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            className="flex items-center justify-center overflow-hidden"
+          >
             <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: pullDistance, opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-              className="flex items-center justify-center overflow-hidden"
+              animate={{
+                rotate: isRefreshing ? 360 : (pullDistance / PULL_THRESHOLD) * 360,
+                scale: pullDistance >= PULL_THRESHOLD ? 1.15 : 0.9,
+              }}
+              transition={isRefreshing
+                ? { rotate: { duration: 0.8, repeat: Infinity, ease: 'linear' } }
+                : { type: 'spring', stiffness: 200, damping: 15 }
+              }
             >
-              <motion.div
-                animate={{
-                  rotate: isRefreshing ? 360 : (pullDistance / PULL_THRESHOLD) * 360,
-                  scale: pullDistance >= PULL_THRESHOLD ? 1.15 : 0.9,
-                }}
-                transition={isRefreshing
-                  ? { rotate: { duration: 0.8, repeat: Infinity, ease: 'linear' } }
-                  : { type: 'spring', stiffness: 200, damping: 15 }
-                }
-              >
-                <svg className="w-6 h-6 text-[var(--text-4)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-              </motion.div>
+              <svg className="w-6 h-6 text-[var(--text-4)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
             </motion.div>
-          )}
-        </AnimatePresence>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <div className="pt-2 pb-1">
         <div className="flex items-center justify-center gap-3 mb-1">
           <button onClick={() => navigateMonth(-1)} className="p-2 hover:bg-[var(--bg-elevated)] rounded-lg" aria-label="이전 달">
             <ChevronLeft className="w-7 h-7" />
@@ -504,10 +542,7 @@ export default function BillingPage() {
 
                 return (
                   <div key={gradeId} data-section-key={`${subject}__${gradeId}`}>
-                    <div
-                      className="sticky z-20 bg-[var(--bg)] -mx-4 px-5 py-1.5 mb-1"
-                      style={{ top: 'var(--grade-sticky-top, 140px)' }}
-                    >
+                    <div className="flex items-center mb-1 px-1">
                       <button onClick={toggleGradeExpand} className="flex items-center gap-0.5 active:opacity-70">
                         <motion.div animate={{ rotate: isGradeExpanded ? 90 : 0 }} transition={{ type: 'spring', stiffness: 300, damping: 25 }}>
                           <ChevronRight className="w-3.5 h-3.5 text-[var(--text-4)]" />
