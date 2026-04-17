@@ -48,9 +48,8 @@ export async function POST(request: Request) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  const studentName = (data as Record<string, unknown>).student
-    ? ((data as Record<string, unknown>).student as Record<string, unknown>).name
-    : body.student_id
+  const paymentWithStudent = data as { student?: { name?: string } | null } | null
+  const studentName = paymentWithStudent?.student?.name ?? body.student_id
   writeAuditLog('payment', data.id, 'create',
     `납부 등록: ${studentName} ${body.billing_month} ${body.amount?.toLocaleString()}원`,
     { ...payload, student_name: studentName })

@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
         billing_month: billingMonth,
         phone: cleanPhone,
         status: 'sent',
-        short_url: (result as Record<string, unknown>).shortURL as string || null,
+        short_url: (result as { shortURL?: string }).shortURL ?? null,
         sent_at: new Date().toISOString(),
       })
 

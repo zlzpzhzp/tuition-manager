@@ -55,9 +55,8 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
   if (existing) {
-    const studentName = (existing as Record<string, unknown>).student
-      ? ((existing as Record<string, unknown>).student as Record<string, unknown>).name
-      : ''
+    const existingWithStudent = existing as { student?: { name?: string } | null; billing_month?: string; amount?: number } | null
+    const studentName = existingWithStudent?.student?.name ?? ''
     writeAuditLog('payment', id, 'delete',
       `납부 삭제: ${studentName} ${existing.billing_month} ${existing.amount?.toLocaleString()}원`,
       existing)
