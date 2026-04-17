@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation'
 import { LayoutDashboard, CreditCard, Send, Settings, Wallet } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
+import useSWR from 'swr'
 import { useNavDirection } from './PageTransition'
 
 const navItems = [
@@ -20,6 +21,12 @@ export default function Navbar() {
   const { setDirection } = useNavDirection()
   const mobileNavRef = useRef<HTMLDivElement>(null)
   const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 })
+
+  const { data: testModeData } = useSWR<{ testMode: boolean }>(
+    '/api/billing/test-mode',
+    (url: string) => fetch(url).then(r => r.json())
+  )
+  const isTestMode = testModeData?.testMode ?? false
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/')
   const activeIdx = navItems.findIndex(item => isActive(item.href))
@@ -53,6 +60,15 @@ export default function Navbar() {
             <Link href="/dashboard" className="flex items-center gap-2.5" aria-label="홈으로 이동">
               <Image src="/icons/icon-192x192.png" alt="원비관리" width={28} height={28} className="rounded-lg" />
               <span className="text-[17px] font-bold text-[var(--text-1)] tracking-tight">원비관리</span>
+              {isTestMode && (
+                <span
+                  className="text-[9px] font-bold px-1.5 py-0.5 rounded-md"
+                  style={{ background: 'var(--orange-dim)', color: 'var(--orange)' }}
+                  title="결제선생 테스트 모드 — 실제 발송되지 않습니다"
+                >
+                  TEST
+                </span>
+              )}
             </Link>
             <div className="flex items-center gap-1">
               <div className="hidden sm:flex gap-1 relative">

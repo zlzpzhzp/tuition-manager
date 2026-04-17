@@ -50,12 +50,6 @@ export default function BillingPage() {
     (url: string) => fetch(url).then(r => r.json()),
     { refreshInterval: 30000 }
   )
-  const { data: testModeData } = useSWR<{ testMode: boolean }>(
-    '/api/billing/test-mode',
-    (url: string) => fetch(url).then(r => r.json())
-  )
-  const isTestMode = testModeData?.testMode ?? true
-
   const [sendingIds, setSendingIds] = useState<Set<string>>(new Set())
   const [batchSending, setBatchSending] = useState<string | null>(null)
   const [batchProgress, setBatchProgress] = useState<{ done: number; total: number } | null>(null)
@@ -375,16 +369,6 @@ export default function BillingPage() {
 
   return (
     <div ref={containerRef}>
-      {isTestMode && (
-        <div className="flex items-center gap-2 px-4 py-2 mb-2 rounded-xl bg-[var(--orange-dim)] border border-[var(--orange)]">
-          <span className="text-base">🔒</span>
-          <div>
-            <p className="text-sm font-bold text-[var(--orange)]">테스트 모드</p>
-            <p className="text-[11px] text-[var(--text-3)]">실제 발송되지 않습니다. 버튼을 눌러도 시뮬레이션만 됩니다.</p>
-          </div>
-        </div>
-      )}
-
       {/* Sticky Memo — 스크롤해도 상단 고정, 3줄→1줄 축소, 탭하면 펼침 */}
       <div className="sticky top-14 z-30 bg-[var(--bg)] -mx-4 px-4 pt-2 pb-2 -mt-6">
         <textarea
