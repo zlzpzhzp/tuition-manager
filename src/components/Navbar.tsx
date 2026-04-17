@@ -64,7 +64,7 @@ export default function Navbar() {
                       href={href}
                       aria-label={label}
                       onClick={() => setDirection(idx > activeIdx ? 'left' : idx < activeIdx ? 'right' : 'none')}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-colors relative z-10
+                      className={`relative flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-colors
                         ${active
                           ? 'text-white'
                           : 'text-[var(--text-3)] hover:text-[var(--text-1)]'}`}
@@ -74,11 +74,12 @@ export default function Navbar() {
                           layoutId="desktop-nav-pill"
                           className="absolute inset-0 bg-[var(--blue)] rounded-xl"
                           transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                          style={{ zIndex: -1 }}
                         />
                       )}
-                      <Icon className="w-4 h-4" />
-                      {label}
+                      <span className="relative z-10 flex items-center gap-2">
+                        <Icon className="w-4 h-4" />
+                        {label}
+                      </span>
                     </Link>
                   )
                 })}
