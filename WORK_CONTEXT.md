@@ -6,7 +6,16 @@
 ## 현재 상태: 진행 중
 
 ## 마지막 작업
-- **일시**: 2026-04-17 22:05 (진행 중)
+- **일시**: 2026-04-17 22:48 (진행 중)
+- **작업 내용**: 결제선생 탭 상단 sticky 메모장 추가 + 불필요한 sticky 제거 (msg 528)
+  - 상단에 textarea 메모 (기본 3줄, 스크롤 시 1줄 축소, 탭 시 내용만큼 펼쳐짐)
+  - localStorage 자동 저장 (300ms 디바운스, key: billing_memo)
+  - 월/통계/필터 블록 sticky 해제 → 메모만 상단 고정
+  - 학년 헤더 sticky 해제 → 원래대로 inline flex
+  - 커밋 805ab15, Vercel READY
+  - **버그 수정(22:48)**: sticky -top-6이 navbar(sticky top-0 h-14) 뒤로 숨음 → `sticky top-14 -mt-6`로 변경
+
+- **일시**: 2026-04-17 22:05 (완료)
 - **작업 내용**: 모두 펼침 + 학년 헤더 스티키 catch
   - IO 기반 자동 펼침/스냅 로직 전부 제거 (scrollDirRef/lastScrollY/lastHitKey 등)
   - 기본 상태: visibleSections의 전체 classIds를 누적 expand (사용자 접음은 유지)

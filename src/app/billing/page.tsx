@@ -386,7 +386,7 @@ export default function BillingPage() {
       )}
 
       {/* Sticky Memo — 스크롤해도 상단 고정, 3줄→1줄 축소, 탭하면 펼침 */}
-      <div className="sticky -top-6 z-30 bg-[var(--bg)] -mx-4 px-4 pt-6 pb-2">
+      <div className="sticky top-14 z-30 bg-[var(--bg)] -mx-4 px-4 pt-2 pb-2 -mt-6">
         <textarea
           ref={memoRef}
           value={memo}
