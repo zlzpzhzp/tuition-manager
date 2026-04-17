@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef, useMemo, useEffect } from 'react'
 import Link from 'next/link'
-import { ChevronLeft, ChevronRight, Check, ChevronDown, ClipboardList, Download, Plus, Send, Loader2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Check, ChevronDown, ClipboardList, Download, Plus, Send, Mail, Loader2 } from 'lucide-react'
 import type { Student, Payment, PaymentMethod, GradeWithClasses } from '@/types'
 import { getStudentFee, getPaymentStatus, PAYMENT_STATUS_LABELS, PAYMENT_STATUS_COLORS, PAYMENT_METHOD_LABELS } from '@/types'
 import PaymentModal from '@/components/PaymentModal'
@@ -1183,12 +1183,13 @@ export default function PaymentsPage() {
                                     const billStatus = getBillStatus(student.id)
                                     const bill = billByStudent.get(student.id)
                                     const styles: Record<BillStatus, { fg: string; bg: string; title: string }> = {
-                                      unsent:    { fg: 'var(--text-4)',    bg: 'var(--bg-elevated)', title: '카톡 청구서 발송' },
-                                      sent:      { fg: 'var(--orange)',    bg: 'var(--orange-dim)',  title: '발송됨 — 탭하여 파기' },
-                                      paid:      { fg: 'var(--paid-text)', bg: 'var(--green-dim)',   title: '결제완료 — 탭하여 취소' },
-                                      cancelled: { fg: 'var(--red)',       bg: 'var(--red-dim)',     title: '취소됨 — 탭하여 재발송' },
+                                      unsent:    { fg: 'var(--text-4)', bg: 'var(--bg-elevated)', title: '카톡 청구서 발송' },
+                                      sent:      { fg: 'var(--orange)', bg: 'var(--orange-dim)',  title: '발송됨 — 탭하여 파기' },
+                                      paid:      { fg: 'white',         bg: 'var(--blue)',        title: '수납 완료 — 탭하여 취소' },
+                                      cancelled: { fg: 'var(--red)',    bg: 'var(--red-dim)',     title: '취소됨 — 탭하여 재발송' },
                                     }
                                     const s = styles[billStatus]
+                                    const isPaid = billStatus === 'paid'
                                     return (
                                       <button
                                         onClick={(e) => {
@@ -1206,12 +1207,18 @@ export default function PaymentsPage() {
                                             setBillSendTarget({ studentId: student.id, studentName: student.name, phone: parentPhone, amount: fee })
                                           }
                                         }}
-                                        className="p-1 rounded-lg transition-colors shrink-0 hover:opacity-80"
+                                        className={`${isPaid ? 'px-2 py-0.5' : 'p-1'} rounded-lg transition-colors shrink-0 hover:opacity-80 flex items-center justify-center`}
                                         style={{ color: s.fg, background: s.bg }}
                                         aria-label={s.title}
                                         title={s.title}
                                       >
-                                        <Send className="w-3.5 h-3.5" />
+                                        {billStatus === 'sent' ? (
+                                          <Mail className="w-3.5 h-3.5" />
+                                        ) : billStatus === 'paid' ? (
+                                          <span className="text-[10px] font-bold leading-none">수납</span>
+                                        ) : (
+                                          <Send className="w-3.5 h-3.5" />
+                                        )}
                                       </button>
                                     )
                                   })()}
