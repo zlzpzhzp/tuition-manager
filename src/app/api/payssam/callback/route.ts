@@ -56,16 +56,16 @@ export async function POST(request: NextRequest) {
       .update(updateData)
       .eq('bill_id', bill_id)
 
-    // 결제 완료(F)인 경우 → 자동으로 납부 기록 생성
+    // 결제 완료(F) + 정규 원비인 경우에만 → 자동으로 납부 기록 생성
+    // 비정규 결제(테스트, 보강, 특강 등)는 bill_history에만 기록되고 납부 탭에 반영되지 않음
     if (appr_state === 'F' && bill_id) {
       const { data: billData } = await supabase
         .from('tuition_bill_history')
-        .select('student_id, amount, billing_month')
+        .select('student_id, amount, billing_month, is_regular_tuition')
         .eq('bill_id', bill_id)
         .single()
 
-      if (billData) {
-        // 이미 납부 기록이 있는지 확인
+      if (billData && billData.is_regular_tuition !== false) {
         const { data: existingPayment } = await supabase
           .from('tuition_payments')
           .select('id')

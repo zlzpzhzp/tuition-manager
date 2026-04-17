@@ -7,7 +7,7 @@ export async function POST(request: NextRequest) {
   const unauthorized = requireAdminSession(request)
   if (unauthorized) return unauthorized
   try {
-    const { studentId, studentName, phone, amount, productName, billingMonth } = await request.json()
+    const { studentId, studentName, phone, amount, productName, billingMonth, isRegularTuition } = await request.json()
 
     if (!studentId || !phone || !amount || !billingMonth) {
       return NextResponse.json({ error: '필수 정보가 누락되었습니다' }, { status: 400 })
@@ -61,6 +61,7 @@ export async function POST(request: NextRequest) {
         status: 'sent',
         short_url: (result as { shortURL?: string }).shortURL ?? null,
         sent_at: new Date().toISOString(),
+        is_regular_tuition: isRegularTuition !== false,
       })
 
       if (dbError) {
