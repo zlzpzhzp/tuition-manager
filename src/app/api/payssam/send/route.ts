@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { sendBill } from '@/lib/payssam'
 import { supabase } from '@/lib/supabase'
+import { requireAdminSession } from '@/lib/auth'
 
 export async function POST(request: NextRequest) {
+  const unauthorized = requireAdminSession(request)
+  if (unauthorized) return unauthorized
   try {
     const { studentId, studentName, phone, amount, productName, billingMonth } = await request.json()
 

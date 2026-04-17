@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { validateInput, rules } from '@/lib/validate'
 import { writeAuditLog } from '@/lib/auditLog'
+import { requireAdminSession } from '@/lib/auth'
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -17,6 +18,8 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
 }
 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const unauthorized = requireAdminSession(request)
+  if (unauthorized) return unauthorized
   const { id } = await params
   const body = await request.json()
 
@@ -59,7 +62,9 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   return NextResponse.json(data)
 }
 
-export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const unauthorized = requireAdminSession(request)
+  if (unauthorized) return unauthorized
   const { id } = await params
 
   const { data: existing } = await supabase

@@ -1,4 +1,5 @@
 import { createHmac } from 'crypto'
+import { NextResponse } from 'next/server'
 
 const COOKIE_NAME = 'auth_token'
 const MAX_AGE = 60 * 60 * 24 * 30 // 30 days
@@ -37,6 +38,23 @@ export function verifySessionToken(token: string): boolean {
   } catch {
     return false
   }
+}
+
+/**
+ * Mutating API 라우트용 defense-in-depth 가드.
+ * 미들웨어가 모든 경로에서 이미 검증하지만, 미들웨어 버그/우회 대비해
+ * 라우트에서도 재확인. 인증 실패 시 401 Response 반환, 성공 시 null.
+ *
+ * 사용: `const unauthorized = requireAdminSession(request); if (unauthorized) return unauthorized`
+ */
+export function requireAdminSession(request: Request): NextResponse | null {
+  const cookieHeader = request.headers.get('cookie') || ''
+  const match = cookieHeader.match(/(?:^|;\s*)auth_token=([^;]+)/)
+  const token = match ? decodeURIComponent(match[1]) : ''
+  if (!token || !verifySessionToken(token)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  return null
 }
 
 export { COOKIE_NAME, MAX_AGE }
