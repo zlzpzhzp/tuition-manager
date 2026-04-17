@@ -4,7 +4,10 @@ let cachedKey: CryptoKey | null = null
 let cachedSecret: string | null = null
 
 async function getHmacKey(): Promise<CryptoKey> {
-  const secret = process.env.SESSION_SECRET || 'tuition-dev-secret-local-only'
+  const secret = process.env.SESSION_SECRET
+  if (!secret || secret.length < 16) {
+    throw new Error('SESSION_SECRET 환경변수가 설정되지 않았거나 너무 짧습니다 (최소 16자)')
+  }
   if (cachedKey && cachedSecret === secret) return cachedKey
   cachedSecret = secret
   cachedKey = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'])

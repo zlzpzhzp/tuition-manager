@@ -5,10 +5,10 @@ const MAX_AGE = 60 * 60 * 24 * 30 // 30 days
 
 function getSecret(): string {
   const secret = process.env.SESSION_SECRET
-  if (!secret && process.env.NODE_ENV === 'production') {
-    console.error('[Auth] SESSION_SECRET 환경변수가 설정되지 않았습니다!')
+  if (!secret || secret.length < 16) {
+    throw new Error('SESSION_SECRET 환경변수가 설정되지 않았거나 너무 짧습니다 (최소 16자)')
   }
-  return secret || 'tuition-dev-secret-local-only'
+  return secret
 }
 
 function sign(data: string): string {
