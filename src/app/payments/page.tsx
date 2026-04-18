@@ -921,12 +921,11 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
           onBlur={() => setMemoFocused(false)}
           placeholder="메모..."
           rows={memoCompact ? 1 : 3}
-          className="w-full resize-none bg-[var(--bg-elevated)] rounded-xl px-3 py-2 text-sm text-[var(--text-1)] placeholder:text-[var(--text-4)] focus:outline-none focus:ring-1 focus:ring-[var(--blue)] leading-[22px]"
-          style={{
-            height: memoCompact ? 38 : 82,
-            overflowY: 'auto',
-            transition: 'height 0.2s ease-out',
-          }}
+          className={`w-full resize-none bg-[var(--bg-elevated)] rounded-xl px-3 py-2 text-sm text-[var(--text-1)] placeholder:text-[var(--text-4)] focus:outline-none focus:ring-1 focus:ring-[var(--blue)] leading-[22px] transition-all duration-200 ${
+            memoCompact
+              ? 'h-[38px] overflow-hidden'
+              : '[field-sizing:content] min-h-[82px] max-h-[400px] overflow-y-auto'
+          }`}
         />
       </div>
 
