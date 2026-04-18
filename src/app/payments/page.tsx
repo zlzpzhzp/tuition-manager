@@ -62,11 +62,14 @@ function FilterDropdownPortal({
   onClose: () => void
 }) {
   const [show, setShow] = useState(false)
-  const [pos, setPos] = useState({ top: 0, right: 0 })
+  const [pos, setPos] = useState({ top: 0, left: 0 })
+  const PILL_WIDTH = 112
 
   useEffect(() => {
     const rect = anchor.getBoundingClientRect()
-    setPos({ top: rect.bottom + 6, right: Math.max(8, window.innerWidth - rect.right) })
+    const centerX = rect.left + rect.width / 2
+    const left = Math.max(8, Math.min(window.innerWidth - PILL_WIDTH - 8, centerX - PILL_WIDTH / 2))
+    setPos({ top: rect.bottom + 6, left })
     requestAnimationFrame(() => setShow(true))
   }, [anchor])
 
@@ -77,17 +80,17 @@ function FilterDropdownPortal({
       <div className="fixed inset-0 z-[60]" onClick={onClose} />
       <div
         data-filter-portal
-        className="fixed z-[61] flex flex-col gap-1 items-end"
-        style={{ top: pos.top, right: pos.right }}
+        className="fixed z-[61] flex flex-col gap-1 items-center"
+        style={{ top: pos.top, left: pos.left, width: PILL_WIDTH }}
         role="listbox"
         aria-label="납부 필터"
       >
         {keys.map((key, i) => {
           const active = currentFilter === key
-          const isWeek = (WEEK_KEYS as PaymentFilter[]).includes(key)
-          const range = isWeek ? weekRanges[key as Exclude<PaymentFilter, 'all' | 'unpaid'>] : null
-          const rangeLabel = range
-            ? range[0] > range[1] ? '' : range[0] === range[1] ? `${range[0]}일` : `${range[0]}~${range[1]}`
+          const isWeek = (WEEK_KEYS as PaymentFilter[]).includes(key) && key !== 'day1'
+          const range = isWeek ? weekRanges[key as Exclude<PaymentFilter, 'all' | 'unpaid' | 'day1'>] : null
+          const rangeLabel = range && range[0] <= range[1]
+            ? range[0] === range[1] ? `${range[0]}일` : `${range[0]}~${range[1]}`
             : ''
           return (
             <button
@@ -96,7 +99,7 @@ function FilterDropdownPortal({
               onClick={() => onSelect(key)}
               role="option"
               aria-selected={active}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap shadow-md transition-colors ${
+              className={`flex items-center justify-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap shadow-md transition-colors ${
                 active
                   ? key === 'unpaid'
                     ? 'bg-[var(--red-dim)] text-[var(--unpaid-text)]'
@@ -106,6 +109,7 @@ function FilterDropdownPortal({
                   : 'bg-[var(--bg-card)] text-[var(--text-2)] hover:text-[var(--text-1)] hover:bg-[var(--bg-card-hover)] border border-[var(--border)]'
               }`}
               style={{
+                width: PILL_WIDTH,
                 opacity: show ? 1 : 0,
                 transform: show ? 'translateY(0) scale(1)' : 'translateY(-6px) scale(0.85)',
                 transition: `opacity 0.2s ease ${i * 0.04}s, transform 0.25s cubic-bezier(0.34,1.56,0.64,1) ${i * 0.04}s, background-color 0.15s, color 0.15s`,
