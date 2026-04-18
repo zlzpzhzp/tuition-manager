@@ -70,42 +70,53 @@ function FilterDropdownPortal({
     requestAnimationFrame(() => setShow(true))
   }, [anchor])
 
+  // 앵커 버튼 본체를 포탈이 덮음
+  useEffect(() => {
+    anchor.style.visibility = 'hidden'
+    return () => { anchor.style.visibility = '' }
+  }, [anchor])
+
   const keys: PaymentFilter[] = ['all', 'unpaid', ...WEEK_KEYS]
-  const ROW_H = 32
+  const orderedKeys = [currentFilter, ...keys.filter(k => k !== currentFilter)]
+
+  if (!rect) return null
+
+  const ROW_H = rect.height
+  const totalH = ROW_H * orderedKeys.length
+  const BORDER_R = Math.round(ROW_H / 2)
 
   const bgFor = (key: PaymentFilter, active: boolean) => {
-    if (!active) return 'text-[var(--text-2)] hover:bg-[var(--bg-card-hover)] hover:text-[var(--text-1)]'
+    if (!active) return 'bg-[var(--surface)] text-[var(--text-2)] hover:bg-[var(--bg-card-hover)] hover:text-[var(--text-1)]'
     if (key === 'unpaid') return 'bg-[var(--red-dim)] text-[var(--unpaid-text)]'
     if (key === 'all') return 'bg-[var(--bg-elevated)] text-[var(--text-1)]'
     return 'bg-[var(--blue-dim)] text-[var(--blue)]'
   }
-
-  if (!rect) return null
 
   return createPortal(
     <>
       <div className="fixed inset-0 z-[60]" onClick={onClose} />
       <div
         data-filter-portal
-        className="fixed z-[61] overflow-hidden shadow-2xl bg-[var(--surface)] ring-1 ring-black/20 rounded-xl origin-top"
+        className="fixed z-[61] overflow-hidden shadow-xl bg-[var(--surface)]"
         style={{
-          top: rect.top + rect.height + 6,
+          top: rect.top,
           left: rect.left,
           width: rect.width,
-          transform: show ? 'scaleY(1)' : 'scaleY(0)',
-          opacity: show ? 1 : 0,
-          transition: 'transform 0.18s ease-out, opacity 0.14s ease-out',
+          height: show ? totalH : ROW_H,
+          borderRadius: BORDER_R,
+          transition: 'height 0.2s ease-out',
         }}
         role="listbox"
         aria-label="납부 필터"
       >
-        {keys.map((key) => {
+        {orderedKeys.map((key, i) => {
           const active = currentFilter === key
           const isWeek = (WEEK_KEYS as PaymentFilter[]).includes(key) && key !== 'day1'
           const range = isWeek ? weekRanges[key as Exclude<PaymentFilter, 'all' | 'unpaid' | 'day1'>] : null
           const rangeLabel = range && range[0] <= range[1]
             ? range[0] === range[1] ? `${range[0]}일` : `${range[0]}~${range[1]}`
             : ''
+          const isCurrent = i === 0
           return (
             <button
               key={key}
@@ -114,10 +125,20 @@ function FilterDropdownPortal({
               role="option"
               aria-selected={active}
               className={`w-full flex items-center justify-center gap-1 text-xs font-semibold whitespace-nowrap transition-colors ${bgFor(key, active)}`}
-              style={{ height: ROW_H }}
+              style={{
+                height: ROW_H,
+                opacity: isCurrent ? 1 : show ? 1 : 0,
+                transition: 'opacity 0.15s ease-out, background-color 0.12s, color 0.12s',
+              }}
             >
               <span>{FILTER_LABELS[key]}</span>
               {rangeLabel && <span className="text-[10px] opacity-60">{rangeLabel}</span>}
+              {isCurrent && (
+                <ChevronDown
+                  className="w-3 h-3 opacity-60 transition-transform"
+                  style={{ transform: show ? 'rotate(180deg)' : 'rotate(0deg)' }}
+                />
+              )}
             </button>
           )
         })}
