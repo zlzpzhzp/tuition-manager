@@ -123,7 +123,7 @@ function FilterDropdownPortal({
               onClick={() => onSelect(key)}
               role="option"
               aria-selected={active}
-              className={`w-full relative flex items-center justify-center text-xs font-semibold whitespace-nowrap transition-colors ${bgFor(key, active)}`}
+              className={`w-full flex items-center justify-center gap-1 text-xs font-semibold whitespace-nowrap transition-colors ${bgFor(key, active)}`}
               style={{
                 height: ROW_H,
                 opacity: isCurrent ? 1 : show ? 1 : 0,
@@ -131,17 +131,17 @@ function FilterDropdownPortal({
               }}
             >
               <span>{FILTER_LABELS[key]}</span>
-              {rangeLabel && (
-                <span className="text-[10px] opacity-60 absolute right-8 top-1/2 -translate-y-1/2">
+              {/* rangeLabel 고정 폭 슬롯 — 폭 일정해야 센터링 시 라벨 첫글자 x좌표 통일됨. 없는 행도 동일 폭 확보 */}
+              {(WEEK_KEYS as PaymentFilter[]).includes(key) && key !== 'day1' && (
+                <span className="text-[10px] opacity-60 inline-block text-left" style={{ minWidth: '3em' }}>
                   {rangeLabel}
                 </span>
               )}
-              {isCurrent && (
-                <ChevronDown
-                  className="w-3 h-3 opacity-60 absolute right-3 top-1/2 transition-transform"
-                  style={{ transform: `translateY(-50%) rotate(${show ? 180 : 0}deg)` }}
-                />
-              )}
+              {/* Chevron 자리는 항상 확보 (비현재행은 투명) — 안 그러면 현재행만 폭 달라져 첫글자 어긋남 */}
+              <ChevronDown
+                className={`w-3 h-3 opacity-60 transition-transform ${isCurrent ? '' : 'invisible'}`}
+                style={{ transform: `rotate(${show && isCurrent ? 180 : 0}deg)` }}
+              />
             </button>
           )
         })}
