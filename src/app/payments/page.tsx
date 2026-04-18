@@ -123,7 +123,7 @@ function FilterDropdownPortal({
               onClick={() => onSelect(key)}
               role="option"
               aria-selected={active}
-              className={`w-full flex items-center justify-center gap-1 text-xs font-semibold whitespace-nowrap transition-colors ${bgFor(key, active)}`}
+              className={`w-full relative flex items-center justify-center text-xs font-semibold whitespace-nowrap transition-colors ${bgFor(key, active)}`}
               style={{
                 height: ROW_H,
                 opacity: isCurrent ? 1 : show ? 1 : 0,
@@ -131,11 +131,15 @@ function FilterDropdownPortal({
               }}
             >
               <span>{FILTER_LABELS[key]}</span>
-              {rangeLabel && <span className="text-[10px] opacity-60">{rangeLabel}</span>}
+              {rangeLabel && (
+                <span className="text-[10px] opacity-60 absolute right-8 top-1/2 -translate-y-1/2">
+                  {rangeLabel}
+                </span>
+              )}
               {isCurrent && (
                 <ChevronDown
-                  className="w-3 h-3 opacity-60 transition-transform"
-                  style={{ transform: show ? 'rotate(180deg)' : 'rotate(0deg)' }}
+                  className="w-3 h-3 opacity-60 absolute right-3 top-1/2 transition-transform"
+                  style={{ transform: `translateY(-50%) rotate(${show ? 180 : 0}deg)` }}
                 />
               )}
             </button>
