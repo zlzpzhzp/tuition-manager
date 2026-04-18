@@ -149,7 +149,6 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
   // 통합 필터 (전체/미납/1일/첫째주~넷째주)
   const [paymentFilter, setPaymentFilter] = useState<PaymentFilter>('all')
   const [filterOpen, setFilterOpen] = useState(false)
-  const filterRef = useRef<HTMLDivElement>(null)
   const [monthMemo, setMonthMemo] = useState('')
 
   // Sun~Sat 기준 주차 범위 (billing page와 동일)
@@ -400,11 +399,15 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
     }
   }, [])
 
-  // 필터 드롭다운 외부 클릭 닫기
+  // 필터 드롭다운 외부 클릭 닫기 — 여러 인스턴스를 className으로 감지
   useEffect(() => {
     if (!filterOpen) return
     const onClick = (e: MouseEvent) => {
-      if (filterRef.current && !filterRef.current.contains(e.target as Node)) setFilterOpen(false)
+      const wrappers = document.querySelectorAll('[data-filter-wrapper]')
+      for (const w of wrappers) {
+        if (w.contains(e.target as Node)) return
+      }
+      setFilterOpen(false)
     }
     document.addEventListener('mousedown', onClick)
     return () => document.removeEventListener('mousedown', onClick)
@@ -830,7 +833,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
       </div>
 
       {/* 월별 메모 — sticky (스크롤 시 1줄로 축소) */}
-      <div data-sticky-header className="sticky top-14 z-30 bg-[var(--bg)] -mx-4 px-4 pt-2 pb-3">
+      <div data-sticky-header className="sticky top-14 z-30 bg-[var(--bg)] -mx-4 px-4 pt-2 pb-2">
         <textarea
           ref={memoRef}
           value={monthMemo}
@@ -844,60 +847,6 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
           className="w-full resize-none bg-[var(--bg-elevated)] rounded-xl px-3 py-2 text-sm text-[var(--text-1)] placeholder:text-[var(--text-4)] focus:outline-none focus:ring-1 focus:ring-[var(--blue)] overflow-hidden leading-[22px]"
           style={{ height: memoHeight, transition: 'height 0.2s ease-out' }}
         />
-      </div>
-
-      {/* 통합 필터 — 학년 레이블(중1)과 같은 Y좌표, 스크롤해도 따라다님 */}
-      <div
-        className="sticky z-30 pointer-events-none flex justify-end -mx-4 px-5 py-1.5 mb-1"
-        style={{ top: 'var(--grade-sticky-top, 140px)' }}
-      >
-        <div ref={filterRef} className="relative pointer-events-auto">
-          <button
-            onClick={() => setFilterOpen(v => !v)}
-            className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold transition-colors shadow-sm ${
-              paymentFilter === 'unpaid'
-                ? 'bg-[var(--red-dim)] text-[var(--unpaid-text)]'
-                : paymentFilter !== 'all'
-                  ? 'bg-[var(--blue-dim)] text-[var(--blue)]'
-                  : 'bg-[var(--bg-elevated)] text-[var(--text-2)] hover:bg-[var(--bg-card-hover)]'
-            }`}
-          >
-            <span>{FILTER_LABELS[paymentFilter]}</span>
-            <ChevronDown className="w-3 h-3 opacity-60" />
-          </button>
-          <AnimatePresence>
-            {filterOpen && (
-              <motion.div
-                initial={{ opacity: 0, y: -4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-                transition={{ duration: 0.15 }}
-                className="absolute right-0 top-full mt-1 min-w-[140px] rounded-xl border border-[var(--border)] bg-[var(--bg-card)] shadow-xl overflow-hidden"
-              >
-                {(['all', 'unpaid', ...WEEK_KEYS] as PaymentFilter[]).map((key) => {
-                  const active = paymentFilter === key
-                  const isWeek = WEEK_KEYS.includes(key)
-                  const range = isWeek ? weekRanges[key as Exclude<PaymentFilter, 'all' | 'unpaid'>] : null
-                  const rangeLabel = range
-                    ? range[0] > range[1] ? '-' : range[0] === range[1] ? `${range[0]}일` : `${range[0]}~${range[1]}`
-                    : ''
-                  return (
-                    <button
-                      key={key}
-                      onClick={() => { setPaymentFilter(key); setFilterOpen(false) }}
-                      className={`w-full flex items-center justify-between px-3 py-2 text-xs font-medium transition-colors ${
-                        active ? 'bg-[var(--blue)]/20 text-[var(--blue)]' : 'text-[var(--text-2)] hover:bg-[var(--bg-elevated)]'
-                      }`}
-                    >
-                      <span>{FILTER_LABELS[key]}</span>
-                      {rangeLabel && <span className="text-[10px] opacity-60 ml-2">{rangeLabel}</span>}
-                    </button>
-                  )
-                })}
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
       </div>
 
       {/* 과목별 → 학년별 납부 현황 */}
@@ -947,7 +896,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
               return (
                 <div key={gradeId} data-section-key={`${subject}__${gradeId}`}>
                   <div
-                    className="sticky z-20 bg-[var(--bg)] -mx-4 px-5 pt-2 pb-2 mb-1"
+                    className="sticky z-20 bg-[var(--bg)] -mx-4 px-5 pt-1.5 pb-1.5 mb-1 flex items-center justify-between gap-3"
                     style={{ top: 'var(--grade-sticky-top, 140px)' }}
                   >
                     <button
@@ -959,6 +908,53 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                       </motion.div>
                       <span className="text-[15px] font-bold text-[var(--text-1)] tracking-tight">{gradeName}</span>
                     </button>
+                    <div data-filter-wrapper className="relative">
+                      <button
+                        onClick={() => setFilterOpen(v => !v)}
+                        className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold transition-colors shadow-sm ${
+                          paymentFilter === 'unpaid'
+                            ? 'bg-[var(--red-dim)] text-[var(--unpaid-text)]'
+                            : paymentFilter !== 'all'
+                              ? 'bg-[var(--blue-dim)] text-[var(--blue)]'
+                              : 'bg-[var(--bg-elevated)] text-[var(--text-2)] hover:bg-[var(--bg-card-hover)]'
+                        }`}
+                      >
+                        <span>{FILTER_LABELS[paymentFilter]}</span>
+                        <ChevronDown className="w-3 h-3 opacity-60" />
+                      </button>
+                      <AnimatePresence>
+                        {filterOpen && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -4 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -4 }}
+                            transition={{ duration: 0.15 }}
+                            className="absolute right-0 top-full mt-1 min-w-[140px] rounded-xl border border-[var(--border)] bg-[var(--bg-card)] shadow-xl overflow-hidden z-40"
+                          >
+                            {(['all', 'unpaid', ...WEEK_KEYS] as PaymentFilter[]).map((key) => {
+                              const active = paymentFilter === key
+                              const isWeek = WEEK_KEYS.includes(key)
+                              const range = isWeek ? weekRanges[key as Exclude<PaymentFilter, 'all' | 'unpaid'>] : null
+                              const rangeLabel = range
+                                ? range[0] > range[1] ? '-' : range[0] === range[1] ? `${range[0]}일` : `${range[0]}~${range[1]}`
+                                : ''
+                              return (
+                                <button
+                                  key={key}
+                                  onClick={() => { setPaymentFilter(key); setFilterOpen(false) }}
+                                  className={`w-full flex items-center justify-between px-3 py-2 text-xs font-medium transition-colors ${
+                                    active ? 'bg-[var(--blue)]/20 text-[var(--blue)]' : 'text-[var(--text-2)] hover:bg-[var(--bg-elevated)]'
+                                  }`}
+                                >
+                                  <span>{FILTER_LABELS[key]}</span>
+                                  {rangeLabel && <span className="text-[10px] opacity-60 ml-2">{rangeLabel}</span>}
+                                </button>
+                              )
+                            })}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
                   </div>
                   <div className="card overflow-hidden">
                   {gradeClasses.map(cls => {

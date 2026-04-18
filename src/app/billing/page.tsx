@@ -385,19 +385,29 @@ export default function BillingPage() {
       </AnimatePresence>
 
       <div className="pt-2 pb-1">
-        <div className="flex items-center justify-center gap-3 mb-1">
-          <button onClick={() => navigateMonth(-1)} className="p-2 hover:bg-[var(--bg-elevated)] rounded-lg" aria-label="이전 달">
-            <ChevronLeft className="w-7 h-7" />
-          </button>
-          <h1 className="font-extrabold tracking-tight text-center">
-            <span className="text-[2.6rem] sm:text-[3.2rem] leading-none">{selectedMonth.split('-')[0]}</span>
-            <span className="text-[1.8rem] sm:text-[2.2rem] text-[var(--text-3)]">년 </span>
-            <span className="text-5xl sm:text-6xl">{parseInt(selectedMonth.split('-')[1])}</span>
-            <span className="text-[1.8rem] sm:text-[2.2rem] text-[var(--text-3)]">월</span>
-          </h1>
-          <button onClick={() => navigateMonth(1)} className="p-2 hover:bg-[var(--bg-elevated)] rounded-lg" aria-label="다음 달">
-            <ChevronRight className="w-7 h-7" />
-          </button>
+        <div className="flex items-end justify-between gap-3 mb-1">
+          <div className="leading-none">
+            <div className="text-[11px] font-semibold tracking-widest text-[var(--text-4)] mb-1.5 uppercase">{(() => { const t = new Date(); return t.getFullYear() })()}</div>
+            <div className="flex items-baseline gap-2">
+              <h1 className="text-[2.6rem] sm:text-[3.2rem] font-extrabold tracking-tight leading-none text-[var(--text-1)]">
+                {(() => { const t = new Date(); return `${t.getMonth() + 1}월 ${t.getDate()}일` })()}
+              </h1>
+              <span className="text-lg sm:text-xl font-semibold text-[var(--text-3)] tracking-tight">
+                {(() => { const t = new Date(); return ['일', '월', '화', '수', '목', '금', '토'][t.getDay()] + '요일' })()}
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center gap-0.5 mb-0.5">
+            <button onClick={() => navigateMonth(-1)} className="p-1.5 hover:bg-[var(--bg-elevated)] rounded-lg text-[var(--text-3)]" aria-label="이전 달">
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <span className="text-sm font-semibold text-[var(--text-2)] min-w-[44px] text-center tabular-nums">
+              {parseInt(selectedMonth.split('-')[1])}월
+            </span>
+            <button onClick={() => navigateMonth(1)} className="p-1.5 hover:bg-[var(--bg-elevated)] rounded-lg text-[var(--text-3)]" aria-label="다음 달">
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* 결제일 필터 */}
