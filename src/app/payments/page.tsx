@@ -830,7 +830,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
       </div>
 
       {/* 월별 메모 — sticky (스크롤 시 1줄로 축소) */}
-      <div data-sticky-header className="sticky top-14 z-30 bg-[var(--bg)] -mx-4 px-4 pt-2 pb-2 mb-4">
+      <div data-sticky-header className="sticky top-14 z-30 bg-[var(--bg)] -mx-4 px-4 pt-2 pb-3">
         <textarea
           ref={memoRef}
           value={monthMemo}
@@ -947,17 +947,17 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
               return (
                 <div key={gradeId} data-section-key={`${subject}__${gradeId}`}>
                   <div
-                    className="sticky z-20 bg-[var(--bg)] -mx-4 px-5 py-1.5 mb-1"
+                    className="sticky z-20 bg-[var(--bg)] -mx-4 px-5 pt-2 pb-2 mb-1"
                     style={{ top: 'var(--grade-sticky-top, 140px)' }}
                   >
                     <button
                       onClick={toggleGradeExpand}
-                      className="flex items-center gap-0.5 active:opacity-70"
+                      className="flex items-center gap-1 active:opacity-70"
                     >
                       <motion.div animate={{ rotate: isGradeExpanded ? 90 : 0 }} transition={{ type: 'spring', stiffness: 300, damping: 25 }}>
-                        <ChevronRight className="w-3.5 h-3.5 text-[var(--text-4)]" />
+                        <ChevronRight className="w-4 h-4 text-[var(--text-3)]" />
                       </motion.div>
-                      <span className="text-xs text-[var(--text-4)]">{gradeName}</span>
+                      <span className="text-[15px] font-bold text-[var(--text-1)] tracking-tight">{gradeName}</span>
                     </button>
                   </div>
                   <div className="card overflow-hidden">
