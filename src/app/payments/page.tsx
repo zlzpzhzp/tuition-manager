@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useRef, useMemo, useEffect } from 'react'
+import { useState, useCallback, useRef, useMemo, useEffect, useLayoutEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { ChevronLeft, ChevronRight, Check, ChevronDown, ClipboardList, Download, Plus, Send, Mail, Loader2 } from 'lucide-react'
 import type { Student, Payment, PaymentMethod, GradeWithClasses } from '@/types'
@@ -286,7 +286,9 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
   const memoRef = useRef<HTMLTextAreaElement>(null)
   const MEMO_LINE = 22
   const MEMO_PAD = 16
-  const [memoContentHeight, setMemoContentHeight] = useState(3 * MEMO_LINE + MEMO_PAD)
+  const MEMO_COLLAPSED = MEMO_LINE + MEMO_PAD
+  const MEMO_DEFAULT = 3 * MEMO_LINE + MEMO_PAD
+  const [memoHeight, setMemoHeight] = useState(MEMO_DEFAULT)
 
   useEffect(() => {
     const onScroll = () => setMemoScrolled(window.scrollY > 80)
@@ -294,19 +296,26 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  useEffect(() => {
-    if (memoFocused && memoRef.current) {
-      const el = memoRef.current
-      el.style.height = 'auto'
-      setMemoContentHeight(Math.max(3 * MEMO_LINE + MEMO_PAD, el.scrollHeight))
+  useLayoutEffect(() => {
+    if (memoScrolled && !memoFocused) {
+      setMemoHeight(MEMO_COLLAPSED)
+      return
     }
-  }, [memoFocused, monthMemo])
-
-  const memoHeight = memoScrolled && !memoFocused
-    ? MEMO_LINE + MEMO_PAD
-    : memoFocused
-      ? memoContentHeight
-      : 3 * MEMO_LINE + MEMO_PAD
+    if (!memoFocused) {
+      setMemoHeight(MEMO_DEFAULT)
+      return
+    }
+    const el = memoRef.current
+    if (!el) return
+    const prevHeight = el.style.height
+    const prevTransition = el.style.transition
+    el.style.transition = 'none'
+    el.style.height = 'auto'
+    const measured = Math.max(MEMO_DEFAULT, el.scrollHeight)
+    el.style.height = prevHeight
+    el.style.transition = prevTransition
+    setMemoHeight(measured)
+  }, [memoFocused, monthMemo, memoScrolled, MEMO_COLLAPSED, MEMO_DEFAULT])
 
   // AI 필터
   const [aiFilterIds, setAiFilterIds] = useState<Set<string> | null>(null)
