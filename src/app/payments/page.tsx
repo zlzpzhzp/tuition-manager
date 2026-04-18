@@ -1278,17 +1278,17 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                                     </span>
                                   )}
                                   {!withdrawn && (() => {
-                                    // 납부 완료 → 결제수단별 아이콘
+                                    // 납부 완료 → 결제수단별 아이콘 (배경 전부 파란색으로 통일, 심볼만 다르게)
                                     if (status === 'paid' && studentPayments.length > 0) {
                                       const method = studentPayments[0].method
                                       const bill = billByStudent.get(student.id)
-                                      const methodStyle: Record<string, { Icon: typeof Check; bg: string; fg: string; title: string }> = {
-                                        payssam:  { Icon: Check,          bg: 'var(--blue)',        fg: 'white',          title: '결제선생 완료 — 탭하여 취소' },
-                                        card:     { Icon: CreditCard,     bg: 'var(--blue-dim)',    fg: 'var(--blue)',    title: '카드결제 — 탭하여 편집' },
-                                        cash:     { Icon: Banknote,       bg: 'var(--green-dim)',   fg: 'var(--paid-text)', title: '현금결제 — 탭하여 편집' },
-                                        transfer: { Icon: ArrowLeftRight, bg: 'var(--bg-elevated)', fg: 'var(--text-2)',  title: '계좌이체 — 탭하여 편집' },
+                                      const methodSymbol: Record<string, { Icon: typeof Check; rotate?: number; title: string }> = {
+                                        payssam:  { Icon: Send,          rotate: 180, title: '결제선생 완료 — 탭하여 취소' },
+                                        card:     { Icon: CreditCard,                 title: '카드결제 — 탭하여 편집' },
+                                        cash:     { Icon: Banknote,                   title: '현금결제 — 탭하여 편집' },
+                                        transfer: { Icon: ArrowLeftRight,             title: '계좌이체 — 탭하여 편집' },
                                       }
-                                      const s = methodStyle[method] ?? { Icon: Check, bg: 'var(--bg-elevated)', fg: 'var(--text-2)', title: '납부 완료 — 탭하여 편집' }
+                                      const s = methodSymbol[method] ?? { Icon: Check, title: '납부 완료 — 탭하여 편집' }
                                       const IconComp = s.Icon
                                       return (
                                         <button
@@ -1307,11 +1307,11 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                                             }
                                           }}
                                           className="p-1 rounded-lg transition-colors shrink-0 hover:opacity-80 flex items-center justify-center"
-                                          style={{ color: s.fg, background: s.bg }}
+                                          style={{ color: 'var(--blue)', background: 'var(--blue-dim)' }}
                                           aria-label={s.title}
                                           title={s.title}
                                         >
-                                          <IconComp className="w-3.5 h-3.5" strokeWidth={method === 'payssam' ? 3 : 2} />
+                                          <IconComp className="w-3.5 h-3.5" style={s.rotate ? { transform: `rotate(${s.rotate}deg)` } : undefined} />
                                         </button>
                                       )
                                     }
