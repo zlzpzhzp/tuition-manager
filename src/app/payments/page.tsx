@@ -70,52 +70,42 @@ function FilterDropdownPortal({
     requestAnimationFrame(() => setShow(true))
   }, [anchor])
 
-  // 앵커 버튼 본체를 포탈이 완전히 덮어야 하므로 opacity 0 처리
-  useEffect(() => {
-    anchor.style.visibility = 'hidden'
-    return () => { anchor.style.visibility = '' }
-  }, [anchor])
-
   const keys: PaymentFilter[] = ['all', 'unpaid', ...WEEK_KEYS]
-  const orderedKeys = [currentFilter, ...keys.filter(k => k !== currentFilter)]
-
-  if (!rect) return null
-
-  const ROW_H = rect.height
-  const totalH = ROW_H * orderedKeys.length
+  const ROW_H = 32
 
   const bgFor = (key: PaymentFilter, active: boolean) => {
-    if (!active) return 'bg-[var(--surface)] text-[var(--text-2)] hover:bg-[var(--bg-card-hover)] hover:text-[var(--text-1)]'
+    if (!active) return 'text-[var(--text-2)] hover:bg-[var(--bg-card-hover)] hover:text-[var(--text-1)]'
     if (key === 'unpaid') return 'bg-[var(--red-dim)] text-[var(--unpaid-text)]'
-    if (key === 'all') return 'bg-[var(--bg-elevated)] text-[var(--text-2)]'
+    if (key === 'all') return 'bg-[var(--bg-elevated)] text-[var(--text-1)]'
     return 'bg-[var(--blue-dim)] text-[var(--blue)]'
   }
+
+  if (!rect) return null
 
   return createPortal(
     <>
       <div className="fixed inset-0 z-[60]" onClick={onClose} />
       <div
         data-filter-portal
-        className="fixed z-[61] overflow-hidden shadow-2xl bg-[var(--surface)] ring-1 ring-black/10"
+        className="fixed z-[61] overflow-hidden shadow-2xl bg-[var(--surface)] ring-1 ring-black/20 rounded-xl origin-top"
         style={{
-          top: rect.top,
+          top: rect.top + rect.height + 6,
           left: rect.left,
           width: rect.width,
-          height: show ? totalH : ROW_H,
-          borderRadius: show ? 16 : 9999,
-          transition: 'height 0.32s cubic-bezier(0.34,1.56,0.64,1), border-radius 0.25s ease, box-shadow 0.25s ease',
+          transform: show ? 'scaleY(1)' : 'scaleY(0)',
+          opacity: show ? 1 : 0,
+          transition: 'transform 0.18s ease-out, opacity 0.14s ease-out',
         }}
         role="listbox"
         aria-label="납부 필터"
       >
-        {orderedKeys.map((key, i) => {
+        {keys.map((key) => {
           const active = currentFilter === key
           const isWeek = (WEEK_KEYS as PaymentFilter[]).includes(key) && key !== 'day1'
           const range = isWeek ? weekRanges[key as Exclude<PaymentFilter, 'all' | 'unpaid' | 'day1'>] : null
           const rangeLabel = range && range[0] <= range[1]
             ? range[0] === range[1] ? `${range[0]}일` : `${range[0]}~${range[1]}`
             : ''
-          const isCurrent = i === 0
           return (
             <button
               key={key}
@@ -124,20 +114,10 @@ function FilterDropdownPortal({
               role="option"
               aria-selected={active}
               className={`w-full flex items-center justify-center gap-1 text-xs font-semibold whitespace-nowrap transition-colors ${bgFor(key, active)}`}
-              style={{
-                height: ROW_H,
-                opacity: isCurrent ? 1 : show ? 1 : 0,
-                transition: `opacity 0.2s ease ${show ? 0.1 + i * 0.02 : 0}s, background-color 0.12s, color 0.12s`,
-              }}
+              style={{ height: ROW_H }}
             >
               <span>{FILTER_LABELS[key]}</span>
               {rangeLabel && <span className="text-[10px] opacity-60">{rangeLabel}</span>}
-              {isCurrent && (
-                <ChevronDown
-                  className="w-3 h-3 opacity-60 transition-transform"
-                  style={{ transform: show ? 'rotate(180deg)' : 'rotate(0deg)' }}
-                />
-              )}
             </button>
           )
         })}
@@ -479,29 +459,22 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
     })
   }, [visibleSections])
 
-  // 스티키 높이 계산: 메모 → 필터바 → 학년헤더 순으로 스택됨
+  // 스티키 헤더 높이를 CSS 변수로 주입 → 학년 헤더가 그 아래로 스틱
   useEffect(() => {
     const update = () => {
-      const memoEl = document.querySelector('[data-sticky-header]') as HTMLElement | null
-      const filterEl = document.querySelector('[data-filter-bar]') as HTMLElement | null
-      const memoH = memoEl ? memoEl.getBoundingClientRect().height : 0
-      const filterH = filterEl ? filterEl.getBoundingClientRect().height : 0
-      const filterTop = Math.max(0, memoH + 56)
-      const gradeTop = filterTop + filterH
-      document.documentElement.style.setProperty('--filter-sticky-top', `${filterTop}px`)
-      document.documentElement.style.setProperty('--grade-sticky-top', `${gradeTop}px`)
+      const el = document.querySelector('[data-sticky-header]') as HTMLElement | null
+      if (!el) return
+      const h = el.getBoundingClientRect().height
+      document.documentElement.style.setProperty('--grade-sticky-top', `${Math.max(0, h + 56)}px`)
     }
     update()
-    const memoEl = document.querySelector('[data-sticky-header]')
-    const filterEl = document.querySelector('[data-filter-bar]')
-    const ro = new ResizeObserver(update)
-    if (memoEl) ro.observe(memoEl)
-    if (filterEl) ro.observe(filterEl)
+    const el = document.querySelector('[data-sticky-header]')
+    const ro = el ? new ResizeObserver(update) : null
+    if (el && ro) ro.observe(el)
     window.addEventListener('resize', update)
     return () => {
-      ro.disconnect()
+      ro?.disconnect()
       window.removeEventListener('resize', update)
-      document.documentElement.style.removeProperty('--filter-sticky-top')
       document.documentElement.style.removeProperty('--grade-sticky-top')
     }
   }, [])
@@ -942,28 +915,6 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
         />
       </div>
 
-      {/* 필터 바 — sticky, 단독 1개 */}
-      <div
-        data-filter-bar
-        className="sticky z-25 bg-[var(--bg)] -mx-4 px-5 pt-1 pb-1.5 flex justify-end"
-        style={{ top: 'var(--filter-sticky-top, 140px)' }}
-      >
-        <button
-          onClick={(e) => setFilterAnchor(prev => prev === e.currentTarget ? null : e.currentTarget)}
-          style={{ width: 112 }}
-          className={`flex items-center justify-center gap-1 px-3 py-1 rounded-full text-xs font-semibold transition-colors shadow-sm ${
-            paymentFilter === 'unpaid'
-              ? 'bg-[var(--red-dim)] text-[var(--unpaid-text)]'
-              : paymentFilter !== 'all'
-                ? 'bg-[var(--blue-dim)] text-[var(--blue)]'
-                : 'bg-[var(--bg-elevated)] text-[var(--text-2)] hover:bg-[var(--bg-card-hover)]'
-          }`}
-        >
-          <span>{FILTER_LABELS[paymentFilter]}</span>
-          <ChevronDown className={`w-3 h-3 opacity-60 transition-transform ${filterAnchor ? 'rotate-180' : ''}`} />
-        </button>
-      </div>
-
       {/* 과목별 → 학년별 납부 현황 */}
       {subjectGradeGroups.map(({ subject, grades: subjectGrades }) => {
         // 과목 전체에 표시할 학생이 있는지 확인
@@ -1008,11 +959,13 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                 })
               }
 
+              const isFirstGrade = visibleSections[0]?.key === `${subject}__${gradeId}`
+
               return (
                 <div key={gradeId} data-section-key={`${subject}__${gradeId}`}>
                   <div
-                    className="sticky z-20 bg-[var(--bg)] -mx-4 px-5 pt-1.5 pb-1.5 mb-1 flex items-center"
-                    style={{ top: 'var(--grade-sticky-top, 180px)' }}
+                    className="sticky z-20 bg-[var(--bg)] -mx-4 px-5 pt-1.5 pb-1.5 mb-1 flex items-center justify-between gap-3"
+                    style={{ top: 'var(--grade-sticky-top, 140px)' }}
                   >
                     <button
                       onClick={toggleGradeExpand}
@@ -1023,6 +976,22 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                       </motion.div>
                       <span className="text-[15px] font-bold text-[var(--text-1)] tracking-tight">{gradeName}</span>
                     </button>
+                    {isFirstGrade && (
+                      <button
+                        onClick={(e) => setFilterAnchor(prev => prev === e.currentTarget ? null : e.currentTarget)}
+                        style={{ width: 112 }}
+                        className={`flex items-center justify-center gap-1 px-3 py-1 rounded-full text-xs font-semibold transition-colors shadow-sm ${
+                          paymentFilter === 'unpaid'
+                            ? 'bg-[var(--red-dim)] text-[var(--unpaid-text)]'
+                            : paymentFilter !== 'all'
+                              ? 'bg-[var(--blue-dim)] text-[var(--blue)]'
+                              : 'bg-[var(--bg-elevated)] text-[var(--text-2)] hover:bg-[var(--bg-card-hover)]'
+                        }`}
+                      >
+                        <span>{FILTER_LABELS[paymentFilter]}</span>
+                        <ChevronDown className={`w-3 h-3 opacity-60 transition-transform ${filterAnchor ? 'rotate-180' : ''}`} />
+                      </button>
+                    )}
                   </div>
                   <div className="card overflow-hidden">
                   {gradeClasses.map(cls => {
