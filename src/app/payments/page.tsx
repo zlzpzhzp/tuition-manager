@@ -62,14 +62,11 @@ function FilterDropdownPortal({
   onClose: () => void
 }) {
   const [show, setShow] = useState(false)
-  const [pos, setPos] = useState({ top: 0, left: 0 })
-  const PILL_WIDTH = 112
+  const [pos, setPos] = useState({ top: 0, left: 0, width: 0 })
 
   useEffect(() => {
     const rect = anchor.getBoundingClientRect()
-    const centerX = rect.left + rect.width / 2
-    const left = Math.max(8, Math.min(window.innerWidth - PILL_WIDTH - 8, centerX - PILL_WIDTH / 2))
-    setPos({ top: rect.bottom + 6, left })
+    setPos({ top: rect.bottom + 4, left: rect.left, width: rect.width })
     requestAnimationFrame(() => setShow(true))
   }, [anchor])
 
@@ -80,12 +77,20 @@ function FilterDropdownPortal({
       <div className="fixed inset-0 z-[60]" onClick={onClose} />
       <div
         data-filter-portal
-        className="fixed z-[61] flex flex-col gap-1 items-center"
-        style={{ top: pos.top, left: pos.left, width: PILL_WIDTH }}
+        className="fixed z-[61] overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] shadow-xl"
+        style={{
+          top: pos.top,
+          left: pos.left,
+          width: pos.width,
+          transformOrigin: 'top center',
+          transform: show ? 'scaleY(1)' : 'scaleY(0.05)',
+          opacity: show ? 1 : 0,
+          transition: 'transform 0.22s cubic-bezier(0.34,1.56,0.64,1), opacity 0.15s ease',
+        }}
         role="listbox"
         aria-label="납부 필터"
       >
-        {keys.map((key, i) => {
+        {keys.map((key) => {
           const active = currentFilter === key
           const isWeek = (WEEK_KEYS as PaymentFilter[]).includes(key) && key !== 'day1'
           const range = isWeek ? weekRanges[key as Exclude<PaymentFilter, 'all' | 'unpaid' | 'day1'>] : null
@@ -99,20 +104,18 @@ function FilterDropdownPortal({
               onClick={() => onSelect(key)}
               role="option"
               aria-selected={active}
-              className={`flex items-center justify-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap shadow-md transition-colors ${
+              className={`w-full flex items-center justify-center gap-1 py-1.5 text-xs font-semibold whitespace-nowrap transition-colors ${
                 active
                   ? key === 'unpaid'
                     ? 'bg-[var(--red-dim)] text-[var(--unpaid-text)]'
                     : key === 'all'
                       ? 'bg-[var(--bg-elevated)] text-[var(--text-1)]'
                       : 'bg-[var(--blue-dim)] text-[var(--blue)]'
-                  : 'bg-[var(--bg-card)] text-[var(--text-2)] hover:text-[var(--text-1)] hover:bg-[var(--bg-card-hover)] border border-[var(--border)]'
+                  : 'text-[var(--text-2)] hover:text-[var(--text-1)] hover:bg-[var(--bg-elevated)]'
               }`}
               style={{
-                width: PILL_WIDTH,
                 opacity: show ? 1 : 0,
-                transform: show ? 'translateY(0) scale(1)' : 'translateY(-6px) scale(0.85)',
-                transition: `opacity 0.2s ease ${i * 0.04}s, transform 0.25s cubic-bezier(0.34,1.56,0.64,1) ${i * 0.04}s, background-color 0.15s, color 0.15s`,
+                transition: 'opacity 0.15s ease 0.1s, background-color 0.12s, color 0.12s',
               }}
             >
               <span>{FILTER_LABELS[key]}</span>
@@ -975,7 +978,8 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                     </button>
                     <button
                       onClick={(e) => setFilterAnchor(prev => prev === e.currentTarget ? null : e.currentTarget)}
-                      className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold transition-colors shadow-sm ${
+                      style={{ width: 112 }}
+                      className={`flex items-center justify-center gap-1 px-3 py-1 rounded-full text-xs font-semibold transition-colors shadow-sm ${
                         paymentFilter === 'unpaid'
                           ? 'bg-[var(--red-dim)] text-[var(--unpaid-text)]'
                           : paymentFilter !== 'all'
@@ -984,7 +988,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                       }`}
                     >
                       <span>{FILTER_LABELS[paymentFilter]}</span>
-                      <ChevronDown className="w-3 h-3 opacity-60" />
+                      <ChevronDown className={`w-3 h-3 opacity-60 transition-transform ${filterAnchor ? 'rotate-180' : ''}`} />
                     </button>
                   </div>
                   <div className="card overflow-hidden">
