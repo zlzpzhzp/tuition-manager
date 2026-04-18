@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom'
 import { motion } from 'framer-motion'
 import { X } from 'lucide-react'
 import type { Student, Grade, Class } from '@/types'
-import { getTodayString } from '@/lib/utils'
+import { getTodayString, formatPhone } from '@/lib/utils'
 
 interface Props {
   student?: Student | null
@@ -18,8 +18,8 @@ interface Props {
 export default function StudentModal({ student, grades, defaultClassId, onSave, onClose }: Props) {
   const [name, setName] = useState(student?.name ?? '')
   const [classId, setClassId] = useState(student?.class_id ?? defaultClassId ?? '')
-  const [phone, setPhone] = useState(student?.phone ?? '')
-  const [parentPhone, setParentPhone] = useState(student?.parent_phone ?? '')
+  const [phone, setPhone] = useState(formatPhone(student?.phone ?? ''))
+  const [parentPhone, setParentPhone] = useState(formatPhone(student?.parent_phone ?? ''))
   const [enrollmentDate, setEnrollmentDate] = useState(student?.enrollment_date ?? getTodayString())
   const [customFee, setCustomFee] = useState(student?.custom_fee != null ? String(student.custom_fee) : '')
   const [memo, setMemo] = useState(student?.memo ?? '')
@@ -129,11 +129,10 @@ export default function StudentModal({ student, grades, defaultClassId, onSave, 
               <label className="block text-sm font-medium text-[var(--text-2)] mb-1">학생 연락처</label>
               <input
                 type="tel"
+                inputMode="numeric"
                 value={phone}
-                onChange={e => setPhone(e.target.value)}
+                onChange={e => setPhone(formatPhone(e.target.value))}
                 placeholder="010-0000-0000"
-                pattern="^[\d\-]*$"
-                title="숫자와 하이픈만 입력 가능합니다"
                 className="w-full px-3 py-2 border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-1)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
               />
             </div>
@@ -141,11 +140,10 @@ export default function StudentModal({ student, grades, defaultClassId, onSave, 
               <label className="block text-sm font-medium text-[var(--text-2)] mb-1">학부모 연락처</label>
               <input
                 type="tel"
+                inputMode="numeric"
                 value={parentPhone}
-                onChange={e => setParentPhone(e.target.value)}
+                onChange={e => setParentPhone(formatPhone(e.target.value))}
                 placeholder="010-0000-0000"
-                pattern="^[\d\-]*$"
-                title="숫자와 하이픈만 입력 가능합니다"
                 className="w-full px-3 py-2 border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-1)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
               />
             </div>

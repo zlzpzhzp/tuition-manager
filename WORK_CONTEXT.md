@@ -6,13 +6,25 @@
 ## 현재 상태: 진행 중
 
 ## 마지막 작업
-- **일시**: 2026-04-18 (진행) — 납부탭 학생 행 펼침 시 자동 스크롤 (msg 593)
-  - **문제**: 학생 행 "결제" 탭하면 인라인 폼이 펼쳐지는데, 맨 오른쪽 아이콘(Send/Mail/수납)이 화면 밖으로 밀려 수동 스크롤 필요
-  - **원인**: `handleExpand`는 state만 바꾸고 스크롤 조정 없음. 모바일 하단 nav(~80px)가 겹침
-  - **수정**: `src/app/payments/page.tsx`
-    - line 1017 row wrapper에 `data-student-row={student.id}` 추가
-    - expandedStudentId 변경 시 useEffect — 120ms 딜레이 후 getBoundingClientRect로 bottom이 viewport - 80px(모바일) 위로 오도록 `window.scrollBy({ behavior: 'smooth' })`
-  - 다음: 빌드 → 커밋 → 푸시 → :3001 재시작 → Vercel 배포 → 텔레그램 보고
+- **일시**: 2026-04-18 11:50 (진행) — 학부모/학생 연락처 자동 대쉬 포맷 (msg 605)
+  - **요청**: "학부모 연락처 입력할때 대쉬 써야되나? 아무렇게나써도 대쉬 알아서 생기게 하고 써도 알아서 인식하게 할수있지?"
+  - **수정**: `src/lib/utils.ts`에 `formatPhone(input)` 추가
+    - 숫자만 추출→11자리 제한→010/02/일반 area code별 대쉬 자동 삽입 (3-4-4 / 2-x-4)
+  - `src/components/StudentModal.tsx` import 추가 + phone/parentPhone state 초기값 + onChange에 적용
+  - 저장 시 API는 이미 `phone.replace(/-/g,'')`로 인식 — dash-agnostic
+  - 다음: onChange 적용 완료 → 빌드 → 커밋 → 배포
+
+- **일시**: 2026-04-18 (완료) — PaymentModal/StudentModal createPortal (커밋 58343ca)
+  - **문제(msg 598)**: 납부완료 초록배지/ClipboardList(차트) 아이콘 탭 시 PaymentModal이 viewport가 아닌 페이지 맨 아래에 떠서 스크롤해야 보임
+  - **원인**: PageTransition의 motion.div가 transform+willChange:transform으로 containing block 생성 → fixed inset-0이 PageTransition 기준으로 잡힘
+  - **수정**: `createPortal(..., document.body)`로 모달을 트리에서 탈출. BillSendModal/BillActionModal은 이미 적용돼 있었음
+
+- **일시**: 2026-04-18 08:15 (완료) — :3001 구버전 서버 강제 재시작
+  - 새벽 4시 서버가 restart command EADDRINUSE로 재시작 안 됨 → 수동 kill -9 + nohup으로 최신 빌드 올림
+
+- **일시**: 2026-04-18 07:10 (완료) — 납부탭 학생 행 펼침 자동 스크롤 (커밋 b7092c3)
+  - line 1017 row wrapper에 `data-student-row` + useEffect(120ms) getBoundingClientRect→scrollBy
+  - 이 수정만으론 본질 문제 해결 안 됐음 (진짜는 PaymentModal containing block)
 
 - **일시**: 2026-04-18 (완료) — 납부탭 청구서 상태별 아이콘 (커밋 da8cd22)
   - **요청 (msg 580)**: "미발송=회색 비행기 / 발송=편지모양 / 열어보면=열린편지모양 / 납부=수납 동그라미"

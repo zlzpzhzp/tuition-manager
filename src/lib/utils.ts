@@ -48,6 +48,22 @@ export function revalidatePayments(billingMonth: string) {
 // ─── Date Helpers (re-export from lib/date) ─────────────────────────
 export { getTodayString } from './date'
 
+// ─── Phone Formatting ────────────────────────────────────────────
+export function formatPhone(input: string): string {
+  const d = input.replace(/\D/g, '').slice(0, 11)
+  if (!d) return ''
+  if (d.startsWith('02')) {
+    if (d.length <= 2) return d
+    if (d.length <= 5) return `${d.slice(0, 2)}-${d.slice(2)}`
+    if (d.length <= 9) return `${d.slice(0, 2)}-${d.slice(2, 5)}-${d.slice(5)}`
+    return `${d.slice(0, 2)}-${d.slice(2, 6)}-${d.slice(6, 10)}`
+  }
+  if (d.length <= 3) return d
+  if (d.length <= 7) return `${d.slice(0, 3)}-${d.slice(3)}`
+  if (d.length === 10) return `${d.slice(0, 3)}-${d.slice(3, 6)}-${d.slice(6)}`
+  return `${d.slice(0, 3)}-${d.slice(3, 7)}-${d.slice(7, 11)}`
+}
+
 // ─── Payment Due Day ──────────────────────────────────────────────
 /** 학생의 결제 예정일 (등록일 기준 매월 같은 날) */
 export function getPaymentDueDay(student: Student): number {
