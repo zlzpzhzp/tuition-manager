@@ -9,7 +9,6 @@ import PaymentModal from '@/components/PaymentModal'
 import StudentModal from '@/components/StudentModal'
 import DatePickerPopup from '@/components/payments/DatePickerPopup'
 import MethodPickerPopup from '@/components/payments/MethodPickerPopup'
-import AiFilterButton from '@/components/payments/AiFilterButton'
 import { getPrevMonth, getPaymentDueDay, isPaymentScheduled, getUnpaidLabelText, getActiveStudents, isWithdrawnStudent, safeMutate, decodePaymentMemo, useGrades, usePayments, revalidateGrades, revalidatePayments, getTodayString } from '@/lib/utils'
 import { METHOD_OPTIONS_SHORT } from '@/lib/constants'
 import { PaymentsSkeleton } from '@/components/Skeleton'
@@ -302,11 +301,6 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
     }
   }, [monthMemo])
 
-  // AI 필터
-  const [aiFilterIds, setAiFilterIds] = useState<Set<string> | null>(null)
-  const [aiFilterDesc, setAiFilterDesc] = useState('')
-  const [aiFilterLoading, setAiFilterLoading] = useState(false)
-
   const fetchData = useCallback(() => {
     revalidateGrades()
     revalidatePayments(selectedMonth)
@@ -457,8 +451,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
         const classIds: string[] = []
         for (const cls of gcs) {
           const active = getActiveStudents(cls.students ?? [], selectedMonth)
-          let students = aiFilterIds ? active.filter(s => aiFilterIds.has(s.id)) : active
-          students = students.filter(s => passesFilter(s, cls))
+          const students = active.filter(s => passesFilter(s, cls))
           if (students.length > 0) classIds.push(cls.id)
         }
         if (classIds.length === 0) continue
@@ -466,7 +459,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
       }
     }
     return list
-  }, [subjectGradeGroups, selectedMonth, aiFilterIds, passesFilter])
+  }, [subjectGradeGroups, selectedMonth, passesFilter])
 
   // 기본: 보이는 반 전부 펼침 (새 반 등장 시 추가만, 사용자 접음은 유지)
   useEffect(() => {
@@ -738,41 +731,6 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
     fetchData()
   }
 
-  // ─── AI filter ────────────────────────────────────────────────
-  const handleAiFilter = async (query: string) => {
-    setAiFilterLoading(true)
-    const studentContext = allStudents.map(s => {
-      const sp = getStudentPayments(s.id)
-      const fee = getStudentFee(s, s.class)
-      const paid = sp.reduce((sum, p) => sum + p.amount, 0)
-      return {
-        id: s.id, name: s.name, grade: '', class_name: s.class?.name || '',
-        fee, paid, status: getPaymentStatus(paid, fee),
-        due_day: getDueDay(s), payment_method: sp[0]?.method || null,
-        payment_date: sp[0]?.payment_date || null,
-        current_memo: sp[0]?.memo || null, prev_memo: getPrevMemo(s.id),
-      }
-    })
-
-    try {
-      const res = await fetch('/api/agent/filter', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query, context: { students: studentContext, billing_month: selectedMonth } }),
-      })
-      const data = await res.json()
-      if (data.student_ids && data.student_ids.length > 0) {
-        setAiFilterIds(new Set(data.student_ids))
-        setAiFilterDesc(data.description || '필터 적용')
-      } else {
-        setAiFilterIds(new Set())
-        setAiFilterDesc(data.description || '결과 없음')
-      }
-    } catch { alert('AI 필터 처리 중 오류가 발생했습니다.') }
-    setAiFilterLoading(false)
-  }
-
-  const clearAiFilter = () => { setAiFilterIds(null); setAiFilterDesc('') }
-
   // ─── Pull-to-refresh ──────────────────────────────────────
   const [pullDistance, setPullDistance] = useState(0)
   const [isRefreshing, setIsRefreshing] = useState(false)
@@ -811,7 +769,6 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
     if (pullDistance >= PULL_THRESHOLD) {
       setIsRefreshing(true)
       setPullDistance(40) // 새로고침 중 표시 위치
-      clearAiFilter()
       await fetchData()
       // 약간의 딜레이로 새로고침 느낌
       await new Promise(r => setTimeout(r, 500))
@@ -956,10 +913,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
         // 과목 전체에 표시할 학생이 있는지 확인
         const hasVisibleStudents = subjectGrades.some(({ classes: gradeClasses }) =>
           gradeClasses.some(cls => {
-            let students = aiFilterIds
-              ? getActiveStudents(cls.students ?? [], selectedMonth).filter(s => aiFilterIds.has(s.id))
-              : getActiveStudents(cls.students ?? [], selectedMonth)
-            students = students.filter(s => passesFilter(s, cls))
+            const students = getActiveStudents(cls.students ?? [], selectedMonth).filter(s => passesFilter(s, cls))
             return students.length > 0
           })
         )
@@ -975,10 +929,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
             {subjectGrades.map(({ gradeId, gradeName, classes: gradeClasses }) => {
               // 이 학년에 표시할 학생이 있는지
               const hasGradeStudents = gradeClasses.some(cls => {
-                let students = aiFilterIds
-                  ? getActiveStudents(cls.students ?? [], selectedMonth).filter(s => aiFilterIds.has(s.id))
-                  : getActiveStudents(cls.students ?? [], selectedMonth)
-                students = students.filter(s => passesFilter(s, cls))
+                const students = getActiveStudents(cls.students ?? [], selectedMonth).filter(s => passesFilter(s, cls))
                 return students.length > 0
               })
               if (!hasGradeStudents) return null
@@ -1032,8 +983,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                   <div className="card overflow-hidden">
                   {gradeClasses.map(cls => {
                 const allClassStudents = getActiveStudents(cls.students ?? [], selectedMonth)
-                let students = aiFilterIds ? allClassStudents.filter(s => aiFilterIds.has(s.id)) : allClassStudents
-                students = students.filter(s => passesFilter(s, cls))
+                let students = allClassStudents.filter(s => passesFilter(s, cls))
                 // 결제일 오름차순 정렬
                 students = [...students].sort((a, b) => getDueDay(a) - getDueDay(b))
 
@@ -1511,14 +1461,6 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
           anchorRef={methodButtonRef}
         />
       )}
-
-      <AiFilterButton
-        aiFilterIds={aiFilterIds}
-        aiFilterDesc={aiFilterDesc}
-        onFilter={handleAiFilter}
-        onClear={clearAiFilter}
-        loading={aiFilterLoading}
-      />
 
       {/* 필터 드롭다운 — 단일 포탈, 업로더식 텍스트 필 + 스태거 애니메이션 */}
       {filterAnchor && <FilterDropdownPortal
