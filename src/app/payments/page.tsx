@@ -116,6 +116,7 @@ function FilterDropdownPortal({
             ? range[0] === range[1] ? `${range[0]}일` : `${range[0]}~${range[1]}`
             : ''
           const isCurrent = i === 0
+          const isWeekRow = (WEEK_KEYS as PaymentFilter[]).includes(key) && key !== 'day1'
           return (
             <button
               key={key}
@@ -123,7 +124,7 @@ function FilterDropdownPortal({
               onClick={() => onSelect(key)}
               role="option"
               aria-selected={active}
-              className={`w-full flex items-center justify-center gap-1 pl-6 text-xs font-semibold whitespace-nowrap transition-colors ${bgFor(key, active)}`}
+              className={`w-full flex items-center justify-center gap-1 ${isWeekRow ? 'pl-12' : 'pl-6'} text-xs font-semibold whitespace-nowrap transition-colors ${bgFor(key, active)}`}
               style={{
                 height: ROW_H,
                 opacity: isCurrent ? 1 : show ? 1 : 0,
