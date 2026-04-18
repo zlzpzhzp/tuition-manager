@@ -252,47 +252,6 @@ export default function BillingPage() {
     return scoped.slice(0, 30)
   }, [bills, weekFilter, studentById])
 
-  // ─── Memo (스크롤 연동 상단 고정) ───────────────────────────
-  const [memo, setMemo] = useState('')
-  const [memoFocused, setMemoFocused] = useState(false)
-  const [memoScrolled, setMemoScrolled] = useState(false)
-  const memoRef = useRef<HTMLTextAreaElement>(null)
-
-  useEffect(() => {
-    try {
-      const s = localStorage.getItem('billing_memo')
-      if (s) setMemo(s)
-    } catch {}
-  }, [])
-  useEffect(() => {
-    const t = setTimeout(() => {
-      try { localStorage.setItem('billing_memo', memo) } catch {}
-    }, 300)
-    return () => clearTimeout(t)
-  }, [memo])
-
-  useEffect(() => {
-    const onScroll = () => setMemoScrolled(window.scrollY > 30)
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [])
-
-  const MEMO_LINE = 22
-  const MEMO_PAD = 16
-  const [memoContentHeight, setMemoContentHeight] = useState(3 * MEMO_LINE)
-
-  useEffect(() => {
-    if (memoFocused && memoRef.current) {
-      setMemoContentHeight(Math.max(3 * MEMO_LINE, memoRef.current.scrollHeight))
-    }
-  }, [memoFocused, memo])
-
-  const memoHeight = memoScrolled && !memoFocused
-    ? MEMO_LINE + MEMO_PAD
-    : memoFocused
-      ? memoContentHeight + MEMO_PAD
-      : 3 * MEMO_LINE + MEMO_PAD
-
   // 필터 드롭다운 외부 클릭 닫기
   useEffect(() => {
     if (!showFilter) return
@@ -397,20 +356,6 @@ export default function BillingPage() {
 
   return (
     <div ref={containerRef}>
-      {/* Sticky Memo */}
-      <div className="sticky top-14 z-30 bg-[var(--bg)] -mx-4 px-4 pt-2 pb-2 -mt-6">
-        <textarea
-          ref={memoRef}
-          value={memo}
-          onChange={e => setMemo(e.target.value)}
-          onFocus={() => setMemoFocused(true)}
-          onBlur={() => setMemoFocused(false)}
-          placeholder="메모..."
-          className="w-full resize-none bg-[var(--bg-elevated)] rounded-xl px-3 py-2 text-sm text-[var(--text-1)] placeholder:text-[var(--text-4)] focus:outline-none focus:ring-1 focus:ring-[var(--blue)] overflow-hidden leading-[22px]"
-          style={{ height: memoHeight, transition: 'height 0.2s ease-out' }}
-        />
-      </div>
-
       {/* Pull-to-refresh 인디케이터 */}
       <AnimatePresence>
         {pullDistance > 0 && (

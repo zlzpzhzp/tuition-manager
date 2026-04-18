@@ -180,6 +180,32 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
     setMonthMemo(localStorage.getItem(`payment_memo_${selectedMonth}`) ?? '')
   }, [selectedMonth])
 
+  // 월별 메모 스크롤 연동 (스크롤 시 1줄 축소)
+  const [memoScrolled, setMemoScrolled] = useState(false)
+  const [memoFocused, setMemoFocused] = useState(false)
+  const memoRef = useRef<HTMLTextAreaElement>(null)
+  const MEMO_LINE = 22
+  const MEMO_PAD = 16
+  const [memoContentHeight, setMemoContentHeight] = useState(3 * MEMO_LINE)
+
+  useEffect(() => {
+    const onScroll = () => setMemoScrolled(window.scrollY > 80)
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
+  useEffect(() => {
+    if (memoFocused && memoRef.current) {
+      setMemoContentHeight(Math.max(3 * MEMO_LINE, memoRef.current.scrollHeight))
+    }
+  }, [memoFocused, monthMemo])
+
+  const memoHeight = memoScrolled && !memoFocused
+    ? MEMO_LINE + MEMO_PAD
+    : memoFocused
+      ? memoContentHeight + MEMO_PAD
+      : 3 * MEMO_LINE + MEMO_PAD
+
   // AI 필터
   const [aiFilterIds, setAiFilterIds] = useState<Set<string> | null>(null)
   const [aiFilterDesc, setAiFilterDesc] = useState('')
@@ -405,8 +431,8 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
 
   // ─── Swipe handlers (swipe-action-guide.md 기반) ──────────────
   const SPRING = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
-  const MEMO_W = 200  // 왼쪽 비고 입력 패널 너비 (컬러 피커 포함)
-  const PAY_W = 150   // 오른쪽 결제 특이사항 입력 패널 너비
+  const MEMO_W = 160  // 왼쪽 비고 패널 너비 (헤더: 라벨+색상테이프+저장)
+  const PAY_W = 150   // 오른쪽 결제 특이사항 패널 너비 (헤더: 배지+저장)
 
   const openOffset = (id: string): number => {
     if (swipeOpenId !== id) return 0
@@ -743,8 +769,8 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
 
   return (
     <div ref={containerRef} onClick={() => { if (swipeOpenId) closeSwipeEdit() }}>
-      {/* 월 네비게이션 — sticky 고정 */}
-      <div data-sticky-header className="sticky top-14 z-30 bg-[var(--bg)] -mx-4 px-4 pt-3 pb-1 -mt-6">
+      {/* 월 네비게이션 — 스크롤하면 사라짐 */}
+      <div className="-mx-4 px-4 pt-3 pb-1 -mt-6">
         {/* Pull-to-refresh 인디케이터 */}
         <AnimatePresence>
           {pullDistance > 0 && (
@@ -803,17 +829,20 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
 
       </div>
 
-      {/* 월별 메모 */}
-      <div className="mb-4">
+      {/* 월별 메모 — sticky (스크롤 시 1줄로 축소) */}
+      <div data-sticky-header className="sticky top-14 z-30 bg-[var(--bg)] -mx-4 px-4 pt-2 pb-2 mb-4">
         <textarea
+          ref={memoRef}
           value={monthMemo}
           onChange={e => {
             setMonthMemo(e.target.value)
             localStorage.setItem(`payment_memo_${selectedMonth}`, e.target.value)
           }}
+          onFocus={() => setMemoFocused(true)}
+          onBlur={() => setMemoFocused(false)}
           placeholder="메모..."
-          className="w-full px-4 py-3 text-sm card resize-none focus:outline-none focus:ring-2 focus:ring-[var(--blue)] placeholder-[var(--text-4)]"
-          rows={3}
+          className="w-full resize-none bg-[var(--bg-elevated)] rounded-xl px-3 py-2 text-sm text-[var(--text-1)] placeholder:text-[var(--text-4)] focus:outline-none focus:ring-1 focus:ring-[var(--blue)] overflow-hidden leading-[22px]"
+          style={{ height: memoHeight, transition: 'height 0.2s ease-out' }}
         />
       </div>
 
@@ -1043,61 +1072,50 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                       const withdrawn = isWithdrawnStudent(student)
 
                       return (
-                        <div key={student.id} data-student-row={student.id} className="relative overflow-hidden">
-                          {/* 왼쪽에서 끌어 → 비고 입력 + 색상 */}
-                          <div data-edit-panel className="absolute inset-y-0 left-0 w-[200px] flex items-center gap-1.5 px-2 bg-[var(--bg-elevated)]" onClick={e => e.stopPropagation()}>
-                            <input
-                              type="text"
-                              value={openSide === 'left' ? editMemoValue : ''}
-                              onChange={e => setEditMemoValue(e.target.value)}
-                              placeholder="비고"
-                              className="flex-1 min-w-0 px-2 py-1 text-xs border border-[var(--border)] rounded-lg bg-[var(--bg-card)] focus:outline-none focus:ring-1 focus:ring-[var(--blue)]"
-                              onKeyDown={e => { if (e.key === 'Enter') handleSaveMemo(student.id) }}
-                            />
-                            <div className="flex items-center gap-1 shrink-0">
-                              {(['yellow', 'green', 'red'] as const).map(c => {
-                                const dot = c === 'yellow' ? 'bg-yellow-400' : c === 'green' ? 'bg-green-400' : 'bg-red-400'
-                                const active = editMemoColor === c
-                                return (
-                                  <button
-                                    key={c}
-                                    type="button"
-                                    onClick={() => setEditMemoColor(active ? null : c)}
-                                    className={`w-4 h-4 rounded-full ${dot} ${active ? 'ring-2 ring-white/80' : 'opacity-60'}`}
-                                    aria-label={`색상 ${c}`}
-                                  />
-                                )
-                              })}
+                        <div key={student.id} data-student-row={student.id} className="relative">
+                          {/* 위층: 행 높이 (좌/우 패널 헤더 + 메인 콘텐츠) */}
+                          <div className="relative overflow-hidden">
+                            {/* 왼쪽 패널 헤더 — 비고 라벨 + 색상 테이프 + 저장 */}
+                            <div data-edit-panel className="absolute inset-y-0 left-0 w-[160px] flex items-center gap-1.5 px-2 bg-[var(--bg-elevated)]" onClick={e => e.stopPropagation()}>
+                              <span className="text-[10px] font-bold text-[var(--text-3)] shrink-0">비고</span>
+                              <div className="flex items-center gap-1 shrink-0">
+                                {(['yellow', 'green', 'red'] as const).map(c => {
+                                  const bg = c === 'yellow' ? 'bg-yellow-400' : c === 'green' ? 'bg-green-400' : 'bg-red-400'
+                                  const active = editMemoColor === c
+                                  return (
+                                    <button
+                                      key={c}
+                                      type="button"
+                                      onClick={() => setEditMemoColor(active ? null : c)}
+                                      className={`w-6 h-3 rounded-[2px] ${bg} ${active ? 'ring-2 ring-white shadow-md' : 'opacity-60'}`}
+                                      style={{ transform: 'skewX(-10deg)' }}
+                                      aria-label={`색상 ${c}`}
+                                    />
+                                  )
+                                })}
+                              </div>
+                              <button onClick={() => handleSaveMemo(student.id)} className="ml-auto p-1.5 bg-[var(--blue)] hover:opacity-80 text-white rounded-full shrink-0 shadow-sm transition-opacity" aria-label="저장">
+                                <Check className="w-3.5 h-3.5" />
+                              </button>
                             </div>
-                            <button onClick={() => handleSaveMemo(student.id)} className="p-1.5 bg-[var(--blue)] hover:opacity-80 text-white rounded-full shrink-0 shadow-sm transition-opacity" aria-label="저장">
-                              <Check className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
 
-                          {/* 오른쪽에서 끌어 → 결제 특이사항 */}
-                          <div data-edit-panel className="absolute inset-y-0 right-0 w-[150px] flex items-center gap-1.5 px-2 bg-[var(--bg-elevated)]" onClick={e => e.stopPropagation()}>
-                            <input
-                              type="text"
-                              value={openSide === 'right' ? editPayMemoValue : ''}
-                              onChange={e => setEditPayMemoValue(e.target.value)}
-                              placeholder="결제메모"
-                              className="flex-1 min-w-0 px-2 py-1 text-xs border border-[var(--border)] rounded-lg bg-[var(--bg-card)] focus:outline-none focus:ring-1 focus:ring-[var(--blue)]"
-                              onKeyDown={e => { if (e.key === 'Enter') handleSavePayMemo(student.id) }}
-                            />
-                            <button onClick={() => handleSavePayMemo(student.id)} className="p-1.5 bg-[var(--blue)] hover:opacity-80 text-white rounded-full shrink-0 shadow-sm transition-opacity" aria-label="저장">
-                              <Check className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
+                            {/* 오른쪽 패널 헤더 — "결제특이사항" 배지 + 저장 */}
+                            <div data-edit-panel className="absolute inset-y-0 right-0 w-[150px] flex items-center justify-between gap-1.5 px-2 bg-[var(--bg-elevated)]" onClick={e => e.stopPropagation()}>
+                              <span className="text-[10px] font-bold text-[var(--orange)] px-2 py-0.5 rounded-full bg-[var(--orange-dim)] shrink-0">결제특이사항</span>
+                              <button onClick={() => handleSavePayMemo(student.id)} className="p-1.5 bg-[var(--blue)] hover:opacity-80 text-white rounded-full shrink-0 shadow-sm transition-opacity" aria-label="저장">
+                                <Check className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
 
-                          {/* 메인 콘텐츠 */}
-                          <div
-                            data-swipe-row={student.id}
-                            className="relative bg-[var(--bg-card)] z-10"
-                            onTouchStart={e => handleTouchStart(e, student.id)}
-                            onTouchMove={handleTouchMove}
-                            onTouchEnd={handleTouchEnd}
-                            style={isSwipeOpen ? { transform: `translateX(${openSide === 'left' ? MEMO_W : -PAY_W}px)`, transition: SPRING } : undefined}
-                          >
+                            {/* 메인 콘텐츠 */}
+                            <div
+                              data-swipe-row={student.id}
+                              className="relative bg-[var(--bg-card)] z-10"
+                              onTouchStart={e => handleTouchStart(e, student.id)}
+                              onTouchMove={handleTouchMove}
+                              onTouchEnd={handleTouchEnd}
+                              style={isSwipeOpen ? { transform: `translateX(${openSide === 'left' ? MEMO_W : -PAY_W}px)`, transition: SPRING } : undefined}
+                            >
                             <div className={`flex items-center gap-2 px-4 ${hasMemo && !isExpanded ? 'pt-1.5 pb-0.5' : 'py-1.5'} ${
                               status === 'unpaid' && !isExpanded && !withdrawn ? 'cursor-pointer active:bg-[var(--bg-card-hover)]' : ''
                             } ${withdrawn ? 'opacity-60' : ''}`}
@@ -1288,7 +1306,35 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                                 </div>
                               </div>
                             )}
+                            </div>
                           </div>
+                          {/* 아래층: 입력 공간 (스와이프 열렸을 때만) */}
+                          {isSwipeOpen && openSide === 'left' && (
+                            <div className="px-3 py-2 bg-[var(--bg-elevated)] border-t border-[var(--border)]" onClick={e => e.stopPropagation()}>
+                              <textarea
+                                value={editMemoValue}
+                                onChange={e => setEditMemoValue(e.target.value)}
+                                onKeyDown={e => {
+                                  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); handleSaveMemo(student.id) }
+                                }}
+                                placeholder="비고 내용 (⌘Enter 저장)"
+                                rows={3}
+                                className="w-full px-3 py-2 text-sm border border-[var(--border)] rounded-lg bg-[var(--bg-card)] focus:outline-none focus:ring-1 focus:ring-[var(--blue)] resize-none leading-relaxed"
+                              />
+                            </div>
+                          )}
+                          {isSwipeOpen && openSide === 'right' && (
+                            <div className="px-3 py-2 bg-[var(--bg-elevated)] border-t border-[var(--border)]" onClick={e => e.stopPropagation()}>
+                              <input
+                                type="text"
+                                value={editPayMemoValue}
+                                onChange={e => setEditPayMemoValue(e.target.value)}
+                                onKeyDown={e => { if (e.key === 'Enter') handleSavePayMemo(student.id) }}
+                                placeholder="결제 특이사항"
+                                className="w-full px-3 py-2 text-sm border border-[var(--border)] rounded-lg bg-[var(--bg-card)] focus:outline-none focus:ring-1 focus:ring-[var(--blue)]"
+                              />
+                            </div>
+                          )}
                         </div>
                       )
                     })}
