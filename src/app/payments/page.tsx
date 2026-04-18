@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useRef, useMemo, useEffect, useLayoutEffect } from 'react'
+import { useState, useCallback, useRef, useMemo, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { ChevronLeft, ChevronRight, Check, ChevronDown, ClipboardList, Download, Plus, Send, Mail, Loader2 } from 'lucide-react'
 import type { Student, Payment, PaymentMethod, GradeWithClasses } from '@/types'
@@ -284,38 +284,13 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
   const [memoScrolled, setMemoScrolled] = useState(false)
   const [memoFocused, setMemoFocused] = useState(false)
   const memoRef = useRef<HTMLTextAreaElement>(null)
-  const MEMO_LINE = 22
-  const MEMO_PAD = 16
-  const MEMO_COLLAPSED = MEMO_LINE + MEMO_PAD
-  const MEMO_DEFAULT = 3 * MEMO_LINE + MEMO_PAD
-  const [memoHeight, setMemoHeight] = useState(MEMO_DEFAULT)
+  const memoCompact = memoScrolled && !memoFocused
 
   useEffect(() => {
     const onScroll = () => setMemoScrolled(window.scrollY > 80)
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
-
-  useLayoutEffect(() => {
-    if (memoScrolled && !memoFocused) {
-      setMemoHeight(MEMO_COLLAPSED)
-      return
-    }
-    if (!memoFocused) {
-      setMemoHeight(MEMO_DEFAULT)
-      return
-    }
-    const el = memoRef.current
-    if (!el) return
-    const prevHeight = el.style.height
-    const prevTransition = el.style.transition
-    el.style.transition = 'none'
-    el.style.height = 'auto'
-    const measured = Math.max(MEMO_DEFAULT, el.scrollHeight)
-    el.style.height = prevHeight
-    el.style.transition = prevTransition
-    setMemoHeight(measured)
-  }, [memoFocused, monthMemo, memoScrolled, MEMO_COLLAPSED, MEMO_DEFAULT])
 
   // AI 필터
   const [aiFilterIds, setAiFilterIds] = useState<Set<string> | null>(null)
@@ -945,8 +920,13 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
           onFocus={() => setMemoFocused(true)}
           onBlur={() => setMemoFocused(false)}
           placeholder="메모..."
-          className="w-full resize-none bg-[var(--bg-elevated)] rounded-xl px-3 py-2 text-sm text-[var(--text-1)] placeholder:text-[var(--text-4)] focus:outline-none focus:ring-1 focus:ring-[var(--blue)] overflow-hidden leading-[22px]"
-          style={{ height: memoHeight, transition: 'height 0.2s ease-out' }}
+          rows={memoCompact ? 1 : 3}
+          className="w-full resize-none bg-[var(--bg-elevated)] rounded-xl px-3 py-2 text-sm text-[var(--text-1)] placeholder:text-[var(--text-4)] focus:outline-none focus:ring-1 focus:ring-[var(--blue)] leading-[22px]"
+          style={{
+            height: memoCompact ? 38 : 82,
+            overflowY: 'auto',
+            transition: 'height 0.2s ease-out',
+          }}
         />
       </div>
 

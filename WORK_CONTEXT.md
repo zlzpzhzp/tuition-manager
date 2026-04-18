@@ -3,7 +3,19 @@
 > 이 파일은 Claude 세션 간 작업 연속성을 위한 컨텍스트 추적 파일입니다.
 > 작업 중 수시로 업데이트하고, 커밋 시 함께 포함시킵니다.
 
-## 현재 상태: 완료
+## 현재 상태: 진행중 — 납부탭 메모 textarea 버그 3회 시도 후 고정 높이로 전환
+
+### 2026-04-19 03:30 (진행중)
+- msg 679 "납부탭 메모장 이상함한글자 쓸때마다 한줄씩 늘어나서 계속길어져"
+- 1차 수정 (c33993a): useEffect에서 el.style.height='auto' 추가 + MEMO_PAD 이중 적용 제거
+  - 실패 원인: useEffect가 페인트 후 실행, 복구 안 해서 DOM이 auto 상태로 남음
+- 2차 수정 (81de44e): useLayoutEffect로 전환 + 측정 전후 height/transition 저장·복구
+  - msg 688 "안고쳐짐" → 여전히 실패
+- 3차 수정 (진행중): JS 측정 전부 제거, 고정 높이 (focused/unfocused 둘 다 82px, compact 38px) + overflow-y-auto 내부 스크롤
+  - memoHeight state, useLayoutEffect, MEMO_LINE/PAD 상수 전부 제거
+  - textarea에 rows + 고정 height + overflow-y-auto
+
+## 마지막 작업
 
 ## 마지막 작업
 - **일시**: 2026-04-19 02:18 (진행중) — 납부탭 필터 드롭다운 대수술 + 결제선생 헤더 개선
