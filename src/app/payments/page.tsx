@@ -1063,13 +1063,14 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                           )
                         }
                         if (eligibleCount === 0) return null
+                        const isAllFilter = paymentFilter === 'all'
                         return (
                           <button
                             onClick={(e) => { e.stopPropagation(); sendClassBatch(cls) }}
-                            disabled={!!batchSending}
-                            className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[var(--orange-dim)] text-[var(--orange)] hover:opacity-80 disabled:opacity-40 mr-1"
+                            disabled={!!batchSending || isAllFilter}
+                            className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[var(--orange-dim)] text-[var(--orange)] hover:opacity-80 disabled:opacity-40 disabled:cursor-not-allowed mr-1"
                             aria-label={`${cls.name} 일괄 청구서 발송`}
-                            title={`미발송 ${eligibleCount}명 일괄 발송`}
+                            title={isAllFilter ? '필터를 먼저 선택하세요 (전체일 때 일괄 발송 불가)' : `미발송 ${eligibleCount}명 일괄 발송`}
                           >
                             <Send className="w-3 h-3" />
                             <span>일괄 {eligibleCount}</span>
