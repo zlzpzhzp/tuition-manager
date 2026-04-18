@@ -1,13 +1,14 @@
 'use client'
 
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
-import { ChevronLeft, ChevronRight, ChevronDown, Loader2, AlertCircle, Clock, PhoneOff, Lock, Download, FileText, Ban } from 'lucide-react'
+import { ChevronLeft, ChevronRight, ChevronDown, Loader2, AlertCircle, Clock, PhoneOff, Lock, Download, FileText, Ban, Send } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import type { Student, GradeWithClasses } from '@/types'
 import { getStudentFee } from '@/types'
 import { useGrades, getActiveStudents, getPaymentDueDay } from '@/lib/utils'
 import AiFilterButton from '@/components/payments/AiFilterButton'
+import QuickBillSendModal from '@/components/QuickBillSendModal'
 import useSWR from 'swr'
 
 interface BillRecord {
@@ -139,6 +140,9 @@ export default function BillingPage() {
   const [aiFilterDesc, setAiFilterDesc] = useState('')
   const [aiFilterLoading, setAiFilterLoading] = useState(false)
 
+  // 청구서 발송 모달
+  const [showSendModal, setShowSendModal] = useState(false)
+
   const allVisibleStudents = useMemo<StudentWithClass[]>(() =>
     grades.flatMap(g => g.classes.flatMap(c => {
       const active = getActiveStudents((c as ClassWithStudents).students ?? [], selectedMonth)
@@ -147,6 +151,13 @@ export default function BillingPage() {
         .filter(s => aiFilterIds ? aiFilterIds.has(s.id) : true)
         .map(s => ({ ...s, class: c as ClassWithStudents }))
     })), [grades, selectedMonth, matchesWeekFilter, getDueDay, aiFilterIds])
+
+  // 발송 모달용: 모든 활성 학생 (필터 미적용)
+  const allForSendModal = useMemo<StudentWithClass[]>(() =>
+    grades.flatMap(g => g.classes.flatMap(c => {
+      const active = getActiveStudents((c as ClassWithStudents).students ?? [], selectedMonth)
+      return active.map(s => ({ ...s, class: c as ClassWithStudents }))
+    })), [grades, selectedMonth])
 
   const studentById = useMemo(() => {
     const map = new Map<string, StudentWithClass>()
@@ -492,8 +503,17 @@ export default function BillingPage() {
           )
         })()}
 
+        {/* 청구서 발송 — 메인 진입점 */}
+        <button
+          onClick={() => setShowSendModal(true)}
+          className="w-full mt-2 flex items-center justify-center gap-2 py-3 rounded-2xl bg-[var(--blue)] text-white text-sm font-bold hover:opacity-90 active:scale-[0.98] transition-all shadow-[0_2px_12px_rgba(59,130,246,0.2)]"
+        >
+          <Send className="w-4 h-4" />
+          청구서 발송하기
+        </button>
+
         {/* 결제일 필터 */}
-        <div className="flex justify-between items-center mt-2 mb-2">
+        <div className="flex justify-between items-center mt-3 mb-2">
           <div className="text-[11px] text-[var(--text-4)]">
             {isTestMode && (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[var(--orange-dim)] text-[var(--orange)] font-semibold">
@@ -816,6 +836,15 @@ export default function BillingPage() {
         onClear={clearAiFilter}
         loading={aiFilterLoading}
       />
+
+      {showSendModal && (
+        <QuickBillSendModal
+          students={allForSendModal}
+          billingMonth={selectedMonth}
+          onClose={() => setShowSendModal(false)}
+          onSuccess={() => mutateBills()}
+        />
+      )}
     </div>
   )
 }
