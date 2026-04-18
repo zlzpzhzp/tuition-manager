@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef, useMemo, useEffect, useLayoutEffect } from 'react'
 import { createPortal } from 'react-dom'
-import { ChevronLeft, ChevronRight, Check, ChevronDown, ClipboardList, Download, Plus, Send, Mail, Loader2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Check, ChevronDown, ClipboardList, Download, Plus, Send, Mail, Loader2, CreditCard, Banknote, ArrowLeftRight } from 'lucide-react'
 import type { Student, Payment, PaymentMethod, GradeWithClasses } from '@/types'
 import { getStudentFee, getPaymentStatus, PAYMENT_STATUS_LABELS, PAYMENT_STATUS_COLORS, PAYMENT_METHOD_LABELS } from '@/types'
 import PaymentModal from '@/components/PaymentModal'
@@ -1277,7 +1277,47 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                                       {displayLabel}
                                     </span>
                                   )}
-                                  {!withdrawn && (student.parent_phone || student.phone) && (() => {
+                                  {!withdrawn && (() => {
+                                    // 납부 완료 → 결제수단별 아이콘
+                                    if (status === 'paid' && studentPayments.length > 0) {
+                                      const method = studentPayments[0].method
+                                      const bill = billByStudent.get(student.id)
+                                      const methodStyle: Record<string, { Icon: typeof Check; bg: string; fg: string; title: string }> = {
+                                        payssam:  { Icon: Check,          bg: 'var(--blue)',        fg: 'white',          title: '결제선생 완료 — 탭하여 취소' },
+                                        card:     { Icon: CreditCard,     bg: 'var(--blue-dim)',    fg: 'var(--blue)',    title: '카드결제 — 탭하여 편집' },
+                                        cash:     { Icon: Banknote,       bg: 'var(--green-dim)',   fg: 'var(--paid-text)', title: '현금결제 — 탭하여 편집' },
+                                        transfer: { Icon: ArrowLeftRight, bg: 'var(--bg-elevated)', fg: 'var(--text-2)',  title: '계좌이체 — 탭하여 편집' },
+                                      }
+                                      const s = methodStyle[method] ?? { Icon: Check, bg: 'var(--bg-elevated)', fg: 'var(--text-2)', title: '납부 완료 — 탭하여 편집' }
+                                      const IconComp = s.Icon
+                                      return (
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation()
+                                            if (method === 'payssam' && bill?.status === 'paid') {
+                                              setBillActionTarget({
+                                                studentId: student.id,
+                                                studentName: student.name,
+                                                billId: bill.bill_id,
+                                                amount: bill.amount,
+                                                status: 'paid',
+                                              })
+                                            } else {
+                                              handleOpenModal(student.id, fee)
+                                            }
+                                          }}
+                                          className="p-1 rounded-lg transition-colors shrink-0 hover:opacity-80 flex items-center justify-center"
+                                          style={{ color: s.fg, background: s.bg }}
+                                          aria-label={s.title}
+                                          title={s.title}
+                                        >
+                                          <IconComp className="w-3.5 h-3.5" strokeWidth={method === 'payssam' ? 3 : 2} />
+                                        </button>
+                                      )
+                                    }
+
+                                    // 미납/부분납 → 결제선생 발송/파기 플로우 (전화번호 있을 때만)
+                                    if (!(student.parent_phone || student.phone)) return null
                                     const billStatus = getBillStatus(student.id)
                                     const bill = billByStudent.get(student.id)
                                     const styles: Record<BillStatus, { fg: string; bg: string; title: string }> = {
@@ -1287,7 +1327,6 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                                       cancelled: { fg: 'var(--red)',    bg: 'var(--red-dim)',     title: '취소됨 — 탭하여 재발송' },
                                     }
                                     const s = styles[billStatus]
-                                    const isPaid = billStatus === 'paid'
                                     return (
                                       <button
                                         onClick={(e) => {
@@ -1305,15 +1344,13 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                                             setBillSendTarget({ studentId: student.id, studentName: student.name, phone: parentPhone, amount: fee })
                                           }
                                         }}
-                                        className={`${isPaid ? 'px-2 py-0.5' : 'p-1'} rounded-lg transition-colors shrink-0 hover:opacity-80 flex items-center justify-center`}
+                                        className="p-1 rounded-lg transition-colors shrink-0 hover:opacity-80 flex items-center justify-center"
                                         style={{ color: s.fg, background: s.bg }}
                                         aria-label={s.title}
                                         title={s.title}
                                       >
                                         {billStatus === 'sent' ? (
                                           <Mail className="w-3.5 h-3.5" />
-                                        ) : billStatus === 'paid' ? (
-                                          <span className="text-[10px] font-bold leading-none">수납</span>
                                         ) : (
                                           <Send className="w-3.5 h-3.5" />
                                         )}

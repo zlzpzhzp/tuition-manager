@@ -3,7 +3,30 @@
 > 이 파일은 Claude 세션 간 작업 연속성을 위한 컨텍스트 추적 파일입니다.
 > 작업 중 수시로 업데이트하고, 커밋 시 함께 포함시킵니다.
 
-## 현재 상태: 진행중 — 납부탭 메모 textarea 버그 3회 시도 후 고정 높이로 전환
+## 현재 상태: 진행중 — 납부탭 결제수단별 아이콘 표시
+
+### 2026-04-19 04:35 (진행중)
+- msg 716 "이번달은 결제선생으로 결제한 애들 결제완료 되면 나오는 아이콘으로 바꿔놔. 다른 결제수단으로 결제한 애들은 그 칸을 카드모양 아이콘이나 현금 모양 아이콘이나 원화 표시를 갖고오든가 해서 그 결제선생 아이콘 대신 놓아줘"
+- 작업: 납부탭 학생 행 우측 아이콘을 status === 'paid' 일 때 결제수단별로 분기
+  - payssam → Check (blue bg) → 탭하여 BillActionModal (취소)
+  - card → CreditCard (blue-dim bg)
+  - cash → Banknote (green-dim bg)
+  - transfer → ArrowLeftRight (bg-elevated)
+  - 기타 → Check (default)
+  - 미납/부분납 → 기존 Send/Mail 플로우 유지
+- 파일: src/app/payments/page.tsx (import에 CreditCard/Banknote/ArrowLeftRight 추가)
+
+### 2026-04-19 04:10 (완료, 100d654)
+- msg 712 "스크롤 할때 학년 고정바 위치가 제대로 안잡히는 버그" (스크린샷 첨부)
+- 원인: memoCompact 토글 시 ResizeObserver 콜백이 한 프레임 뒤 → 그 사이 프레임에 학년바 위치 gap
+- 수정: useEffect → useLayoutEffect + memoCompact 의존성 → 페인트 전 동기 CSS 변수 갱신
+- 배포: Vercel dpl_98PYqRWvVKDUwBUa143cngePY61g + 로컬 서버 재기동
+
+### 2026-04-19 04:00 (완료)
+- msg 708 "배포가 안됐나? 반영이 안된 거 같은데" → msg 709 "어디 막혀있나봐"
+- 원인: 로컬 next-server(pid 3318376) 1시간 전 빌드를 메모리에 들고 있음. tuition.dminstitute.co → 로컬:3001이라 Vercel 배포만으론 불충분
+- 수정: kill 후 rm -rf .next && next build && next start
+- memory에 feedback_local_server_restart.md 저장 — 앞으로 이 함정 방지
 
 ### 2026-04-19 03:30 (진행중)
 - msg 679 "납부탭 메모장 이상함한글자 쓸때마다 한줄씩 늘어나서 계속길어져"
