@@ -6,7 +6,17 @@
 ## 현재 상태: 진행 중
 
 ## 마지막 작업
-- **일시**: 2026-04-18 11:50 (진행) — 학부모/학생 연락처 자동 대쉬 포맷 (msg 605)
+- **일시**: 2026-04-18 22:45 (진행) — 학생 상세 페이지를 모달로 전환 (msg 608)
+  - **요청**: "학생 눌러서 뜨는 세부사항 창도 플로팅으로 띄우는게 좋겠어 쓸데없이 페이지를 들어가는게 번거롭고 무겁게 느껴짐"
+  - **작업**: `src/components/StudentDetailModal.tsx` 신규 작성
+    - 기존 `src/app/students/[id]/page.tsx` 내용을 모달로 이식 (createPortal + framer-motion bottom sheet)
+    - fetchData/handleUpdate/handleDelete/handleWithdraw/handleReenroll/handleSavePayment/handleDeletePayment 전부 이식
+    - onChange 콜백으로 부모(payments)에 재fetch 신호
+    - 내부에 StudentModal, PaymentModal 렌더 유지
+    - 색상 토큰화 (var(--text-4), var(--bg-card) 등) — 기존 페이지는 하드코딩 #212126 등 사용해서 다크 톤 일부 안 맞았음
+  - 다음: `src/app/payments/page.tsx` line 1075 `<Link>` → button + StudentDetailModal 렌더, 빌드, 커밋, 배포
+
+- **일시**: 2026-04-18 11:50 (완료) — 학부모/학생 연락처 자동 대쉬 포맷 (커밋 f5841b7)
   - **요청**: "학부모 연락처 입력할때 대쉬 써야되나? 아무렇게나써도 대쉬 알아서 생기게 하고 써도 알아서 인식하게 할수있지?"
   - **수정**: `src/lib/utils.ts`에 `formatPhone(input)` 추가
     - 숫자만 추출→11자리 제한→010/02/일반 area code별 대쉬 자동 삽입 (3-4-4 / 2-x-4)

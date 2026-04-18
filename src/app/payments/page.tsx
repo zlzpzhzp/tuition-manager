@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useCallback, useRef, useMemo, useEffect } from 'react'
-import Link from 'next/link'
 import { ChevronLeft, ChevronRight, Check, ChevronDown, ClipboardList, Download, Plus, Send, Mail, Loader2 } from 'lucide-react'
 import type { Student, Payment, PaymentMethod, GradeWithClasses } from '@/types'
 import { getStudentFee, getPaymentStatus, PAYMENT_STATUS_LABELS, PAYMENT_STATUS_COLORS, PAYMENT_METHOD_LABELS } from '@/types'
@@ -15,6 +14,7 @@ import { METHOD_OPTIONS_SHORT } from '@/lib/constants'
 import { PaymentsSkeleton } from '@/components/Skeleton'
 import BillSendModal from '@/components/BillSendModal'
 import BillActionModal from '@/components/BillActionModal'
+import StudentDetailModal from '@/components/StudentDetailModal'
 import { motion, AnimatePresence } from 'framer-motion'
 import useSWR from 'swr'
 
@@ -65,6 +65,7 @@ export default function PaymentsPage() {
 
   // 인라인 납부 폼
   const [expandedStudentId, setExpandedStudentId] = useState<string | null>(null)
+const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
   const [inlineDate, setInlineDate] = useState(today)
   const [inlineMethod, setInlineMethod] = useState<PaymentMethod>('payssam')
   const [inlineSuccess, setInlineSuccess] = useState<string | null>(null)
@@ -1071,10 +1072,14 @@ export default function PaymentsPage() {
                               {hasDiscuss && (
                                 <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-[var(--red-dim)] text-[var(--unpaid-text)] font-bold shrink-0">DISCUSS</span>
                               )}
-                              <Link
-                                href={`/students/${student.id}`}
-                                className="flex-1 min-w-0"
-                                onClick={e => { if (wasSwiped.current) e.preventDefault(); e.stopPropagation() }}
+                              <button
+                                type="button"
+                                className="flex-1 min-w-0 text-left"
+                                onClick={e => {
+                                  e.stopPropagation()
+                                  if (wasSwiped.current) return
+                                  setDetailStudentId(student.id)
+                                }}
                               >
                                 <span className={`text-sm font-medium ${withdrawn ? 'line-through decoration-red-500 decoration-2 text-[var(--text-4)]' : ''}`}>{student.name}</span>
                                 {!withdrawn && !student.parent_phone && (
@@ -1092,7 +1097,7 @@ export default function PaymentsPage() {
                                     {student.memo}
                                   </p>
                                 )}
-                              </Link>
+                              </button>
 
                               {isExpanded ? (
                                 <div
@@ -1309,6 +1314,14 @@ export default function PaymentsPage() {
           billingMonth={selectedMonth}
           onClose={() => setBillSendTarget(null)}
           onSuccess={() => { fetchData(); mutateBills() }}
+        />
+      )}
+
+      {detailStudentId && (
+        <StudentDetailModal
+          studentId={detailStudentId}
+          onClose={() => setDetailStudentId(null)}
+          onChange={fetchData}
         />
       )}
 
