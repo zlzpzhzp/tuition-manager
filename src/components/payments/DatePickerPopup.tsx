@@ -47,7 +47,7 @@ export default function DatePickerPopup({ inlineDate, onDateChange, onClose, anc
   }
 
   return createPortal(
-    <>
+    <div data-picker-portal>
       <div className="fixed inset-0 z-[60]" onClick={onClose} />
       <div
         ref={popupRef}
@@ -102,7 +102,7 @@ export default function DatePickerPopup({ inlineDate, onDateChange, onClose, anc
           ))}
         </div>
       </div>
-    </>,
+    </div>,
     document.body
   )
 }

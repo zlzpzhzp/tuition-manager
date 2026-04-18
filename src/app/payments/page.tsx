@@ -500,6 +500,31 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
     return () => clearTimeout(timer)
   }, [expandedStudentId])
 
+  // 펼쳐진 팬(fan) 외부 클릭 시 닫기 — 단, 날짜/결제수단 피커 포탈은 제외
+  useEffect(() => {
+    if (!expandedStudentId) return
+    const onPointerDown = (e: MouseEvent | TouchEvent) => {
+      const target = e.target as HTMLElement | null
+      if (!target) return
+      if (target.closest(`[data-student-row="${expandedStudentId}"]`)) return
+      // 포탈로 뜨는 피커 내부 클릭이면 무시 (피커는 자체 backdrop으로 닫힘)
+      if (target.closest('[data-picker-portal]')) return
+      setExpandedStudentId(null)
+      setShowDatePicker(false)
+      setShowMethodPicker(false)
+    }
+    // 팬이 열린 프레임에 즉시 닫히는 것 방지
+    const t = setTimeout(() => {
+      document.addEventListener('mousedown', onPointerDown)
+      document.addEventListener('touchstart', onPointerDown, { passive: true })
+    }, 0)
+    return () => {
+      clearTimeout(t)
+      document.removeEventListener('mousedown', onPointerDown)
+      document.removeEventListener('touchstart', onPointerDown)
+    }
+  }, [expandedStudentId])
+
   // ─── Swipe handlers (swipe-action-guide.md 기반) ──────────────
   const SPRING = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
   const MEMO_W = 160  // 왼쪽 비고 패널 너비 (헤더: 라벨+색상테이프+저장)

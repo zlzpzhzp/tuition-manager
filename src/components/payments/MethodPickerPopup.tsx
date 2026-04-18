@@ -30,7 +30,7 @@ export default function MethodPickerPopup({ currentMethod, onMethodChange, onClo
   }, [anchorRef])
 
   return createPortal(
-    <>
+    <div data-picker-portal>
       <div className="fixed inset-0 z-[60]" onClick={onClose} />
       <div
         className="fixed z-[61] flex flex-col gap-0.5 items-start"
@@ -60,7 +60,7 @@ export default function MethodPickerPopup({ currentMethod, onMethodChange, onClo
           </button>
         ))}
       </div>
-    </>,
+    </div>,
     document.body
   )
 }
