@@ -424,6 +424,9 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
     })
     if (eligible.length === 0) return
 
+    const confirmed = window.confirm(`${cls.name} · ${eligible.length}건 청구서를 일괄 발송합니다.\n\n계속하시겠습니까?`)
+    if (!confirmed) return
+
     cancelBatchRef.current = false
     setCancellingBatch(false)
     setBatchSending(cls.id)
@@ -1066,11 +1069,22 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                         const isAllFilter = paymentFilter === 'all'
                         return (
                           <button
-                            onClick={(e) => { e.stopPropagation(); sendClassBatch(cls) }}
-                            disabled={!!batchSending || isAllFilter}
-                            className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[var(--orange-dim)] text-[var(--orange)] hover:opacity-80 disabled:opacity-40 disabled:cursor-not-allowed mr-1"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              if (isAllFilter) {
+                                alert('결제일을 선택해주세요! 전체 상태에서는 일괄 발송이 불가합니다.')
+                                return
+                              }
+                              sendClassBatch(cls)
+                            }}
+                            disabled={!!batchSending}
+                            className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold mr-1 ${
+                              isAllFilter
+                                ? 'bg-[var(--bg-elevated)] text-[var(--text-4)] opacity-60 cursor-not-allowed'
+                                : 'bg-[var(--orange-dim)] text-[var(--orange)] hover:opacity-80 disabled:opacity-40'
+                            }`}
                             aria-label={`${cls.name} 일괄 청구서 발송`}
-                            title={isAllFilter ? '필터를 먼저 선택하세요 (전체일 때 일괄 발송 불가)' : `미발송 ${eligibleCount}명 일괄 발송`}
+                            title={isAllFilter ? '결제일을 선택하세요' : `미발송 ${eligibleCount}명 일괄 발송`}
                           >
                             <Send className="w-3 h-3" />
                             <span>일괄 {eligibleCount}</span>

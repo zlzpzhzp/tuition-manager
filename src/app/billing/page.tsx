@@ -389,28 +389,33 @@ export default function BillingPage() {
           const [y, m] = selectedMonth.split('-').map(Number)
           const today = new Date()
           const isCurrentMonth = today.getFullYear() === y && today.getMonth() + 1 === m
-          const dayLabel = isCurrentMonth
-            ? `${today.getDate()}일 ${['일','월','화','수','목','금','토'][today.getDay()]}요일`
-            : ''
+          const weekday = isCurrentMonth ? ['일','월','화','수','목','금','토'][today.getDay()] : ''
+          const dayNum = isCurrentMonth ? today.getDate() : null
           return (
-            <div className="flex items-end gap-2 mb-1">
-              <button onClick={() => navigateMonth(-1)} className="p-1.5 hover:bg-[var(--bg-elevated)] rounded-lg text-[var(--text-4)] mb-1" aria-label="이전 달">
+            <div className="flex items-center gap-1 mb-1">
+              <button onClick={() => navigateMonth(-1)} className="p-1.5 hover:bg-[var(--bg-elevated)] rounded-lg text-[var(--text-4)] shrink-0" aria-label="이전 달">
                 <ChevronLeft className="w-5 h-5" />
               </button>
-              <div className="leading-none flex-1">
-                <div className="text-[11px] font-semibold tracking-widest text-[var(--text-4)] mb-1.5 uppercase">{y}</div>
-                <div className="flex items-baseline gap-2">
-                  <h1 className="text-[2.6rem] sm:text-[3.2rem] font-extrabold tracking-tight leading-none text-[var(--text-1)] tabular-nums">
-                    {m}월
+              <div className="leading-none flex-1 py-1">
+                <div className="text-[10px] font-bold tracking-[0.2em] text-[var(--text-4)] mb-2">{y}</div>
+                <div className="flex items-baseline gap-2.5">
+                  <h1 className="text-[2.4rem] font-extrabold tracking-tight leading-none text-[var(--text-1)] tabular-nums">
+                    {m}<span className="text-[1.5rem] font-bold text-[var(--text-2)] ml-0.5">월</span>
+                    {dayNum !== null && (
+                      <>
+                        <span className="ml-2 text-[var(--text-1)]">{dayNum}</span>
+                        <span className="text-[1.5rem] font-bold text-[var(--text-2)] ml-0.5">일</span>
+                      </>
+                    )}
                   </h1>
-                  {dayLabel && (
-                    <span className="text-lg sm:text-xl font-semibold text-[var(--text-3)] tracking-tight">
-                      {dayLabel}
+                  {weekday && (
+                    <span className="text-sm font-semibold text-[var(--text-3)] tracking-tight">
+                      {weekday}요일
                     </span>
                   )}
                 </div>
               </div>
-              <button onClick={() => navigateMonth(1)} className="p-1.5 hover:bg-[var(--bg-elevated)] rounded-lg text-[var(--text-4)] mb-1" aria-label="다음 달">
+              <button onClick={() => navigateMonth(1)} className="p-1.5 hover:bg-[var(--bg-elevated)] rounded-lg text-[var(--text-4)] shrink-0" aria-label="다음 달">
                 <ChevronRight className="w-5 h-5" />
               </button>
             </div>
