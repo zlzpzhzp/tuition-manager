@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useRef, useMemo, useEffect } from 'react'
+import { useState, useCallback, useRef, useMemo, useEffect, useLayoutEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { ChevronLeft, ChevronRight, Check, ChevronDown, ClipboardList, Download, Plus, Send, Mail, Loader2 } from 'lucide-react'
 import type { Student, Payment, PaymentMethod, GradeWithClasses } from '@/types'
@@ -284,6 +284,8 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
   const [memoScrolled, setMemoScrolled] = useState(false)
   const [memoFocused, setMemoFocused] = useState(false)
   const memoRef = useRef<HTMLTextAreaElement>(null)
+  const memoMirrorRef = useRef<HTMLDivElement>(null)
+  const [memoAutoHeight, setMemoAutoHeight] = useState(82)
   const memoCompact = memoScrolled && !memoFocused
 
   useEffect(() => {
@@ -291,6 +293,14 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
+
+  // mirror div로 메모 높이 측정 (scrollHeight 피드백 루프 회피)
+  useLayoutEffect(() => {
+    if (memoMirrorRef.current) {
+      const measured = memoMirrorRef.current.scrollHeight
+      setMemoAutoHeight(Math.max(82, Math.min(400, measured)))
+    }
+  }, [monthMemo])
 
   // AI 필터
   const [aiFilterIds, setAiFilterIds] = useState<Set<string> | null>(null)
@@ -910,23 +920,35 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
 
       {/* 월별 메모 — sticky (스크롤 시 1줄로 축소) */}
       <div data-sticky-header className="sticky top-14 z-30 bg-[var(--bg)] -mx-4 px-4 pt-2 pb-2">
-        <textarea
-          ref={memoRef}
-          value={monthMemo}
-          onChange={e => {
-            setMonthMemo(e.target.value)
-            localStorage.setItem(`payment_memo_${selectedMonth}`, e.target.value)
-          }}
-          onFocus={() => setMemoFocused(true)}
-          onBlur={() => setMemoFocused(false)}
-          placeholder="메모..."
-          rows={memoCompact ? 1 : 3}
-          className={`w-full resize-none bg-[var(--bg-elevated)] rounded-xl px-3 py-2 text-sm text-[var(--text-1)] placeholder:text-[var(--text-4)] focus:outline-none focus:ring-1 focus:ring-[var(--blue)] leading-[22px] transition-all duration-200 ${
-            memoCompact
-              ? 'h-[38px] overflow-hidden'
-              : '[field-sizing:content] min-h-[82px] max-h-[400px] overflow-y-auto'
-          }`}
-        />
+        <div className="relative">
+          <textarea
+            ref={memoRef}
+            value={monthMemo}
+            onChange={e => {
+              setMonthMemo(e.target.value)
+              localStorage.setItem(`payment_memo_${selectedMonth}`, e.target.value)
+            }}
+            onFocus={() => setMemoFocused(true)}
+            onBlur={() => setMemoFocused(false)}
+            placeholder="메모..."
+            rows={memoCompact ? 1 : undefined}
+            style={memoCompact ? undefined : { height: `${memoAutoHeight}px` }}
+            className={`w-full resize-none bg-[var(--bg-elevated)] rounded-xl px-3 py-2 text-sm text-[var(--text-1)] placeholder:text-[var(--text-4)] focus:outline-none focus:ring-1 focus:ring-[var(--blue)] leading-[22px] ${
+              memoCompact
+                ? 'h-[38px] overflow-hidden'
+                : 'overflow-y-auto'
+            }`}
+          />
+          {/* mirror div: 텍스트 기반 높이 측정 (화면에 보이지 않음) */}
+          <div
+            ref={memoMirrorRef}
+            aria-hidden
+            className="invisible absolute top-0 left-0 right-0 w-full whitespace-pre-wrap break-words rounded-xl px-3 py-2 text-sm leading-[22px] pointer-events-none"
+            style={{ minHeight: '82px' }}
+          >
+            {monthMemo + '\n'}
+          </div>
+        </div>
       </div>
 
       {/* 과목별 → 학년별 납부 현황 */}
