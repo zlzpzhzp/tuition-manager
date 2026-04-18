@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback, useRef, useMemo, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { ChevronLeft, ChevronRight, Check, ChevronDown, ClipboardList, Download, Plus, Send, Mail, Loader2 } from 'lucide-react'
 import type { Student, Payment, PaymentMethod, GradeWithClasses } from '@/types'
 import { getStudentFee, getPaymentStatus, PAYMENT_STATUS_LABELS, PAYMENT_STATUS_COLORS, PAYMENT_METHOD_LABELS } from '@/types'
@@ -46,6 +47,80 @@ const FILTER_LABELS: Record<PaymentFilter, string> = {
 }
 
 const WEEK_KEYS: PaymentFilter[] = ['day1', 'week1', 'week2', 'week3', 'week4']
+
+function FilterDropdownPortal({
+  anchor,
+  currentFilter,
+  weekRanges,
+  onSelect,
+  onClose,
+}: {
+  anchor: HTMLElement
+  currentFilter: PaymentFilter
+  weekRanges: Record<Exclude<PaymentFilter, 'all' | 'unpaid'>, [number, number]>
+  onSelect: (key: PaymentFilter) => void
+  onClose: () => void
+}) {
+  const [show, setShow] = useState(false)
+  const [pos, setPos] = useState({ top: 0, right: 0 })
+
+  useEffect(() => {
+    const rect = anchor.getBoundingClientRect()
+    setPos({ top: rect.bottom + 6, right: Math.max(8, window.innerWidth - rect.right) })
+    requestAnimationFrame(() => setShow(true))
+  }, [anchor])
+
+  const keys: PaymentFilter[] = ['all', 'unpaid', ...WEEK_KEYS]
+
+  return createPortal(
+    <>
+      <div className="fixed inset-0 z-[60]" onClick={onClose} />
+      <div
+        data-filter-portal
+        className="fixed z-[61] flex flex-col gap-1 items-end"
+        style={{ top: pos.top, right: pos.right }}
+        role="listbox"
+        aria-label="납부 필터"
+      >
+        {keys.map((key, i) => {
+          const active = currentFilter === key
+          const isWeek = (WEEK_KEYS as PaymentFilter[]).includes(key)
+          const range = isWeek ? weekRanges[key as Exclude<PaymentFilter, 'all' | 'unpaid'>] : null
+          const rangeLabel = range
+            ? range[0] > range[1] ? '' : range[0] === range[1] ? `${range[0]}일` : `${range[0]}~${range[1]}`
+            : ''
+          return (
+            <button
+              key={key}
+              type="button"
+              onClick={() => onSelect(key)}
+              role="option"
+              aria-selected={active}
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap shadow-md transition-colors ${
+                active
+                  ? key === 'unpaid'
+                    ? 'bg-[var(--red-dim)] text-[var(--unpaid-text)]'
+                    : key === 'all'
+                      ? 'bg-[var(--bg-elevated)] text-[var(--text-1)]'
+                      : 'bg-[var(--blue-dim)] text-[var(--blue)]'
+                  : 'bg-[var(--bg-card)] text-[var(--text-2)] hover:text-[var(--text-1)] hover:bg-[var(--bg-card-hover)] border border-[var(--border)]'
+              }`}
+              style={{
+                opacity: show ? 1 : 0,
+                transform: show ? 'translateY(0) scale(1)' : 'translateY(-6px) scale(0.85)',
+                transition: `opacity 0.2s ease ${i * 0.04}s, transform 0.25s cubic-bezier(0.34,1.56,0.64,1) ${i * 0.04}s, background-color 0.15s, color 0.15s`,
+              }}
+            >
+              <span>{FILTER_LABELS[key]}</span>
+              {rangeLabel && <span className="text-[10px] opacity-60">{rangeLabel}</span>}
+            </button>
+          )
+        })}
+      </div>
+    </>,
+    document.body,
+  )
+}
 
 export default function PaymentsPage() {
   const today = getTodayString()
@@ -148,7 +223,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
 
   // 통합 필터 (전체/미납/1일/첫째주~넷째주)
   const [paymentFilter, setPaymentFilter] = useState<PaymentFilter>('all')
-  const [filterOpen, setFilterOpen] = useState(false)
+  const [filterAnchor, setFilterAnchor] = useState<HTMLButtonElement | null>(null)
   const [monthMemo, setMonthMemo] = useState('')
 
   // Sun~Sat 기준 주차 범위 (billing page와 동일)
@@ -398,20 +473,6 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
       document.documentElement.style.removeProperty('--grade-sticky-top')
     }
   }, [])
-
-  // 필터 드롭다운 외부 클릭 닫기 — 여러 인스턴스를 className으로 감지
-  useEffect(() => {
-    if (!filterOpen) return
-    const onClick = (e: MouseEvent) => {
-      const wrappers = document.querySelectorAll('[data-filter-wrapper]')
-      for (const w of wrappers) {
-        if (w.contains(e.target as Node)) return
-      }
-      setFilterOpen(false)
-    }
-    document.addEventListener('mousedown', onClick)
-    return () => document.removeEventListener('mousedown', onClick)
-  }, [filterOpen])
 
   // 학생 행 펼침 시 자동 스크롤 — 우측 아이콘(Send/Mail/수납)이 화면 밖으로 밀리지 않게
   useEffect(() => {
@@ -908,53 +969,19 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                       </motion.div>
                       <span className="text-[15px] font-bold text-[var(--text-1)] tracking-tight">{gradeName}</span>
                     </button>
-                    <div data-filter-wrapper className="relative">
-                      <button
-                        onClick={() => setFilterOpen(v => !v)}
-                        className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold transition-colors shadow-sm ${
-                          paymentFilter === 'unpaid'
-                            ? 'bg-[var(--red-dim)] text-[var(--unpaid-text)]'
-                            : paymentFilter !== 'all'
-                              ? 'bg-[var(--blue-dim)] text-[var(--blue)]'
-                              : 'bg-[var(--bg-elevated)] text-[var(--text-2)] hover:bg-[var(--bg-card-hover)]'
-                        }`}
-                      >
-                        <span>{FILTER_LABELS[paymentFilter]}</span>
-                        <ChevronDown className="w-3 h-3 opacity-60" />
-                      </button>
-                      <AnimatePresence>
-                        {filterOpen && (
-                          <motion.div
-                            initial={{ opacity: 0, y: -4 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -4 }}
-                            transition={{ duration: 0.15 }}
-                            className="absolute right-0 top-full mt-1 min-w-[140px] rounded-xl border border-[var(--border)] bg-[var(--bg-card)] shadow-xl overflow-hidden z-40"
-                          >
-                            {(['all', 'unpaid', ...WEEK_KEYS] as PaymentFilter[]).map((key) => {
-                              const active = paymentFilter === key
-                              const isWeek = WEEK_KEYS.includes(key)
-                              const range = isWeek ? weekRanges[key as Exclude<PaymentFilter, 'all' | 'unpaid'>] : null
-                              const rangeLabel = range
-                                ? range[0] > range[1] ? '-' : range[0] === range[1] ? `${range[0]}일` : `${range[0]}~${range[1]}`
-                                : ''
-                              return (
-                                <button
-                                  key={key}
-                                  onClick={() => { setPaymentFilter(key); setFilterOpen(false) }}
-                                  className={`w-full flex items-center justify-between px-3 py-2 text-xs font-medium transition-colors ${
-                                    active ? 'bg-[var(--blue)]/20 text-[var(--blue)]' : 'text-[var(--text-2)] hover:bg-[var(--bg-elevated)]'
-                                  }`}
-                                >
-                                  <span>{FILTER_LABELS[key]}</span>
-                                  {rangeLabel && <span className="text-[10px] opacity-60 ml-2">{rangeLabel}</span>}
-                                </button>
-                              )
-                            })}
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
+                    <button
+                      onClick={(e) => setFilterAnchor(prev => prev === e.currentTarget ? null : e.currentTarget)}
+                      className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold transition-colors shadow-sm ${
+                        paymentFilter === 'unpaid'
+                          ? 'bg-[var(--red-dim)] text-[var(--unpaid-text)]'
+                          : paymentFilter !== 'all'
+                            ? 'bg-[var(--blue-dim)] text-[var(--blue)]'
+                            : 'bg-[var(--bg-elevated)] text-[var(--text-2)] hover:bg-[var(--bg-card-hover)]'
+                      }`}
+                    >
+                      <span>{FILTER_LABELS[paymentFilter]}</span>
+                      <ChevronDown className="w-3 h-3 opacity-60" />
+                    </button>
                   </div>
                   <div className="card overflow-hidden">
                   {gradeClasses.map(cls => {
@@ -1434,6 +1461,15 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
         onClear={clearAiFilter}
         loading={aiFilterLoading}
       />
+
+      {/* 필터 드롭다운 — 단일 포탈, 업로더식 텍스트 필 + 스태거 애니메이션 */}
+      {filterAnchor && <FilterDropdownPortal
+        anchor={filterAnchor}
+        currentFilter={paymentFilter}
+        weekRanges={weekRanges}
+        onSelect={(key) => { setPaymentFilter(key); setFilterAnchor(null) }}
+        onClose={() => setFilterAnchor(null)}
+      />}
     </div>
   )
 }
