@@ -62,41 +62,60 @@ function FilterDropdownPortal({
   onClose: () => void
 }) {
   const [show, setShow] = useState(false)
-  const [pos, setPos] = useState({ top: 0, left: 0, width: 0 })
+  const [rect, setRect] = useState<{ top: number; left: number; width: number; height: number } | null>(null)
 
   useEffect(() => {
-    const rect = anchor.getBoundingClientRect()
-    setPos({ top: rect.bottom + 4, left: rect.left, width: rect.width })
+    const r = anchor.getBoundingClientRect()
+    setRect({ top: r.top, left: r.left, width: r.width, height: r.height })
     requestAnimationFrame(() => setShow(true))
   }, [anchor])
 
+  // 앵커 버튼 본체를 포탈이 완전히 덮어야 하므로 opacity 0 처리
+  useEffect(() => {
+    anchor.style.visibility = 'hidden'
+    return () => { anchor.style.visibility = '' }
+  }, [anchor])
+
   const keys: PaymentFilter[] = ['all', 'unpaid', ...WEEK_KEYS]
+  const orderedKeys = [currentFilter, ...keys.filter(k => k !== currentFilter)]
+
+  if (!rect) return null
+
+  const ROW_H = rect.height
+  const totalH = ROW_H * orderedKeys.length
+
+  const bgFor = (key: PaymentFilter, active: boolean) => {
+    if (!active) return 'text-[var(--text-2)] hover:text-[var(--text-1)] hover:bg-[var(--bg-elevated)]'
+    if (key === 'unpaid') return 'bg-[var(--red-dim)] text-[var(--unpaid-text)]'
+    if (key === 'all') return 'bg-[var(--bg-elevated)] text-[var(--text-2)]'
+    return 'bg-[var(--blue-dim)] text-[var(--blue)]'
+  }
 
   return createPortal(
     <>
       <div className="fixed inset-0 z-[60]" onClick={onClose} />
       <div
         data-filter-portal
-        className="fixed z-[61] overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] shadow-xl"
+        className="fixed z-[61] overflow-hidden shadow-xl"
         style={{
-          top: pos.top,
-          left: pos.left,
-          width: pos.width,
-          transformOrigin: 'top center',
-          transform: show ? 'scaleY(1)' : 'scaleY(0.05)',
-          opacity: show ? 1 : 0,
-          transition: 'transform 0.22s cubic-bezier(0.34,1.56,0.64,1), opacity 0.15s ease',
+          top: rect.top,
+          left: rect.left,
+          width: rect.width,
+          height: show ? totalH : ROW_H,
+          borderRadius: show ? 16 : 9999,
+          transition: 'height 0.32s cubic-bezier(0.34,1.56,0.64,1), border-radius 0.25s ease',
         }}
         role="listbox"
         aria-label="납부 필터"
       >
-        {keys.map((key) => {
+        {orderedKeys.map((key, i) => {
           const active = currentFilter === key
           const isWeek = (WEEK_KEYS as PaymentFilter[]).includes(key) && key !== 'day1'
           const range = isWeek ? weekRanges[key as Exclude<PaymentFilter, 'all' | 'unpaid' | 'day1'>] : null
           const rangeLabel = range && range[0] <= range[1]
             ? range[0] === range[1] ? `${range[0]}일` : `${range[0]}~${range[1]}`
             : ''
+          const isCurrent = i === 0
           return (
             <button
               key={key}
@@ -104,22 +123,21 @@ function FilterDropdownPortal({
               onClick={() => onSelect(key)}
               role="option"
               aria-selected={active}
-              className={`w-full flex items-center justify-center gap-1 py-1.5 text-xs font-semibold whitespace-nowrap transition-colors ${
-                active
-                  ? key === 'unpaid'
-                    ? 'bg-[var(--red-dim)] text-[var(--unpaid-text)]'
-                    : key === 'all'
-                      ? 'bg-[var(--bg-elevated)] text-[var(--text-1)]'
-                      : 'bg-[var(--blue-dim)] text-[var(--blue)]'
-                  : 'text-[var(--text-2)] hover:text-[var(--text-1)] hover:bg-[var(--bg-elevated)]'
-              }`}
+              className={`w-full flex items-center justify-center gap-1 text-xs font-semibold whitespace-nowrap transition-colors ${bgFor(key, active)}`}
               style={{
-                opacity: show ? 1 : 0,
-                transition: 'opacity 0.15s ease 0.1s, background-color 0.12s, color 0.12s',
+                height: ROW_H,
+                opacity: isCurrent ? 1 : show ? 1 : 0,
+                transition: `opacity 0.2s ease ${show ? 0.1 + i * 0.02 : 0}s, background-color 0.12s, color 0.12s`,
               }}
             >
               <span>{FILTER_LABELS[key]}</span>
               {rangeLabel && <span className="text-[10px] opacity-60">{rangeLabel}</span>}
+              {isCurrent && (
+                <ChevronDown
+                  className="w-3 h-3 opacity-60 transition-transform"
+                  style={{ transform: show ? 'rotate(180deg)' : 'rotate(0deg)' }}
+                />
+              )}
             </button>
           )
         })}
