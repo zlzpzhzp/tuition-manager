@@ -83,6 +83,10 @@ function FilterDropdownPortal({
   const ROW_H = rect.height
   const totalH = ROW_H * orderedKeys.length
   const BORDER_R = Math.round(ROW_H / 2)
+  // 펼친 상태에서는 알약보다 넓혀서 기간(15~21 등)이 들어갈 여유 확보
+  const OPEN_W = Math.max(rect.width, 140)
+  const portalLeft = show ? rect.left - (OPEN_W - rect.width) / 2 : rect.left
+  const portalW = show ? OPEN_W : rect.width
 
   const bgFor = (key: PaymentFilter, active: boolean) => {
     if (!active) return 'bg-[var(--surface)] text-[var(--text-2)] hover:bg-[var(--bg-card-hover)] hover:text-[var(--text-1)]'
@@ -99,11 +103,11 @@ function FilterDropdownPortal({
         className="fixed z-[61] overflow-hidden shadow-xl bg-[var(--surface)]"
         style={{
           top: rect.top,
-          left: rect.left,
-          width: rect.width,
+          left: portalLeft,
+          width: portalW,
           height: show ? totalH : ROW_H,
           borderRadius: BORDER_R,
-          transition: 'height 0.2s ease-out',
+          transition: 'height 0.2s ease-out, width 0.2s ease-out, left 0.2s ease-out',
         }}
         role="listbox"
         aria-label="납부 필터"
@@ -116,7 +120,6 @@ function FilterDropdownPortal({
             ? range[0] === range[1] ? `${range[0]}일` : `${range[0]}~${range[1]}`
             : ''
           const isCurrent = i === 0
-          const isWeekRow = (WEEK_KEYS as PaymentFilter[]).includes(key) && key !== 'day1'
           return (
             <button
               key={key}
@@ -124,7 +127,10 @@ function FilterDropdownPortal({
               onClick={() => onSelect(key)}
               role="option"
               aria-selected={active}
-              className={`w-full flex items-center justify-center gap-1 ${isWeekRow ? 'pl-12' : 'pl-6'} text-xs font-semibold whitespace-nowrap transition-colors ${bgFor(key, active)}`}
+              // 주차(첫째주~넷째주)만 왼쪽정렬+pl 고정으로 첫글자 x=70 배치 → 미납/1일(센터링시 x≈58~62)보다 한글자 오른쪽
+              className={`relative w-full flex items-center text-xs font-semibold whitespace-nowrap transition-colors ${
+                isWeek ? 'justify-start pl-[70px] gap-1' : 'justify-center gap-1'
+              } ${bgFor(key, active)}`}
               style={{
                 height: ROW_H,
                 opacity: isCurrent ? 1 : show ? 1 : 0,
@@ -132,17 +138,15 @@ function FilterDropdownPortal({
               }}
             >
               <span>{FILTER_LABELS[key]}</span>
-              {/* rangeLabel 고정 폭 슬롯 — 폭 일정해야 센터링 시 라벨 첫글자 x좌표 통일됨. 없는 행도 동일 폭 확보 */}
-              {(WEEK_KEYS as PaymentFilter[]).includes(key) && key !== 'day1' && (
-                <span className="text-[10px] opacity-60 inline-block text-left" style={{ minWidth: '3em' }}>
-                  {rangeLabel}
-                </span>
+              {isWeek && (
+                <span className="text-[10px] opacity-60">{rangeLabel}</span>
               )}
-              {/* Chevron 자리는 항상 확보 (비현재행은 투명) — 안 그러면 현재행만 폭 달라져 첫글자 어긋남 */}
-              <ChevronDown
-                className={`w-3 h-3 opacity-60 transition-transform ${isCurrent ? '' : 'invisible'}`}
-                style={{ transform: `rotate(${show && isCurrent ? 180 : 0}deg)` }}
-              />
+              {isCurrent && (
+                <ChevronDown
+                  className="absolute right-2 w-3 h-3 opacity-60 transition-transform"
+                  style={{ transform: show ? 'rotate(180deg)' : 'rotate(0deg)' }}
+                />
+              )}
             </button>
           )
         })}
