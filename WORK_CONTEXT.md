@@ -3,17 +3,22 @@
 > 이 파일은 Claude 세션 간 작업 연속성을 위한 컨텍스트 추적 파일입니다.
 > 작업 중 수시로 업데이트하고, 커밋 시 함께 포함시킵니다.
 
-## 현재 상태: 진행중 — 납부탭 결제수단 아이콘 통일 (배경 파란색, 심볼만 차이)
+## 현재 상태: 완료 — 주차 필터 라벨 첫글자 x좌표 정렬
 
-### 2026-04-19 07:57 (진행중)
-- msg 720 "일단 파란 체크아이콘 별로임 카드아이콘 좋네 결제 완료되면 전부다 저 김규리 카드 아이콘 같은 파란색으로 하고 안에 심볼만 다르게 하자 결제선생 보낼때 아이콘이 보내는 방향 모양이니까 결제완료되면 다시 180 회전한 아이콘으로 답장받은걸 표현하자 색깔은 내가 아까말한 그 카드 파랑으로통일하고"
-- 작업: 결제완료 아이콘 배경 전부 blue-dim으로 통일, fg는 blue. 심볼만 수단별로:
-  - payssam → Send 180° 회전 (답장받은 모양)
-  - card → CreditCard
-  - cash → Banknote
-  - transfer → ArrowLeftRight
-  - 기타 → Check
+### 2026-04-19 08:14 (완료, ec80d4c)
+- msg 725 "그리 전체미납 첫째주 필터 눌렀을때 첫째주 둘째주 셋째주 냇째주 첫글자 x좌표 통일 첫째주에 맞추는게 좋겠다"
+- 원인: FilterDropdownPortal의 버튼이 `flex justify-center gap-1`로 label + rangeLabel + chevron을 함께 센터링 → rangeLabel 폭 차이("4~7" vs "15~21")로 3글자 주차 라벨의 첫글자 x좌표 흔들림
+- 수정: rangeLabel과 ChevronDown을 absolute 포지셔닝으로 분리 → 센터링에 라벨만 영향 → 첫/둘/셋/넷 첫글자 x좌표 동일
 - 파일: src/app/payments/page.tsx
+- 배포: Vercel + 로컬 :3001 재기동
+
+### 2026-04-19 07:57 (완료, d3a3102)
+- msg 724 "미납인 학생 미납버튼 누르면 결제일이랑 결제수단이랑 선택하면 아이콘 열리잖아 근데 다른 영역 누르면 다시 사라지게 해야지"
+- 작업: expandedStudentId 상태 기반 외부 클릭 감지. 학생 행 외부/picker portal 외부 클릭 시 자동 접힘
+- 파일: src/app/payments/page.tsx (useEffect 추가), DatePickerPopup/MethodPickerPopup (data-picker-portal 마커)
+
+### 2026-04-19 07:30 (완료, 2b6103b)
+- msg 720: 파란 체크 아이콘 → 배경 blue-dim 통일, 심볼만 수단별로 (payssam=Send 180°, card=CreditCard, cash=Banknote, transfer=ArrowLeftRight, 기타=Check)
 
 ### 2026-04-19 04:35 (완료, 7b431d3)
 - msg 716 "이번달은 결제선생으로 결제한 애들 결제완료 되면 나오는 아이콘으로 바꿔놔. 다른 결제수단으로 결제한 애들은 그 칸을 카드모양 아이콘이나 현금 모양 아이콘이나 원화 표시를 갖고오든가 해서 그 결제선생 아이콘 대신 놓아줘"
