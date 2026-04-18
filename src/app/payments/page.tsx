@@ -357,7 +357,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
       const el = document.querySelector('[data-sticky-header]') as HTMLElement | null
       if (!el) return
       const h = el.getBoundingClientRect().height
-      document.documentElement.style.setProperty('--grade-sticky-top', `${Math.max(0, h - 24)}px`)
+      document.documentElement.style.setProperty('--grade-sticky-top', `${Math.max(0, h + 56)}px`)
     }
     update()
     const el = document.querySelector('[data-sticky-header]')
@@ -739,8 +739,8 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
 
   return (
     <div ref={containerRef} onClick={() => { if (swipeOpenId) closeSwipeEdit() }}>
-      {/* 월 네비게이션 — sticky 고정 (iOS 대응: -top-6으로 main py-6 상쇄) */}
-      <div data-sticky-header className="sticky -top-6 z-30 bg-[var(--bg)] -mx-4 px-4 pt-6 pb-1">
+      {/* 월 네비게이션 — sticky 고정 */}
+      <div data-sticky-header className="sticky top-14 z-30 bg-[var(--bg)] -mx-4 px-4 pt-3 pb-1 -mt-6">
         {/* Pull-to-refresh 인디케이터 */}
         <AnimatePresence>
           {pullDistance > 0 && (

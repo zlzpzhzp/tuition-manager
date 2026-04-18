@@ -54,7 +54,7 @@ export default function Navbar() {
   return (
     <>
       {/* 데스크톱 상단 */}
-      <nav className="sticky top-0 z-40" style={{ background: 'var(--bg-card)', borderBottom: '1px solid var(--border)' }}>
+      <nav className="fixed top-0 left-0 right-0 z-40" style={{ background: 'var(--bg-card)', borderBottom: '1px solid var(--border)' }}>
         <div className="max-w-4xl mx-auto px-5">
           <div className="flex items-center justify-between h-14">
             <Link href="/dashboard" className="flex items-center gap-2.5" aria-label="홈으로 이동">

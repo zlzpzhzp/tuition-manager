@@ -70,7 +70,7 @@ export default async function RootLayout({
           <NavDirectionProvider>
             <ServiceWorkerRegistration />
             <Navbar />
-            <main className="max-w-4xl mx-auto px-4 py-6 pb-24 sm:pb-8">
+            <main className="max-w-4xl mx-auto px-4 pt-20 pb-24 sm:pb-8">
               <PageTransition>
                 {children}
               </PageTransition>

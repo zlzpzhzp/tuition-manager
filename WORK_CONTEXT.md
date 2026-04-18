@@ -6,7 +6,17 @@
 ## 현재 상태: 진행 중
 
 ## 마지막 작업
-- **일시**: 2026-04-18 22:45 (진행) — 학생 상세 페이지를 모달로 전환 (msg 608)
+- **일시**: 2026-04-18 23:15 (완료) — Navbar sticky → fixed 전환 (msg 611)
+  - **요청**: "시로고침 저거 내리면 맨위에 원비관리 줄부터 따라내려오는데 그거는 위에고정해줄 수 없어 아래로 당기면 너무 많이 당겨야해. 그리고 새록침이 페이지 새로고침 맞아?"
+  - **답변 1**: pull-to-refresh는 `fetchData()` → `globalMutate()` 호출 = SWR 재fetch. 페이지 전체 리로드 아님.
+  - **답변 2 (수정)**:
+    - `Navbar.tsx`: `sticky top-0` → `fixed top-0 left-0 right-0` — 오버스크롤 시 navbar가 움직이지 않게
+    - `layout.tsx`: `main py-6` → `pt-20 pb-24 sm:pb-8` — fixed navbar 가림 방지 (56px navbar + 24px 여백)
+    - `payments/page.tsx`: sticky 월헤더 `-top-6 pt-6` → `top-14 -mt-6 pt-3` — navbar 바로 아래 고정되도록
+    - grade-sticky-top 계산 `h - 24` → `h + 56` — 새 stick 위치(navbar 하단) 기준
+  - 다음: 커밋, 배포
+
+- **일시**: 2026-04-18 22:45 (완료) — 학생 상세 페이지를 모달로 전환 (msg 608, 커밋 3cdcdf8)
   - **요청**: "학생 눌러서 뜨는 세부사항 창도 플로팅으로 띄우는게 좋겠어 쓸데없이 페이지를 들어가는게 번거롭고 무겁게 느껴짐"
   - **작업**: `src/components/StudentDetailModal.tsx` 신규 작성
     - 기존 `src/app/students/[id]/page.tsx` 내용을 모달로 이식 (createPortal + framer-motion bottom sheet)
