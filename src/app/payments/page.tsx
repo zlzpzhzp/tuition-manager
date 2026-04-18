@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useRef, useMemo, useEffect } from 'react'
+import { useState, useCallback, useRef, useMemo, useEffect, useLayoutEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { ChevronLeft, ChevronRight, Check, ChevronDown, ClipboardList, Download, Plus, Send, Mail, Loader2 } from 'lucide-react'
 import type { Student, Payment, PaymentMethod, GradeWithClasses } from '@/types'
@@ -462,7 +462,8 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
   }, [visibleSections])
 
   // 스티키 헤더 높이를 CSS 변수로 주입 → 학년 헤더가 그 아래로 스틱
-  useEffect(() => {
+  // memoCompact 전환 시 페인트 전 동기 갱신 → 학년바와 메모 사이 gap 차단
+  useLayoutEffect(() => {
     const update = () => {
       const el = document.querySelector('[data-sticky-header]') as HTMLElement | null
       if (!el) return
@@ -477,9 +478,8 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
     return () => {
       ro?.disconnect()
       window.removeEventListener('resize', update)
-      document.documentElement.style.removeProperty('--grade-sticky-top')
     }
-  }, [])
+  }, [memoCompact])
 
   // 학생 행 펼침 시 자동 스크롤 — 우측 아이콘(Send/Mail/수납)이 화면 밖으로 밀리지 않게
   useEffect(() => {
