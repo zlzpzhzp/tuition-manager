@@ -7,7 +7,7 @@ export async function POST(request: NextRequest) {
   const unauthorized = requireAdminSession(request)
   if (unauthorized) return unauthorized
   try {
-    const { studentId, studentName, phone, amount, productName, billingMonth, isRegularTuition } = await request.json()
+    const { studentId, studentName, phone, amount, productName, billingMonth, isRegularTuition, billNote } = await request.json()
 
     if (!studentId || !phone || !amount || !billingMonth) {
       return NextResponse.json({ error: '필수 정보가 누락되었습니다' }, { status: 400 })
@@ -22,23 +22,28 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '유효하지 않은 전화번호입니다' }, { status: 400 })
     }
 
-    // 중복 발송 방지: 같은 학생+같은 월에 활성 청구서가 있으면 차단
-    const { data: existingBills } = await supabase
-      .from('tuition_bill_history')
-      .select('bill_id, status')
-      .eq('student_id', studentId)
-      .eq('billing_month', billingMonth)
-      .in('status', ['sent', 'paid'])
+    const isRegular = isRegularTuition !== false
 
-    if (existingBills && existingBills.length > 0) {
-      const activeBill = existingBills.find(b => b.status === 'sent')
-      const paidBill = existingBills.find(b => b.status === 'paid')
+    // 정규 수업료만 중복 발송 방지 (보충비/분할결제 등 비정규는 중복 허용)
+    if (isRegular) {
+      const { data: existingBills } = await supabase
+        .from('tuition_bill_history')
+        .select('bill_id, status, is_regular_tuition')
+        .eq('student_id', studentId)
+        .eq('billing_month', billingMonth)
+        .in('status', ['sent', 'paid'])
 
-      if (paidBill) {
-        return NextResponse.json({ error: '이미 결제 완료된 청구서가 있습니다', code: 'ALREADY_PAID' }, { status: 409 })
-      }
-      if (activeBill) {
-        return NextResponse.json({ error: '이미 발송된 청구서가 있습니다. 기존 청구서를 파기한 후 다시 발송해주세요.', code: 'ALREADY_SENT', bill_id: activeBill.bill_id }, { status: 409 })
+      const regularBills = (existingBills ?? []).filter(b => b.is_regular_tuition !== false)
+      if (regularBills.length > 0) {
+        const activeBill = regularBills.find(b => b.status === 'sent')
+        const paidBill = regularBills.find(b => b.status === 'paid')
+
+        if (paidBill) {
+          return NextResponse.json({ error: '이미 결제 완료된 청구서가 있습니다', code: 'ALREADY_PAID' }, { status: 409 })
+        }
+        if (activeBill) {
+          return NextResponse.json({ error: '이미 발송된 청구서가 있습니다. 기존 청구서를 파기한 후 다시 발송해주세요.', code: 'ALREADY_SENT', bill_id: activeBill.bill_id }, { status: 409 })
+        }
       }
     }
 
@@ -61,7 +66,8 @@ export async function POST(request: NextRequest) {
         status: 'sent',
         short_url: (result as { shortURL?: string }).shortURL ?? null,
         sent_at: new Date().toISOString(),
-        is_regular_tuition: isRegularTuition !== false,
+        is_regular_tuition: isRegular,
+        bill_note: typeof billNote === 'string' && billNote.trim() ? billNote.trim() : null,
       })
 
       if (dbError) {

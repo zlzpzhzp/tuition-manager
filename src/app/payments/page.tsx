@@ -286,7 +286,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
   const memoRef = useRef<HTMLTextAreaElement>(null)
   const MEMO_LINE = 22
   const MEMO_PAD = 16
-  const [memoContentHeight, setMemoContentHeight] = useState(3 * MEMO_LINE)
+  const [memoContentHeight, setMemoContentHeight] = useState(3 * MEMO_LINE + MEMO_PAD)
 
   useEffect(() => {
     const onScroll = () => setMemoScrolled(window.scrollY > 80)
@@ -296,14 +296,16 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
 
   useEffect(() => {
     if (memoFocused && memoRef.current) {
-      setMemoContentHeight(Math.max(3 * MEMO_LINE, memoRef.current.scrollHeight))
+      const el = memoRef.current
+      el.style.height = 'auto'
+      setMemoContentHeight(Math.max(3 * MEMO_LINE + MEMO_PAD, el.scrollHeight))
     }
   }, [memoFocused, monthMemo])
 
   const memoHeight = memoScrolled && !memoFocused
     ? MEMO_LINE + MEMO_PAD
     : memoFocused
-      ? memoContentHeight + MEMO_PAD
+      ? memoContentHeight
       : 3 * MEMO_LINE + MEMO_PAD
 
   // AI 필터
