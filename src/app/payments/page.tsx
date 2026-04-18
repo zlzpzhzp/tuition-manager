@@ -123,7 +123,7 @@ function FilterDropdownPortal({
               onClick={() => onSelect(key)}
               role="option"
               aria-selected={active}
-              className={`w-full flex items-center justify-center gap-1 text-xs font-semibold whitespace-nowrap transition-colors ${bgFor(key, active)}`}
+              className={`w-full flex items-center justify-center gap-1 pl-6 text-xs font-semibold whitespace-nowrap transition-colors ${bgFor(key, active)}`}
               style={{
                 height: ROW_H,
                 opacity: isCurrent ? 1 : show ? 1 : 0,
