@@ -39,8 +39,8 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   if (body.withdrawal_date !== undefined) updates.withdrawal_date = body.withdrawal_date
   if (body.custom_fee !== undefined) updates.custom_fee = body.custom_fee
   if (body.payment_due_day !== undefined) updates.payment_due_day = body.payment_due_day
-  if (body.has_discuss !== undefined) updates.has_discuss = body.has_discuss
   if (body.memo !== undefined) updates.memo = body.memo || null
+  if (body.memo_color !== undefined) updates.memo_color = body.memo_color || null
 
   const { data, error } = await supabase
     .from('tuition_students')
@@ -51,7 +51,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  // has_discuss, memo 변경은 빈번하므로 중요 변경만 로그
+  // memo/memo_color 변경은 빈번하므로 중요 변경만 로그
   const importantKeys = ['name', 'class_id', 'custom_fee', 'payment_due_day', 'withdrawal_date', 'enrollment_date']
   const changed = Object.keys(updates).filter(k => importantKeys.includes(k))
   if (changed.length > 0) {

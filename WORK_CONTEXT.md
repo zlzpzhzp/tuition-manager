@@ -3,10 +3,28 @@
 > 이 파일은 Claude 세션 간 작업 연속성을 위한 컨텍스트 추적 파일입니다.
 > 작업 중 수시로 업데이트하고, 커밋 시 함께 포함시킵니다.
 
-## 현재 상태: 진행 중
+## 현재 상태: 완료
 
 ## 마지막 작업
-- **일시**: 2026-04-18 23:15 (완료) — Navbar sticky → fixed 전환 (msg 611)
+- **일시**: 2026-04-19 01:30 (완료) — 스와이프 방향 스왑 + 형광펜 색상 + DISCUSS 제거 + 모달 비고 인라인 편집 (msg 620,622,623)
+  - **요청 내역 (속기사)**:
+    - msg 620: "학생창으로 가서 수정을 눌러야 비고작성이 되는데 비고는 학생창 띄우면 바로 작성할 수 있게 비고 칸 만들어. 그리고 왼쪽에서 오른쪽에 뭐 버튼 많으니까 오른쪽에서 밀어서 비고 작성하는거 없애자. 대신 왼쪽에서 끌고와서 비고 작성하게 만들어주고 비고 내용 모든 내용 다 지금 처럼 아랫줄에 표시되게 해줘 오른쪽엔 결제관련 특이사항만 적도록 하자. 근데 지금 오른쪽에 김규리 3.3첫등원 같은건 어떻게 적은거지? 비고는 왼쪽에 뜨던데"
+    - 답변: "3.3첫등원" = 결제 특이사항(payment.memo), PaymentModal에서 입력한 것 → "지난달: 3.3첫등원" 형식으로 오른쪽 표시
+    - msg 622: "없애자" (DISCUSS 기능 제거 확정)
+    - msg 623: "왼쪽에서 오른쪽 당겨서 비고쓰는 란도 만들고 색깔 형광펜칠도 만들자 한 3개 색깔정도로 뭔가 표시할 수있게"
+  - **작업 내역**:
+    - DISCUSS 제거: `toggleDiscuss`, `hasDiscuss`, `has_discuss` 전부 코드/타입/agent filter prompt에서 삭제
+    - 스와이프 방향 스왑: 오른쪽 드래그(+MEMO_W=200px) → 왼쪽 패널(비고 편집 + 색상 피커), 왼쪽 드래그(-PAY_W=150px) → 오른쪽 패널(결제메모 편집)
+    - 핸들러: `handleSaveMemo`(student.memo + memo_color PUT), `handleSavePayMemo`(payment.memo PUT), `openOffset` 헬퍼
+    - 형광펜 색상 3종: yellow/green/red. `memoHighlight` 조건부 클래스로 비고 텍스트 하이라이트
+    - DB 마이그레이션: `ALTER TABLE tuition_students ADD COLUMN memo_color text`
+    - API: `/api/students/[id]` PUT에 `memo_color` 받기 추가, `has_discuss` 제거
+    - 타입: `Student.memo_color?: 'yellow'|'green'|'red'|null`, `has_discuss` 제거
+    - StudentDetailModal: 모달 내 비고 인라인 input + 색상 3종 피커 (`handleSaveMemo` 저장 시 flash 피드백)
+  - **확인**: tsc/build 통과, rtk proxy로 full build 성공
+  - 다음: 커밋 + 배포
+
+- **일시**: 2026-04-18 23:15 (완료, 커밋 9af1d73) — Navbar sticky → fixed 전환 (msg 611)
   - **요청**: "시로고침 저거 내리면 맨위에 원비관리 줄부터 따라내려오는데 그거는 위에고정해줄 수 없어 아래로 당기면 너무 많이 당겨야해. 그리고 새록침이 페이지 새로고침 맞아?"
   - **답변 1**: pull-to-refresh는 `fetchData()` → `globalMutate()` 호출 = SWR 재fetch. 페이지 전체 리로드 아님.
   - **답변 2 (수정)**:

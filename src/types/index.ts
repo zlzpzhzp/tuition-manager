@@ -44,8 +44,8 @@ export interface Student {
   withdrawal_date?: string | null
   custom_fee?: number | null
   payment_due_day?: number | null
-  has_discuss?: boolean
   memo?: string
+  memo_color?: 'yellow' | 'green' | 'red' | null
   created_at: string
   class?: Class
 }

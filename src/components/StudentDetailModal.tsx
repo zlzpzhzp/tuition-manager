@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { motion } from 'framer-motion'
-import { X, Pencil, Trash2, Plus, CreditCard, Calculator, LogOut } from 'lucide-react'
+import { X, Pencil, Trash2, Plus, CreditCard, Calculator, LogOut, Check } from 'lucide-react'
 import type { Student, Payment, Grade, Class } from '@/types'
 import { getStudentFee, calcRefund, parseClassDays, DAY_LABELS, PAYMENT_METHOD_LABELS, CASH_RECEIPT_LABELS, getPaymentStatus, PAYMENT_STATUS_LABELS, PAYMENT_STATUS_COLORS } from '@/types'
 import StudentModal from '@/components/StudentModal'
@@ -25,6 +25,10 @@ export default function StudentDetailModal({ studentId, onClose, onChange }: Pro
   const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [showRefundCalc, setShowRefundCalc] = useState(false)
   const [refundDate, setRefundDate] = useState(getTodayString())
+  const [memoValue, setMemoValue] = useState('')
+  const [memoColor, setMemoColor] = useState<'yellow' | 'green' | 'red' | null>(null)
+  const [memoSaving, setMemoSaving] = useState(false)
+  const [memoSavedFlash, setMemoSavedFlash] = useState(false)
 
   const fetchData = useCallback(async () => {
     const [studentResult, paymentsResult] = await Promise.all([
@@ -37,8 +41,22 @@ export default function StudentDetailModal({ studentId, onClose, onChange }: Pro
     }
     setStudent(studentResult.data)
     setPayments(paymentsResult.data ?? [])
+    setMemoValue(studentResult.data?.memo ?? '')
+    setMemoColor(studentResult.data?.memo_color ?? null)
     setLoading(false)
   }, [studentId])
+
+  const handleSaveMemo = async () => {
+    setMemoSaving(true)
+    const memo = memoValue.trim() || null
+    const { error } = await safeMutate(`/api/students/${studentId}`, 'PUT', { memo, memo_color: memoColor })
+    setMemoSaving(false)
+    if (error) { alert(`저장 실패: ${error}`); return }
+    setMemoSavedFlash(true)
+    setTimeout(() => setMemoSavedFlash(false), 1200)
+    await fetchData()
+    notifyChange()
+  }
 
   const ensureGrades = useCallback(async () => {
     if (grades.length > 0) return
@@ -203,6 +221,46 @@ export default function StudentDetailModal({ studentId, onClose, onChange }: Pro
                     <p className="font-medium">{student.parent_phone}</p>
                   </div>
                 )}
+              </div>
+
+              {/* 비고 인라인 편집 */}
+              <div className="mt-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-[var(--text-4)]">비고</span>
+                  <div className="flex items-center gap-2">
+                    {(['yellow', 'green', 'red'] as const).map(c => {
+                      const dot = c === 'yellow' ? 'bg-yellow-400' : c === 'green' ? 'bg-green-400' : 'bg-red-400'
+                      const active = memoColor === c
+                      return (
+                        <button
+                          key={c}
+                          type="button"
+                          onClick={() => setMemoColor(active ? null : c)}
+                          className={`w-4 h-4 rounded-full ${dot} ${active ? 'ring-2 ring-white/80' : 'opacity-50'}`}
+                          aria-label={`색상 ${c}`}
+                        />
+                      )
+                    })}
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={memoValue}
+                    onChange={e => setMemoValue(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') handleSaveMemo() }}
+                    placeholder="학생에 대한 메모"
+                    className="flex-1 px-3 py-2 text-sm border border-[var(--border)] rounded-lg bg-[var(--bg)] focus:outline-none focus:ring-1 focus:ring-[var(--blue)]"
+                  />
+                  <button
+                    onClick={handleSaveMemo}
+                    disabled={memoSaving}
+                    className={`p-2 rounded-lg text-white shrink-0 transition-all ${memoSavedFlash ? 'bg-[var(--green)] scale-110' : 'bg-[var(--blue)] hover:opacity-80'}`}
+                    aria-label="비고 저장"
+                  >
+                    <Check className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
 
               {student.withdrawal_date ? (
