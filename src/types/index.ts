@@ -47,6 +47,8 @@ export interface Student {
   memo?: string
   memo_color?: 'yellow' | 'green' | 'red' | null
   order_index?: number
+  split_billing_parts?: number | null
+  split_billing_amounts?: number[] | null
   created_at: string
   class?: Class
 }

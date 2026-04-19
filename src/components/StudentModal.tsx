@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { motion } from 'framer-motion'
-import { X } from 'lucide-react'
+import { X, Split } from 'lucide-react'
 import type { Student, Grade, Class } from '@/types'
 import { getTodayString, formatPhone } from '@/lib/utils'
 
@@ -24,6 +24,8 @@ export default function StudentModal({ student, grades, defaultClassId, onSave, 
   const [customFee, setCustomFee] = useState(student?.custom_fee != null ? String(student.custom_fee) : '')
   const [paymentDueDay, setPaymentDueDay] = useState(student?.payment_due_day != null ? String(student.payment_due_day) : '')
   const [memo, setMemo] = useState(student?.memo ?? '')
+  const [splitParts, setSplitParts] = useState<number | null>(student?.split_billing_parts ?? null)
+  const [splitAmounts, setSplitAmounts] = useState<number[] | null>(student?.split_billing_amounts ?? null)
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
@@ -45,6 +47,8 @@ export default function StudentModal({ student, grades, defaultClassId, onSave, 
       custom_fee: customFee ? parseInt(customFee) : null,
       payment_due_day: dueDay,
       memo,
+      split_billing_parts: splitParts,
+      split_billing_amounts: splitAmounts,
     })
   }
 
@@ -182,6 +186,25 @@ export default function StudentModal({ student, grades, defaultClassId, onSave, 
               <span className="text-sm text-[var(--text-4)]">원</span>
             </div>
           </div>
+
+          {splitParts && splitAmounts && splitAmounts.length === splitParts && (
+            <div className="flex items-start gap-2 p-3 bg-[var(--blue-dim)] rounded-lg">
+              <Split className="w-4 h-4 text-[var(--blue)] shrink-0 mt-0.5" />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold text-[var(--blue)]">분할결제 설정됨</p>
+                <p className="text-xs text-[var(--text-3)] mt-0.5 break-words">
+                  {splitAmounts.map(a => a.toLocaleString()).join(' + ')} = {splitAmounts.reduce((s, a) => s + a, 0).toLocaleString()}원 ({splitParts}회 분할)
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => { setSplitParts(null); setSplitAmounts(null) }}
+                className="shrink-0 px-2 py-1 rounded-md text-xs font-semibold bg-[var(--red-dim)] text-[var(--red)] hover:opacity-80"
+              >
+                해제
+              </button>
+            </div>
+          )}
 
           <div>
             <label className="block text-sm font-medium text-[var(--text-2)] mb-1">메모</label>

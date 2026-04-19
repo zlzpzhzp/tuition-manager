@@ -243,7 +243,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
 
   // 청구서 발송 모달
   const [billSendTarget, setBillSendTarget] = useState<{ studentId: string; studentName: string; phone: string; amount: number; subject: string | null } | null>(null)
-  const [billActionTarget, setBillActionTarget] = useState<{ studentId: string; studentName: string; billId: string; amount: number; status: 'sent' | 'paid' | 'cancelled' } | null>(null)
+  const [billActionTarget, setBillActionTarget] = useState<{ studentId: string; studentName: string; phone: string; billId: string; amount: number; status: 'sent' | 'paid' | 'cancelled' } | null>(null)
   const [bulkBillTarget, setBulkBillTarget] = useState<{ cls: ClassWithStudents | null; className: string; targets: BulkBillTarget[]; studentClsMap?: Map<string, ClassWithStudents> } | null>(null)
 
   // 청구서 현황 (결제선생 발송/결제/취소 상태)
@@ -432,6 +432,20 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
     const phone = student.parent_phone || student.phone || ''
     const fee = getStudentFee(student, cls)
     if (!phone || fee <= 0) return
+
+    // 분할결제 설정된 학생은 저장된 금액 그대로 N개 발송
+    if (student.split_billing_parts && student.split_billing_amounts && student.split_billing_amounts.length === student.split_billing_parts) {
+      await safeMutate('/api/payssam/split-send', 'POST', {
+        studentId: student.id,
+        studentName: student.name,
+        phone: phone.replace(/-/g, ''),
+        billingMonth: selectedMonth,
+        amounts: student.split_billing_amounts,
+        persist: false,
+      })
+      return
+    }
+
     await safeMutate('/api/payssam/send', 'POST', {
       studentId: student.id,
       studentName: student.name,
@@ -1641,6 +1655,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                                               setBillActionTarget({
                                                 studentId: student.id,
                                                 studentName: student.name,
+                                                phone: student.parent_phone || student.phone || '',
                                                 billId: bill.bill_id,
                                                 amount: bill.amount,
                                                 status: 'paid',
@@ -1680,6 +1695,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                                             setBillActionTarget({
                                               studentId: student.id,
                                               studentName: student.name,
+                                              phone: student.parent_phone || student.phone || '',
                                               billId: bill.bill_id,
                                               amount: bill.amount,
                                               status: billStatus,
@@ -1860,10 +1876,13 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
 
       {billActionTarget && (
         <BillActionModal
+          studentId={billActionTarget.studentId}
           studentName={billActionTarget.studentName}
+          phone={billActionTarget.phone}
           billId={billActionTarget.billId}
           amount={billActionTarget.amount}
           status={billActionTarget.status}
+          billingMonth={selectedMonth}
           onClose={() => setBillActionTarget(null)}
           onSuccess={() => { fetchData(); mutateBills() }}
         />
