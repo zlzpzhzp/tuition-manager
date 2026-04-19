@@ -3,7 +3,8 @@ import { supabase } from '@/lib/supabase'
 import { resendBill, readBill } from '@/lib/payssam'
 
 // Vercel Cron 전용 엔드포인트. CRON_SECRET으로 보호.
-// 매일 09:00 KST 실행 — 미결제 PaySsam 청구서를 3일 간격으로 최대 3회 재발송.
+// 매일 15:00 KST(06:00 UTC) 실행 — 미결제 PaySsam 청구서를 5일 간격으로 최대 3회 재발송.
+// 주말(토/일) 실행 시 스킵 → 실질 발송은 월~금 15:00 KST.
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get('authorization')
   const expected = `Bearer ${process.env.CRON_SECRET}`
@@ -12,9 +13,17 @@ export async function GET(request: NextRequest) {
   }
 
   const now = new Date()
-  const threeDaysAgoISO = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000).toISOString()
 
-  // sent 상태 + (재발송 없음 | 마지막 재발송 3일 이상 경과) + resend_count < 3
+  // 주말 스킵 (KST 기준 요일 판정). Sat=6, Sun=0
+  const kstNow = new Date(now.getTime() + 9 * 60 * 60 * 1000)
+  const kstDay = kstNow.getUTCDay()
+  if (kstDay === 0 || kstDay === 6) {
+    return NextResponse.json({ ok: true, skipped: 'weekend', kst_day: kstDay, at: now.toISOString() })
+  }
+
+  const fiveDaysAgoISO = new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString()
+
+  // sent 상태 + (재발송 없음 | 마지막 재발송 5일 이상 경과) + resend_count < 3
   const { data: candidates, error } = await supabase
     .from('tuition_bill_history')
     .select('bill_id, amount, student_id, billing_month, resend_count, last_resend_at, sent_at')
@@ -32,7 +41,7 @@ export async function GET(request: NextRequest) {
   for (const bill of candidates || []) {
     summary.checked++
     const lastActionAt = bill.last_resend_at || bill.sent_at
-    if (lastActionAt && new Date(lastActionAt) > new Date(threeDaysAgoISO)) {
+    if (lastActionAt && new Date(lastActionAt) > new Date(fiveDaysAgoISO)) {
       summary.skipped++
       continue
     }
