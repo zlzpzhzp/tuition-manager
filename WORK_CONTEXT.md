@@ -3,7 +3,22 @@
 > 이 파일은 Claude 세션 간 작업 연속성을 위한 컨텍스트 추적 파일입니다.
 > 작업 중 수시로 업데이트하고, 커밋 시 함께 포함시킵니다.
 
-## 현재 상태: 필터 드롭 깜빡임 제거 + 필터별 일괄발송 배찌 구현 (de6bbb5)
+## 현재 상태: 필터 드롭 깜빡임 완전 제거 + 테스트 모드 해제 (74fb610)
+
+### 2026-04-19 17:30 (완료, 74fb610)
+- msg 869 "아직도 깜빡거리긴해 수정하고 이제 테스트 모드 종료해"
+- ① 깜빡임 재추정 원인: 행 opacity 스태거 페이드가 여러 fade-in 이벤트를 발생시켜 누적 flicker로 보임
+  - motion.button → 일반 button 복귀
+  - 행 opacity animate/transition 제거 (컨테이너 overflow-hidden 클리핑으로 자연 reveal)
+  - 주차 기간 라벨 AnimatePresence 제거, 정적 렌더
+  - 남은 애니메이션: 컨테이너 height(0.5s) + 현재행 chevron 회전(0.44s)
+- ② 테스트 모드 해제
+  - src/lib/payssam.ts TEST_MODE true → false
+  - BASE_URL은 stg 유지 (운영 URL 전환 별도 지시)
+- 파일: src/app/payments/page.tsx (148-176), src/lib/payssam.ts
+- 배포: dpl_8gxFqqAGHcZpMrQy41CSvqZAhb4D
+
+### 2026-04-19 16:55 (완료, de6bbb5) — 필터 드롭 깜빡임 + 필터별 일괄발송 배찌 구현
 
 ### 2026-04-19 16:55 (완료, de6bbb5)
 - msg 865 "원하는대로 다 구현됐는데 드롭된다음에 깜빡이네" + msg 866 "주차별 일괄 구현 안된거야?"
