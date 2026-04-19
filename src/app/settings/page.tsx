@@ -12,18 +12,24 @@ const SUBJECT_COLORS = ['bg-[#1c2d45] text-[#5b9cf5]', 'bg-[#1a3328] text-[#34d3
 
 type GradeWithClasses = import('@/types').Grade & { classes: (Class & { students?: Student[] })[] }
 
+const SUBJECT_TABS = ['수학', '영어'] as const
+const CLASS_NAME_PRESETS = ['H', 'S', 'A', 'N', 'K', '기하', '기하(원장)', '기하(류)', '확통', '미적분', '미적/확통'] as const
+
 export default function SettingsPage() {
   const router = useRouter()
   const { data: grades = [], isLoading: loading } = useGrades<GradeWithClasses[]>()
   const { data: teachers = [] } = useTeachers<Teacher[]>()
+  const [selectedSubject, setSelectedSubject] = useState<string>('수학')
   const [addingClassToGrade, setAddingClassToGrade] = useState<string | null>(null)
   const [newClassName, setNewClassName] = useState('')
+  const [newClassNameCustom, setNewClassNameCustom] = useState(false)
   const [newClassFee, setNewClassFee] = useState('')
   const [newClassSubject, setNewClassSubject] = useState('')
   const [newClassDays, setNewClassDays] = useState<number[]>([])
   const [newClassTeacherId, setNewClassTeacherId] = useState('')
   const [editingClassId, setEditingClassId] = useState<string | null>(null)
   const [editClassName, setEditClassName] = useState('')
+  const [editClassNameCustom, setEditClassNameCustom] = useState(false)
   const [editClassFee, setEditClassFee] = useState('')
   const [editClassSubject, setEditClassSubject] = useState('')
   const [editClassDays, setEditClassDays] = useState<number[]>([])
@@ -100,11 +106,12 @@ export default function SettingsPage() {
 
   // ─── 반 추가 폼 초기화 ───
   const resetClassForm = () => {
-    setNewClassName(''); setNewClassFee(''); setNewClassSubject(''); setNewClassDays([]); setNewClassTeacherId('')
+    setNewClassName(''); setNewClassNameCustom(false); setNewClassFee(''); setNewClassSubject(''); setNewClassDays([]); setNewClassTeacherId('')
   }
 
   const openClassFormForGrade = (gradeId: string) => {
     resetClassForm()
+    setNewClassSubject(selectedSubject)
     setAddingClassToGrade(gradeId)
   }
 
@@ -189,14 +196,11 @@ export default function SettingsPage() {
     fetchGrades()
   }
 
-  const swapClassOrder = async (gradeId: string, idx: number, dir: -1 | 1) => {
-    const grade = grades.find(g => g.id === gradeId)
-    if (!grade) return
-    const classes = grade.classes
+  const swapClassOrder = async (classList: (Class & { students?: Student[] })[], idx: number, dir: -1 | 1) => {
     const targetIdx = idx + dir
-    if (targetIdx < 0 || targetIdx >= classes.length) return
-    const a = classes[idx]
-    const b = classes[targetIdx]
+    if (targetIdx < 0 || targetIdx >= classList.length) return
+    const a = classList[idx]
+    const b = classList[targetIdx]
     // swap order_index
     await Promise.all([
       safeMutate(`/api/classes/${a.id}`, 'PUT', { order_index: b.order_index }),
@@ -258,6 +262,13 @@ export default function SettingsPage() {
 
   const formatFee = (fee: number) => fee.toLocaleString() + '원'
 
+  const allSubjectsInUse = useMemo(() => {
+    const set = new Set<string>()
+    grades.forEach(g => g.classes.forEach(c => { if (c.subject) set.add(c.subject) }))
+    SUBJECT_TABS.forEach(s => set.add(s))
+    return Array.from(set)
+  }, [grades])
+
   if (loading) return (
     <div className="animate-pulse">
       <div className="h-6 bg-gray-200 rounded w-32 mb-6"></div>
@@ -282,31 +293,77 @@ export default function SettingsPage() {
     <div>
       <h1 className="text-[22px] font-bold tracking-tight mb-6">과목/반 설정</h1>
 
+      {/* 과목 탭 */}
+      <div className="flex gap-1.5 mb-4 overflow-x-auto pb-1 -mx-1 px-1">
+        {allSubjectsInUse.map(subject => (
+          <button
+            key={subject}
+            onClick={() => setSelectedSubject(subject)}
+            className={`shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold transition-colors ${
+              selectedSubject === subject
+                ? 'bg-[var(--blue)] text-white'
+                : 'bg-[var(--bg-elevated)] text-[var(--text-3)] hover:bg-[var(--bg-card-hover)]'
+            }`}
+          >
+            {subject}
+          </button>
+        ))}
+      </div>
+
       {/* 학년별 반 관리 */}
       {grades.length === 0 ? (
         <div className="text-center py-12 text-[var(--text-4)]">반을 추가해주세요</div>
       ) : (
         <div className="space-y-2 mb-6">
           {grades.map((grade) => {
-            const totalStudents = grade.classes.reduce((sum, cls) => sum + getActiveStudents(cls.students ?? []).length, 0)
+            const classesInSubject = grade.classes.filter(c => (c.subject ?? '') === selectedSubject)
+            const totalStudents = classesInSubject.reduce((sum, cls) => sum + getActiveStudents(cls.students ?? []).length, 0)
             return (
               <div key={grade.id} className="card overflow-hidden">
                 <div className="flex items-center gap-2 px-4 py-3">
                   <span className="flex-1 font-semibold text-sm">{grade.name}</span>
-                  <span className="text-xs text-[var(--text-4)] mr-1">{grade.classes.length}개 반</span>
+                  <span className="text-xs text-[var(--text-4)] mr-1">{classesInSubject.length}개 반</span>
                   <span className="text-xs text-[var(--text-4)]">{totalStudents}명</span>
                 </div>
 
                 <div className="border-t border-[var(--border)] bg-[var(--bg-card-hover)]/50 px-4 py-3">
-                  {grade.classes.length > 0 && (
+                  {classesInSubject.length > 0 && (
                     <div className="space-y-2 mb-3">
-                      {grade.classes.map((cls, clsIdx) => (
+                      {classesInSubject.map((cls, clsIdx) => (
                         <div key={cls.id} className="flex items-center gap-1.5 sm:gap-2 bg-[var(--bg-card)] rounded-lg px-2 sm:px-3 py-2">
                           {editingClassId === cls.id ? (
                             <div className="flex-1 min-w-0 space-y-2">
                               <div className="flex items-center gap-1.5 min-w-0">
-                                <input type="text" list="subject-list" value={editClassSubject} onChange={e => setEditClassSubject(e.target.value)} placeholder="과목" className="w-14 shrink-0 px-1.5 py-1 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)]" />
-                                <input type="text" value={editClassName} onChange={e => setEditClassName(e.target.value)} className="flex-1 min-w-0 px-2 py-1 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)]" placeholder="반 이름" autoFocus />
+                                <select
+                                  value={SUBJECT_TABS.includes(editClassSubject as typeof SUBJECT_TABS[number]) ? editClassSubject : '__custom__'}
+                                  onChange={e => {
+                                    if (e.target.value === '__custom__') { setEditClassSubject(''); return }
+                                    setEditClassSubject(e.target.value)
+                                  }}
+                                  className="w-[72px] shrink-0 px-1.5 py-1 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)] bg-[var(--bg-card)]"
+                                >
+                                  {SUBJECT_TABS.map(s => <option key={s} value={s}>{s}</option>)}
+                                  <option value="__custom__">직접입력</option>
+                                </select>
+                                {!SUBJECT_TABS.includes(editClassSubject as typeof SUBJECT_TABS[number]) && (
+                                  <input type="text" value={editClassSubject} onChange={e => setEditClassSubject(e.target.value)} placeholder="과목" className="w-14 shrink-0 px-1.5 py-1 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)]" />
+                                )}
+                                {editClassNameCustom ? (
+                                  <input type="text" value={editClassName} onChange={e => setEditClassName(e.target.value)} className="flex-1 min-w-0 px-2 py-1 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)]" placeholder="반 이름" autoFocus />
+                                ) : (
+                                  <select
+                                    value={CLASS_NAME_PRESETS.includes(editClassName as typeof CLASS_NAME_PRESETS[number]) ? editClassName : '__custom__'}
+                                    onChange={e => {
+                                      if (e.target.value === '__custom__') { setEditClassNameCustom(true); setEditClassName(''); return }
+                                      setEditClassName(e.target.value)
+                                    }}
+                                    className="flex-1 min-w-0 px-2 py-1 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)] bg-[var(--bg-card)]"
+                                  >
+                                    <option value="">반 선택...</option>
+                                    {CLASS_NAME_PRESETS.map(n => <option key={n} value={n}>{n}</option>)}
+                                    <option value="__custom__">직접입력</option>
+                                  </select>
+                                )}
                                 <button onClick={() => updateClass(cls.id)} className="shrink-0 text-green-600 p-1" aria-label="저장"><Check className="w-4 h-4" /></button>
                                 <button onClick={() => setEditingClassId(null)} className="shrink-0 text-[var(--text-4)] p-1" aria-label="취소"><X className="w-4 h-4" /></button>
                               </div>
@@ -334,7 +391,7 @@ export default function SettingsPage() {
                               {/* 순서 변경 버튼 */}
                               <div className="flex flex-col shrink-0">
                                 <button
-                                  onClick={() => swapClassOrder(grade.id, clsIdx, -1)}
+                                  onClick={() => swapClassOrder(classesInSubject, clsIdx, -1)}
                                   disabled={clsIdx === 0}
                                   className="p-0 text-[var(--text-4)] hover:text-[var(--text-3)] disabled:opacity-20 disabled:hover:text-[var(--text-4)]"
                                   aria-label="위로"
@@ -342,8 +399,8 @@ export default function SettingsPage() {
                                   <ChevronUp className="w-3.5 h-3.5" />
                                 </button>
                                 <button
-                                  onClick={() => swapClassOrder(grade.id, clsIdx, 1)}
-                                  disabled={clsIdx === grade.classes.length - 1}
+                                  onClick={() => swapClassOrder(classesInSubject, clsIdx, 1)}
+                                  disabled={clsIdx === classesInSubject.length - 1}
                                   className="p-0 text-[var(--text-4)] hover:text-[var(--text-3)] disabled:opacity-20 disabled:hover:text-[var(--text-4)]"
                                   aria-label="아래로"
                                 >
@@ -381,15 +438,44 @@ export default function SettingsPage() {
                   {addingClassToGrade === grade.id ? (
                     <div className="space-y-2">
                       <div className="flex items-center gap-1.5 min-w-0">
-                        <input
-                          type="text" list="subject-list" value={newClassSubject} onChange={e => setNewClassSubject(e.target.value)}
-                          placeholder="과목" className="w-14 shrink-0 px-1.5 py-1.5 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
-                        />
-                        <input
-                          type="text" value={newClassName} onChange={e => setNewClassName(e.target.value)}
-                          onKeyDown={e => e.key === 'Enter' && addClass()}
-                          placeholder="반 이름" className="flex-1 min-w-0 px-2 py-1.5 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)]" autoFocus
-                        />
+                        <select
+                          value={SUBJECT_TABS.includes(newClassSubject as typeof SUBJECT_TABS[number]) ? newClassSubject : '__custom__'}
+                          onChange={e => {
+                            if (e.target.value === '__custom__') { setNewClassSubject(''); return }
+                            setNewClassSubject(e.target.value)
+                          }}
+                          className="w-[72px] shrink-0 px-1.5 py-1.5 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)] bg-[var(--bg-card)]"
+                        >
+                          {SUBJECT_TABS.map(s => <option key={s} value={s}>{s}</option>)}
+                          <option value="__custom__">직접입력</option>
+                        </select>
+                        {!SUBJECT_TABS.includes(newClassSubject as typeof SUBJECT_TABS[number]) && (
+                          <input
+                            type="text" value={newClassSubject} onChange={e => setNewClassSubject(e.target.value)}
+                            placeholder="과목" className="w-14 shrink-0 px-1.5 py-1.5 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
+                          />
+                        )}
+                        {newClassNameCustom ? (
+                          <input
+                            type="text" value={newClassName} onChange={e => setNewClassName(e.target.value)}
+                            onKeyDown={e => e.key === 'Enter' && addClass()}
+                            placeholder="반 이름" className="flex-1 min-w-0 px-2 py-1.5 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)]" autoFocus
+                          />
+                        ) : (
+                          <select
+                            value={CLASS_NAME_PRESETS.includes(newClassName as typeof CLASS_NAME_PRESETS[number]) ? newClassName : '__custom__'}
+                            onChange={e => {
+                              if (e.target.value === '__custom__') { setNewClassNameCustom(true); setNewClassName(''); return }
+                              setNewClassName(e.target.value)
+                            }}
+                            className="flex-1 min-w-0 px-2 py-1.5 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)] bg-[var(--bg-card)]"
+                            autoFocus
+                          >
+                            <option value="">반 선택...</option>
+                            {CLASS_NAME_PRESETS.map(n => <option key={n} value={n}>{n}</option>)}
+                            <option value="__custom__">직접입력</option>
+                          </select>
+                        )}
                         <button onClick={() => addClass()} className="shrink-0 text-green-600 p-1" aria-label="저장"><Check className="w-4 h-4" /></button>
                         <button onClick={() => { setAddingClassToGrade(null); resetClassForm() }} className="shrink-0 text-[var(--text-4)] p-1" aria-label="취소"><X className="w-4 h-4" /></button>
                       </div>

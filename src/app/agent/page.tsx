@@ -25,7 +25,7 @@ const TOOL_LABELS: Record<string, string> = {
 const EXAMPLES = [
   '이번달 미납 학생 알려줘',
   '고1 납부현황 보여줘',
-  '중1 수학H반 학생 누구야?',
+  '중1 H반 학생 누구야?',
   '3월 전체 납부율 어때?',
 ]
 
