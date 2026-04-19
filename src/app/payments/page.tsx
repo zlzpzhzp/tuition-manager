@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef, useMemo, useEffect, useLayoutEffect } from 'react'
 import { createPortal } from 'react-dom'
-import { ChevronLeft, ChevronRight, Check, ChevronDown, ClipboardList, Download, Plus, Send, Mail, Loader2, CreditCard, Banknote, ArrowLeftRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Check, ChevronDown, ClipboardList, Download, Plus, Send, Mail, Loader2, CreditCard, Banknote, ArrowLeftRight, X } from 'lucide-react'
 import type { Student, Payment, PaymentMethod, GradeWithClasses } from '@/types'
 import { getStudentFee, getPaymentStatus, PAYMENT_STATUS_LABELS, PAYMENT_STATUS_COLORS, PAYMENT_METHOD_LABELS } from '@/types'
 import PaymentModal from '@/components/PaymentModal'
@@ -221,12 +221,13 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
   const [selectedPrevMemo, setSelectedPrevMemo] = useState<string | null>(null)
   const [selectedPrevMethod, setSelectedPrevMethod] = useState<PaymentMethod | null>(null)
 
-  // 스와이프
-  const [swipeOpenId, setSwipeOpenId] = useState<string | null>(null)
-  const [swipeOpenSide, setSwipeOpenSide] = useState<'left' | 'right' | null>(null)
+  // 스와이프 — 좌측(비고)은 다중 선택, 우측(결제특이사항)은 단일
+  const [selectedMemoIds, setSelectedMemoIds] = useState<Set<string>>(new Set())
+  const [swipeOpenPayId, setSwipeOpenPayId] = useState<string | null>(null)
   const [editMemoValue, setEditMemoValue] = useState('')
   const [editMemoColor, setEditMemoColor] = useState<string | null>(null)
   const [editPayMemoValue, setEditPayMemoValue] = useState('')
+  const [bulkSaving, setBulkSaving] = useState(false)
   const touchRef = useRef<{
     startX: number; startY: number; currentX: number
     id: string; el: HTMLElement
@@ -576,20 +577,21 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
   const MEMO_W = 160  // 왼쪽 비고 패널 너비 (헤더: 라벨+색상테이프+저장)
   const PAY_W = 150   // 오른쪽 결제 특이사항 패널 너비 (헤더: 배지+저장)
 
-  const openOffset = (id: string): number => {
-    if (swipeOpenId !== id) return 0
-    return swipeOpenSide === 'left' ? MEMO_W : swipeOpenSide === 'right' ? -PAY_W : 0
-  }
+  const rowOffset = useCallback((id: string): number => {
+    if (selectedMemoIds.has(id)) return MEMO_W
+    if (swipeOpenPayId === id) return -PAY_W
+    return 0
+  }, [selectedMemoIds, swipeOpenPayId])
 
   const handleTouchStart = (e: React.TouchEvent, studentId: string) => {
     if (expandedStudentId) return
     const touch = e.touches[0]
     const el = e.currentTarget as HTMLElement
-    const baseOffset = openOffset(studentId)
+    const baseOffset = rowOffset(studentId)
     touchRef.current = {
       startX: touch.clientX, startY: touch.clientY, currentX: touch.clientX,
       id: studentId, el, decided: false, isHorizontal: false,
-      baseOffset, wasOpen: swipeOpenId === studentId,
+      baseOffset, wasOpen: baseOffset !== 0,
     }
   }
 
@@ -620,13 +622,19 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
     touchRef.current.el.style.transform = `translateX(${raw}px)`
   }
 
+  const animateRowTo = (id: string, x: number) => {
+    const el = document.querySelector(`[data-swipe-row="${id}"]`) as HTMLElement | null
+    if (el) { el.style.transition = SPRING; el.style.transform = `translateX(${x}px)` }
+  }
+
   const handleTouchEnd = () => {
     if (!touchRef.current) return
     const { el, id, isHorizontal, startX, currentX } = touchRef.current
     const dx = currentX - startX
     const baseOffset = touchRef.current.baseOffset ?? 0
     const wasOpen = touchRef.current.wasOpen
-    const finalPos = baseOffset + dx
+    const wasMemoSelected = selectedMemoIds.has(id)
+    const wasPayOpen = swipeOpenPayId === id
 
     el.style.transition = SPRING
 
@@ -635,52 +643,67 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
       setTimeout(() => { wasSwiped.current = false }, 200)
     }
 
-    const snapClosed = () => {
-      el.style.transform = 'translateX(0)'
-      setSwipeOpenId(null)
-      setSwipeOpenSide(null)
-    }
-
     if (!isHorizontal) {
       el.style.transform = wasOpen ? `translateX(${baseOffset}px)` : 'translateX(0)'
       touchRef.current = null
       return
     }
 
-    // 열린 상태에서 닫기 — 중심 근처로 돌아오면 닫기
-    if (wasOpen && Math.abs(finalPos) < 60) {
-      snapClosed()
-      touchRef.current = null
-      return
+    // 우로 밀기
+    if (dx > 60) {
+      if (wasPayOpen) {
+        // 결제특이사항 닫고 비고 선택으로 전환
+        el.style.transform = `translateX(${MEMO_W}px)`
+        setSwipeOpenPayId(null)
+        const student = allStudents.find(s => s.id === id)
+        setSelectedMemoIds(prev => {
+          const next = new Set(prev); next.add(id); return next
+        })
+        if (student && selectedMemoIds.size === 0) {
+          setEditMemoValue(student.memo ?? '')
+          setEditMemoColor(student.memo_color ?? null)
+        }
+      } else if (!wasMemoSelected) {
+        // 비고 선택에 추가
+        el.style.transform = `translateX(${MEMO_W}px)`
+        const student = allStudents.find(s => s.id === id)
+        setSelectedMemoIds(prev => {
+          const next = new Set(prev); next.add(id); return next
+        })
+        // 첫 선택이면 해당 학생 값으로 초기화
+        if (student && selectedMemoIds.size === 0) {
+          setEditMemoValue(student.memo ?? '')
+          setEditMemoColor(student.memo_color ?? null)
+        }
+      } else {
+        // 이미 선택됨 → 제자리
+        el.style.transform = `translateX(${MEMO_W}px)`
+      }
     }
-
-    // 우로 밀기 → 왼쪽 패널(비고) 열기
-    if (!wasOpen && dx > 60) {
-      if (swipeOpenId && swipeOpenId !== id) {
-        const prevEl = document.querySelector(`[data-swipe-row="${swipeOpenId}"]`) as HTMLElement | null
-        if (prevEl) { prevEl.style.transition = SPRING; prevEl.style.transform = 'translateX(0)' }
+    // 좌로 밀기
+    else if (dx < -60) {
+      if (wasMemoSelected) {
+        // 비고 선택에서 해제
+        el.style.transform = 'translateX(0)'
+        setSelectedMemoIds(prev => {
+          const next = new Set(prev); next.delete(id); return next
+        })
+      } else if (wasPayOpen) {
+        // 결제특이사항 닫기
+        el.style.transform = 'translateX(0)'
+        setSwipeOpenPayId(null)
+      } else {
+        // 결제특이사항 열기 (비고 선택 전체 해제)
+        if (selectedMemoIds.size > 0) {
+          selectedMemoIds.forEach(prevId => { if (prevId !== id) animateRowTo(prevId, 0) })
+          setSelectedMemoIds(new Set())
+        }
+        el.style.transform = `translateX(-${PAY_W}px)`
+        setSwipeOpenPayId(id)
+        const sp = paymentsByStudentId.get(id) ?? []
+        const { cleanMemo } = decodePaymentMemo(sp[0]?.memo)
+        setEditPayMemoValue(cleanMemo ?? '')
       }
-      el.style.transform = `translateX(${MEMO_W}px)`
-      const student = allStudents.find(s => s.id === id)
-      if (student) {
-        setSwipeOpenId(id)
-        setSwipeOpenSide('left')
-        setEditMemoValue(student.memo ?? '')
-        setEditMemoColor(student.memo_color ?? null)
-      }
-    }
-    // 좌로 밀기 → 오른쪽 패널(결제 특이사항) 열기
-    else if (!wasOpen && dx < -60) {
-      if (swipeOpenId && swipeOpenId !== id) {
-        const prevEl = document.querySelector(`[data-swipe-row="${swipeOpenId}"]`) as HTMLElement | null
-        if (prevEl) { prevEl.style.transition = SPRING; prevEl.style.transform = 'translateX(0)' }
-      }
-      el.style.transform = `translateX(-${PAY_W}px)`
-      setSwipeOpenId(id)
-      setSwipeOpenSide('right')
-      const sp = paymentsByStudentId.get(id) ?? []
-      const { cleanMemo } = decodePaymentMemo(sp[0]?.memo)
-      setEditPayMemoValue(cleanMemo ?? '')
     }
     // 임계값 미달 → 원위치
     else {
@@ -690,13 +713,19 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
     touchRef.current = null
   }
 
+  const closeAllMemoSelections = () => {
+    selectedMemoIds.forEach(id => animateRowTo(id, 0))
+    setSelectedMemoIds(new Set())
+    setEditMemoValue('')
+    setEditMemoColor(null)
+  }
+
   const closeSwipeEdit = () => {
-    if (swipeOpenId) {
-      const el = document.querySelector(`[data-swipe-row="${swipeOpenId}"]`) as HTMLElement | null
-      if (el) { el.style.transition = SPRING; el.style.transform = 'translateX(0)' }
-      setSwipeOpenId(null)
-      setSwipeOpenSide(null)
+    if (swipeOpenPayId) {
+      animateRowTo(swipeOpenPayId, 0)
+      setSwipeOpenPayId(null)
     }
+    if (selectedMemoIds.size > 0) closeAllMemoSelections()
   }
 
   const handleSaveMemo = async (studentId: string) => {
@@ -704,6 +733,21 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
     const { error } = await safeMutate(`/api/students/${studentId}`, 'PUT', { memo, memo_color: editMemoColor })
     if (error) { alert('저장 실패'); return }
     closeSwipeEdit()
+    await fetchData()
+  }
+
+  const handleBulkSaveMemo = async () => {
+    if (selectedMemoIds.size === 0) return
+    setBulkSaving(true)
+    const memo = editMemoValue.trim() || null
+    const ids = Array.from(selectedMemoIds)
+    const results = await Promise.all(
+      ids.map(id => safeMutate(`/api/students/${id}`, 'PUT', { memo, memo_color: editMemoColor }))
+    )
+    setBulkSaving(false)
+    const failed = results.filter(r => r.error).length
+    if (failed > 0) { alert(`${failed}건 저장 실패`); return }
+    closeAllMemoSelections()
     await fetchData()
   }
 
@@ -874,7 +918,71 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
   )
 
   return (
-    <div ref={containerRef} onClick={() => { if (swipeOpenId) closeSwipeEdit() }}>
+    <div ref={containerRef} onClick={() => { if (selectedMemoIds.size > 0 || swipeOpenPayId) closeSwipeEdit() }}>
+      {/* 다중 선택 상단 툴바 — 2개 이상 선택 시 고정 */}
+      <AnimatePresence>
+        {selectedMemoIds.size >= 2 && (
+          <motion.div
+            key="bulk-toolbar"
+            initial={{ y: -80, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: -80, opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 420, damping: 34, mass: 0.8 }}
+            className="fixed top-0 left-0 right-0 z-50 bg-[var(--bg-elevated)] border-b border-[var(--border)] shadow-lg"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="max-w-3xl mx-auto px-3 py-2 flex items-center gap-2">
+              <button
+                onClick={closeAllMemoSelections}
+                className="p-1.5 rounded-full hover:bg-[var(--bg-card-hover)] text-[var(--text-3)] shrink-0"
+                aria-label="선택 취소"
+              >
+                <X className="w-4 h-4" />
+              </button>
+              <span className="text-xs font-bold text-[var(--text-1)] tabular-nums shrink-0">
+                {selectedMemoIds.size}명
+              </span>
+              <div className="flex items-center gap-1 shrink-0">
+                {(['yellow', 'green', 'red'] as const).map(c => {
+                  const bg = c === 'yellow' ? 'bg-[var(--orange-dim)]' : c === 'green' ? 'bg-[var(--paid-bg)]' : 'bg-[var(--unpaid-bg)]'
+                  const active = editMemoColor === c
+                  return (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => setEditMemoColor(active ? null : c)}
+                      className={`w-7 h-3.5 rounded-[2px] ${bg} ${active ? 'ring-1 ring-white/70 shadow-md' : 'opacity-60'}`}
+                      style={{ transform: 'skewX(-10deg)' }}
+                      aria-label={`색상 ${c}`}
+                    />
+                  )
+                })}
+              </div>
+              <input
+                type="text"
+                value={editMemoValue}
+                onChange={e => setEditMemoValue(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') handleBulkSaveMemo() }}
+                placeholder="비고 (일괄 적용)"
+                className="flex-1 min-w-0 px-2.5 py-1 rounded-lg text-xs border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-1)] focus:outline-none focus:ring-1 focus:ring-[var(--blue)] placeholder-[var(--text-4)]"
+              />
+              <button
+                onClick={handleBulkSaveMemo}
+                disabled={bulkSaving}
+                className="p-1.5 bg-[var(--blue)] hover:opacity-80 text-white rounded-full shrink-0 shadow-sm transition-opacity disabled:opacity-50"
+                aria-label="일괄 저장"
+              >
+                {bulkSaving ? (
+                  <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <Check className="w-3.5 h-3.5" />
+                )}
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* 월 네비게이션 — 스크롤하면 사라짐 */}
       <div className="-mx-4 px-4 pt-3 pb-1 -mt-6">
         {/* Pull-to-refresh 인디케이터 */}
@@ -1160,8 +1268,12 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                       const isSubmitting = inlineSubmitting === student.id
                       const { cleanMemo } = decodePaymentMemo(currentMemo)
                       const hasMemo = !!(prevMemo || cleanMemo)
-                      const isSwipeOpen = swipeOpenId === student.id
-                      const openSide = isSwipeOpen ? swipeOpenSide : null
+                      const isMemoSelected = selectedMemoIds.has(student.id)
+                      const isPayOpen = swipeOpenPayId === student.id
+                      const isSwipeOpen = isMemoSelected || isPayOpen
+                      const openSide: 'left' | 'right' | null = isMemoSelected ? 'left' : isPayOpen ? 'right' : null
+                      const isMultiSelect = selectedMemoIds.size >= 2
+                      const isSoleMemoSelection = isMemoSelected && selectedMemoIds.size === 1
                       const memoColor = student.memo_color ?? null
                       const memoHighlight = memoColor === 'yellow' ? 'bg-[var(--orange-dim)] text-[var(--orange)] px-1.5 py-0.5 rounded-full font-bold'
                         : memoColor === 'green' ? 'bg-[var(--paid-bg)] text-[var(--paid-text)] px-1.5 py-0.5 rounded-full font-bold'
@@ -1173,28 +1285,39 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                         <div key={student.id} data-student-row={student.id} className="relative">
                           {/* 위층: 행 높이 (좌/우 패널 헤더 + 메인 콘텐츠) */}
                           <div className="relative overflow-hidden">
-                            {/* 왼쪽 패널 헤더 — 비고 라벨 + 색상 테이프 + 저장 */}
+                            {/* 왼쪽 패널 헤더 — 비고 라벨 + 색상 테이프 + 저장 (다중선택 시 체크마크만) */}
                             <div data-edit-panel className="absolute inset-y-0 left-0 w-[160px] flex items-center gap-1.5 px-2 bg-[var(--bg-elevated)]" onClick={e => e.stopPropagation()}>
-                              <span className="text-[10px] font-bold text-[var(--text-3)] shrink-0">비고</span>
-                              <div className="flex items-center gap-1 shrink-0">
-                                {(['yellow', 'green', 'red'] as const).map(c => {
-                                  const bg = c === 'yellow' ? 'bg-[var(--orange-dim)]' : c === 'green' ? 'bg-[var(--paid-bg)]' : 'bg-[var(--unpaid-bg)]'
-                                  const active = editMemoColor === c
-                                  return (
-                                    <button
-                                      key={c}
-                                      type="button"
-                                      onClick={() => setEditMemoColor(active ? null : c)}
-                                      className={`w-6 h-3 rounded-[2px] ${bg} ${active ? 'ring-1 ring-white/70 shadow-md' : 'opacity-60'}`}
-                                      style={{ transform: 'skewX(-10deg)' }}
-                                      aria-label={`색상 ${c}`}
-                                    />
-                                  )
-                                })}
-                              </div>
-                              <button onClick={() => handleSaveMemo(student.id)} className="ml-auto p-1.5 bg-[var(--blue)] hover:opacity-80 text-white rounded-full shrink-0 shadow-sm transition-opacity" aria-label="저장">
-                                <Check className="w-3.5 h-3.5" />
-                              </button>
+                              {isMultiSelect ? (
+                                <>
+                                  <div className="w-5 h-5 rounded-full bg-[var(--blue)] flex items-center justify-center shrink-0">
+                                    <Check className="w-3 h-3 text-white" strokeWidth={3} />
+                                  </div>
+                                  <span className="text-[11px] font-semibold text-[var(--text-2)] truncate">선택됨</span>
+                                </>
+                              ) : (
+                                <>
+                                  <span className="text-[10px] font-bold text-[var(--text-3)] shrink-0">비고</span>
+                                  <div className="flex items-center gap-1 shrink-0">
+                                    {(['yellow', 'green', 'red'] as const).map(c => {
+                                      const bg = c === 'yellow' ? 'bg-[var(--orange-dim)]' : c === 'green' ? 'bg-[var(--paid-bg)]' : 'bg-[var(--unpaid-bg)]'
+                                      const active = editMemoColor === c
+                                      return (
+                                        <button
+                                          key={c}
+                                          type="button"
+                                          onClick={() => setEditMemoColor(active ? null : c)}
+                                          className={`w-6 h-3 rounded-[2px] ${bg} ${active ? 'ring-1 ring-white/70 shadow-md' : 'opacity-60'}`}
+                                          style={{ transform: 'skewX(-10deg)' }}
+                                          aria-label={`색상 ${c}`}
+                                        />
+                                      )
+                                    })}
+                                  </div>
+                                  <button onClick={() => handleSaveMemo(student.id)} className="ml-auto p-1.5 bg-[var(--blue)] hover:opacity-80 text-white rounded-full shrink-0 shadow-sm transition-opacity" aria-label="저장">
+                                    <Check className="w-3.5 h-3.5" />
+                                  </button>
+                                </>
+                              )}
                             </div>
 
                             {/* 오른쪽 패널 헤더 — "결제특이사항" 배지 + 저장 */}
@@ -1454,8 +1577,8 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                             )}
                             </div>
                           </div>
-                          {/* 아래층: 입력 공간 (스와이프 열렸을 때만) */}
-                          {isSwipeOpen && openSide === 'left' && (
+                          {/* 아래층: 입력 공간 — 단일 선택일 때만 (다중선택은 상단 툴바) */}
+                          {isSoleMemoSelection && (
                             <div className="px-3 py-2 bg-[var(--bg-elevated)] border-t border-[var(--border)]" onClick={e => e.stopPropagation()}>
                               <textarea
                                 value={editMemoValue}
