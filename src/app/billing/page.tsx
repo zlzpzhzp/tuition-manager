@@ -825,17 +825,16 @@ function ActionRow({ icon, color, bg, label, count, expanded, onToggle, children
   )
 }
 
-function ActionItemRow({ name, detail, amount, accent, irregular, note }: {
+function ActionItemRow({ name, detail, amount, irregular, note }: {
   name: string
   detail: string
   amount?: number
-  accent: string
+  accent?: string
   irregular?: boolean
   note?: string | null
 }) {
   return (
     <div className="flex items-start gap-2 py-1.5 border-b border-[var(--border)]/40 last:border-b-0">
-      <span className="w-1 h-1 rounded-full shrink-0 mt-2" style={{ background: accent }} />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5 flex-wrap">
           <span className="text-sm font-medium">{name}</span>
