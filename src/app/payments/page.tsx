@@ -127,9 +127,9 @@ function FilterDropdownPortal({
               onClick={() => onSelect(key)}
               role="option"
               aria-selected={active}
-              // 주차(첫째주~넷째주)만 왼쪽정렬+pl 고정으로 첫글자 x=70 배치 → 미납/1일(센터링시 x≈58~62)보다 한글자 오른쪽
+              // 주차만 왼쪽정렬+pl 고정으로 첫글자 x=22 (유저 지시: 네글자 좌측 이동)
               className={`relative w-full flex items-center text-xs font-semibold whitespace-nowrap transition-colors ${
-                isWeek ? 'justify-start pl-[70px] gap-1' : 'justify-center gap-1'
+                isWeek ? 'justify-start pl-[22px] gap-1' : 'justify-center gap-1'
               } ${bgFor(key, active)}`}
               style={{
                 height: ROW_H,
