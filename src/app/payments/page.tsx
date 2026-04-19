@@ -158,9 +158,9 @@ function FilterDropdownPortal({
               }}
               transition={{
                 opacity: {
-                  duration: show ? 0.28 : 0.16,
+                  duration: show ? 0.22 : 0.14,
                   ease: [0.22, 1, 0.36, 1],
-                  delay: isCurrent ? 0 : show ? 0.14 + i * 0.038 : 0,
+                  delay: isCurrent ? 0 : show ? 0.1 + i * 0.028 : 0,
                 },
               }}
               style={{
@@ -179,9 +179,9 @@ function FilterDropdownPortal({
                     animate={{ opacity: 0.6 }}
                     exit={{ opacity: 0 }}
                     transition={{
-                      duration: 0.22,
+                      duration: 0.18,
                       ease: [0.22, 1, 0.36, 1],
-                      delay: isCurrent ? 0.18 : 0.2 + i * 0.038,
+                      delay: isCurrent ? 0.14 : 0.14 + i * 0.028,
                     }}
                     style={{ whiteSpace: 'nowrap' }}
                   >
@@ -267,7 +267,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
   // 청구서 발송 모달
   const [billSendTarget, setBillSendTarget] = useState<{ studentId: string; studentName: string; phone: string; amount: number; subject: string | null } | null>(null)
   const [billActionTarget, setBillActionTarget] = useState<{ studentId: string; studentName: string; billId: string; amount: number; status: 'sent' | 'paid' | 'cancelled' } | null>(null)
-  const [bulkBillTarget, setBulkBillTarget] = useState<{ cls: ClassWithStudents; className: string; targets: BulkBillTarget[] } | null>(null)
+  const [bulkBillTarget, setBulkBillTarget] = useState<{ cls: ClassWithStudents | null; className: string; targets: BulkBillTarget[]; studentClsMap?: Map<string, ClassWithStudents> } | null>(null)
 
   // 청구서 현황 (결제선생 발송/결제/취소 상태)
   const { data: bills = [], mutate: mutateBills } = useSWR<BillRecord[]>(
@@ -485,21 +485,35 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
 
   const executeBulkSend = useCallback(async () => {
     if (!bulkBillTarget) return
-    const { cls, targets } = bulkBillTarget
-    const eligible = (cls.students ?? []).filter(s => targets.some(t => t.studentId === s.id))
+    const { cls, targets, studentClsMap } = bulkBillTarget
+
+    // 단일반 bulk(cls 있음) vs 필터 전체 bulk(studentClsMap 있음) 구분
+    const items: Array<{ student: Student; cls: ClassWithStudents }> = []
+    if (cls) {
+      const eligible = (cls.students ?? []).filter(s => targets.some(t => t.studentId === s.id))
+      for (const s of eligible) items.push({ student: s, cls })
+    } else if (studentClsMap) {
+      for (const t of targets) {
+        const c = studentClsMap.get(t.studentId)
+        const s = c?.students?.find(st => st.id === t.studentId)
+        if (s && c) items.push({ student: s, cls: c })
+      }
+    }
+
+    const batchId = cls?.id ?? '__filter__'
     setBulkBillTarget(null)
 
     cancelBatchRef.current = false
     setCancellingBatch(false)
-    setBatchSending(cls.id)
-    setBatchProgress({ done: 0, total: eligible.length })
+    setBatchSending(batchId)
+    setBatchProgress({ done: 0, total: items.length })
 
-    for (let i = 0; i < eligible.length; i++) {
+    for (let i = 0; i < items.length; i++) {
       if (cancelBatchRef.current) break
-      await sendOneBill(eligible[i], cls)
-      setBatchProgress({ done: i + 1, total: eligible.length })
+      await sendOneBill(items[i].student, items[i].cls)
+      setBatchProgress({ done: i + 1, total: items.length })
       if (cancelBatchRef.current) break
-      if (i < eligible.length - 1) await new Promise(r => setTimeout(r, 500))
+      if (i < items.length - 1) await new Promise(r => setTimeout(r, 500))
     }
 
     setBatchSending(null)
@@ -513,6 +527,36 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
     cancelBatchRef.current = true
     setCancellingBatch(true)
   }, [])
+
+  // 현재 필터에 해당하는 모든 반의 미납 학생을 한방에 발송
+  const openFilterBulkBillModal = useCallback(() => {
+    const targets: BulkBillTarget[] = []
+    const studentClsMap = new Map<string, ClassWithStudents>()
+    for (const grade of grades) {
+      for (const cls of grade.classes ?? []) {
+        const classStudents = getActiveStudents(cls.students ?? [], selectedMonth).filter(s => passesFilter(s, cls as ClassWithStudents))
+        for (const s of classStudents) {
+          const phone = s.parent_phone || s.phone || ''
+          const fee = getStudentFee(s, cls as ClassWithStudents)
+          if (!phone || fee <= 0 || billByStudent.has(s.id)) continue
+          targets.push({
+            studentId: s.id,
+            studentName: s.name,
+            className: cls.name,
+            amount: fee,
+          })
+          studentClsMap.set(s.id, cls as ClassWithStudents)
+        }
+      }
+    }
+    if (targets.length === 0) return
+    setBulkBillTarget({
+      cls: null,
+      className: `${FILTER_LABELS[paymentFilter]} 일괄`,
+      targets,
+      studentClsMap,
+    })
+  }, [grades, selectedMonth, passesFilter, billByStudent, paymentFilter])
 
   // ─── Visible sections (스크롤 아코디언용) ───────────────────────
   type SectionRef = { key: string; classIds: string[] }
@@ -1178,20 +1222,76 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                       <span className="text-[15px] font-bold text-[var(--text-1)] tracking-tight">{gradeName}</span>
                     </button>
                     {isFirstGrade && (
-                      <button
-                        onClick={(e) => setFilterAnchor(prev => prev === e.currentTarget ? null : e.currentTarget)}
-                        style={{ width: 112 }}
-                        className={`relative flex items-center justify-center px-3 py-1 rounded-full text-xs font-semibold transition-colors shadow-sm ${
-                          paymentFilter === 'unpaid'
-                            ? 'bg-[var(--red-dim)] text-[var(--unpaid-text)]'
-                            : paymentFilter !== 'all'
-                              ? 'bg-[var(--blue-dim)] text-[var(--blue)]'
-                              : 'bg-[var(--bg-elevated)] text-[var(--text-2)] hover:bg-[var(--bg-card-hover)]'
-                        }`}
-                      >
-                        <span>{FILTER_LABELS[paymentFilter]}</span>
-                        <ChevronDown className={`absolute right-2 w-3 h-3 opacity-60 transition-transform ${filterAnchor ? 'rotate-180' : ''}`} />
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <AnimatePresence initial={false}>
+                          {paymentFilter !== 'all' && batchSending !== '__filter__' && (() => {
+                            // 현재 필터에 걸리는 모든 반의 발송가능 인원 합산
+                            let eligibleCount = 0
+                            for (const grade of grades) {
+                              for (const cls of grade.classes ?? []) {
+                                const classStudents = getActiveStudents(cls.students ?? [], selectedMonth).filter(s => passesFilter(s, cls as ClassWithStudents))
+                                for (const s of classStudents) {
+                                  const phone = s.parent_phone || s.phone || ''
+                                  const fee = getStudentFee(s, cls as ClassWithStudents)
+                                  if (phone && fee > 0 && !billByStudent.has(s.id)) eligibleCount++
+                                }
+                              }
+                            }
+                            if (eligibleCount === 0) return null
+                            return (
+                              <motion.button
+                                key="filter-bulk-badge"
+                                type="button"
+                                onClick={openFilterBulkBillModal}
+                                disabled={!!batchSending}
+                                initial={{ opacity: 0, scale: 0.9 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.9 }}
+                                transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+                                className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-[var(--red-dim)] text-[var(--unpaid-text)] shadow-sm active:opacity-70 disabled:opacity-50"
+                              >
+                                <Send className="w-3 h-3" />
+                                <span>{FILTER_LABELS[paymentFilter]} 일괄</span>
+                                <span className="tabular-nums opacity-70">{eligibleCount}</span>
+                              </motion.button>
+                            )
+                          })()}
+                          {batchSending === '__filter__' && batchProgress && (
+                            <motion.div
+                              key="filter-bulk-progress"
+                              initial={{ opacity: 0, scale: 0.9 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              exit={{ opacity: 0, scale: 0.9 }}
+                              transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+                              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[var(--orange-dim)]"
+                            >
+                              <Loader2 className="w-3 h-3 animate-spin text-[var(--orange)]" />
+                              <span className="text-[11px] font-bold text-[var(--orange)] tabular-nums">{batchProgress.done}/{batchProgress.total}</span>
+                              <button
+                                onClick={cancelBatch}
+                                disabled={cancellingBatch}
+                                className="px-1.5 py-0.5 rounded-md bg-[var(--red-dim)] text-[var(--red)] text-[10px] font-bold hover:opacity-80 disabled:opacity-50"
+                              >
+                                {cancellingBatch ? '중단중' : '중단'}
+                              </button>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                        <button
+                          onClick={(e) => setFilterAnchor(prev => prev === e.currentTarget ? null : e.currentTarget)}
+                          style={{ width: 112 }}
+                          className={`relative flex items-center justify-center px-3 py-1 rounded-full text-xs font-semibold transition-colors shadow-sm ${
+                            paymentFilter === 'unpaid'
+                              ? 'bg-[var(--red-dim)] text-[var(--unpaid-text)]'
+                              : paymentFilter !== 'all'
+                                ? 'bg-[var(--blue-dim)] text-[var(--blue)]'
+                                : 'bg-[var(--bg-elevated)] text-[var(--text-2)] hover:bg-[var(--bg-card-hover)]'
+                          }`}
+                        >
+                          <span>{FILTER_LABELS[paymentFilter]}</span>
+                          <ChevronDown className={`absolute right-2 w-3 h-3 opacity-60 transition-transform ${filterAnchor ? 'rotate-180' : ''}`} />
+                        </button>
+                      </div>
                     )}
                   </div>
                   <div className="card overflow-hidden">

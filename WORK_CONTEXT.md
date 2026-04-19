@@ -3,17 +3,30 @@
 > 이 파일은 Claude 세션 간 작업 연속성을 위한 컨텍스트 추적 파일입니다.
 > 작업 중 수시로 업데이트하고, 커밋 시 함께 포함시킵니다.
 
-## 현재 상태: 필터 드롭다운 재설계 — 텍스트 슬라이드 제거 + 컨테이너 드롭 (진행중)
+## 현재 상태: 필터 드롭다운 애니메이션 수정 완료 + 필터별 일괄발송 배찌 대기
 
-### 2026-04-19 16:20 (진행중)
+### 2026-04-19 16:40 (완료, d2b40a9) — 필터 드롭 애니메이션 발동 버그
+- msg 861 "필터 누르면 그냥 아래로 늘어나는 애니메이션 없이 뿅 그냥 필터 전체 나타남"
+- 원인: React 19가 setRect+setShow를 같은 커밋에 배칭 → motion.div가 처음 마운트될 때 이미 show=true, height=totalH. `initial={false}`이라 전환 없이 즉시 끝값.
+- 수정:
+  - setRect와 setShow useEffect 분리 (2-frame rAF로 show 플립)
+  - motion.div에 `initial={false}` 대신 명시적 `initial={{ height: ROW_H, borderRadius: BORDER_R, top, left, width }}`
+- 파일: src/app/payments/page.tsx (68-85, 103-126)
+- 배포: dpl_4SLmMhBnQGgJmnkHzv4cWfhZiX8f (READY)
+
+### 2026-04-19 16:20 (완료) — 필터 드롭다운 재설계
 - msg 853 "필터 정열 지금 좋은데 글씨가 왼쪽에서 들어오는 애니메이션 말고 필터가 아래로 드롭되면서 펼쳐지는 애니매이션을 예쁘게 해"
 - 수정: FilterDropdownPortal의 컨테이너/행 애니메이션 재구성
-  - 컨테이너: spring → cubic-bezier [0.22,1,0.36,1] 0.36s (오버슈트 제거, 클린 드롭)
+  - 컨테이너: cubic-bezier [0.22,1,0.36,1] 0.5s (메모 애니메이션 톤)
   - 행: y/paddingLeft/justifyContent 애니메이션 제거 → style에 정적 적용 (텍스트 슬라이드 없음)
-  - 행 opacity 스태거(0.08+i*0.028s delay)로 순차 페이드인 (드롭다운 드러나는 느낌)
+  - 행 opacity 스태거(0.14+i*0.038s delay)로 순차 페이드인
   - rangeLabel: width 애니메이션 제거, opacity만 페이드
-  - chevron: spring → cubic-bezier
-- 파일: src/app/payments/page.tsx (52-185)
+  - chevron: 0.44s cubic-bezier
+
+### 다음 — task #73 필터별 일괄발송 배찌
+- msg 862 "필터 선택하면 왼쪽에 1일 일괄 첫째주 일괄 같은거 빨간색으로 한방에 다보내는 배찌 만들어줘"
+- 구현 계획: 필터 "1일"/"첫째주" 등 선택 시 좌측에 "1일 일괄" "첫째주 일괄" 빨간 배찌 → 탭 시 해당 필터의 모든 미납 학생에게 청구서 발송
+- 배치 위치 확인 대기 (msg 863 질문)
 
 ## 이전 상태: 스와이프 다중 선택 완료 + 메모창 애니메이션 부드럽게
 
