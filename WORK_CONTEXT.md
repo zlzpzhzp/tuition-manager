@@ -3,9 +3,28 @@
 > 이 파일은 Claude 세션 간 작업 연속성을 위한 컨텍스트 추적 파일입니다.
 > 작업 중 수시로 업데이트하고, 커밋 시 함께 포함시킵니다.
 
-## 현재 상태: 청구서 취소 시 유령 결제완료 표시 버그 수정
+## 현재 상태: 자동 재발송 크론 + 다른결제수단 자동파기 구현 완료
 
-### 2026-04-19 17:55 (진행) — 취소 후에도 "결제완료" 파란 체크 남는 버그
+### 2026-04-19 18:20 (완료, f5a4f53) — 재발송 크론 + 배지 + paid 안전장치 + 다른결제수단 자동파기 + cancelled 아이콘 SVG
+- msg 883 요청 전부 구현
+- ① 다른결제수단 저장 시 자동파기 (#77)
+  - /api/payments POST — payssam이 아닌 수단 저장 시 같은 학생·월의 sent 정규 청구서 자동 파기
+  - bill_note: "{수단} 결제로 자동 파기" → 결제선생 탭 최근활동에 표시
+- ② 자동 재발송 크론 3회 + 배지 + paid 안전장치 (#78)
+  - /api/cron/resend — 매일 09:00 KST (UTC 00:00) 실행
+  - sent 상태 + 3일 이상 경과 + resend_count < 3 조건
+  - 안전장치1: tuition_payments 이미 있으면 스킵
+  - 안전장치2: PaySsam readBill로 appr_state='F' 확인 시 DB 동기화만 하고 재발송 중단
+  - 성공 시 resend_count++, last_resend_at 갱신, bill_note='자동 재발송 N회차'
+  - UI 발송 버튼 우상단 빨간 숫자배지 (resend_count > 0)
+- ③ cancelled 아이콘 SVG 재구현 (#76)
+  - Send 컴포넌트 + 오버레이 → inline SVG로 교체 (위치 문제 해결)
+  - opacity 0.5 종이비행기 + 대각선 취소선, scaleX(-1) 좌우반전
+- 파일: src/app/api/payments/route.ts, src/app/api/cron/resend/route.ts (신규), src/middleware.ts (cron 인증면제), src/app/payments/page.tsx (배지+SVG), vercel.json (cron 스케줄)
+- DB: tuition_bill_history.resend_count int default 0, last_resend_at timestamptz 컬럼 추가
+- 환경변수: CRON_SECRET 추가 (.env.local + Vercel 프로덕션)
+
+### 2026-04-19 17:55 (완료) — 취소 후에도 "결제완료" 파란 체크 남는 버그
 - msg 872/873: "취소까지 다했는데 그 표시가 없다" / "그대로 결제된 상태로 표시"
 - 원인: PaySsam 콜백이 결제완료(F) 시 tuition_payments에 자동 insert했는데, /api/payssam/cancel은 tuition_bill_history.status만 'cancelled'로 바꾸고 tuition_payments 레코드를 남겨둠 → UI가 tuition_payments 존재 기준으로 status='paid' 계속 표시
 - 수정 1: /api/payssam/cancel — bill 취소 성공 시 해당 student_id+billing_month+method='payssam'인 tuition_payments 레코드 삭제
