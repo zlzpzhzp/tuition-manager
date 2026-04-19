@@ -1168,19 +1168,16 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                               <div className="flex items-center gap-1 shrink-0">
                                 {(['yellow', 'green', 'red'] as const).map(c => {
                                   const bg = c === 'yellow' ? 'bg-[var(--orange-dim)]' : c === 'green' ? 'bg-[var(--paid-bg)]' : 'bg-[var(--unpaid-bg)]'
-                                  const dot = c === 'yellow' ? 'bg-[var(--orange)]' : c === 'green' ? 'bg-[var(--paid-text)]' : 'bg-[var(--unpaid-text)]'
                                   const active = editMemoColor === c
                                   return (
                                     <button
                                       key={c}
                                       type="button"
                                       onClick={() => setEditMemoColor(active ? null : c)}
-                                      className={`w-6 h-3 rounded-[2px] ${bg} ${active ? 'ring-1 ring-white/70 shadow-md' : 'opacity-60'} flex items-center justify-center`}
+                                      className={`w-6 h-3 rounded-[2px] ${bg} ${active ? 'ring-1 ring-white/70 shadow-md' : 'opacity-60'}`}
                                       style={{ transform: 'skewX(-10deg)' }}
                                       aria-label={`색상 ${c}`}
-                                    >
-                                      <span className={`w-1 h-1 rounded-full ${dot}`} />
-                                    </button>
+                                    />
                                   )
                                 })}
                               </div>
