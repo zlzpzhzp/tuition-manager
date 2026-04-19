@@ -24,7 +24,7 @@ export default function DashboardPage() {
       g.classes.flatMap(c =>
         getActiveStudents(c.students ?? [], currentMonth)
           .filter(s => !s.withdrawal_date)
-          .map(s => ({ ...s, class: c }))
+          .map(s => ({ ...s, class: c, gradeName: g.name }))
       )
     ), [grades, currentMonth])
 
@@ -55,8 +55,8 @@ export default function DashboardPage() {
   const urgentStudents = useMemo(() => {
     const today = new Date()
     return stats.unpaidStudents.filter(s => {
-      const enrollDay = new Date(s.enrollment_date).getDate()
-      const dueDate = new Date(today.getFullYear(), today.getMonth(), enrollDay)
+      const dueDay = getPaymentDueDay(s)
+      const dueDate = new Date(today.getFullYear(), today.getMonth(), dueDay)
       if (dueDate < today) dueDate.setMonth(dueDate.getMonth() + 1)
       const daysUntilDue = Math.round((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
       return daysUntilDue <= 3
@@ -126,7 +126,7 @@ export default function DashboardPage() {
             {urgentStudents.slice(0, 5).map(s => {
               const fee = getStudentFee(s, s.class)
               const paid = getStudentPaid(s.id)
-              const enrollDay = new Date(s.enrollment_date).getDate()
+              const dueDay = getPaymentDueDay(s)
               return (
                 <Link key={s.id} href={`/students/${s.id}`}
                   className="flex items-center justify-between py-2.5 px-1 rounded-xl hover:bg-white/5 transition-colors">
@@ -135,9 +135,9 @@ export default function DashboardPage() {
                     {s.enrollment_date?.startsWith(currentMonth) && (
                       <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-[var(--blue-bg)] text-[var(--blue)] font-bold">신규</span>
                     )}
-                    <span className="text-[13px] text-[var(--text-4)]">{s.class?.name}</span>
+                    <span className="text-[13px] text-[var(--text-4)]">{s.gradeName} · {s.class?.name}</span>
                   </div>
-                  <span className="text-[13px] font-semibold text-[var(--orange)] tabular-nums">{enrollDay}일 · {(fee - paid).toLocaleString()}원</span>
+                  <span className="text-[13px] font-semibold text-[var(--orange)] tabular-nums">{dueDay}일 · {(fee - paid).toLocaleString()}원</span>
                 </Link>
               )
             })}
@@ -183,7 +183,7 @@ export default function DashboardPage() {
                       {s.enrollment_date?.startsWith(currentMonth) && (
                         <span className="text-[10px] ml-1.5 px-1.5 py-0.5 rounded-md bg-[var(--blue-bg)] text-[var(--blue)] font-bold">신규</span>
                       )}
-                      <span className="text-[13px] text-[var(--text-4)] ml-2">{s.class?.name}</span>
+                      <span className="text-[13px] text-[var(--text-4)] ml-2">{s.gradeName} · {s.class?.name}</span>
                     </div>
                     <span className="text-[13px] text-[var(--text-4)] tabular-nums">{(fee - paid).toLocaleString()}원</span>
                     <span className="px-2.5 py-1 rounded-lg text-[12px] font-bold" style={{ backgroundColor: displayColors.bg, color: displayColors.text }}>

@@ -65,8 +65,9 @@ export function formatPhone(input: string): string {
 }
 
 // ─── Payment Due Day ──────────────────────────────────────────────
-/** 학생의 결제 예정일 (등록일 기준 매월 같은 날) */
+/** 학생의 결제 예정일 — payment_due_day 우선, 없으면 등록일 기준 */
 export function getPaymentDueDay(student: Student): number {
+  if (student.payment_due_day != null) return student.payment_due_day
   return new Date(student.enrollment_date).getDate()
 }
 
