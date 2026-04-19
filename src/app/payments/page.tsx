@@ -84,13 +84,13 @@ function FilterDropdownPortal({
   const ROW_H = rect.height
   const totalH = ROW_H * orderedKeys.length
   const BORDER_R = Math.round(ROW_H / 2)
-  // 펼친 상태에서는 알약보다 넓혀서 기간(15~21 등)이 들어갈 여유 확보
-  const OPEN_W = Math.max(rect.width, 128)
-  const portalLeft = show ? rect.left - (OPEN_W - rect.width) / 2 : rect.left
-  const portalW = show ? OPEN_W : rect.width
+  // 알약과 동일한 폭 유지 — 좌우 여백 없애기
+  const OPEN_W = rect.width
+  const portalLeft = rect.left
+  const portalW = rect.width
 
   const bgFor = (key: PaymentFilter, active: boolean) => {
-    if (!active) return 'bg-[var(--surface)] text-[var(--text-2)] hover:bg-[var(--bg-card-hover)] hover:text-[var(--text-1)]'
+    if (!active) return 'bg-[var(--bg-elevated)] text-[var(--text-2)] hover:bg-[var(--bg-card-hover)] hover:text-[var(--text-1)]'
     if (key === 'unpaid') return 'bg-[var(--red-dim)] text-[var(--unpaid-text)]'
     if (key === 'all') return 'bg-[var(--bg-elevated)] text-[var(--text-1)]'
     return 'bg-[var(--blue-dim)] text-[var(--blue)]'
@@ -101,7 +101,7 @@ function FilterDropdownPortal({
       <div className="fixed inset-0 z-[60]" onClick={onClose} />
       <motion.div
         data-filter-portal
-        className="fixed z-[61] overflow-hidden shadow-xl bg-[var(--surface)]"
+        className="fixed z-[61] overflow-hidden shadow-xl bg-[var(--bg-elevated)]"
         initial={false}
         animate={{
           top: rect.top,
@@ -110,7 +110,10 @@ function FilterDropdownPortal({
           height: show ? totalH : ROW_H,
           borderRadius: BORDER_R,
         }}
-        transition={{ type: 'spring', stiffness: 360, damping: 34, mass: 0.7 }}
+        transition={{
+          height: { type: 'spring', stiffness: 320, damping: 32, mass: 0.6 },
+          default: { type: 'spring', stiffness: 320, damping: 32, mass: 0.6 },
+        }}
         role="listbox"
         aria-label="납부 필터"
       >
@@ -122,7 +125,6 @@ function FilterDropdownPortal({
             ? range[0] === range[1] ? `${range[0]}일` : `${range[0]}~${range[1]}`
             : ''
           const isCurrent = i === 0
-          const alignLeft = show || isWeek
           return (
             <motion.button
               key={key}
@@ -130,17 +132,14 @@ function FilterDropdownPortal({
               onClick={() => onSelect(key)}
               role="option"
               aria-selected={active}
-              className={`relative w-full flex items-center text-xs font-semibold whitespace-nowrap gap-1 transition-colors ${bgFor(key, active)}`}
+              className={`relative w-full flex items-center justify-center text-xs font-semibold whitespace-nowrap gap-1 transition-colors ${bgFor(key, active)}`}
               animate={{
                 opacity: isCurrent ? 1 : show ? 1 : 0,
-                paddingLeft: alignLeft ? 40 : 0,
-                justifyContent: alignLeft ? 'flex-start' : 'center',
+                y: isCurrent ? 0 : show ? 0 : -4,
               }}
               transition={{
-                paddingLeft: { type: 'spring', stiffness: 360, damping: 34, mass: 0.7 },
-                justifyContent: { duration: 0 },
-                opacity: { duration: 0.18, ease: [0.4, 0, 0.2, 1] },
-                default: { duration: 0.18 },
+                opacity: { duration: 0.18, ease: [0.4, 0, 0.2, 1], delay: isCurrent ? 0 : show ? i * 0.025 : 0 },
+                y: { type: 'spring', stiffness: 420, damping: 30, delay: isCurrent ? 0 : show ? i * 0.025 : 0 },
               }}
               style={{ height: ROW_H }}
             >
@@ -153,7 +152,7 @@ function FilterDropdownPortal({
                     initial={{ opacity: 0, width: 0 }}
                     animate={{ opacity: 0.6, width: 'auto' }}
                     exit={{ opacity: 0, width: 0 }}
-                    transition={{ duration: 0.15 }}
+                    transition={{ duration: 0.18, ease: [0.4, 0, 0.2, 1] }}
                     style={{ overflow: 'hidden', whiteSpace: 'nowrap' }}
                   >
                     {rangeLabel}
@@ -164,7 +163,7 @@ function FilterDropdownPortal({
                 <motion.div
                   className="absolute right-2 flex items-center justify-center"
                   animate={{ rotate: show ? 180 : 0 }}
-                  transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
+                  transition={{ type: 'spring', stiffness: 360, damping: 28 }}
                 >
                   <ChevronDown className="w-3 h-3 opacity-60" />
                 </motion.div>

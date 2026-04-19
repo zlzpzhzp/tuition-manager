@@ -25,6 +25,7 @@ interface BillRecord {
   sent_at: string
   updated_at?: string
   is_regular_tuition?: boolean
+  bill_note?: string | null
 }
 
 type WeekFilter = 'all' | 'day1' | 'week1' | 'week2' | 'week3' | 'week4'
@@ -568,6 +569,114 @@ export default function BillingPage() {
           </div>
         </div>
 
+        {/* 액션 필요 */}
+        {(actionItems.overdue.length > 0 || actionItems.cancelled.length > 0 || actionItems.noPhone.length > 0) && (
+          <div className="card overflow-hidden mb-3">
+            <h2 className="text-sm font-semibold text-[var(--text-2)] px-4 pt-4 pb-2">액션 필요</h2>
+            <div>
+              {actionItems.overdue.length > 0 && (
+                <ActionRow
+                  icon={<Clock className="w-4 h-4" />}
+                  color="var(--orange)"
+                  bg="var(--orange-dim)"
+                  label="3일 이상 미결제"
+                  count={actionItems.overdue.length}
+                  expanded={expandedAction === 'overdue'}
+                  onToggle={() => setExpandedAction(expandedAction === 'overdue' ? null : 'overdue')}
+                >
+                  {actionItems.overdue.map(({ bill, student, daysSince }) => (
+                    <ActionItemRow
+                      key={bill.id}
+                      name={student?.name ?? '?'}
+                      detail={`${daysSince}일째 미결제`}
+                      amount={bill.amount}
+                      accent="var(--orange)"
+                      irregular={bill.is_regular_tuition === false}
+                      note={bill.bill_note}
+                    />
+                  ))}
+                </ActionRow>
+              )}
+              {actionItems.cancelled.length > 0 && (
+                <ActionRow
+                  icon={<Ban className="w-4 h-4" />}
+                  color="var(--red)"
+                  bg="var(--red-dim)"
+                  label="취소 / 파기된 청구서"
+                  count={actionItems.cancelled.length}
+                  expanded={expandedAction === 'cancelled'}
+                  onToggle={() => setExpandedAction(expandedAction === 'cancelled' ? null : 'cancelled')}
+                >
+                  {actionItems.cancelled.map(({ bill, student }) => (
+                    <ActionItemRow
+                      key={bill.id}
+                      name={student?.name ?? '?'}
+                      detail={bill.status === 'destroyed' ? '파기됨' : '취소됨'}
+                      amount={bill.amount}
+                      accent="var(--red)"
+                      irregular={bill.is_regular_tuition === false}
+                      note={bill.bill_note}
+                    />
+                  ))}
+                </ActionRow>
+              )}
+              {actionItems.noPhone.length > 0 && (
+                <ActionRow
+                  icon={<PhoneOff className="w-4 h-4" />}
+                  color="var(--text-3)"
+                  bg="var(--bg-elevated)"
+                  label="전화번호 미등록"
+                  count={actionItems.noPhone.length}
+                  expanded={expandedAction === 'nophone'}
+                  onToggle={() => setExpandedAction(expandedAction === 'nophone' ? null : 'nophone')}
+                >
+                  {actionItems.noPhone.map(s => (
+                    <ActionItemRow
+                      key={s.id}
+                      name={s.name}
+                      detail={s.class?.name ?? ''}
+                      accent="var(--text-3)"
+                    />
+                  ))}
+                </ActionRow>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* 최근 활동 피드 */}
+        {recentActivity.length > 0 && (
+          <div className="card p-4 mb-3">
+            <h2 className="text-sm font-semibold text-[var(--text-2)] mb-3">최근 활동</h2>
+            <div className="space-y-1.5">
+              {recentActivity.map(bill => {
+                const s = studentById.get(bill.student_id)
+                const { label, color } = statusBadge(bill.status)
+                const isIrregular = bill.is_regular_tuition === false
+                const note = bill.bill_note
+                return (
+                  <div key={bill.id} className="flex items-start gap-2 py-1">
+                    <span className="text-[10px] text-[var(--text-4)] w-14 shrink-0 tabular-nums mt-0.5">{timeAgo(bill.updated_at ?? bill.sent_at, nowTs)}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-xs font-medium">{s?.name ?? '?'}</span>
+                        {isIrregular && (
+                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-[var(--orange-dim)] text-[var(--orange)] shrink-0">비정규</span>
+                        )}
+                      </div>
+                      {note && (
+                        <p className="text-[10px] text-[var(--text-3)] mt-0.5 truncate" title={note}>📝 {note}</p>
+                      )}
+                    </div>
+                    <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-full whitespace-nowrap shrink-0 mt-0.5" style={{ color, background: dimColor(color) }}>{label}</span>
+                    <span className="text-[11px] text-[var(--text-3)] tabular-nums w-20 text-right shrink-0 mt-0.5">{bill.amount.toLocaleString()}</span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
         {/* 결제율 게이지 */}
         <div className="card p-4 mb-3">
           <div className="flex items-baseline justify-between mb-2">
@@ -672,106 +781,6 @@ export default function BillingPage() {
             })}
           </div>
         </div>
-
-        {/* 액션 필요 */}
-        {(actionItems.overdue.length > 0 || actionItems.cancelled.length > 0 || actionItems.noPhone.length > 0) && (
-          <div className="card overflow-hidden mb-3">
-            <h2 className="text-sm font-semibold text-[var(--text-2)] px-4 pt-4 pb-2">액션 필요</h2>
-            <div>
-              {actionItems.overdue.length > 0 && (
-                <ActionRow
-                  icon={<Clock className="w-4 h-4" />}
-                  color="var(--orange)"
-                  bg="var(--orange-dim)"
-                  label="3일 이상 미결제"
-                  count={actionItems.overdue.length}
-                  expanded={expandedAction === 'overdue'}
-                  onToggle={() => setExpandedAction(expandedAction === 'overdue' ? null : 'overdue')}
-                >
-                  {actionItems.overdue.map(({ bill, student, daysSince }) => (
-                    <ActionItemRow
-                      key={bill.id}
-                      name={student?.name ?? '?'}
-                      detail={`${daysSince}일째 미결제`}
-                      amount={bill.amount}
-                      accent="var(--orange)"
-                      irregular={bill.is_regular_tuition === false}
-                    />
-                  ))}
-                </ActionRow>
-              )}
-              {actionItems.cancelled.length > 0 && (
-                <ActionRow
-                  icon={<Ban className="w-4 h-4" />}
-                  color="var(--red)"
-                  bg="var(--red-dim)"
-                  label="취소 / 파기된 청구서"
-                  count={actionItems.cancelled.length}
-                  expanded={expandedAction === 'cancelled'}
-                  onToggle={() => setExpandedAction(expandedAction === 'cancelled' ? null : 'cancelled')}
-                >
-                  {actionItems.cancelled.map(({ bill, student }) => (
-                    <ActionItemRow
-                      key={bill.id}
-                      name={student?.name ?? '?'}
-                      detail={bill.status === 'destroyed' ? '파기됨' : '취소됨'}
-                      amount={bill.amount}
-                      accent="var(--red)"
-                      irregular={bill.is_regular_tuition === false}
-                    />
-                  ))}
-                </ActionRow>
-              )}
-              {actionItems.noPhone.length > 0 && (
-                <ActionRow
-                  icon={<PhoneOff className="w-4 h-4" />}
-                  color="var(--text-3)"
-                  bg="var(--bg-elevated)"
-                  label="전화번호 미등록"
-                  count={actionItems.noPhone.length}
-                  expanded={expandedAction === 'nophone'}
-                  onToggle={() => setExpandedAction(expandedAction === 'nophone' ? null : 'nophone')}
-                >
-                  {actionItems.noPhone.map(s => (
-                    <ActionItemRow
-                      key={s.id}
-                      name={s.name}
-                      detail={s.class?.name ?? ''}
-                      accent="var(--text-3)"
-                    />
-                  ))}
-                </ActionRow>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* 최근 활동 피드 */}
-        {recentActivity.length > 0 && (
-          <div className="card p-4 mb-3">
-            <h2 className="text-sm font-semibold text-[var(--text-2)] mb-3">최근 활동</h2>
-            <div className="space-y-1.5">
-              {recentActivity.map(bill => {
-                const s = studentById.get(bill.student_id)
-                const { label, color } = statusBadge(bill.status)
-                const isIrregular = bill.is_regular_tuition === false
-                return (
-                  <div key={bill.id} className="flex items-center gap-2 py-1">
-                    <span className="text-[10px] text-[var(--text-4)] w-14 shrink-0 tabular-nums">{timeAgo(bill.updated_at ?? bill.sent_at, nowTs)}</span>
-                    <span className="text-xs font-medium flex-1 truncate flex items-center gap-1.5">
-                      {s?.name ?? '?'}
-                      {isIrregular && (
-                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-[var(--bg-elevated)] text-[var(--text-4)] shrink-0">비정규</span>
-                      )}
-                    </span>
-                    <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-full whitespace-nowrap" style={{ color, background: dimColor(color) }}>{label}</span>
-                    <span className="text-[11px] text-[var(--text-3)] tabular-nums w-20 text-right shrink-0">{bill.amount.toLocaleString()}</span>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        )}
 
         {/* 도구 (접힘) */}
         <div className="card overflow-hidden mb-4">
@@ -896,23 +905,31 @@ function ActionRow({ icon, color, bg, label, count, expanded, onToggle, children
   )
 }
 
-function ActionItemRow({ name, detail, amount, accent, irregular }: {
+function ActionItemRow({ name, detail, amount, accent, irregular, note }: {
   name: string
   detail: string
   amount?: number
   accent: string
   irregular?: boolean
+  note?: string | null
 }) {
   return (
-    <div className="flex items-center gap-2 py-1.5 border-b border-[var(--border)]/40 last:border-b-0">
-      <span className="w-1 h-1 rounded-full shrink-0" style={{ background: accent }} />
-      <span className="text-sm font-medium">{name}</span>
-      {irregular && (
-        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-[var(--bg-elevated)] text-[var(--text-4)]">비정규</span>
-      )}
-      <span className="text-[11px] text-[var(--text-4)]">{detail}</span>
+    <div className="flex items-start gap-2 py-1.5 border-b border-[var(--border)]/40 last:border-b-0">
+      <span className="w-1 h-1 rounded-full shrink-0 mt-2" style={{ background: accent }} />
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="text-sm font-medium">{name}</span>
+          {irregular && (
+            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-[var(--orange-dim)] text-[var(--orange)]">비정규</span>
+          )}
+          <span className="text-[11px] text-[var(--text-4)]">{detail}</span>
+        </div>
+        {note && (
+          <p className="text-[10px] text-[var(--text-3)] mt-0.5 truncate" title={note}>📝 {note}</p>
+        )}
+      </div>
       {amount !== undefined && (
-        <span className="ml-auto text-[11px] font-semibold tabular-nums text-[var(--text-3)]">{amount.toLocaleString()}원</span>
+        <span className="text-[11px] font-semibold tabular-nums text-[var(--text-3)] shrink-0 mt-1">{amount.toLocaleString()}원</span>
       )}
     </div>
   )
