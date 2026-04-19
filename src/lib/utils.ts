@@ -12,7 +12,7 @@ const swrFetcher = async (url: string) => {
 }
 
 const swrOptions = {
-  revalidateOnFocus: false,
+  revalidateOnFocus: true,
   dedupingInterval: 5000,
 }
 
