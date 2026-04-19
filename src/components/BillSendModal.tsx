@@ -4,12 +4,14 @@ import { useState, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { motion } from 'framer-motion'
 import { X, Send, AlertTriangle, Check, Loader2 } from 'lucide-react'
+import { getRegularTuitionTitle, REGULAR_TUITION_MESSAGE } from '@/lib/billing-title'
 
 interface Props {
   studentName: string
   studentId: string
   phone: string
   amount: number
+  subject: string | null
   billingMonth: string
   onClose: () => void
   onSuccess?: () => void
@@ -17,7 +19,9 @@ interface Props {
 
 type SendState = 'idle' | 'confirming' | 'sending' | 'success' | 'error'
 
-export default function BillSendModal({ studentName, studentId, phone, amount, billingMonth, onClose, onSuccess }: Props) {
+export default function BillSendModal({ studentName, studentId, phone, amount, subject, billingMonth, onClose, onSuccess }: Props) {
+  const productName = getRegularTuitionTitle(subject, billingMonth)
+  const messageContent = REGULAR_TUITION_MESSAGE
   const [state, setState] = useState<SendState>('idle')
   const [errorMsg, setErrorMsg] = useState('')
   const [billId, setBillId] = useState('')
@@ -62,7 +66,8 @@ export default function BillSendModal({ studentName, studentId, phone, amount, b
           studentName,
           phone: cleanPhone,
           amount,
-          productName: `${billingMonth.replace('-', '년 ')}월 수업료`,
+          productName,
+          message: messageContent,
           billingMonth,
         }),
       })

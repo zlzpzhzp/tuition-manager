@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { X, Send, AlertTriangle, Check, Loader2, Search, PhoneOff } from 'lucide-react'
 import type { Student, GradeWithClasses } from '@/types'
 import { getStudentFee } from '@/types'
+import { getRegularTuitionTitle, REGULAR_TUITION_MESSAGE } from '@/lib/billing-title'
 
 type ClassWithStudents = GradeWithClasses['classes'][number]
 type StudentWithClass = Student & { class: ClassWithStudents }
@@ -29,6 +30,8 @@ export default function QuickBillSendModal({ students, billingMonth, onClose, on
   const [amountStr, setAmountStr] = useState('')
   const [billNote, setBillNote] = useState('')
   const [isRegular, setIsRegular] = useState(true)
+  const [title, setTitle] = useState('')
+  const [messageContent, setMessageContent] = useState('')
   const searchRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => { setMounted(true) }, [])
@@ -43,6 +46,14 @@ export default function QuickBillSendModal({ students, billingMonth, onClose, on
       setAmountStr(String(fee))
     }
   }, [selected, amountStr])
+
+  // 정규/비정규 · 학생 변경 시 제목/내용 기본값 자동 세팅 (사용자 편집 전까지)
+  const autoTitle = useMemo(() => {
+    if (!selected) return ''
+    if (isRegular) return getRegularTuitionTitle(selected.class?.subject ?? null, billingMonth)
+    return ''
+  }, [selected, isRegular, billingMonth])
+  const autoMessage = isRegular ? REGULAR_TUITION_MESSAGE : ''
 
   const phone = selected ? (selected.parent_phone || selected.phone || '') : ''
   const cleanPhone = phone.replace(/-/g, '')
@@ -77,6 +88,8 @@ export default function QuickBillSendModal({ students, billingMonth, onClose, on
     setErrorMsg('')
 
     try {
+      const finalTitle = title.trim() || autoTitle || `${billingMonth.replace('-', '년 ')}월 수업료`
+      const finalMessage = messageContent.trim() || autoMessage || `${selected.name} ${billingMonth.replace('-', '년 ')}월 수업료`
       const res = await fetch('/api/payssam/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -85,7 +98,8 @@ export default function QuickBillSendModal({ students, billingMonth, onClose, on
           studentName: selected.name,
           phone: cleanPhone,
           amount,
-          productName: `${billingMonth.replace('-', '년 ')}월 수업료`,
+          productName: finalTitle,
+          message: finalMessage,
           billingMonth,
           isRegularTuition: isRegular,
           billNote: billNote || undefined,
@@ -106,7 +120,7 @@ export default function QuickBillSendModal({ students, billingMonth, onClose, on
       setErrorMsg('네트워크 오류가 발생했습니다')
       setState('error')
     }
-  }, [state, selected, cleanPhone, amount, billingMonth, isRegular, billNote, onClose, onSuccess])
+  }, [state, selected, cleanPhone, amount, billingMonth, isRegular, billNote, title, messageContent, autoTitle, autoMessage, onClose, onSuccess])
 
   const formatMonth = (m: string) => { const [y, mo] = m.split('-'); return `${y}년 ${parseInt(mo)}월` }
 
@@ -216,7 +230,7 @@ export default function QuickBillSendModal({ students, billingMonth, onClose, on
                       </div>
                     </div>
                     <button
-                      onClick={() => { setSelectedId(null); setAmountStr(''); setBillNote(''); setIsRegular(true) }}
+                      onClick={() => { setSelectedId(null); setAmountStr(''); setBillNote(''); setIsRegular(true); setTitle(''); setMessageContent('') }}
                       disabled={state !== 'form'}
                       className="text-xs text-[var(--text-4)] hover:text-[var(--text-3)] px-2 py-1 rounded-lg hover:bg-[var(--bg-card-hover)] disabled:opacity-40"
                     >
@@ -277,6 +291,36 @@ export default function QuickBillSendModal({ students, billingMonth, onClose, on
                     >
                       비정규 (보충/분할)
                     </button>
+                  </div>
+
+                  {/* 제목 (카톡 알림톡 상품명) */}
+                  <div>
+                    <label className="block text-xs font-medium text-[var(--text-3)] mb-1.5">
+                      제목
+                    </label>
+                    <input
+                      type="text"
+                      value={title}
+                      onChange={e => setTitle(e.target.value.slice(0, 60))}
+                      disabled={state !== 'form'}
+                      placeholder={autoTitle || (isRegular ? '예: 디엠수학 4월 정규원비' : '예: 4월 보충비')}
+                      className="w-full px-3 py-2 bg-[var(--bg-elevated)] rounded-xl text-sm text-[var(--text-1)] placeholder:text-[var(--text-4)] focus:outline-none focus:ring-1 focus:ring-[var(--blue)] disabled:opacity-60"
+                    />
+                  </div>
+
+                  {/* 내용 (카톡 알림톡 메시지) */}
+                  <div>
+                    <label className="block text-xs font-medium text-[var(--text-3)] mb-1.5">
+                      내용
+                    </label>
+                    <textarea
+                      value={messageContent}
+                      onChange={e => setMessageContent(e.target.value.slice(0, 200))}
+                      disabled={state !== 'form'}
+                      rows={2}
+                      placeholder={autoMessage || '예: 안녕하세요. 디엠학원 결제링크입니다. 감사합니다😁'}
+                      className="w-full px-3 py-2 bg-[var(--bg-elevated)] rounded-xl text-sm text-[var(--text-1)] placeholder:text-[var(--text-4)] focus:outline-none focus:ring-1 focus:ring-[var(--blue)] disabled:opacity-60 resize-none"
+                    />
                   </div>
 
                   {/* 비고 */}

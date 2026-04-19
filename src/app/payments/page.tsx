@@ -11,6 +11,7 @@ import DatePickerPopup from '@/components/payments/DatePickerPopup'
 import MethodPickerPopup from '@/components/payments/MethodPickerPopup'
 import { getPrevMonth, getPaymentDueDay, isPaymentScheduled, getUnpaidLabelText, getActiveStudents, isWithdrawnStudent, safeMutate, decodePaymentMemo, useGrades, usePayments, revalidateGrades, revalidatePayments, getTodayString } from '@/lib/utils'
 import { METHOD_OPTIONS_SHORT } from '@/lib/constants'
+import { getRegularTuitionTitle, REGULAR_TUITION_MESSAGE } from '@/lib/billing-title'
 import { PaymentsSkeleton } from '@/components/Skeleton'
 import BillSendModal from '@/components/BillSendModal'
 import BillActionModal from '@/components/BillActionModal'
@@ -212,7 +213,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
   const [addStudentClassId, setAddStudentClassId] = useState<string | null>(null)
 
   // 청구서 발송 모달
-  const [billSendTarget, setBillSendTarget] = useState<{ studentId: string; studentName: string; phone: string; amount: number } | null>(null)
+  const [billSendTarget, setBillSendTarget] = useState<{ studentId: string; studentName: string; phone: string; amount: number; subject: string | null } | null>(null)
   const [billActionTarget, setBillActionTarget] = useState<{ studentId: string; studentName: string; billId: string; amount: number; status: 'sent' | 'paid' | 'cancelled' } | null>(null)
 
   // 청구서 현황 (결제선생 발송/결제/취소 상태)
@@ -397,7 +398,8 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
       studentName: student.name,
       phone: phone.replace(/-/g, ''),
       amount: fee,
-      productName: `${selectedMonth.replace('-', '년 ')}월 수업료`,
+      productName: getRegularTuitionTitle(cls.subject, selectedMonth),
+      message: REGULAR_TUITION_MESSAGE,
       billingMonth: selectedMonth,
     })
   }, [selectedMonth])
@@ -1255,7 +1257,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                                     <button
                                       onClick={() => {
                                         const parentPhone = student.parent_phone || student.phone || ''
-                                        setBillSendTarget({ studentId: student.id, studentName: student.name, phone: parentPhone, amount: fee })
+                                        setBillSendTarget({ studentId: student.id, studentName: student.name, phone: parentPhone, amount: fee, subject: cls.subject ?? null })
                                       }}
                                       className="fan-item p-1 text-[var(--orange)] hover:opacity-70"
                                       aria-label="청구서 발송"
@@ -1374,7 +1376,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                                             })
                                           } else {
                                             const parentPhone = student.parent_phone || student.phone || ''
-                                            setBillSendTarget({ studentId: student.id, studentName: student.name, phone: parentPhone, amount: fee })
+                                            setBillSendTarget({ studentId: student.id, studentName: student.name, phone: parentPhone, amount: fee, subject: cls.subject ?? null })
                                           }
                                         }}
                                         className="p-1 rounded-lg transition-colors shrink-0 hover:opacity-80 flex items-center justify-center"
@@ -1483,6 +1485,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
           studentName={billSendTarget.studentName}
           phone={billSendTarget.phone}
           amount={billSendTarget.amount}
+          subject={billSendTarget.subject}
           billingMonth={selectedMonth}
           onClose={() => setBillSendTarget(null)}
           onSuccess={() => { fetchData(); mutateBills() }}

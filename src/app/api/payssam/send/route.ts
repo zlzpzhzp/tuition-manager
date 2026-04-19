@@ -7,7 +7,7 @@ export async function POST(request: NextRequest) {
   const unauthorized = requireAdminSession(request)
   if (unauthorized) return unauthorized
   try {
-    const { studentId, studentName, phone, amount, productName, billingMonth, isRegularTuition, billNote } = await request.json()
+    const { studentId, studentName, phone, amount, productName, message, billingMonth, isRegularTuition, billNote } = await request.json()
 
     if (!studentId || !phone || !amount || !billingMonth) {
       return NextResponse.json({ error: '필수 정보가 누락되었습니다' }, { status: 400 })
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
       phone: cleanPhone,
       amount,
       productName: productName || `${billingMonth.replace('-', '년 ')}월 수업료`,
-      message: `${studentName} ${billingMonth.replace('-', '년 ')}월 수업료`,
+      message: (typeof message === 'string' && message.trim()) ? message : `${studentName} ${billingMonth.replace('-', '년 ')}월 수업료`,
     })
 
     if (result.code === '0000') {
