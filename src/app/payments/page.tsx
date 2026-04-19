@@ -85,7 +85,7 @@ function FilterDropdownPortal({
   const totalH = ROW_H * orderedKeys.length
   const BORDER_R = Math.round(ROW_H / 2)
   // 펼친 상태에서는 알약보다 넓혀서 기간(15~21 등)이 들어갈 여유 확보
-  const OPEN_W = Math.max(rect.width, 140)
+  const OPEN_W = Math.max(rect.width, 128)
   const portalLeft = show ? rect.left - (OPEN_W - rect.width) / 2 : rect.left
   const portalW = show ? OPEN_W : rect.width
 
