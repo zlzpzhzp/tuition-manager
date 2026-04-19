@@ -1677,9 +1677,9 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                                         {billStatus === 'sent' ? (
                                           <Mail className="w-3.5 h-3.5" />
                                         ) : billStatus === 'cancelled' ? (
-                                          // 종이비행기 상하반전 + 대각선 취소선 (inline SVG)
+                                          // 종이비행기 좌우반전 + 대각선 취소선(╲) (inline SVG)
                                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                                            <g opacity="0.5" transform="translate(0 24) scale(1 -1)">
+                                            <g opacity="0.5" transform="translate(24 0) scale(-1 1)">
                                               <path d="m22 2-7 20-4-9-9-4Z" />
                                               <path d="M22 2 11 13" />
                                             </g>
