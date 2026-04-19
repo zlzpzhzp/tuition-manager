@@ -4,7 +4,7 @@ import { useState, useCallback, useRef, useMemo, useEffect, useLayoutEffect } fr
 import { createPortal } from 'react-dom'
 import { ChevronLeft, ChevronRight, Check, ChevronDown, ClipboardList, Download, Plus, Send, Mail, Loader2, CreditCard, Banknote, ArrowLeftRight, X } from 'lucide-react'
 import type { Student, Payment, PaymentMethod, GradeWithClasses } from '@/types'
-import { getStudentFee, getPaymentStatus, PAYMENT_STATUS_LABELS, PAYMENT_STATUS_COLORS, PAYMENT_METHOD_LABELS } from '@/types'
+import { getStudentFee, getPaymentStatus, PAYMENT_STATUS_LABELS, PAYMENT_STATUS_COLORS, PAYMENT_METHOD_LABELS, parseClassDays, DAY_LABELS } from '@/types'
 import PaymentModal from '@/components/PaymentModal'
 import StudentModal from '@/components/StudentModal'
 import DatePickerPopup from '@/components/payments/DatePickerPopup'
@@ -1293,7 +1293,18 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                       onClick={() => toggleClass(cls.id)}
                     >
                       <span className="text-sm font-medium text-[var(--text-3)]">{cls.name}</span>
-                      <span className="text-xs text-[var(--text-4)] ml-1">{cls.monthly_fee > 0 ? `${cls.monthly_fee.toLocaleString()}원` : ''}</span>
+                      {(() => {
+                        const teacherName = cls.teacher?.name
+                        const days = parseClassDays(cls.class_days)
+                        const dayStr = days?.length ? days.map(d => DAY_LABELS[d]).filter(Boolean).join('') : ''
+                        if (!teacherName && !dayStr) return null
+                        return (
+                          <span className="text-[10px] text-[var(--text-4)] ml-1.5">
+                            {teacherName}{teacherName && dayStr ? ' · ' : ''}{dayStr}
+                          </span>
+                        )
+                      })()}
+                      <span className="text-xs text-[var(--text-4)] ml-1.5">{cls.monthly_fee > 0 ? `${cls.monthly_fee.toLocaleString()}원` : ''}</span>
                       <span className="text-xs text-[var(--text-4)] ml-2">{paidCount}/{students.length}</span>
                       <span className="flex-1" />
                       {(() => {
@@ -1361,7 +1372,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                       style={{ overflow: 'hidden' }}
                     >
-                    {students.map((student) => {
+                    {students.map((student, idx) => {
                       const fee = getStudentFee(student, cls)
                       const studentPayments = getStudentPayments(student.id)
                       const paid = studentPayments.reduce((s, p) => s + p.amount, 0)
@@ -1468,6 +1479,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                                   setDetailStudentId(student.id)
                                 }}
                               >
+                                <span className="text-[11px] text-[var(--text-4)] mr-1 tabular-nums">{idx + 1}.</span>
                                 <span className={`text-sm font-medium ${withdrawn ? 'line-through decoration-red-500 decoration-2 text-[var(--text-4)]' : ''}`}>{student.name}</span>
                                 {!withdrawn && !student.parent_phone && (
                                   <span className="text-[9px] ml-1 px-1 py-0.5 rounded-full bg-[var(--orange-dim)] text-[var(--orange)] font-bold" title="보호자 연락처 미등록">📵</span>
