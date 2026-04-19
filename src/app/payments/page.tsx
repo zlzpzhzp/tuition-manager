@@ -939,7 +939,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
       <div data-sticky-header className="sticky top-14 z-30 bg-[var(--bg)] -mx-4 px-4 pt-2 pb-2">
         <motion.div
           animate={{ height: memoCompact ? 38 : memoNaturalH }}
-          transition={{ type: 'spring', stiffness: 280, damping: 32, mass: 0.8 }}
+          transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
           className="relative overflow-hidden rounded-xl bg-[var(--bg-elevated)]"
         >
           <textarea
