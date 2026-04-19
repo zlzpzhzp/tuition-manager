@@ -1,8 +1,7 @@
 import { createHash } from 'crypto'
 
-// ⚠️ 테스트 모드 — 실제 발송 차단
-// 초능력자님이 "실제 적용하자"고 할 때까지 절대 false로 바꾸지 말 것
-const TEST_MODE = true
+// 테스트 모드 해제 — 실제 발송 활성화 (2026-04-19, 초능력자님 승인)
+const TEST_MODE = false
 
 const BASE_URL = process.env.PAYSSAM_API_URL || 'https://stg.paymint.co.kr/partner'
 const API_KEY = () => process.env.PAYSSAM_API_KEY || ''

@@ -145,24 +145,13 @@ function FilterDropdownPortal({
           // 주차 행은 펼침 시 좌측 정렬 (첫글자 x좌표 통일), 비주차/현재행은 중앙 정렬
           const alignLeft = isWeek && show
           return (
-            <motion.button
+            <button
               key={key}
               type="button"
               onClick={() => onSelect(key)}
               role="option"
               aria-selected={active}
-              className={`relative w-full flex items-center text-xs font-semibold whitespace-nowrap transition-colors ${bgFor(key, active)}`}
-              initial={false}
-              animate={{
-                opacity: isCurrent ? 1 : show ? 1 : 0,
-              }}
-              transition={{
-                opacity: {
-                  duration: show ? 0.22 : 0.14,
-                  ease: [0.22, 1, 0.36, 1],
-                  delay: isCurrent ? 0 : show ? 0.1 + i * 0.028 : 0,
-                },
-              }}
+              className={`relative w-full flex items-center text-xs font-semibold whitespace-nowrap ${bgFor(key, active)}`}
               style={{
                 height: ROW_H,
                 paddingLeft: alignLeft ? 28 : 0,
@@ -170,25 +159,11 @@ function FilterDropdownPortal({
               }}
             >
               <span>{FILTER_LABELS[key]}</span>
-              <AnimatePresence initial={false}>
-                {isWeek && rangeLabel && show && (
-                  <motion.span
-                    key="range"
-                    className="text-[10px] opacity-60 ml-1"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 0.6 }}
-                    exit={{ opacity: 0 }}
-                    transition={{
-                      duration: 0.18,
-                      ease: [0.22, 1, 0.36, 1],
-                      delay: isCurrent ? 0.14 : 0.14 + i * 0.028,
-                    }}
-                    style={{ whiteSpace: 'nowrap' }}
-                  >
-                    {rangeLabel}
-                  </motion.span>
-                )}
-              </AnimatePresence>
+              {isWeek && rangeLabel && (isCurrent || show) && (
+                <span className="text-[10px] opacity-60 ml-1" style={{ whiteSpace: 'nowrap' }}>
+                  {rangeLabel}
+                </span>
+              )}
               {isCurrent && (
                 <motion.div
                   className="absolute right-2 flex items-center justify-center"
@@ -198,7 +173,7 @@ function FilterDropdownPortal({
                   <ChevronDown className="w-3 h-3 opacity-60" />
                 </motion.div>
               )}
-            </motion.button>
+            </button>
           )
         })}
       </motion.div>
