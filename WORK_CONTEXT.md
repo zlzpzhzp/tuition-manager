@@ -3,7 +3,24 @@
 > 이 파일은 Claude 세션 간 작업 연속성을 위한 컨텍스트 추적 파일입니다.
 > 작업 중 수시로 업데이트하고, 커밋 시 함께 포함시킵니다.
 
-## 현재 상태: 필터 드롭다운 애니메이션 수정 완료 + 필터별 일괄발송 배찌 대기
+## 현재 상태: 필터 드롭 깜빡임 제거 + 필터별 일괄발송 배찌 구현 (de6bbb5)
+
+### 2026-04-19 16:55 (완료, de6bbb5)
+- msg 865 "원하는대로 다 구현됐는데 드롭된다음에 깜빡이네" + msg 866 "주차별 일괄 구현 안된거야?"
+- ① 깜빡임 원인: 행/주차라벨 페이드 스태거가 컨테이너 드롭(0.5s)보다 늦게 끝나 꼬리가 남음
+  - 행: delay 0.14+i*0.038 → 0.1+i*0.028, duration 0.28 → 0.22
+  - 주차 라벨: delay 0.2+i*0.038 → 0.14+i*0.028, duration 0.22 → 0.18
+  - 모든 페이드가 드롭 내에서 마무리 (i=6 최대 0.488s ≈ 드롭 끝)
+- ② 필터별 일괄발송 배찌 구현
+  - 필터 ≠ 'all' 시 알약 왼쪽에 "{FILTER_LABELS} 일괄 N" 빨간 배찌 (Send 아이콘)
+  - 탭 → 모든 반(subjectGradeGroups) 훑어서 eligible 수집 → BulkBillSendModal에 로드
+  - 발송 중 batchSending='__filter__' sentinel + 진행률(N/M) + 중단 버튼
+  - bulkBillTarget 구조 확장: cls | null + studentClsMap (student→cls)
+  - executeBulkSend에서 필터모드 시 studentClsMap으로 반별 sendOneBill
+- 파일: src/app/payments/page.tsx (270, 469-542, 1224-1294)
+- 배포: dpl_DPCMTnLz7trwY9peYctqbFH7Yp17
+
+### 2026-04-19 16:40 (완료, d2b40a9) — 필터 드롭 애니메이션 발동 버그
 
 ### 2026-04-19 16:40 (완료, d2b40a9) — 필터 드롭 애니메이션 발동 버그
 - msg 861 "필터 누르면 그냥 아래로 늘어나는 애니메이션 없이 뿅 그냥 필터 전체 나타남"
