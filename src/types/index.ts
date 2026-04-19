@@ -46,6 +46,7 @@ export interface Student {
   payment_due_day?: number | null
   memo?: string
   memo_color?: 'yellow' | 'green' | 'red' | null
+  order_index?: number
   created_at: string
   class?: Class
 }

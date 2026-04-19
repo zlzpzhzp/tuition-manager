@@ -29,6 +29,7 @@ export async function queryGradesTree() {
     .select('*, tuition_classes(*, tuition_teachers:teacher_id(*), tuition_students(*))')
     .order('order_index')
     .order('order_index', { referencedTable: 'tuition_classes' })
+    .order('order_index', { referencedTable: 'tuition_classes.tuition_students' })
     .order('name', { referencedTable: 'tuition_classes.tuition_students' })
 
   return { data: data as RawGrade[] | null, error }

@@ -1275,8 +1275,13 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                   {gradeClasses.map(cls => {
                 const allClassStudents = getActiveStudents(cls.students ?? [], selectedMonth)
                 let students = allClassStudents.filter(s => passesFilter(s, cls))
-                // 결제일 오름차순 정렬
-                students = [...students].sort((a, b) => getDueDay(a) - getDueDay(b))
+                // 사용자가 지정한 순서(order_index) 우선, 없으면 결제일 오름차순
+                students = [...students].sort((a, b) => {
+                  const ao = a.order_index ?? 0
+                  const bo = b.order_index ?? 0
+                  if (ao !== bo) return ao - bo
+                  return getDueDay(a) - getDueDay(b)
+                })
 
                 if (students.length === 0) return null
 
