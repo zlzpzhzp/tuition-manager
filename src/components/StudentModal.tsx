@@ -22,6 +22,7 @@ export default function StudentModal({ student, grades, defaultClassId, onSave, 
   const [parentPhone, setParentPhone] = useState(formatPhone(student?.parent_phone ?? ''))
   const [enrollmentDate, setEnrollmentDate] = useState(student?.enrollment_date ?? getTodayString())
   const [customFee, setCustomFee] = useState(student?.custom_fee != null ? String(student.custom_fee) : '')
+  const [paymentDueDay, setPaymentDueDay] = useState(student?.payment_due_day != null ? String(student.payment_due_day) : '')
   const [memo, setMemo] = useState(student?.memo ?? '')
 
   useEffect(() => {
@@ -33,6 +34,8 @@ export default function StudentModal({ student, grades, defaultClassId, onSave, 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!name.trim()) return
+    const dueDayNum = paymentDueDay ? parseInt(paymentDueDay) : null
+    const dueDay = dueDayNum != null && dueDayNum >= 1 && dueDayNum <= 31 ? dueDayNum : null
     onSave({
       name: name.trim(),
       class_id: classId || null,
@@ -40,6 +43,7 @@ export default function StudentModal({ student, grades, defaultClassId, onSave, 
       parent_phone: parentPhone,
       enrollment_date: enrollmentDate,
       custom_fee: customFee ? parseInt(customFee) : null,
+      payment_due_day: dueDay,
       memo,
     })
   }
@@ -113,15 +117,31 @@ export default function StudentModal({ student, grades, defaultClassId, onSave, 
             </select>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-[var(--text-2)] mb-1">첫 등원일 *</label>
-            <input
-              type="date"
-              value={enrollmentDate}
-              onChange={e => setEnrollmentDate(e.target.value)}
-              className="w-full px-3 py-2 border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-1)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
-              required
-            />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-[var(--text-2)] mb-1">첫 등원일 *</label>
+              <input
+                type="date"
+                value={enrollmentDate}
+                onChange={e => setEnrollmentDate(e.target.value)}
+                className="w-full px-3 py-2 border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-1)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[var(--text-2)] mb-1">
+                결제일 <span className="text-[var(--text-4)] font-normal">(1~31, 비우면 등원일 기준)</span>
+              </label>
+              <input
+                type="number"
+                min={1}
+                max={31}
+                value={paymentDueDay}
+                onChange={e => setPaymentDueDay(e.target.value)}
+                placeholder="예: 3"
+                className="w-full px-3 py-2 border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-1)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
+              />
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
