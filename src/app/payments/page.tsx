@@ -127,9 +127,8 @@ function FilterDropdownPortal({
               onClick={() => onSelect(key)}
               role="option"
               aria-selected={active}
-              // 주차만 왼쪽정렬+pl 고정으로 첫글자 x=34 (유저 지시: 22→34, 한글자 우측 이동)
               className={`relative w-full flex items-center text-xs font-semibold whitespace-nowrap transition-colors ${
-                isWeek ? 'justify-start pl-[34px] gap-1' : 'justify-center gap-1'
+                isWeek ? 'justify-start pl-[40px] gap-1' : 'justify-center gap-1'
               } ${bgFor(key, active)}`}
               style={{
                 height: ROW_H,
