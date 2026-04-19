@@ -117,7 +117,7 @@ export default function StudentModal({ student, grades, defaultClassId, onSave, 
             </select>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-[1fr_auto] gap-3 items-end">
             <div>
               <label className="block text-sm font-medium text-[var(--text-2)] mb-1">첫 등원일 *</label>
               <input
@@ -128,17 +128,15 @@ export default function StudentModal({ student, grades, defaultClassId, onSave, 
                 required
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-[var(--text-2)] mb-1">
-                결제일 <span className="text-[var(--text-4)] font-normal">(1~31, 비우면 등원일 기준)</span>
-              </label>
+            <div className="w-[96px]">
+              <label className="block text-sm font-medium text-[var(--text-2)] mb-1">결제일</label>
               <input
                 type="number"
                 min={1}
                 max={31}
                 value={paymentDueDay}
                 onChange={e => setPaymentDueDay(e.target.value)}
-                placeholder="예: 3"
+                placeholder="등원일"
                 className="w-full px-3 py-2 border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-1)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
               />
             </div>
