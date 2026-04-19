@@ -1581,54 +1581,62 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                             </div>
                           </div>
                           {/* 아래층: 입력 공간 — 단일 선택일 때만 (다중선택은 상단 툴바) */}
-                          {/* 비고 입력 — CSS grid-template-rows 트릭으로 네이티브 부드러움 */}
-                          <div
-                            className="grid transition-all duration-[420ms] ease-[cubic-bezier(0.22,1,0.36,1)] will-change-[grid-template-rows]"
-                            style={{
-                              gridTemplateRows: isSoleMemoSelection ? '1fr' : '0fr',
-                              opacity: isSoleMemoSelection ? 1 : 0,
-                            }}
-                            aria-hidden={!isSoleMemoSelection}
-                          >
-                            <div className="overflow-hidden min-h-0">
-                              <div className="px-3 py-2 bg-[var(--bg-elevated)] border-t border-[var(--border)]" onClick={e => e.stopPropagation()}>
-                                <textarea
-                                  value={editMemoValue}
-                                  onChange={e => setEditMemoValue(e.target.value)}
-                                  onKeyDown={e => {
-                                    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); handleSaveMemo(student.id) }
-                                  }}
-                                  placeholder="비고 내용 (⌘Enter 저장)"
-                                  rows={3}
-                                  tabIndex={isSoleMemoSelection ? 0 : -1}
-                                  className="w-full px-3 py-2 text-sm border border-[var(--border)] rounded-lg bg-[var(--bg-card)] focus:outline-none focus:ring-1 focus:ring-[var(--blue)] resize-none leading-relaxed"
-                                />
-                              </div>
-                            </div>
-                          </div>
+                          {/* 비고 입력 — framer-motion height:auto (iOS Safari 포함 전브라우저 호환) */}
+                          <AnimatePresence initial={false}>
+                            {isSoleMemoSelection && (
+                              <motion.div
+                                key="memo-input"
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: 'auto', opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                transition={{
+                                  height: { duration: 0.38, ease: [0.22, 1, 0.36, 1] },
+                                  opacity: { duration: 0.24, ease: [0.22, 1, 0.36, 1] },
+                                }}
+                                style={{ overflow: 'hidden' }}
+                              >
+                                <div className="px-3 py-2 bg-[var(--bg-elevated)] border-t border-[var(--border)]" onClick={e => e.stopPropagation()}>
+                                  <textarea
+                                    value={editMemoValue}
+                                    onChange={e => setEditMemoValue(e.target.value)}
+                                    onKeyDown={e => {
+                                      if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); handleSaveMemo(student.id) }
+                                    }}
+                                    placeholder="비고 내용 (⌘Enter 저장)"
+                                    rows={3}
+                                    className="w-full px-3 py-2 text-sm border border-[var(--border)] rounded-lg bg-[var(--bg-card)] focus:outline-none focus:ring-1 focus:ring-[var(--blue)] resize-none leading-relaxed"
+                                  />
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
                           {/* 결제특이사항 입력 — 동일 패턴 */}
-                          <div
-                            className="grid transition-all duration-[420ms] ease-[cubic-bezier(0.22,1,0.36,1)] will-change-[grid-template-rows]"
-                            style={{
-                              gridTemplateRows: isSwipeOpen && openSide === 'right' ? '1fr' : '0fr',
-                              opacity: isSwipeOpen && openSide === 'right' ? 1 : 0,
-                            }}
-                            aria-hidden={!(isSwipeOpen && openSide === 'right')}
-                          >
-                            <div className="overflow-hidden min-h-0">
-                              <div className="px-3 py-2 bg-[var(--bg-elevated)] border-t border-[var(--border)]" onClick={e => e.stopPropagation()}>
-                                <input
-                                  type="text"
-                                  value={editPayMemoValue}
-                                  onChange={e => setEditPayMemoValue(e.target.value)}
-                                  onKeyDown={e => { if (e.key === 'Enter') handleSavePayMemo(student.id) }}
-                                  placeholder="결제 특이사항"
-                                  tabIndex={isSwipeOpen && openSide === 'right' ? 0 : -1}
-                                  className="w-full px-3 py-2 text-sm border border-[var(--border)] rounded-lg bg-[var(--bg-card)] focus:outline-none focus:ring-1 focus:ring-[var(--blue)]"
-                                />
-                              </div>
-                            </div>
-                          </div>
+                          <AnimatePresence initial={false}>
+                            {isSwipeOpen && openSide === 'right' && (
+                              <motion.div
+                                key="pay-memo-input"
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: 'auto', opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                transition={{
+                                  height: { duration: 0.38, ease: [0.22, 1, 0.36, 1] },
+                                  opacity: { duration: 0.24, ease: [0.22, 1, 0.36, 1] },
+                                }}
+                                style={{ overflow: 'hidden' }}
+                              >
+                                <div className="px-3 py-2 bg-[var(--bg-elevated)] border-t border-[var(--border)]" onClick={e => e.stopPropagation()}>
+                                  <input
+                                    type="text"
+                                    value={editPayMemoValue}
+                                    onChange={e => setEditPayMemoValue(e.target.value)}
+                                    onKeyDown={e => { if (e.key === 'Enter') handleSavePayMemo(student.id) }}
+                                    placeholder="결제 특이사항"
+                                    className="w-full px-3 py-2 text-sm border border-[var(--border)] rounded-lg bg-[var(--bg-card)] focus:outline-none focus:ring-1 focus:ring-[var(--blue)]"
+                                  />
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
                         </div>
                       )
                     })}
