@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
-import { ChevronLeft, ChevronRight, ChevronDown, Loader2, AlertCircle, Clock, PhoneOff, Lock, Download, FileText, Ban, Send } from 'lucide-react'
+import { ChevronDown, Loader2, AlertCircle, Clock, PhoneOff, Lock, Download, FileText, Ban, Send } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import type { Student, GradeWithClasses } from '@/types'
@@ -62,9 +62,7 @@ export default function BillingPage() {
     const now = new Date()
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
   })
-  const [weekFilter, setWeekFilter] = useState<WeekFilter>('all')
-  const [showFilter, setShowFilter] = useState(false)
-  const filterRef = useRef<HTMLDivElement>(null)
+  const [weekFilter] = useState<WeekFilter>('all')
   const [expandedAction, setExpandedAction] = useState<'overdue' | 'cancelled' | 'nophone' | null>(null)
   const [showTools, setShowTools] = useState(false)
   const [nowTs, setNowTs] = useState(() => Date.now())
@@ -86,12 +84,6 @@ export default function BillingPage() {
     (url: string) => fetch(url).then(r => r.json()),
     { refreshInterval: 60000 }
   )
-
-  const navigateMonth = (delta: number) => {
-    const [y, m] = selectedMonth.split('-').map(Number)
-    const d = new Date(y, m - 1 + delta, 1)
-    setSelectedMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`)
-  }
 
   // Sun~Sat 기준 주차 범위
   const weekRanges = useMemo(() => {
@@ -270,16 +262,6 @@ export default function BillingPage() {
       : bills.filter(b => studentById.has(b.student_id))
     return scoped.slice(0, 30)
   }, [bills, weekFilter, studentById])
-
-  // 필터 드롭다운 외부 클릭 닫기
-  useEffect(() => {
-    if (!showFilter) return
-    const onClick = (e: MouseEvent) => {
-      if (filterRef.current && !filterRef.current.contains(e.target as Node)) setShowFilter(false)
-    }
-    document.addEventListener('mousedown', onClick)
-    return () => document.removeEventListener('mousedown', onClick)
-  }, [showFilter])
 
   // ─── Pull-to-refresh ──────────────────────────────────────
   const [pullDistance, setPullDistance] = useState(0)
@@ -468,38 +450,24 @@ export default function BillingPage() {
 
       <div className="pt-2 pb-1">
         {(() => {
-          const [y, m] = selectedMonth.split('-').map(Number)
           const today = new Date()
-          const isCurrentMonth = today.getFullYear() === y && today.getMonth() + 1 === m
-          const weekday = isCurrentMonth ? ['일','월','화','수','목','금','토'][today.getDay()] : ''
-          const dayNum = isCurrentMonth ? today.getDate() : null
+          const y = today.getFullYear()
+          const m = today.getMonth() + 1
+          const d = today.getDate()
+          const weekday = ['일','월','화','수','목','금','토'][today.getDay()]
           return (
-            <div className="flex items-center gap-1 mb-1">
-              <button onClick={() => navigateMonth(-1)} className="p-1.5 hover:bg-[var(--bg-elevated)] rounded-lg text-[var(--text-4)] shrink-0" aria-label="이전 달">
-                <ChevronLeft className="w-5 h-5" />
-              </button>
-              <div className="leading-none flex-1 py-1">
-                <div className="text-[10px] font-bold tracking-[0.2em] text-[var(--text-4)] mb-2">{y}</div>
-                <div className="flex items-baseline gap-2.5">
-                  <h1 className="text-[2.4rem] font-extrabold tracking-tight leading-none text-[var(--text-1)] tabular-nums">
-                    {m}<span className="text-[1.5rem] font-bold text-[var(--text-2)] ml-0.5">월</span>
-                    {dayNum !== null && (
-                      <>
-                        <span className="ml-2 text-[var(--text-1)]">{dayNum}</span>
-                        <span className="text-[1.5rem] font-bold text-[var(--text-2)] ml-0.5">일</span>
-                      </>
-                    )}
-                  </h1>
-                  {weekday && (
-                    <span className="text-sm font-semibold text-[var(--text-3)] tracking-tight">
-                      {weekday}요일
-                    </span>
-                  )}
-                </div>
+            <div className="leading-none py-1 mb-1">
+              <div className="text-[10px] font-bold tracking-[0.2em] text-[var(--text-4)] mb-2">{y}</div>
+              <div className="flex items-baseline gap-2.5">
+                <h1 className="text-[2.4rem] font-extrabold tracking-tight leading-none text-[var(--text-1)] tabular-nums">
+                  {m}<span className="text-[1.5rem] font-bold text-[var(--text-2)] ml-0.5">월</span>
+                  <span className="ml-2 text-[var(--text-1)]">{d}</span>
+                  <span className="text-[1.5rem] font-bold text-[var(--text-2)] ml-0.5">일</span>
+                </h1>
+                <span className="text-sm font-semibold text-[var(--text-3)] tracking-tight">
+                  {weekday}요일
+                </span>
               </div>
-              <button onClick={() => navigateMonth(1)} className="p-1.5 hover:bg-[var(--bg-elevated)] rounded-lg text-[var(--text-4)] shrink-0" aria-label="다음 달">
-                <ChevronRight className="w-5 h-5" />
-              </button>
             </div>
           )
         })()}
@@ -513,61 +481,13 @@ export default function BillingPage() {
           청구서 발송하기
         </button>
 
-        {/* 결제일 필터 */}
-        <div className="flex justify-between items-center mt-3 mb-2">
-          <div className="text-[11px] text-[var(--text-4)]">
-            {isTestMode && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[var(--orange-dim)] text-[var(--orange)] font-semibold">
-                <Lock className="w-3 h-3" /> 테스트 모드
-              </span>
-            )}
+        {isTestMode && (
+          <div className="mt-3 mb-2">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[var(--orange-dim)] text-[var(--orange)] text-[11px] font-semibold">
+              <Lock className="w-3 h-3" /> 테스트 모드
+            </span>
           </div>
-          <div ref={filterRef} className="relative">
-            <button
-              onClick={() => setShowFilter(v => !v)}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold bg-[var(--bg-elevated)] text-[var(--text-2)] hover:bg-[var(--bg-card-hover)] transition-colors"
-            >
-              <span>{FILTER_LABELS[weekFilter]}</span>
-              <ChevronDown className="w-3 h-3 opacity-60" />
-            </button>
-            <AnimatePresence>
-              {showFilter && (
-                <motion.div
-                  initial={{ opacity: 0, y: -4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -4 }}
-                  transition={{ duration: 0.15 }}
-                  className="absolute right-0 top-full mt-1 min-w-[140px] rounded-xl border border-[var(--border)] bg-[var(--bg-card)] shadow-xl z-40 overflow-hidden"
-                >
-                  {filterOrder.map((key) => {
-                    const range = key !== 'all' ? weekRanges[key as Exclude<WeekFilter, 'all'>] : null
-                    const disabled = range ? !isRangeValid(range) : false
-                    const active = weekFilter === key
-                    return (
-                      <button
-                        key={key}
-                        onClick={() => { if (!disabled) { setWeekFilter(key); setShowFilter(false) } }}
-                        disabled={disabled}
-                        className={`w-full flex items-center justify-between px-3 py-2 text-xs font-medium transition-colors ${
-                          active
-                            ? 'bg-[var(--blue)]/20 text-[var(--blue)]'
-                            : disabled
-                            ? 'text-[var(--text-4)] opacity-40 cursor-not-allowed'
-                            : 'text-[var(--text-2)] hover:bg-[var(--bg-elevated)]'
-                        }`}
-                      >
-                        <span>{FILTER_LABELS[key]}</span>
-                        {range && isRangeValid(range) && key !== 'day1' && (
-                          <span className="text-[10px] opacity-60 ml-3">{formatRange(range)}</span>
-                        )}
-                      </button>
-                    )
-                  })}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        </div>
+        )}
 
         {/* 액션 필요 */}
         {(actionItems.overdue.length > 0 || actionItems.cancelled.length > 0 || actionItems.noPhone.length > 0) && (
