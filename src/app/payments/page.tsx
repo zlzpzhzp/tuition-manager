@@ -138,7 +138,7 @@ function FilterDropdownPortal({
               animate={{
                 opacity: isCurrent ? 1 : show ? 1 : 0,
                 y: isCurrent ? 0 : show ? 0 : -4,
-                paddingLeft: alignLeft ? 16 : 0,
+                paddingLeft: alignLeft ? 28 : 0,
                 justifyContent: alignLeft ? 'flex-start' : 'center',
               }}
               transition={{
@@ -1578,32 +1578,54 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                             </div>
                           </div>
                           {/* 아래층: 입력 공간 — 단일 선택일 때만 (다중선택은 상단 툴바) */}
-                          {isSoleMemoSelection && (
-                            <div className="px-3 py-2 bg-[var(--bg-elevated)] border-t border-[var(--border)]" onClick={e => e.stopPropagation()}>
-                              <textarea
-                                value={editMemoValue}
-                                onChange={e => setEditMemoValue(e.target.value)}
-                                onKeyDown={e => {
-                                  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); handleSaveMemo(student.id) }
-                                }}
-                                placeholder="비고 내용 (⌘Enter 저장)"
-                                rows={3}
-                                className="w-full px-3 py-2 text-sm border border-[var(--border)] rounded-lg bg-[var(--bg-card)] focus:outline-none focus:ring-1 focus:ring-[var(--blue)] resize-none leading-relaxed"
-                              />
-                            </div>
-                          )}
-                          {isSwipeOpen && openSide === 'right' && (
-                            <div className="px-3 py-2 bg-[var(--bg-elevated)] border-t border-[var(--border)]" onClick={e => e.stopPropagation()}>
-                              <input
-                                type="text"
-                                value={editPayMemoValue}
-                                onChange={e => setEditPayMemoValue(e.target.value)}
-                                onKeyDown={e => { if (e.key === 'Enter') handleSavePayMemo(student.id) }}
-                                placeholder="결제 특이사항"
-                                className="w-full px-3 py-2 text-sm border border-[var(--border)] rounded-lg bg-[var(--bg-card)] focus:outline-none focus:ring-1 focus:ring-[var(--blue)]"
-                              />
-                            </div>
-                          )}
+                          <AnimatePresence initial={false}>
+                            {isSoleMemoSelection && (
+                              <motion.div
+                                key="memo-input"
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: 'auto', opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+                                style={{ overflow: 'hidden' }}
+                              >
+                                <div className="px-3 py-2 bg-[var(--bg-elevated)] border-t border-[var(--border)]" onClick={e => e.stopPropagation()}>
+                                  <textarea
+                                    value={editMemoValue}
+                                    onChange={e => setEditMemoValue(e.target.value)}
+                                    onKeyDown={e => {
+                                      if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); handleSaveMemo(student.id) }
+                                    }}
+                                    placeholder="비고 내용 (⌘Enter 저장)"
+                                    rows={3}
+                                    className="w-full px-3 py-2 text-sm border border-[var(--border)] rounded-lg bg-[var(--bg-card)] focus:outline-none focus:ring-1 focus:ring-[var(--blue)] resize-none leading-relaxed"
+                                  />
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                          <AnimatePresence initial={false}>
+                            {isSwipeOpen && openSide === 'right' && (
+                              <motion.div
+                                key="pay-memo-input"
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: 'auto', opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+                                style={{ overflow: 'hidden' }}
+                              >
+                                <div className="px-3 py-2 bg-[var(--bg-elevated)] border-t border-[var(--border)]" onClick={e => e.stopPropagation()}>
+                                  <input
+                                    type="text"
+                                    value={editPayMemoValue}
+                                    onChange={e => setEditPayMemoValue(e.target.value)}
+                                    onKeyDown={e => { if (e.key === 'Enter') handleSavePayMemo(student.id) }}
+                                    placeholder="결제 특이사항"
+                                    className="w-full px-3 py-2 text-sm border border-[var(--border)] rounded-lg bg-[var(--bg-card)] focus:outline-none focus:ring-1 focus:ring-[var(--blue)]"
+                                  />
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
                         </div>
                       )
                     })}
