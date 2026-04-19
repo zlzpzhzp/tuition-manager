@@ -99,17 +99,18 @@ function FilterDropdownPortal({
   return createPortal(
     <>
       <div className="fixed inset-0 z-[60]" onClick={onClose} />
-      <div
+      <motion.div
         data-filter-portal
         className="fixed z-[61] overflow-hidden shadow-xl bg-[var(--surface)]"
-        style={{
+        initial={false}
+        animate={{
           top: rect.top,
           left: portalLeft,
           width: portalW,
           height: show ? totalH : ROW_H,
           borderRadius: BORDER_R,
-          transition: 'height 0.2s ease-out, width 0.2s ease-out, left 0.2s ease-out',
         }}
+        transition={{ type: 'spring', stiffness: 360, damping: 34, mass: 0.7 }}
         role="listbox"
         aria-label="납부 필터"
       >
@@ -121,36 +122,57 @@ function FilterDropdownPortal({
             ? range[0] === range[1] ? `${range[0]}일` : `${range[0]}~${range[1]}`
             : ''
           const isCurrent = i === 0
+          const alignLeft = show || isWeek
           return (
-            <button
+            <motion.button
               key={key}
               type="button"
               onClick={() => onSelect(key)}
               role="option"
               aria-selected={active}
-              className={`relative w-full flex items-center text-xs font-semibold whitespace-nowrap transition-colors ${
-                isWeek ? 'justify-start pl-[40px] gap-1' : 'justify-center gap-1'
-              } ${bgFor(key, active)}`}
-              style={{
-                height: ROW_H,
+              className={`relative w-full flex items-center text-xs font-semibold whitespace-nowrap gap-1 transition-colors ${bgFor(key, active)}`}
+              animate={{
                 opacity: isCurrent ? 1 : show ? 1 : 0,
-                transition: 'opacity 0.15s ease-out, background-color 0.12s, color 0.12s',
+                paddingLeft: alignLeft ? 40 : 0,
+                justifyContent: alignLeft ? 'flex-start' : 'center',
               }}
+              transition={{
+                paddingLeft: { type: 'spring', stiffness: 360, damping: 34, mass: 0.7 },
+                justifyContent: { duration: 0 },
+                opacity: { duration: 0.18, ease: [0.4, 0, 0.2, 1] },
+                default: { duration: 0.18 },
+              }}
+              style={{ height: ROW_H }}
             >
               <span>{FILTER_LABELS[key]}</span>
-              {isWeek && (
-                <span className="text-[10px] opacity-60">{rangeLabel}</span>
-              )}
+              <AnimatePresence initial={false}>
+                {isWeek && rangeLabel && show && (
+                  <motion.span
+                    key="range"
+                    className="text-[10px] opacity-60"
+                    initial={{ opacity: 0, width: 0 }}
+                    animate={{ opacity: 0.6, width: 'auto' }}
+                    exit={{ opacity: 0, width: 0 }}
+                    transition={{ duration: 0.15 }}
+                    style={{ overflow: 'hidden', whiteSpace: 'nowrap' }}
+                  >
+                    {rangeLabel}
+                  </motion.span>
+                )}
+              </AnimatePresence>
               {isCurrent && (
-                <ChevronDown
-                  className="absolute right-2 w-3 h-3 opacity-60 transition-transform"
-                  style={{ transform: show ? 'rotate(180deg)' : 'rotate(0deg)' }}
-                />
+                <motion.div
+                  className="absolute right-2 flex items-center justify-center"
+                  animate={{ rotate: show ? 180 : 0 }}
+                  transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
+                >
+                  <ChevronDown className="w-3 h-3 opacity-60" />
+                </motion.div>
               )}
-            </button>
+            </motion.button>
           )
         })}
-      </div>
+      </motion.div>
     </>,
     document.body,
   )
@@ -996,7 +1018,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                       <button
                         onClick={(e) => setFilterAnchor(prev => prev === e.currentTarget ? null : e.currentTarget)}
                         style={{ width: 112 }}
-                        className={`flex items-center justify-center gap-1 px-3 py-1 rounded-full text-xs font-semibold transition-colors shadow-sm ${
+                        className={`relative flex items-center justify-center px-3 py-1 rounded-full text-xs font-semibold transition-colors shadow-sm ${
                           paymentFilter === 'unpaid'
                             ? 'bg-[var(--red-dim)] text-[var(--unpaid-text)]'
                             : paymentFilter !== 'all'
@@ -1005,7 +1027,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                         }`}
                       >
                         <span>{FILTER_LABELS[paymentFilter]}</span>
-                        <ChevronDown className={`w-3 h-3 opacity-60 transition-transform ${filterAnchor ? 'rotate-180' : ''}`} />
+                        <ChevronDown className={`absolute right-2 w-3 h-3 opacity-60 transition-transform ${filterAnchor ? 'rotate-180' : ''}`} />
                       </button>
                     )}
                   </div>
