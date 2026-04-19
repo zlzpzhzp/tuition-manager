@@ -80,7 +80,6 @@ export async function POST(request: NextRequest) {
             method: 'payssam',
             payment_date: getTodayString(),
             billing_month: billData.billing_month,
-            memo: `결제선생 자동수납 (${appr_pay_type || 'card'})`,
           })
         }
       }

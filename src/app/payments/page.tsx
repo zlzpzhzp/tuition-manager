@@ -758,21 +758,24 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
     // 좌로 밀기
     else if (dx < -60) {
       if (wasMemoSelected) {
-        // 비고 선택에서 해제
+        // 비고 선택에서 해제 (해당 학생만)
         el.style.transform = 'translateX(0)'
         setSelectedMemoIds(prev => {
           const next = new Set(prev); next.delete(id); return next
         })
+      } else if (selectedMemoIds.size > 0) {
+        // 다른 학생이 비고 활성화 중 → 전체 해제만, 결제특이사항 열지 않음
+        el.style.transform = wasOpen ? `translateX(${baseOffset}px)` : 'translateX(0)'
+        selectedMemoIds.forEach(prevId => animateRowTo(prevId, 0))
+        setSelectedMemoIds(new Set())
+        setEditMemoValue('')
+        setEditMemoColor(null)
       } else if (wasPayOpen) {
         // 결제특이사항 닫기
         el.style.transform = 'translateX(0)'
         setSwipeOpenPayId(null)
       } else {
-        // 결제특이사항 열기 (비고 선택 전체 해제)
-        if (selectedMemoIds.size > 0) {
-          selectedMemoIds.forEach(prevId => { if (prevId !== id) animateRowTo(prevId, 0) })
-          setSelectedMemoIds(new Set())
-        }
+        // 결제특이사항 열기
         el.style.transform = `translateX(-${PAY_W}px)`
         setSwipeOpenPayId(id)
         const sp = paymentsByStudentId.get(id) ?? []
