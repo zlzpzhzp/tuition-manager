@@ -3,7 +3,15 @@
 > 이 파일은 Claude 세션 간 작업 연속성을 위한 컨텍스트 추적 파일입니다.
 > 작업 중 수시로 업데이트하고, 커밋 시 함께 포함시킵니다.
 
-## 현재 상태: 필터 드롭 깜빡임 완전 제거 + 테스트 모드 해제 (74fb610)
+## 현재 상태: 청구서 취소 시 유령 결제완료 표시 버그 수정
+
+### 2026-04-19 17:55 (진행) — 취소 후에도 "결제완료" 파란 체크 남는 버그
+- msg 872/873: "취소까지 다했는데 그 표시가 없다" / "그대로 결제된 상태로 표시"
+- 원인: PaySsam 콜백이 결제완료(F) 시 tuition_payments에 자동 insert했는데, /api/payssam/cancel은 tuition_bill_history.status만 'cancelled'로 바꾸고 tuition_payments 레코드를 남겨둠 → UI가 tuition_payments 존재 기준으로 status='paid' 계속 표시
+- 수정 1: /api/payssam/cancel — bill 취소 성공 시 해당 student_id+billing_month+method='payssam'인 tuition_payments 레코드 삭제
+- 수정 2: DB 직접 정리 — 중1H 테스트의 유령 payments 레코드 1건 DELETE (payment_id 2bfaf267-...)
+- 수정 3: cancelled 상태 아이콘 구분 — Send + 45도 빨간 취소선 오버레이(찢어진 종이비행기)로 unsent와 시각 차별화
+- 파일: src/app/api/payssam/cancel/route.ts, src/app/payments/page.tsx (1673-1684)
 
 ### 2026-04-19 17:30 (완료, 74fb610)
 - msg 869 "아직도 깜빡거리긴해 수정하고 이제 테스트 모드 종료해"

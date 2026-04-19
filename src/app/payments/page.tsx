@@ -1672,6 +1672,12 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                                       >
                                         {billStatus === 'sent' ? (
                                           <Mail className="w-3.5 h-3.5" />
+                                        ) : billStatus === 'cancelled' ? (
+                                          // 찢어진 종이비행기 — Send에 대각선 취소선
+                                          <span className="relative inline-flex items-center justify-center w-3.5 h-3.5">
+                                            <Send className="w-3.5 h-3.5 opacity-55" />
+                                            <span className="absolute w-[18px] h-[1.5px] bg-current rotate-45 rounded-full" aria-hidden />
+                                          </span>
                                         ) : (
                                           <Send className="w-3.5 h-3.5" />
                                         )}
