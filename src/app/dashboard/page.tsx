@@ -3,12 +3,14 @@
 import { useCallback, useMemo } from 'react'
 import Link from 'next/link'
 import { Users, CreditCard, AlertCircle, TrendingUp } from 'lucide-react'
-import type { Payment, GradeWithClasses, Teacher } from '@/types'
-import { getStudentFee, getPaymentStatus, PAYMENT_STATUS_LABELS, PAYMENT_STATUS_COLORS } from '@/types'
+import type { Payment, GradeWithClasses, Teacher, Student, Class } from '@/types'
+import { getStudentFee, getPaymentStatus } from '@/types'
 import { getPaymentDueDay, isPaymentScheduled, getActiveStudents, getCurrentMonth, formatMonth, useGrades, usePayments, useTeachers } from '@/lib/utils'
 import { DashboardSkeleton } from '@/components/Skeleton'
 import { motion } from 'framer-motion'
 import { FadeInUp, StaggerContainer, StaggerItem, AnimatedNumber } from '@/components/motion'
+
+type DashStudent = Student & { class: Class; gradeName: string; gradeIndex: number; classIndex: number }
 
 export default function DashboardPage() {
   const currentMonth = getCurrentMonth()
@@ -19,14 +21,26 @@ export default function DashboardPage() {
   const loading = gradesLoading || paymentsLoading
   const error = gradesError || paymentsError
 
-  const allStudents = useMemo(() =>
-    grades.flatMap(g =>
-      g.classes.flatMap(c =>
+  const allStudents = useMemo<DashStudent[]>(() => {
+    const list: DashStudent[] = []
+    grades.forEach((g, gi) => {
+      g.classes.forEach((c, ci) => {
         getActiveStudents(c.students ?? [], currentMonth)
           .filter(s => !s.withdrawal_date)
-          .map(s => ({ ...s, class: c, gradeName: g.name }))
-      )
-    ), [grades, currentMonth])
+          .forEach(s => list.push({ ...s, class: c, gradeName: g.name, gradeIndex: gi, classIndex: ci }))
+      })
+    })
+    // 영어 과목은 학년 낮아도 뒤로
+    const subjectWeight = (c: Class) => (c.subject === '영어' ? 1 : 0)
+    list.sort((a, b) => {
+      const sw = subjectWeight(a.class) - subjectWeight(b.class)
+      if (sw !== 0) return sw
+      if (a.gradeIndex !== b.gradeIndex) return a.gradeIndex - b.gradeIndex
+      if (a.classIndex !== b.classIndex) return a.classIndex - b.classIndex
+      return (a.order_index ?? 0) - (b.order_index ?? 0)
+    })
+    return list
+  }, [grades, currentMonth])
 
   const paidByStudentId = useMemo(() => {
     const map = new Map<string, number>()
@@ -51,17 +65,6 @@ export default function DashboardPage() {
     const paymentRate = totalStudents > 0 ? Math.round((paidCount / totalStudents) * 100) : 0
     return { totalStudents, totalFee, totalPaid, unpaidStudents, overdueStudents, scheduledStudents, paidCount, paymentRate }
   }, [allStudents, payments, currentMonth, paidByStudentId])
-
-  const urgentStudents = useMemo(() => {
-    const today = new Date()
-    return stats.unpaidStudents.filter(s => {
-      const dueDay = getPaymentDueDay(s)
-      const dueDate = new Date(today.getFullYear(), today.getMonth(), dueDay)
-      if (dueDate < today) dueDate.setMonth(dueDate.getMonth() + 1)
-      const daysUntilDue = Math.round((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
-      return daysUntilDue <= 3
-    })
-  }, [stats.unpaidStudents])
 
   if (loading) return <DashboardSkeleton />
 
@@ -116,65 +119,27 @@ export default function DashboardPage() {
         </StaggerItem>
       </StaggerContainer>
 
-      {/* 납부 기한 임박 */}
-      {urgentStudents.length > 0 && (
-        <FadeInUp delay={0.15} className="card p-5" style={{ background: '#2a2018' }}>
-          <h2 className="text-[15px] font-bold text-[var(--orange)] mb-3 flex items-center gap-1.5">
-            <AlertCircle className="w-4 h-4" /> 납부 기한 임박
-          </h2>
-          <div className="space-y-1">
-            {urgentStudents.slice(0, 5).map(s => {
-              const fee = getStudentFee(s, s.class)
-              const paid = getStudentPaid(s.id)
-              const dueDay = getPaymentDueDay(s)
-              return (
-                <Link key={s.id} href={`/students/${s.id}`}
-                  className="flex items-center justify-between py-2.5 px-1 rounded-xl hover:bg-white/5 transition-colors">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[15px] font-semibold text-[var(--text-1)]">{s.name}</span>
-                    {s.enrollment_date?.startsWith(currentMonth) && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-[var(--blue-bg)] text-[var(--blue)] font-bold">신규</span>
-                    )}
-                    <span className="text-[13px] text-[var(--text-4)]">{s.gradeName} · {s.class?.name}</span>
-                  </div>
-                  <span className="text-[13px] font-semibold text-[var(--orange)] tabular-nums">{dueDay}일 · {(fee - paid).toLocaleString()}원</span>
-                </Link>
-              )
-            })}
-          </div>
-        </FadeInUp>
-      )}
-
-      {/* 미납 학생 목록 */}
+      {/* 미납 */}
       <FadeInUp delay={0.2} className="card p-5">
         <div className="flex items-center gap-2 mb-4">
-          <h2 className="text-[17px] font-bold text-[var(--text-1)]">미납 학생</h2>
+          <h2 className="text-[17px] font-bold text-[var(--text-1)]">미납</h2>
           {stats.overdueStudents.length > 0 && <span className="text-[13px] font-bold text-[var(--red)]">{stats.overdueStudents.length}</span>}
-          {stats.scheduledStudents.length > 0 && <span className="text-[13px] font-bold text-[var(--orange)]">예정 {stats.scheduledStudents.length}</span>}
         </div>
-        {stats.unpaidStudents.length === 0 ? (
-          <p className="text-[15px] text-[var(--text-4)] py-8 text-center">모든 학생이 납부 완료했습니다</p>
+        {stats.overdueStudents.length === 0 ? (
+          <p className="text-[15px] text-[var(--text-4)] py-8 text-center">미납 학생이 없습니다</p>
         ) : (
           <div className="space-y-0">
-            {stats.unpaidStudents.map(s => {
+            {stats.overdueStudents.map((s, idx) => {
               const fee = getStudentFee(s, s.class)
               const paid = getStudentPaid(s.id)
-              const status = getPaymentStatus(paid, fee)
-              const scheduled = status === 'unpaid' && isPaymentScheduled(s, currentMonth)
-              const displayColors = scheduled
-                ? { bg: '#302a1a', text: '#e5a731' }
-                : PAYMENT_STATUS_COLORS[status]
               const dueDay = getPaymentDueDay(s)
               const month = parseInt(currentMonth.split('-')[1])
-              const displayLabel = status === 'unpaid'
-                ? `${month}/${dueDay} ${scheduled ? '예정' : '미납'}`
-                : PAYMENT_STATUS_LABELS[status]
               return (
                 <motion.div
                   key={s.id}
                   initial={{ opacity: 0, x: -8 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ type: 'spring', stiffness: 400, damping: 28, delay: Math.min(stats.unpaidStudents.indexOf(s) * 0.03, 0.3) }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 28, delay: Math.min(idx * 0.03, 0.3) }}
                 >
                   <Link href={`/students/${s.id}`}
                     className="flex items-center gap-3 py-3.5 border-b border-[var(--border)] last:border-b-0 hover:bg-[var(--bg-card-hover)] -mx-2 px-2 rounded-xl transition-colors">
@@ -186,8 +151,8 @@ export default function DashboardPage() {
                       <span className="text-[13px] text-[var(--text-4)] ml-2">{s.gradeName} · {s.class?.name}</span>
                     </div>
                     <span className="text-[13px] text-[var(--text-4)] tabular-nums">{(fee - paid).toLocaleString()}원</span>
-                    <span className="px-2.5 py-1 rounded-lg text-[12px] font-bold" style={{ backgroundColor: displayColors.bg, color: displayColors.text }}>
-                      {displayLabel}
+                    <span className="px-2.5 py-1 rounded-lg text-[12px] font-bold" style={{ backgroundColor: '#351c20', color: '#e8656d' }}>
+                      {month}/{dueDay} 미납
                     </span>
                   </Link>
                 </motion.div>
@@ -196,6 +161,47 @@ export default function DashboardPage() {
           </div>
         )}
       </FadeInUp>
+
+      {/* 예정 */}
+      {stats.scheduledStudents.length > 0 && (
+        <FadeInUp delay={0.22} className="card p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <h2 className="text-[17px] font-bold text-[var(--text-1)]">예정</h2>
+            <span className="text-[13px] font-bold text-[var(--orange)]">{stats.scheduledStudents.length}</span>
+          </div>
+          <div className="space-y-0">
+            {stats.scheduledStudents.map((s, idx) => {
+              const fee = getStudentFee(s, s.class)
+              const paid = getStudentPaid(s.id)
+              const dueDay = getPaymentDueDay(s)
+              const month = parseInt(currentMonth.split('-')[1])
+              return (
+                <motion.div
+                  key={s.id}
+                  initial={{ opacity: 0, x: -8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 28, delay: Math.min(idx * 0.03, 0.3) }}
+                >
+                  <Link href={`/students/${s.id}`}
+                    className="flex items-center gap-3 py-3.5 border-b border-[var(--border)] last:border-b-0 hover:bg-[var(--bg-card-hover)] -mx-2 px-2 rounded-xl transition-colors">
+                    <div className="flex-1 min-w-0">
+                      <span className="text-[15px] font-semibold text-[var(--text-1)]">{s.name}</span>
+                      {s.enrollment_date?.startsWith(currentMonth) && (
+                        <span className="text-[10px] ml-1.5 px-1.5 py-0.5 rounded-md bg-[var(--blue-bg)] text-[var(--blue)] font-bold">신규</span>
+                      )}
+                      <span className="text-[13px] text-[var(--text-4)] ml-2">{s.gradeName} · {s.class?.name}</span>
+                    </div>
+                    <span className="text-[13px] text-[var(--text-4)] tabular-nums">{(fee - paid).toLocaleString()}원</span>
+                    <span className="px-2.5 py-1 rounded-lg text-[12px] font-bold" style={{ backgroundColor: '#302a1a', color: '#e5a731' }}>
+                      {month}/{dueDay} 예정
+                    </span>
+                  </Link>
+                </motion.div>
+              )
+            })}
+          </div>
+        </FadeInUp>
+      )}
 
       {/* 선생님별 매출 */}
       {teachers.length > 0 && grades.length > 0 && (() => {
