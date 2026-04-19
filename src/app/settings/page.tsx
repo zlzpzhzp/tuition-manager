@@ -303,23 +303,26 @@ export default function SettingsPage() {
                       {grade.classes.map((cls, clsIdx) => (
                         <div key={cls.id} className="flex items-center gap-1.5 sm:gap-2 bg-[var(--bg-card)] rounded-lg px-2 sm:px-3 py-2">
                           {editingClassId === cls.id ? (
-                            <div className="flex-1 space-y-2">
-                              <div className="flex items-center gap-2">
-                                <input type="text" list="subject-list" value={editClassSubject} onChange={e => setEditClassSubject(e.target.value)} placeholder="과목" className="w-16 px-1 py-1 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)]" />
-                                <input type="text" value={editClassName} onChange={e => setEditClassName(e.target.value)} className="flex-1 px-2 py-1 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)]" placeholder="반 이름" autoFocus />
-                                <input type="number" value={editClassFee} onChange={e => setEditClassFee(e.target.value)} className="w-28 px-2 py-1 border rounded text-sm text-right focus:outline-none focus:ring-2 focus:ring-[var(--blue)]" placeholder="원비" />
-                                <span className="text-xs text-[var(--text-4)]">원</span>
-                                <button onClick={() => updateClass(cls.id)} className="text-green-600" aria-label="저장"><Check className="w-4 h-4" /></button>
-                                <button onClick={() => setEditingClassId(null)} className="text-[var(--text-4)]" aria-label="취소"><X className="w-4 h-4" /></button>
+                            <div className="flex-1 min-w-0 space-y-2">
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <input type="text" list="subject-list" value={editClassSubject} onChange={e => setEditClassSubject(e.target.value)} placeholder="과목" className="w-14 shrink-0 px-1.5 py-1 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)]" />
+                                <input type="text" value={editClassName} onChange={e => setEditClassName(e.target.value)} className="flex-1 min-w-0 px-2 py-1 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)]" placeholder="반 이름" autoFocus />
+                                <button onClick={() => updateClass(cls.id)} className="shrink-0 text-green-600 p-1" aria-label="저장"><Check className="w-4 h-4" /></button>
+                                <button onClick={() => setEditingClassId(null)} className="shrink-0 text-[var(--text-4)] p-1" aria-label="취소"><X className="w-4 h-4" /></button>
                               </div>
-                              <div className="flex items-center gap-2 pl-1">
-                                <span className="text-xs text-[var(--text-3)]">수업 요일</span>
+                              <div className="flex items-center gap-2 pl-1 min-w-0">
+                                <span className="text-xs text-[var(--text-3)] shrink-0">원비</span>
+                                <input type="number" value={editClassFee} onChange={e => setEditClassFee(e.target.value)} className="flex-1 min-w-0 max-w-[140px] px-2 py-1 border rounded text-sm text-right focus:outline-none focus:ring-2 focus:ring-[var(--blue)]" placeholder="원비" />
+                                <span className="text-xs text-[var(--text-4)] shrink-0">원</span>
+                              </div>
+                              <div className="flex items-center gap-2 pl-1 min-w-0 flex-wrap">
+                                <span className="text-xs text-[var(--text-3)] shrink-0">요일</span>
                                 <DayPicker days={editClassDays} setDays={setEditClassDays} />
                               </div>
                               {teachers.length > 0 && (
-                                <div className="flex items-center gap-2 pl-1">
-                                  <span className="text-xs text-[var(--text-3)]">선생님</span>
-                                  <select value={editClassTeacherId} onChange={e => setEditClassTeacherId(e.target.value)} className="px-2 py-1 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)] bg-[var(--bg-card)]">
+                                <div className="flex items-center gap-2 pl-1 min-w-0">
+                                  <span className="text-xs text-[var(--text-3)] shrink-0">선생님</span>
+                                  <select value={editClassTeacherId} onChange={e => setEditClassTeacherId(e.target.value)} className="flex-1 min-w-0 px-2 py-1 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)] bg-[var(--bg-card)]">
                                     <option value="">없음</option>
                                     {teachers.map(t => <option key={t.id} value={t.id}>{t.name}{t.subject ? ` (${t.subject})` : ''}</option>)}
                                   </select>
@@ -377,33 +380,36 @@ export default function SettingsPage() {
 
                   {addingClassToGrade === grade.id ? (
                     <div className="space-y-2">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5 min-w-0">
                         <input
                           type="text" list="subject-list" value={newClassSubject} onChange={e => setNewClassSubject(e.target.value)}
-                          placeholder="과목" className="w-16 px-1 py-1.5 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
+                          placeholder="과목" className="w-14 shrink-0 px-1.5 py-1.5 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
                         />
                         <input
                           type="text" value={newClassName} onChange={e => setNewClassName(e.target.value)}
                           onKeyDown={e => e.key === 'Enter' && addClass()}
-                          placeholder="반 이름" className="flex-1 px-2 py-1.5 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)]" autoFocus
+                          placeholder="반 이름" className="flex-1 min-w-0 px-2 py-1.5 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)]" autoFocus
                         />
+                        <button onClick={() => addClass()} className="shrink-0 text-green-600 p-1" aria-label="저장"><Check className="w-4 h-4" /></button>
+                        <button onClick={() => { setAddingClassToGrade(null); resetClassForm() }} className="shrink-0 text-[var(--text-4)] p-1" aria-label="취소"><X className="w-4 h-4" /></button>
+                      </div>
+                      <div className="flex items-center gap-2 pl-1 min-w-0">
+                        <span className="text-xs text-[var(--text-3)] shrink-0">원비</span>
                         <input
                           type="number" value={newClassFee} onChange={e => setNewClassFee(e.target.value)}
                           onKeyDown={e => e.key === 'Enter' && addClass()}
-                          placeholder="원비" className="w-28 px-2 py-1.5 border rounded text-sm text-right focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
+                          placeholder="원비" className="flex-1 min-w-0 max-w-[140px] px-2 py-1.5 border rounded text-sm text-right focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
                         />
-                        <span className="text-xs text-[var(--text-4)]">원</span>
-                        <button onClick={() => addClass()} className="text-green-600" aria-label="저장"><Check className="w-4 h-4" /></button>
-                        <button onClick={() => { setAddingClassToGrade(null); resetClassForm() }} className="text-[var(--text-4)]" aria-label="취소"><X className="w-4 h-4" /></button>
+                        <span className="text-xs text-[var(--text-4)] shrink-0">원</span>
                       </div>
-                      <div className="flex items-center gap-2 pl-1">
-                        <span className="text-xs text-[var(--text-3)]">수업 요일</span>
+                      <div className="flex items-center gap-2 pl-1 min-w-0 flex-wrap">
+                        <span className="text-xs text-[var(--text-3)] shrink-0">요일</span>
                         <DayPicker days={newClassDays} setDays={setNewClassDays} />
                       </div>
                       {teachers.length > 0 && (
-                        <div className="flex items-center gap-2 pl-1">
-                          <span className="text-xs text-[var(--text-3)]">선생님</span>
-                          <select value={newClassTeacherId} onChange={e => setNewClassTeacherId(e.target.value)} className="px-2 py-1.5 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)] bg-[var(--bg-card)]">
+                        <div className="flex items-center gap-2 pl-1 min-w-0">
+                          <span className="text-xs text-[var(--text-3)] shrink-0">선생님</span>
+                          <select value={newClassTeacherId} onChange={e => setNewClassTeacherId(e.target.value)} className="flex-1 min-w-0 px-2 py-1.5 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)] bg-[var(--bg-card)]">
                             <option value="">없음</option>
                             {teachers.map(t => <option key={t.id} value={t.id}>{t.name}{t.subject ? ` (${t.subject})` : ''}</option>)}
                           </select>
