@@ -1201,11 +1201,22 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                                 {!withdrawn && student.enrollment_date?.startsWith(selectedMonth) && (
                                   <span className="text-[9px] ml-1.5 px-1.5 py-0.5 rounded-full bg-[var(--blue-bg)] text-[var(--blue)] font-bold">신규</span>
                                 )}
-                                {student.memo && (
-                                  <p className="text-[11px] font-medium leading-tight mt-0.5">
-                                    <span className={memoHighlight}>{student.memo}</span>
-                                  </p>
-                                )}
+                                <AnimatePresence initial={false}>
+                                  {student.memo && (
+                                    <motion.div
+                                      key="memo"
+                                      initial={{ height: 0, opacity: 0 }}
+                                      animate={{ height: 'auto', opacity: 1 }}
+                                      exit={{ height: 0, opacity: 0 }}
+                                      transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
+                                      style={{ overflow: 'hidden' }}
+                                    >
+                                      <p className="text-[11px] font-medium leading-tight mt-0.5">
+                                        <span className={memoHighlight}>{student.memo}</span>
+                                      </p>
+                                    </motion.div>
+                                  )}
+                                </AnimatePresence>
                               </button>
 
                               {isExpanded ? (
