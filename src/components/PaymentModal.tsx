@@ -30,7 +30,7 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
   const [method, setMethod] = useState<PaymentMethod>(payment?.method as PaymentMethod ?? prevMethod ?? 'remote')
   const [paymentDate, setPaymentDate] = useState(payment?.payment_date ?? today)
   const [billingMonth, setBillingMonth] = useState(payment?.billing_month ?? defaultBillingMonth ?? currentMonth)
-  const [memo, setMemo] = useState(payment?.memo ?? '')
+  const [memo, setMemo] = useState(payment?.memo ?? prevMemo ?? '')
   const [cashReceipt, setCashReceipt] = useState<'issued' | 'pending' | null>(payment?.cash_receipt ?? null)
   const [showConfirmDelete, setShowConfirmDelete] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
@@ -126,12 +126,21 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
           <button onClick={onClose} className="p-1.5 text-[var(--text-4)] hover:text-[var(--text-3)] hover:bg-[var(--bg-elevated)] rounded-lg transition-colors"><X className="w-5 h-5" /></button>
         </div>
 
-        {/* 이전달 비고 알림 */}
-        {prevMemo && (
+        {/* 전달 비고 내용 알림 */}
+        {prevMemo && !payment && (
           <div className="mx-5 mt-4 p-3 bg-[var(--orange-dim)] border border-[var(--orange)] rounded-lg flex gap-2">
             <AlertTriangle className="w-4 h-4 text-[var(--orange)] shrink-0 mt-0.5" />
             <div>
-              <p className="text-xs font-medium text-[var(--orange)]">지난달 비고</p>
+              <p className="text-xs font-medium text-[var(--orange)]">전달 비고 내용 (자동 반영)</p>
+              <p className="text-xs text-[var(--orange)] mt-0.5">{prevMemo}</p>
+            </div>
+          </div>
+        )}
+        {prevMemo && payment && (
+          <div className="mx-5 mt-4 p-3 bg-[var(--orange-dim)] border border-[var(--orange)] rounded-lg flex gap-2">
+            <AlertTriangle className="w-4 h-4 text-[var(--orange)] shrink-0 mt-0.5" />
+            <div>
+              <p className="text-xs font-medium text-[var(--orange)]">전달 비고 내용</p>
               <p className="text-xs text-[var(--orange)] mt-0.5">{prevMemo}</p>
             </div>
           </div>

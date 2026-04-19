@@ -210,6 +210,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
   const [inlineSlideOut, setInlineSlideOut] = useState<string | null>(null)
   const [showMethodPicker, setShowMethodPicker] = useState(false)
   const [inlineMemo, setInlineMemo] = useState('')
+  const [inlineMemoFromPrev, setInlineMemoFromPrev] = useState(false)
   const [showDatePicker, setShowDatePicker] = useState(false)
   const dateButtonRef = useRef<HTMLButtonElement>(null)
   const methodButtonRef = useRef<HTMLButtonElement>(null)
@@ -847,7 +848,9 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
     setInlineMethod(prevPayment?.method as PaymentMethod || 'payssam')
     setShowMethodPicker(false)
     setShowDatePicker(false)
-    setInlineMemo('')
+    const prev = getPrevMemo(studentId)
+    setInlineMemo(prev ?? '')
+    setInlineMemoFromPrev(!!prev)
   }
 
   const handleInlineSubmit = async (studentId: string, fee: number) => {
@@ -1593,14 +1596,19 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                                       <ClipboardList className="w-3.5 h-3.5" />
                                     </button>
                                   </div>
-                                  <input
-                                    type="text"
-                                    value={inlineMemo}
-                                    onChange={e => setInlineMemo(e.target.value)}
-                                    placeholder="비고"
-                                    className="fan-item w-full px-2.5 py-1 rounded-lg text-xs border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-1)] focus:outline-none focus:ring-1 focus:ring-[var(--blue)] placeholder-[var(--text-4)]"
-                                    aria-label="비고 입력"
-                                  />
+                                  <div className="fan-item w-full relative">
+                                    {inlineMemoFromPrev && inlineMemo && (
+                                      <span className="absolute left-1.5 top-1/2 -translate-y-1/2 px-1 py-0.5 rounded text-[9px] font-semibold bg-[var(--orange-dim)] text-[var(--orange)] pointer-events-none">전달</span>
+                                    )}
+                                    <input
+                                      type="text"
+                                      value={inlineMemo}
+                                      onChange={e => { setInlineMemo(e.target.value); setInlineMemoFromPrev(false) }}
+                                      placeholder="비고"
+                                      className={`w-full py-1 rounded-lg text-xs border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-1)] focus:outline-none focus:ring-1 focus:ring-[var(--blue)] placeholder-[var(--text-4)] ${inlineMemoFromPrev && inlineMemo ? 'pl-9 pr-2.5' : 'px-2.5'}`}
+                                      aria-label="비고 입력"
+                                    />
+                                  </div>
                                 </div>
                               ) : (
                                 <>
