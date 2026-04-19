@@ -125,6 +125,8 @@ function FilterDropdownPortal({
             ? range[0] === range[1] ? `${range[0]}일` : `${range[0]}~${range[1]}`
             : ''
           const isCurrent = i === 0
+          // 주차 행은 펼침 시 좌측 정렬 (첫글자 x좌표 통일), 비주차/현재행은 중앙 정렬
+          const alignLeft = isWeek && show
           return (
             <motion.button
               key={key}
@@ -132,14 +134,18 @@ function FilterDropdownPortal({
               onClick={() => onSelect(key)}
               role="option"
               aria-selected={active}
-              className={`relative w-full flex items-center justify-center text-xs font-semibold whitespace-nowrap gap-1 transition-colors ${bgFor(key, active)}`}
+              className={`relative w-full flex items-center text-xs font-semibold whitespace-nowrap transition-colors ${bgFor(key, active)}`}
               animate={{
                 opacity: isCurrent ? 1 : show ? 1 : 0,
                 y: isCurrent ? 0 : show ? 0 : -4,
+                paddingLeft: alignLeft ? 16 : 0,
+                justifyContent: alignLeft ? 'flex-start' : 'center',
               }}
               transition={{
                 opacity: { duration: 0.18, ease: [0.4, 0, 0.2, 1], delay: isCurrent ? 0 : show ? i * 0.025 : 0 },
                 y: { type: 'spring', stiffness: 420, damping: 30, delay: isCurrent ? 0 : show ? i * 0.025 : 0 },
+                paddingLeft: { type: 'spring', stiffness: 320, damping: 32, mass: 0.6 },
+                justifyContent: { duration: 0 },
               }}
               style={{ height: ROW_H }}
             >
@@ -148,7 +154,7 @@ function FilterDropdownPortal({
                 {isWeek && rangeLabel && show && (
                   <motion.span
                     key="range"
-                    className="text-[10px] opacity-60"
+                    className="text-[10px] opacity-60 ml-1"
                     initial={{ opacity: 0, width: 0 }}
                     animate={{ opacity: 0.6, width: 'auto' }}
                     exit={{ opacity: 0, width: 0 }}
@@ -313,6 +319,15 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
   const [memoScrolled, setMemoScrolled] = useState(false)
   const [memoFocused, setMemoFocused] = useState(false)
   const memoCompact = memoScrolled && !memoFocused
+
+  // 메모 자연 높이 측정 (확장 상태에서의 target height)
+  const memoSizerRef = useRef<HTMLDivElement>(null)
+  const [memoNaturalH, setMemoNaturalH] = useState(82)
+  useLayoutEffect(() => {
+    if (!memoSizerRef.current) return
+    const h = memoSizerRef.current.scrollHeight
+    setMemoNaturalH(Math.min(400, Math.max(82, h)))
+  }, [monthMemo])
 
   useEffect(() => {
     const onScroll = () => setMemoScrolled(window.scrollY > 80)
@@ -920,9 +935,13 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
 
       </div>
 
-      {/* 월별 메모 — sticky (스크롤 시 1줄로 축소). CSS Grid 오버레이로 자동확장 */}
+      {/* 월별 메모 — sticky (스크롤 시 1줄로 축소). height 스프링 애니메이션 */}
       <div data-sticky-header className="sticky top-14 z-30 bg-[var(--bg)] -mx-4 px-4 pt-2 pb-2">
-        {memoCompact ? (
+        <motion.div
+          animate={{ height: memoCompact ? 38 : memoNaturalH }}
+          transition={{ type: 'spring', stiffness: 280, damping: 32, mass: 0.8 }}
+          className="relative overflow-hidden rounded-xl bg-[var(--bg-elevated)]"
+        >
           <textarea
             value={monthMemo}
             onChange={e => {
@@ -932,30 +951,17 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
             onFocus={() => setMemoFocused(true)}
             onBlur={() => setMemoFocused(false)}
             placeholder="메모..."
-            rows={1}
-            className="w-full resize-none bg-[var(--bg-elevated)] rounded-xl px-3 py-2 text-sm text-[var(--text-1)] placeholder:text-[var(--text-4)] focus:outline-none focus:ring-1 focus:ring-[var(--blue)] leading-[22px] h-[38px] overflow-hidden"
+            className={`w-full h-full resize-none bg-transparent rounded-xl px-3 py-2 text-sm text-[var(--text-1)] placeholder:text-[var(--text-4)] focus:outline-none focus:ring-1 focus:ring-[var(--blue)] leading-[22px] ${memoCompact ? 'overflow-hidden' : 'overflow-y-auto'}`}
           />
-        ) : (
-          <div className="grid">
-            <textarea
-              value={monthMemo}
-              onChange={e => {
-                setMonthMemo(e.target.value)
-                localStorage.setItem(`payment_memo_${selectedMonth}`, e.target.value)
-              }}
-              onFocus={() => setMemoFocused(true)}
-              onBlur={() => setMemoFocused(false)}
-              placeholder="메모..."
-              className="col-start-1 row-start-1 w-full resize-none bg-[var(--bg-elevated)] rounded-xl px-3 py-2 text-sm text-[var(--text-1)] placeholder:text-[var(--text-4)] focus:outline-none focus:ring-1 focus:ring-[var(--blue)] leading-[22px] min-h-[82px] max-h-[400px] overflow-y-auto"
-            />
-            <div
-              aria-hidden
-              className="col-start-1 row-start-1 invisible whitespace-pre-wrap break-words px-3 py-2 text-sm leading-[22px] min-h-[82px] max-h-[400px]"
-            >
-              {monthMemo + '\n'}
-            </div>
+          {/* 숨겨진 sizer — 자연 높이 측정용 */}
+          <div
+            ref={memoSizerRef}
+            aria-hidden
+            className="absolute inset-0 invisible pointer-events-none whitespace-pre-wrap break-words px-3 py-2 text-sm leading-[22px]"
+          >
+            {monthMemo + '\n'}
           </div>
-        )}
+        </motion.div>
       </div>
 
       {/* 과목별 → 학년별 납부 현황 */}
