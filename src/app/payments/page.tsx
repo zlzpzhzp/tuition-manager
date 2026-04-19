@@ -676,8 +676,11 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
           setEditMemoColor(student.memo_color ?? null)
         }
       } else {
-        // 이미 선택됨 → 제자리
-        el.style.transform = `translateX(${MEMO_W}px)`
+        // 이미 선택됨 → 재스와이프로 해제
+        el.style.transform = 'translateX(0)'
+        setSelectedMemoIds(prev => {
+          const next = new Set(prev); next.delete(id); return next
+        })
       }
     }
     // 좌로 밀기
@@ -1585,7 +1588,10 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                                 initial={{ height: 0, opacity: 0 }}
                                 animate={{ height: 'auto', opacity: 1 }}
                                 exit={{ height: 0, opacity: 0 }}
-                                transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+                                transition={{
+                                  height: { duration: 0.38, ease: [0.22, 1, 0.36, 1] },
+                                  opacity: { duration: 0.24, ease: [0.4, 0, 0.2, 1] },
+                                }}
                                 style={{ overflow: 'hidden' }}
                               >
                                 <div className="px-3 py-2 bg-[var(--bg-elevated)] border-t border-[var(--border)]" onClick={e => e.stopPropagation()}>
