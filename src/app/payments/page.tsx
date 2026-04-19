@@ -14,6 +14,7 @@ import { METHOD_OPTIONS_SHORT } from '@/lib/constants'
 import { getRegularTuitionTitle, REGULAR_TUITION_MESSAGE } from '@/lib/billing-title'
 import { PaymentsSkeleton } from '@/components/Skeleton'
 import BillSendModal from '@/components/BillSendModal'
+import BulkBillSendModal, { type BulkBillTarget } from '@/components/BulkBillSendModal'
 import BillActionModal from '@/components/BillActionModal'
 import StudentDetailModal from '@/components/StudentDetailModal'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -243,6 +244,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
   // 청구서 발송 모달
   const [billSendTarget, setBillSendTarget] = useState<{ studentId: string; studentName: string; phone: string; amount: number; subject: string | null } | null>(null)
   const [billActionTarget, setBillActionTarget] = useState<{ studentId: string; studentName: string; billId: string; amount: number; status: 'sent' | 'paid' | 'cancelled' } | null>(null)
+  const [bulkBillTarget, setBulkBillTarget] = useState<{ cls: ClassWithStudents; className: string; targets: BulkBillTarget[] } | null>(null)
 
   // 청구서 현황 (결제선생 발송/결제/취소 상태)
   const { data: bills = [], mutate: mutateBills } = useSWR<BillRecord[]>(
@@ -441,7 +443,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
     })
   }, [selectedMonth])
 
-  const sendClassBatch = useCallback(async (cls: ClassWithStudents) => {
+  const openBulkBillModal = useCallback((cls: ClassWithStudents) => {
     const classStudents = getActiveStudents(cls.students ?? [], selectedMonth).filter(s => passesFilter(s, cls))
     const eligible = classStudents.filter(s => {
       const phone = s.parent_phone || s.phone || ''
@@ -449,9 +451,20 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
       return phone && fee > 0 && !billByStudent.has(s.id)
     })
     if (eligible.length === 0) return
+    const targets: BulkBillTarget[] = eligible.map(s => ({
+      studentId: s.id,
+      studentName: s.name,
+      className: cls.name,
+      amount: getStudentFee(s, cls),
+    }))
+    setBulkBillTarget({ cls, className: cls.name, targets })
+  }, [selectedMonth, passesFilter, billByStudent])
 
-    const confirmed = window.confirm(`${cls.name} · ${eligible.length}건 청구서를 일괄 발송합니다.\n\n계속하시겠습니까?`)
-    if (!confirmed) return
+  const executeBulkSend = useCallback(async () => {
+    if (!bulkBillTarget) return
+    const { cls, targets } = bulkBillTarget
+    const eligible = (cls.students ?? []).filter(s => targets.some(t => t.studentId === s.id))
+    setBulkBillTarget(null)
 
     cancelBatchRef.current = false
     setCancellingBatch(false)
@@ -471,7 +484,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
     setCancellingBatch(false)
     cancelBatchRef.current = false
     mutateBills()
-  }, [selectedMonth, passesFilter, billByStudent, sendOneBill, mutateBills])
+  }, [bulkBillTarget, sendOneBill, mutateBills])
 
   const cancelBatch = useCallback(() => {
     cancelBatchRef.current = true
@@ -1215,7 +1228,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                                 alert('결제일을 선택해주세요! 전체 상태에서는 일괄 발송이 불가합니다.')
                                 return
                               }
-                              sendClassBatch(cls)
+                              openBulkBillModal(cls)
                             }}
                             disabled={!!batchSending}
                             className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold mr-1 ${
@@ -1713,6 +1726,15 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
           status={billActionTarget.status}
           onClose={() => setBillActionTarget(null)}
           onSuccess={() => { fetchData(); mutateBills() }}
+        />
+      )}
+
+      {bulkBillTarget && (
+        <BulkBillSendModal
+          className={bulkBillTarget.className}
+          targets={bulkBillTarget.targets}
+          onClose={() => setBulkBillTarget(null)}
+          onConfirm={executeBulkSend}
         />
       )}
 
