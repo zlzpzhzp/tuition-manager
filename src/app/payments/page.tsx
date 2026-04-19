@@ -68,8 +68,17 @@ function FilterDropdownPortal({
   useEffect(() => {
     const r = anchor.getBoundingClientRect()
     setRect({ top: r.top, left: r.left, width: r.width, height: r.height })
-    requestAnimationFrame(() => setShow(true))
   }, [anchor])
+
+  // rect 커밋 후 다음 프레임에 show=true → 확실히 분리된 렌더 사이클로 드롭 애니메이션 발동
+  useEffect(() => {
+    if (!rect) return
+    let id2 = 0
+    const id1 = requestAnimationFrame(() => {
+      id2 = requestAnimationFrame(() => setShow(true))
+    })
+    return () => { cancelAnimationFrame(id1); if (id2) cancelAnimationFrame(id2) }
+  }, [rect])
 
   // 앵커 버튼 본체를 포탈이 덮음
   useEffect(() => {
@@ -103,7 +112,13 @@ function FilterDropdownPortal({
       <motion.div
         data-filter-portal
         className="fixed z-[61] overflow-hidden shadow-xl bg-[var(--bg-elevated)]"
-        initial={false}
+        initial={{
+          top: rect.top,
+          left: portalLeft,
+          width: portalW,
+          height: ROW_H,
+          borderRadius: BORDER_R,
+        }}
         animate={{
           top: rect.top,
           left: portalLeft,
