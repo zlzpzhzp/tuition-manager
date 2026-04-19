@@ -112,9 +112,9 @@ function FilterDropdownPortal({
           borderRadius: BORDER_R,
         }}
         transition={{
-          height: { duration: 0.36, ease: [0.22, 1, 0.36, 1] },
-          borderRadius: { duration: 0.28, ease: [0.22, 1, 0.36, 1] },
-          default: { duration: 0.3, ease: [0.22, 1, 0.36, 1] },
+          height: { duration: 0.5, ease: [0.22, 1, 0.36, 1] },
+          borderRadius: { duration: 0.4, ease: [0.22, 1, 0.36, 1] },
+          default: { duration: 0.4, ease: [0.22, 1, 0.36, 1] },
         }}
         role="listbox"
         aria-label="납부 필터"
@@ -143,9 +143,9 @@ function FilterDropdownPortal({
               }}
               transition={{
                 opacity: {
-                  duration: show ? 0.22 : 0.14,
+                  duration: show ? 0.28 : 0.16,
                   ease: [0.22, 1, 0.36, 1],
-                  delay: isCurrent ? 0 : show ? 0.08 + i * 0.028 : 0,
+                  delay: isCurrent ? 0 : show ? 0.14 + i * 0.038 : 0,
                 },
               }}
               style={{
@@ -164,9 +164,9 @@ function FilterDropdownPortal({
                     animate={{ opacity: 0.6 }}
                     exit={{ opacity: 0 }}
                     transition={{
-                      duration: 0.2,
+                      duration: 0.22,
                       ease: [0.22, 1, 0.36, 1],
-                      delay: isCurrent ? 0.12 : 0.12 + i * 0.028,
+                      delay: isCurrent ? 0.18 : 0.2 + i * 0.038,
                     }}
                     style={{ whiteSpace: 'nowrap' }}
                   >
@@ -178,7 +178,7 @@ function FilterDropdownPortal({
                 <motion.div
                   className="absolute right-2 flex items-center justify-center"
                   animate={{ rotate: show ? 180 : 0 }}
-                  transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+                  transition={{ duration: 0.44, ease: [0.22, 1, 0.36, 1] }}
                 >
                   <ChevronDown className="w-3 h-3 opacity-60" />
                 </motion.div>
