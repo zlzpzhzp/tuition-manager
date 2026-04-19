@@ -3,7 +3,34 @@
 > 이 파일은 Claude 세션 간 작업 연속성을 위한 컨텍스트 추적 파일입니다.
 > 작업 중 수시로 업데이트하고, 커밋 시 함께 포함시킵니다.
 
-## 현재 상태: 진행중 — 메모 색상 라벨 배찌 톤 매칭 + iPad/데스크 글씨 크기 확대 예정
+## 현재 상태: 결제선생 상단 간소화 + 메모 색상 테이프 내부 점 제거 배포 완료
+
+### 2026-04-19 11:05 (완료, 203e460)
+- msg 808 "좌측에서 나오는 라벨지 점 없애"
+- msg 811 "라벨을 제거했다고? 점만 없애라고 그리고 반영안됨"
+- 오해: 처음엔 billing/page.tsx ActionItemRow의 `w-1 h-1 rounded-full` 점을 제거 (d7a2983) — 하지만 이 점은 액션필요 항목이 있을 때만 표시되므로 현 상태(전부 결제완료)에선 보이지 않음 → 유저가 변화를 못 느낌
+- 진짜 대상: payments/page.tsx 학생 행 좌측 "비고" 색상 테이프(스큐 노랑/초록/빨강) 내부의 `w-1 h-1 rounded-full` 점
+- 수정: 색상 테이프 button 내부 `<span className="w-1 h-1 rounded-full ${dot}" />` 제거, 테이프 자체는 유지
+- 파일: src/app/payments/page.tsx (~1169-1185)
+- 배포: Vercel + 로컬 :3001 재기동
+
+### 2026-04-19 11:01 (완료, 3277c1b)
+- msg 804 "결제선생 날짜에서 월변경이 왜있는건데? 오늘날짜 떠있으면 되지"
+- msg 805 "필터도 필요없늠"
+- 작업: billing 페이지 상단 월 네비게이션(이전/다음 달 버튼) 제거, 결제일 필터(전체/1일/첫째주~넷째주) UI 제거
+- 오늘 날짜 고정 표시로 교체 (YYYY / M월 D일 요일)
+- navigateMonth/showFilter/filterRef/외부클릭 effect 정리. weekFilter 기본값 'all' 유지 → matchesWeekFilter 항상 true
+- 파일: src/app/billing/page.tsx
+- 배포: Vercel + 로컬 :3001 재기동
+
+### 2026-04-19 10:25 (완료, 4bf541b) — task #63
+- msg 799 (화남) "셋째줄 냇째줄 첫글자 라인 틀어졌다! 맞춰놨는데"
+- msg 800 "세째주 넷째주", msg 801 "첫글자 라인"
+- 원인: task #62에서 필터 양옆 여백 줄이려고 전체 행을 justify-center로 변경했는데, 이로 인해 미납/1일과 다른 첫째주/둘째주/셋째주/넷째주의 첫글자 x좌표가 어긋남
+- 수정: `alignLeft = isWeek && show` 플래그로 주차 행만 paddingLeft 16 + flex-start, 비주차 행은 center 유지
+- 메모 compact 애니메이션: DOM 스왑(compact textarea vs grid) 제거, motion.div height 스프링(38↔memoNaturalH)으로 연속 애니메이션. sizer ref로 scrollHeight 측정
+- 파일: src/app/payments/page.tsx
+- 배포: Vercel + 로컬 :3001 재기동
 
 ### 2026-04-19 10:00 (진행중, task #60 + #61)
 - msg 785 "왼쪽에서 땡겼을때 색상 라벨 표시 별로임 그 결제 완료표시 되는 그런톤 색상들로 해줘"
