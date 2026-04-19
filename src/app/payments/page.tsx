@@ -1372,8 +1372,9 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                       if (status === 'unpaid') {
                         displayLabel = getUnpaidLabelText(student, selectedMonth, student.payment_due_day ?? undefined)
                       } else if (studentPayments.length > 0) {
-                        const pDate = new Date(studentPayments[0].payment_date)
-                        displayLabel = `${pDate.getMonth() + 1}/${pDate.getDate()} 납부`
+                        // 배지는 학생의 고정 결제일 (scheduled due day) — 실제 납부일과 무관
+                        const billingMonth = parseInt(selectedMonth.split('-')[1])
+                        displayLabel = `${billingMonth}/${getDueDay(student)} 납부`
                       } else {
                         displayLabel = PAYMENT_STATUS_LABELS[status]
                       }
@@ -1576,9 +1577,11 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                                     const p = studentPayments[0]
                                     const { otherMethod } = decodePaymentMemo(p.memo)
                                     const methodLabel = otherMethod || PAYMENT_METHOD_LABELS[p.method as keyof typeof PAYMENT_METHOD_LABELS]
+                                    // 회색 접두어는 실제 납부일
+                                    const pDate = new Date(p.payment_date)
                                     return (
                                       <span className="text-[10px] text-[var(--text-4)] whitespace-nowrap">
-                                        {parseInt(selectedMonth.split('-')[1])}/{getDueDay(student)} {methodLabel}
+                                        {pDate.getMonth() + 1}/{pDate.getDate()} {methodLabel}
                                       </span>
                                     )
                                   })()}
