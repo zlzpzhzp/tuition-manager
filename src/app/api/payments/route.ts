@@ -2,6 +2,16 @@ import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { validateInput, rules } from '@/lib/validate'
 import { writeAuditLog } from '@/lib/auditLog'
+import { destroyBill } from '@/lib/payssam'
+
+const METHOD_LABEL: Record<string, string> = {
+  card: '카드',
+  transfer: '계좌이체',
+  cash: '현금',
+  payssam: '결제선생',
+  remote: '비대면',
+  other: '기타',
+}
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -53,6 +63,38 @@ export async function POST(request: Request) {
   writeAuditLog('payment', data.id, 'create',
     `납부 등록: ${studentName} ${body.billing_month} ${body.amount?.toLocaleString()}원`,
     { ...payload, student_name: studentName })
+
+  // 다른 결제수단으로 저장 시 같은 학생·월의 미결제 PaySsam 청구서 자동 파기
+  if (body.method !== 'payssam') {
+    const { data: sentBills } = await supabase
+      .from('tuition_bill_history')
+      .select('bill_id, amount')
+      .eq('student_id', body.student_id)
+      .eq('billing_month', body.billing_month)
+      .eq('is_regular_tuition', true)
+      .eq('status', 'sent')
+
+    if (sentBills && sentBills.length > 0) {
+      const methodLabel = METHOD_LABEL[body.method] || body.method
+      for (const bill of sentBills) {
+        try {
+          const result = await destroyBill(bill.bill_id, bill.amount)
+          if (result.code === '0000') {
+            await supabase
+              .from('tuition_bill_history')
+              .update({
+                status: 'destroyed',
+                bill_note: `${methodLabel} 결제로 자동 파기`,
+                updated_at: new Date().toISOString(),
+              })
+              .eq('bill_id', bill.bill_id)
+          }
+        } catch (e) {
+          console.error('[auto-destroy] bill 파기 실패:', bill.bill_id, e)
+        }
+      }
+    }
+  }
 
   return NextResponse.json(data)
 }

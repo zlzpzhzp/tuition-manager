@@ -40,6 +40,7 @@ export async function middleware(request: NextRequest) {
     pathname === '/api/auth/login' ||
     pathname === '/api/auth/logout' ||
     pathname.startsWith('/api/payssam/callback') ||
+    pathname.startsWith('/api/cron/') ||
     pathname.startsWith('/_next') ||
     pathname.startsWith('/icons') ||
     pathname === '/manifest.json' ||

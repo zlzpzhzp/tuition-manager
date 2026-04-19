@@ -31,6 +31,8 @@ interface BillRecord {
   short_url?: string
   sent_at: string
   is_regular_tuition?: boolean
+  resend_count?: number
+  last_resend_at?: string | null
 }
 
 type BillStatus = 'unsent' | 'sent' | 'paid' | 'cancelled'
@@ -1648,6 +1650,8 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                                       cancelled: { fg: 'var(--red)',    bg: 'var(--red-dim)',     title: '취소됨 — 탭하여 재발송' },
                                     }
                                     const s = styles[billStatus]
+                                    const resendCount = bill?.resend_count ?? 0
+                                    const showBadge = billStatus === 'sent' && resendCount > 0
                                     return (
                                       <button
                                         onClick={(e) => {
@@ -1665,21 +1669,33 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                                             setBillSendTarget({ studentId: student.id, studentName: student.name, phone: parentPhone, amount: fee, subject: cls.subject ?? null })
                                           }
                                         }}
-                                        className="p-1 rounded-lg transition-colors shrink-0 hover:opacity-80 flex items-center justify-center"
+                                        className="relative p-1 rounded-lg transition-colors shrink-0 hover:opacity-80 flex items-center justify-center"
                                         style={{ color: s.fg, background: s.bg }}
-                                        aria-label={s.title}
-                                        title={s.title}
+                                        aria-label={showBadge ? `${s.title} — 재발송 ${resendCount}회` : s.title}
+                                        title={showBadge ? `${s.title} · 재발송 ${resendCount}회` : s.title}
                                       >
                                         {billStatus === 'sent' ? (
                                           <Mail className="w-3.5 h-3.5" />
                                         ) : billStatus === 'cancelled' ? (
-                                          // 찢어진 종이비행기 — 좌우반전 Send + 대각선 취소선
-                                          <span className="relative inline-flex items-center justify-center w-3.5 h-3.5" style={{ transform: 'scaleX(-1)' }}>
-                                            <Send className="w-3.5 h-3.5 opacity-55" />
-                                            <span className="absolute w-[18px] h-[1.5px] bg-current rotate-45 rounded-full" aria-hidden />
-                                          </span>
+                                          // 찢어진 종이비행기 — 좌우반전 Send + 대각선 취소선 (inline SVG)
+                                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: 'scaleX(-1)' }} aria-hidden>
+                                            <g opacity="0.5">
+                                              <path d="m22 2-7 20-4-9-9-4Z" />
+                                              <path d="M22 2 11 13" />
+                                            </g>
+                                            <line x1="3.5" y1="20.5" x2="20.5" y2="3.5" />
+                                          </svg>
                                         ) : (
                                           <Send className="w-3.5 h-3.5" />
+                                        )}
+                                        {showBadge && (
+                                          <span
+                                            className="absolute -top-1 -right-1 min-w-[14px] h-[14px] px-1 rounded-full flex items-center justify-center text-[9px] font-bold leading-none"
+                                            style={{ background: 'var(--red)', color: 'white' }}
+                                            aria-hidden
+                                          >
+                                            {resendCount}
+                                          </span>
                                         )}
                                       </button>
                                     )
