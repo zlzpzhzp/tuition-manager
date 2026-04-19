@@ -112,8 +112,9 @@ function FilterDropdownPortal({
           borderRadius: BORDER_R,
         }}
         transition={{
-          height: { type: 'spring', stiffness: 320, damping: 32, mass: 0.6 },
-          default: { type: 'spring', stiffness: 320, damping: 32, mass: 0.6 },
+          height: { duration: 0.36, ease: [0.22, 1, 0.36, 1] },
+          borderRadius: { duration: 0.28, ease: [0.22, 1, 0.36, 1] },
+          default: { duration: 0.3, ease: [0.22, 1, 0.36, 1] },
         }}
         role="listbox"
         aria-label="납부 필터"
@@ -136,19 +137,22 @@ function FilterDropdownPortal({
               role="option"
               aria-selected={active}
               className={`relative w-full flex items-center text-xs font-semibold whitespace-nowrap transition-colors ${bgFor(key, active)}`}
+              initial={false}
               animate={{
                 opacity: isCurrent ? 1 : show ? 1 : 0,
-                y: isCurrent ? 0 : show ? 0 : -4,
+              }}
+              transition={{
+                opacity: {
+                  duration: show ? 0.22 : 0.14,
+                  ease: [0.22, 1, 0.36, 1],
+                  delay: isCurrent ? 0 : show ? 0.08 + i * 0.028 : 0,
+                },
+              }}
+              style={{
+                height: ROW_H,
                 paddingLeft: alignLeft ? 28 : 0,
                 justifyContent: alignLeft ? 'flex-start' : 'center',
               }}
-              transition={{
-                opacity: { duration: 0.18, ease: [0.4, 0, 0.2, 1], delay: isCurrent ? 0 : show ? i * 0.025 : 0 },
-                y: { type: 'spring', stiffness: 420, damping: 30, delay: isCurrent ? 0 : show ? i * 0.025 : 0 },
-                paddingLeft: { type: 'spring', stiffness: 320, damping: 32, mass: 0.6 },
-                justifyContent: { duration: 0 },
-              }}
-              style={{ height: ROW_H }}
             >
               <span>{FILTER_LABELS[key]}</span>
               <AnimatePresence initial={false}>
@@ -156,11 +160,15 @@ function FilterDropdownPortal({
                   <motion.span
                     key="range"
                     className="text-[10px] opacity-60 ml-1"
-                    initial={{ opacity: 0, width: 0 }}
-                    animate={{ opacity: 0.6, width: 'auto' }}
-                    exit={{ opacity: 0, width: 0 }}
-                    transition={{ duration: 0.18, ease: [0.4, 0, 0.2, 1] }}
-                    style={{ overflow: 'hidden', whiteSpace: 'nowrap' }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 0.6 }}
+                    exit={{ opacity: 0 }}
+                    transition={{
+                      duration: 0.2,
+                      ease: [0.22, 1, 0.36, 1],
+                      delay: isCurrent ? 0.12 : 0.12 + i * 0.028,
+                    }}
+                    style={{ whiteSpace: 'nowrap' }}
                   >
                     {rangeLabel}
                   </motion.span>
@@ -170,7 +178,7 @@ function FilterDropdownPortal({
                 <motion.div
                   className="absolute right-2 flex items-center justify-center"
                   animate={{ rotate: show ? 180 : 0 }}
-                  transition={{ type: 'spring', stiffness: 360, damping: 28 }}
+                  transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
                 >
                   <ChevronDown className="w-3 h-3 opacity-60" />
                 </motion.div>
