@@ -1147,9 +1147,9 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                       const isSwipeOpen = swipeOpenId === student.id
                       const openSide = isSwipeOpen ? swipeOpenSide : null
                       const memoColor = student.memo_color ?? null
-                      const memoHighlight = memoColor === 'yellow' ? 'bg-yellow-400/20 text-yellow-200 px-1 rounded'
-                        : memoColor === 'green' ? 'bg-green-400/20 text-green-200 px-1 rounded'
-                        : memoColor === 'red' ? 'bg-red-400/20 text-red-200 px-1 rounded'
+                      const memoHighlight = memoColor === 'yellow' ? 'bg-[var(--orange-dim)] text-[var(--orange)] px-1.5 py-0.5 rounded-full font-bold'
+                        : memoColor === 'green' ? 'bg-[var(--paid-bg)] text-[var(--paid-text)] px-1.5 py-0.5 rounded-full font-bold'
+                        : memoColor === 'red' ? 'bg-[var(--unpaid-bg)] text-[var(--unpaid-text)] px-1.5 py-0.5 rounded-full font-bold'
                         : 'text-[var(--text-3)]'
                       const withdrawn = isWithdrawnStudent(student)
 
@@ -1162,17 +1162,20 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                               <span className="text-[10px] font-bold text-[var(--text-3)] shrink-0">비고</span>
                               <div className="flex items-center gap-1 shrink-0">
                                 {(['yellow', 'green', 'red'] as const).map(c => {
-                                  const bg = c === 'yellow' ? 'bg-yellow-400' : c === 'green' ? 'bg-green-400' : 'bg-red-400'
+                                  const bg = c === 'yellow' ? 'bg-[var(--orange-dim)]' : c === 'green' ? 'bg-[var(--paid-bg)]' : 'bg-[var(--unpaid-bg)]'
+                                  const dot = c === 'yellow' ? 'bg-[var(--orange)]' : c === 'green' ? 'bg-[var(--paid-text)]' : 'bg-[var(--unpaid-text)]'
                                   const active = editMemoColor === c
                                   return (
                                     <button
                                       key={c}
                                       type="button"
                                       onClick={() => setEditMemoColor(active ? null : c)}
-                                      className={`w-6 h-3 rounded-[2px] ${bg} ${active ? 'ring-2 ring-white shadow-md' : 'opacity-60'}`}
+                                      className={`w-6 h-3 rounded-[2px] ${bg} ${active ? 'ring-1 ring-white/70 shadow-md' : 'opacity-60'} flex items-center justify-center`}
                                       style={{ transform: 'skewX(-10deg)' }}
                                       aria-label={`색상 ${c}`}
-                                    />
+                                    >
+                                      <span className={`w-1 h-1 rounded-full ${dot}`} />
+                                    </button>
                                   )
                                 })}
                               </div>

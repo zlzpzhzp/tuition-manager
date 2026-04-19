@@ -315,3 +315,15 @@ button:active, a:active, [role="button"]:active {
 .fan-item:nth-child(2) { animation-delay: 60ms; }
 .fan-item:nth-child(3) { animation-delay: 120ms; }
 .fan-item:nth-child(4) { animation-delay: 180ms; }
+
+/* ─── iPad/데스크탑 글씨 크기 확대 (눈이 침침한 원장용) ─── */
+@media (min-width: 768px) {
+  .text-\[9px\]  { font-size: 11px !important; }
+  .text-\[10px\] { font-size: 12px !important; }
+  .text-\[11px\] { font-size: 13px !important; }
+  .text-\[12px\] { font-size: 14px !important; }
+  .text-\[13px\] { font-size: 15px !important; }
+  .text-\[15px\] { font-size: 17px !important; }
+  .text-xs       { font-size: 14px !important; line-height: 1.45 !important; }
+  .text-sm       { font-size: 16px !important; line-height: 1.5 !important; }
+}
