@@ -935,14 +935,14 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
 
       </div>
 
-      {/* 월별 메모 — sticky (스크롤 시 1줄로 축소). height 스프링 애니메이션 */}
+      {/* 월별 메모 — sticky. 축소 시 1줄 프리뷰가 textarea를 가려 2번째 줄 흘러보임 방지 */}
       <div data-sticky-header className="sticky top-14 z-30 bg-[var(--bg)] -mx-4 px-4 pt-2 pb-2">
         <motion.div
           animate={{ height: memoCompact ? 38 : memoNaturalH }}
           transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
           className="relative overflow-hidden rounded-xl bg-[var(--bg-elevated)]"
         >
-          <textarea
+          <motion.textarea
             value={monthMemo}
             onChange={e => {
               setMonthMemo(e.target.value)
@@ -951,8 +951,19 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
             onFocus={() => setMemoFocused(true)}
             onBlur={() => setMemoFocused(false)}
             placeholder="메모..."
-            className={`w-full h-full resize-none bg-transparent rounded-xl px-3 py-2 text-sm text-[var(--text-1)] placeholder:text-[var(--text-4)] focus:outline-none focus:ring-1 focus:ring-[var(--blue)] leading-[22px] ${memoCompact ? 'overflow-hidden' : 'overflow-y-auto'}`}
+            animate={{ opacity: memoCompact ? 0 : 1 }}
+            transition={{ duration: memoCompact ? 0.12 : 0.35, ease: 'easeOut', delay: memoCompact ? 0 : 0.15 }}
+            className="absolute inset-0 w-full h-full resize-none bg-transparent rounded-xl px-3 py-2 text-sm text-[var(--text-1)] placeholder:text-[var(--text-4)] focus:outline-none focus:ring-1 focus:ring-[var(--blue)] leading-[22px] overflow-y-auto"
           />
+          {/* compact 프리뷰 — 1줄로 고정, 2번째 줄 가림막 역할 */}
+          <motion.div
+            aria-hidden
+            animate={{ opacity: memoCompact ? 1 : 0 }}
+            transition={{ duration: memoCompact ? 0.2 : 0.12, ease: 'easeOut', delay: memoCompact ? 0.05 : 0 }}
+            className="absolute inset-0 px-3 py-2 text-sm leading-[22px] text-[var(--text-1)] whitespace-nowrap overflow-hidden bg-[var(--bg-elevated)] pointer-events-none"
+          >
+            {monthMemo ? monthMemo.split('\n')[0] : <span className="text-[var(--text-4)]">메모...</span>}
+          </motion.div>
           {/* 숨겨진 sizer — 자연 높이 측정용 */}
           <div
             ref={memoSizerRef}
