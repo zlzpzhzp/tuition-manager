@@ -28,6 +28,16 @@ export async function POST(request: Request) {
   ])
   if (validationError) return validationError
 
+  // 해당 반의 최대 order_index + 1 → 맨 아래로 추가
+  const { data: maxRow } = await supabase
+    .from('tuition_students')
+    .select('order_index')
+    .eq('class_id', body.class_id)
+    .order('order_index', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  const nextOrder = (maxRow?.order_index ?? 0) + 1
+
   const { data, error } = await supabase
     .from('tuition_students')
     .insert({
@@ -38,6 +48,7 @@ export async function POST(request: Request) {
       enrollment_date: body.enrollment_date,
       custom_fee: body.custom_fee ?? null,
       memo: body.memo || null,
+      order_index: nextOrder,
     })
     .select('*, class:tuition_classes(*, grade:tuition_grades(*))')
     .single()

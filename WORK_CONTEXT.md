@@ -5,6 +5,44 @@
 
 ## 현재 상태: 진행 중
 
+### 2026-04-20 밤 — 전원납부 배지 + 학생 추가 순서 + 급여명세서 정렬 (msg 1183/1192/1193)
+
+**세션 흐름 (속기사 모드 — 텔레그램 전문)**
+
+- msg 1183 (초능력자님): "다끝나고 납부탭에서 전원납부 완료된 반은 '전원납부' 배찌 찍어주고 자동으로 접히도록 해줘"
+  - payments/page.tsx 수정:
+    - `classStats` useMemo 신설: grades × classes 순회, 각 반별 paidCount/totalCount/isFullyPaid 계산
+    - auto-expand effect 수정: fully-paid 반은 expanded에서 제거(접힘), 아니면 추가(펼침)
+    - 반 헤더 카운트 렌더: isFullyPaid면 "전원납부 N/N" 배지(var(--paid-bg)/var(--paid-text)), 아니면 plain `paidCount/total` 텍스트
+  - 커밋 4295d44, Vercel API 배포 완료
+
+- msg 1188 (초능력자님): "반영 안됐나?"
+  - 원인: tuition.dminstitute.co는 Cloudflare Tunnel로 로컬 :3001 경유 (Vercel 아님). 로컬 next-server가 18:00:44 빌드 PID 3754275 그대로 서빙 중이라 반영 안 됐음.
+  - `rtk proxy npx next build` (RTK heuristic cache 우회) → PID 3754275 kill → `nohup npx next start -p 3001` 재기동 → PID 3768689, /login 200 OK
+  - 텔레그램 답신: "로컬 빌드+재시작 완료. 이제 반영됐을 겁니다."
+
+- msg 1190 (초능력자님): "하베스튼가 뭔가 다함?"
+  - UI 하베스트(amnesia Task K) 상태 확인. 7개 md + SKILL.md 색인 + WORK_CONTEXT.md 로그까지 완료됨 답변
+
+- msg 1192 (초능력자님): "반에다 학생추가 할때 항상 맨아래 추가되게해 이거 순서가 중요함"
+  - src/app/api/students/route.ts POST 수정:
+    - insert 전 `SELECT order_index WHERE class_id ORDER BY order_index DESC LIMIT 1` → maxRow
+    - `order_index = (maxRow?.order_index ?? 0) + 1`로 insert
+    - 결과: 신규 학생은 항상 해당 반 마지막 자리에 추가
+
+- msg 1193 (초능력자님): "급여명세서 작성할때도 이 순서 학년 별 오름차순으로 작성해야함"
+  - src/app/teachers/[id]/page.tsx 수정:
+    - teacherClasses useMemo를 명시적 정렬 체인으로 교체
+    - `grades.sort(order_index asc) → g.classes.filter(teacher_id).sort(order_index asc) → map`
+    - 학생 정렬은 queryGradesTree에서 이미 order_index 순으로 들어오므로 그대로 상속
+
+**미완 작업 (다음 커밋/배포):**
+- 빌드 (`rtk proxy npx next build` 우회)
+- 로컬 :3001 next-server kill + 재시작
+- git add + commit + push (students POST + teacher sort)
+- Vercel API 프로덕션 배포
+- 텔레그램 확인 답변 (msg 1192/1193)
+
 ### 2026-04-20 — UI 패턴 하베스트 (amnesia Task K, msg 3153, 사일런트)
 - 목적: 원비 완성 UI 패턴을 `/root/.claude/skills/ui-patterns-lab/patterns/`에 md로 추출 (재사용 가능하도록)
 - 원본 파일 조사:

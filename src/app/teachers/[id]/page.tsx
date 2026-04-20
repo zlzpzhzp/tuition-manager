@@ -39,11 +39,16 @@ export default function TeacherDetailPage({ params }: { params: Promise<{ id: st
     setSelectedMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`)
   }
 
-  // 이 선생님의 반 + 학생 목록
+  // 이 선생님의 반 + 학생 목록 — 학년 오름차순 → 반 order_index
   const teacherClasses = useMemo(() =>
-    grades.flatMap(g =>
-      g.classes.filter(c => c.teacher_id === teacherId).map(c => ({ ...c, gradeName: g.name }))
-    )
+    [...grades]
+      .sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0))
+      .flatMap(g =>
+        [...g.classes]
+          .filter(c => c.teacher_id === teacherId)
+          .sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0))
+          .map(c => ({ ...c, gradeName: g.name }))
+      )
   , [grades, teacherId])
 
   const teacherStudents = useMemo(() =>
