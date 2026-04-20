@@ -769,6 +769,7 @@ export default function BillingPage() {
       {showSendModal && (
         <QuickBillSendModal
           students={allForSendModal}
+          grades={grades}
           billingMonth={selectedMonth}
           onClose={() => setShowSendModal(false)}
           onSuccess={() => mutateBills()}
