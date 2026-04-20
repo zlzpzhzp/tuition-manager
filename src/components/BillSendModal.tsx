@@ -19,11 +19,23 @@ interface Props {
 
 type SendState = 'idle' | 'confirming' | 'sending' | 'success' | 'scheduled' | 'error'
 
+function todayKstLabel(): string {
+  const now = new Date()
+  const kst = new Date(now.getTime() + (9 * 60 + now.getTimezoneOffset()) * 60000)
+  return `${kst.getMonth() + 1}월 ${kst.getDate()}일`
+}
+
+function buildAmountAdjustNote(original: number, modified: number): string {
+  return `${todayKstLabel()} 금액 수정 발송 (기본 ${original.toLocaleString()}원 → ${modified.toLocaleString()}원)`
+}
+
 export default function BillSendModal({ studentName, studentId, phone, amount, subject, billingMonth, onClose, onSuccess }: Props) {
   const defaultTitle = getRegularTuitionTitle(subject, billingMonth)
   const defaultMessage = REGULAR_TUITION_MESSAGE
   const [title, setTitle] = useState(defaultTitle)
   const [messageContent, setMessageContent] = useState(defaultMessage)
+  const [amountValue, setAmountValue] = useState(amount)
+  const [billNote, setBillNote] = useState('')
   const [state, setState] = useState<SendState>('idle')
   const [errorMsg, setErrorMsg] = useState('')
   const [billId, setBillId] = useState('')
@@ -34,13 +46,26 @@ export default function BillSendModal({ studentName, studentId, phone, amount, s
   useEffect(() => { setMounted(true) }, [])
   useEffect(() => { setTitle(defaultTitle) }, [defaultTitle])
   useEffect(() => { setMessageContent(defaultMessage) }, [defaultMessage])
+  useEffect(() => { setAmountValue(amount) }, [amount])
+
+  // 금액이 기본값과 다르면 결제특이사항 자동 채움 (유저가 수정하지 않은 경우만)
+  useEffect(() => {
+    if (amountValue === amount) return
+    const auto = buildAmountAdjustNote(amount, amountValue)
+    setBillNote(prev => {
+      if (!prev) return auto
+      // 기존 값이 다른 금액으로 생성된 자동 문구면 갱신, 아니면 유저 편집이므로 유지
+      if (/^\d+월 \d+일 금액 수정 발송 \(기본/.test(prev)) return auto
+      return prev
+    })
+  }, [amountValue, amount])
 
   // 전화번호 유효성 검사
   const cleanPhone = phone.replace(/-/g, '')
   const isPhoneValid = /^01[016789]\d{7,8}$/.test(cleanPhone)
 
   // 금액 유효성 검사
-  const isAmountValid = amount > 0
+  const isAmountValid = amountValue > 0
 
   // ESC 닫기
   useEffect(() => {
@@ -65,6 +90,8 @@ export default function BillSendModal({ studentName, studentId, phone, amount, s
     try {
       const finalTitle = title.trim() || defaultTitle
       const finalMessage = messageContent.trim() || defaultMessage
+      const finalBillNote = billNote.trim() ||
+        (amountValue !== amount ? buildAmountAdjustNote(amount, amountValue) : '')
 
       const res = await fetch('/api/payssam/send', {
         method: 'POST',
@@ -73,10 +100,11 @@ export default function BillSendModal({ studentName, studentId, phone, amount, s
           studentId,
           studentName,
           phone: cleanPhone,
-          amount,
+          amount: amountValue,
           productName: finalTitle,
           message: finalMessage,
           billingMonth,
+          billNote: finalBillNote || undefined,
         }),
       })
 
@@ -114,7 +142,7 @@ export default function BillSendModal({ studentName, studentId, phone, amount, s
       setErrorMsg('네트워크 오류가 발생했습니다. 잠시 후 다시 시도해주세요.')
       setState('error')
     }
-  }, [state, studentId, studentName, cleanPhone, amount, billingMonth, title, messageContent, defaultTitle, defaultMessage, onClose, onSuccess])
+  }, [state, studentId, studentName, cleanPhone, amount, amountValue, billingMonth, title, messageContent, billNote, defaultTitle, defaultMessage, onClose, onSuccess])
 
   const formatMonth = (m: string) => {
     const [y, mo] = m.split('-')
@@ -185,10 +213,38 @@ export default function BillSendModal({ studentName, studentId, phone, amount, s
               <span className="text-sm text-[var(--text-3)]">청구 월</span>
               <span className="text-sm font-semibold">{formatMonth(billingMonth)}</span>
             </div>
-            <div className="border-t border-[var(--border)] pt-3 flex justify-between">
-              <span className="text-sm font-medium text-[var(--text-3)]">청구 금액</span>
-              <span className="text-xl font-extrabold text-[var(--blue)]">{amount.toLocaleString()}원</span>
+            <div className="border-t border-[var(--border)] pt-3 flex items-center justify-between gap-2">
+              <span className="text-sm font-medium text-[var(--text-3)] shrink-0">청구 금액</span>
+              <div className="flex items-center gap-1">
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={amountValue === 0 ? '' : amountValue.toLocaleString()}
+                  onChange={e => {
+                    const raw = e.target.value.replace(/[^0-9]/g, '')
+                    if (raw === '') { setAmountValue(0); return }
+                    const n = parseInt(raw, 10)
+                    if (!Number.isNaN(n)) setAmountValue(Math.min(99999999, n))
+                  }}
+                  disabled={state === 'sending' || state === 'success' || state === 'scheduled'}
+                  className="w-32 px-2 py-1 bg-[var(--bg-elevated)] rounded-lg text-xl font-extrabold text-[var(--blue)] text-right tabular-nums focus:outline-none focus:ring-1 focus:ring-[var(--blue)] disabled:opacity-60"
+                />
+                <span className="text-sm font-medium text-[var(--text-3)]">원</span>
+              </div>
             </div>
+            {amountValue !== amount && (
+              <div className="flex items-center justify-end gap-1.5 -mt-1">
+                <span className="text-[10px] text-[var(--text-4)] line-through tabular-nums">{amount.toLocaleString()}원</span>
+                <button
+                  type="button"
+                  onClick={() => setAmountValue(amount)}
+                  className="text-[10px] text-[var(--blue)] hover:underline"
+                  disabled={state === 'sending' || state === 'success' || state === 'scheduled'}
+                >
+                  기본값 복원
+                </button>
+              </div>
+            )}
           </div>
 
           {/* 제목 (카톡 알림톡 상품명) */}
@@ -215,6 +271,24 @@ export default function BillSendModal({ studentName, studentId, phone, amount, s
               placeholder={defaultMessage}
               className="w-full px-3 py-2 bg-[var(--bg-elevated)] rounded-xl text-sm text-[var(--text-1)] placeholder:text-[var(--text-4)] focus:outline-none focus:ring-1 focus:ring-[var(--blue)] disabled:opacity-60 resize-none"
             />
+          </div>
+
+          {/* 결제 특이사항 (bill_note) */}
+          <div>
+            <label className="block text-xs font-medium text-[var(--text-3)] mb-1.5">
+              결제 특이사항 <span className="text-[var(--text-4)] font-normal">(선택)</span>
+            </label>
+            <input
+              type="text"
+              value={billNote}
+              onChange={e => setBillNote(e.target.value.slice(0, 60))}
+              disabled={state === 'sending' || state === 'success' || state === 'scheduled'}
+              placeholder="예: 특강비 포함, 분할결제 2/3회차 등"
+              className="w-full px-3 py-2 bg-[var(--bg-elevated)] rounded-xl text-sm text-[var(--text-1)] placeholder:text-[var(--text-4)] focus:outline-none focus:ring-1 focus:ring-[var(--blue)] disabled:opacity-60"
+            />
+            {amountValue !== amount && (
+              <p className="text-[10px] text-[var(--orange)] mt-1">금액 수정분이 자동 기록됩니다</p>
+            )}
           </div>
 
           {/* 안내 */}
@@ -262,7 +336,7 @@ export default function BillSendModal({ studentName, studentId, phone, amount, s
             <div className="flex items-start gap-2 p-3 bg-[var(--orange-dim)] rounded-xl">
               <AlertTriangle className="w-4 h-4 text-[var(--orange)] shrink-0 mt-0.5" />
               <p className="text-sm text-[var(--orange)]">
-                <strong>{studentName}</strong>님에게 <strong>{amount.toLocaleString()}원</strong> 청구서를 발송합니다. 확인하시겠습니까?
+                <strong>{studentName}</strong>님에게 <strong>{amountValue.toLocaleString()}원</strong> 청구서를 발송합니다. 확인하시겠습니까?
               </p>
             </div>
           )}
