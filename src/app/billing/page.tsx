@@ -456,19 +456,9 @@ export default function BillingPage() {
           const d = today.getDate()
           const weekday = ['일','월','화','수','목','금','토'][today.getDay()]
           return (
-            <div className="leading-none py-1 mb-1">
-              <div className="text-[10px] font-bold tracking-[0.2em] text-[var(--text-4)] mb-2">{y}</div>
-              <div className="flex items-baseline gap-2.5">
-                <h1 className="text-[2.4rem] font-extrabold tracking-tight leading-none text-[var(--text-1)] tabular-nums">
-                  {m}<span className="text-[1.5rem] font-bold text-[var(--text-2)] ml-0.5">월</span>
-                  <span className="ml-2 text-[var(--text-1)]">{d}</span>
-                  <span className="text-[1.5rem] font-bold text-[var(--text-2)] ml-0.5">일</span>
-                </h1>
-                <span className="text-sm font-semibold text-[var(--text-3)] tracking-tight">
-                  {weekday}요일
-                </span>
-              </div>
-            </div>
+            <h1 className="text-[1.5rem] font-extrabold tracking-tight text-[var(--text-1)] tabular-nums mb-2">
+              {y}년 {m}월 {d}일 {weekday}요일
+            </h1>
           )
         })()}
 

@@ -78,8 +78,19 @@ export default function DashboardPage() {
   return (
     <div className="space-y-5">
       <div>
-        <p className="text-[var(--text-4)] text-sm font-medium mb-1">{new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })}</p>
-        <h1 className="text-[26px] font-extrabold text-[var(--text-1)] tracking-tight">{formatMonth(currentMonth)}</h1>
+        {(() => {
+          const today = new Date()
+          const y = today.getFullYear()
+          const m = today.getMonth() + 1
+          const d = today.getDate()
+          const weekday = ['일','월','화','수','목','금','토'][today.getDay()]
+          return (
+            <h1 className="text-[1.5rem] font-extrabold tracking-tight text-[var(--text-1)] tabular-nums mb-1">
+              {y}년 {m}월 {d}일 {weekday}요일
+            </h1>
+          )
+        })()}
+        <p className="text-[13px] font-medium text-[var(--text-4)]">{formatMonth(currentMonth)} 기준</p>
       </div>
 
       {/* 요약 카드 */}

@@ -36,7 +36,7 @@ export default function QuickBillSendModal({ students, grades, billingMonth, onC
   const [browseSubject, setBrowseSubject] = useState<string | null>(null)
   const [browseGradeName, setBrowseGradeName] = useState<string | null>(null)
   const [browseClassName, setBrowseClassName] = useState<string | null>(null)
-  const [openRow, setOpenRow] = useState<'subject' | 'grade' | 'class' | 'student' | null>('subject')
+  const [openPicker, setOpenPicker] = useState<'subject' | 'grade' | 'class' | null>(null)
   const searchRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => { setMounted(true) }, [])
@@ -273,128 +273,142 @@ export default function QuickBillSendModal({ students, grades, billingMonth, onC
                     )}
                   </AnimatePresence>
 
-                  {/* 계층 드롭다운 아코디언 */}
-                  <div className="rounded-xl border border-[var(--border)] divide-y divide-[var(--border)] overflow-hidden bg-[var(--bg-elevated)]">
-                    {/* 과목 */}
-                    <AccordionRow
-                      label="과목"
+                  {/* 한 행에 과목/학년/반 선택 */}
+                  <div className="flex items-center gap-2">
+                    <PillPicker
+                      placeholder="과목"
                       value={browseSubject}
-                      placeholder="선택"
-                      open={openRow === 'subject'}
-                      onToggle={() => setOpenRow(openRow === 'subject' ? null : 'subject')}
-                    >
-                      <div className="grid grid-cols-2 gap-2 p-3">
-                        {subjectList.length === 0 ? (
-                          <div className="col-span-2 p-3 text-center text-xs text-[var(--text-4)]">학생이 없습니다</div>
-                        ) : subjectList.map(s => (
-                          <button
-                            key={s}
-                            onClick={() => {
-                              if (browseSubject !== s) { setBrowseGradeName(null); setBrowseClassName(null) }
-                              setBrowseSubject(s)
-                              setOpenRow('grade')
-                            }}
-                            className={`py-3 rounded-lg text-sm font-bold transition-colors ${
-                              browseSubject === s
-                                ? 'bg-[var(--blue)]/15 text-[var(--blue)] ring-1 ring-[var(--blue)]/40'
-                                : 'bg-[var(--bg-card)] text-[var(--text-1)] hover:bg-[var(--bg-card-hover)]'
-                            }`}
-                          >{s}</button>
-                        ))}
-                      </div>
-                    </AccordionRow>
-
-                    {/* 학년 */}
-                    <AccordionRow
-                      label="학년"
+                      open={openPicker === 'subject'}
+                      onToggle={() => setOpenPicker(openPicker === 'subject' ? null : 'subject')}
+                    />
+                    <PillPicker
+                      placeholder="학년"
                       value={browseGradeName}
-                      placeholder={browseSubject ? '선택' : '과목 먼저'}
                       disabled={!browseSubject}
-                      open={openRow === 'grade'}
-                      onToggle={() => setOpenRow(openRow === 'grade' ? null : 'grade')}
-                    >
-                      <div className="grid grid-cols-3 gap-2 p-3">
-                        {gradeList.length === 0 ? (
-                          <div className="col-span-3 p-3 text-center text-xs text-[var(--text-4)]">학년 없음</div>
-                        ) : gradeList.map(g => (
-                          <button
-                            key={g.id}
-                            onClick={() => {
-                              if (browseGradeName !== g.name) setBrowseClassName(null)
-                              setBrowseGradeName(g.name)
-                              setOpenRow('class')
-                            }}
-                            className={`py-2.5 rounded-lg text-sm font-semibold transition-colors ${
-                              browseGradeName === g.name
-                                ? 'bg-[var(--blue)]/15 text-[var(--blue)] ring-1 ring-[var(--blue)]/40'
-                                : 'bg-[var(--bg-card)] text-[var(--text-1)] hover:bg-[var(--bg-card-hover)]'
-                            }`}
-                          >{g.name}</button>
-                        ))}
-                      </div>
-                    </AccordionRow>
-
-                    {/* 반 */}
-                    <AccordionRow
-                      label="반"
+                      open={openPicker === 'grade'}
+                      onToggle={() => setOpenPicker(openPicker === 'grade' ? null : 'grade')}
+                    />
+                    <PillPicker
+                      placeholder="반"
                       value={browseClassName}
-                      placeholder={browseGradeName ? '선택' : '학년 먼저'}
                       disabled={!browseGradeName}
-                      open={openRow === 'class'}
-                      onToggle={() => setOpenRow(openRow === 'class' ? null : 'class')}
-                    >
-                      <div className="grid grid-cols-3 gap-2 p-3">
-                        {classList.length === 0 ? (
-                          <div className="col-span-3 p-3 text-center text-xs text-[var(--text-4)]">반 없음</div>
-                        ) : classList.map(c => (
-                          <button
-                            key={c.id}
-                            onClick={() => {
-                              setBrowseClassName(c.name)
-                              setOpenRow('student')
-                            }}
-                            className={`py-2.5 rounded-lg text-sm font-semibold transition-colors ${
-                              browseClassName === c.name
-                                ? 'bg-[var(--blue)]/15 text-[var(--blue)] ring-1 ring-[var(--blue)]/40'
-                                : 'bg-[var(--bg-card)] text-[var(--text-1)] hover:bg-[var(--bg-card-hover)]'
-                            }`}
-                          >{c.name}</button>
-                        ))}
-                      </div>
-                    </AccordionRow>
-
-                    {/* 학생 */}
-                    <AccordionRow
-                      label="학생"
-                      value={null}
-                      placeholder={browseClassName ? '선택' : '반 먼저'}
-                      disabled={!browseClassName}
-                      open={openRow === 'student'}
-                      onToggle={() => setOpenRow(openRow === 'student' ? null : 'student')}
-                    >
-                      <div className="max-h-60 overflow-y-auto divide-y divide-[var(--border)]">
-                        {classStudents.length === 0 ? (
-                          <div className="p-4 text-center text-xs text-[var(--text-4)]">학생이 없습니다</div>
-                        ) : classStudents.map(s => {
-                          const p = s.parent_phone || s.phone
-                          const fee = getStudentFee(s, s.class)
-                          return (
-                            <button
-                              key={s.id}
-                              onClick={() => setSelectedId(s.id)}
-                              className="w-full flex items-center gap-2 px-3 py-2 hover:bg-[var(--bg-card-hover)] text-left transition-colors"
-                            >
-                              <div className="flex-1 min-w-0 flex items-center gap-1.5">
-                                <span className="text-sm font-semibold truncate">{s.name}</span>
-                                {!p && <PhoneOff className="w-3 h-3 text-[var(--red)]" />}
-                              </div>
-                              <span className="text-[11px] tabular-nums text-[var(--text-3)]">{fee.toLocaleString()}원</span>
-                            </button>
-                          )
-                        })}
-                      </div>
-                    </AccordionRow>
+                      open={openPicker === 'class'}
+                      onToggle={() => setOpenPicker(openPicker === 'class' ? null : 'class')}
+                    />
                   </div>
+
+                  {/* 선택 팝업 (과목/학년/반 각각) */}
+                  <AnimatePresence initial={false}>
+                    {openPicker && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+                        className="overflow-hidden"
+                      >
+                        <div className="p-2 rounded-xl border border-[var(--border)] bg-[var(--bg-elevated)]">
+                          {openPicker === 'subject' && (
+                            <div className="grid grid-cols-2 gap-2">
+                              {subjectList.length === 0 ? (
+                                <div className="col-span-2 p-3 text-center text-xs text-[var(--text-4)]">학생이 없습니다</div>
+                              ) : subjectList.map(s => (
+                                <button
+                                  key={s}
+                                  onClick={() => {
+                                    if (browseSubject !== s) { setBrowseGradeName(null); setBrowseClassName(null) }
+                                    setBrowseSubject(s)
+                                    setOpenPicker('grade')
+                                  }}
+                                  className={`py-2.5 rounded-lg text-sm font-bold transition-colors ${
+                                    browseSubject === s
+                                      ? 'bg-[var(--blue)]/15 text-[var(--blue)] ring-1 ring-[var(--blue)]/40'
+                                      : 'bg-[var(--bg-card)] text-[var(--text-1)] hover:bg-[var(--bg-card-hover)]'
+                                  }`}
+                                >{s}</button>
+                              ))}
+                            </div>
+                          )}
+                          {openPicker === 'grade' && (
+                            <div className="grid grid-cols-3 gap-2">
+                              {gradeList.length === 0 ? (
+                                <div className="col-span-3 p-3 text-center text-xs text-[var(--text-4)]">학년 없음</div>
+                              ) : gradeList.map(g => (
+                                <button
+                                  key={g.id}
+                                  onClick={() => {
+                                    if (browseGradeName !== g.name) setBrowseClassName(null)
+                                    setBrowseGradeName(g.name)
+                                    setOpenPicker('class')
+                                  }}
+                                  className={`py-2.5 rounded-lg text-sm font-semibold transition-colors ${
+                                    browseGradeName === g.name
+                                      ? 'bg-[var(--blue)]/15 text-[var(--blue)] ring-1 ring-[var(--blue)]/40'
+                                      : 'bg-[var(--bg-card)] text-[var(--text-1)] hover:bg-[var(--bg-card-hover)]'
+                                  }`}
+                                >{g.name}</button>
+                              ))}
+                            </div>
+                          )}
+                          {openPicker === 'class' && (
+                            <div className="grid grid-cols-3 gap-2">
+                              {classList.length === 0 ? (
+                                <div className="col-span-3 p-3 text-center text-xs text-[var(--text-4)]">반 없음</div>
+                              ) : classList.map(c => (
+                                <button
+                                  key={c.id}
+                                  onClick={() => {
+                                    setBrowseClassName(c.name)
+                                    setOpenPicker(null)
+                                  }}
+                                  className={`py-2.5 rounded-lg text-sm font-semibold transition-colors ${
+                                    browseClassName === c.name
+                                      ? 'bg-[var(--blue)]/15 text-[var(--blue)] ring-1 ring-[var(--blue)]/40'
+                                      : 'bg-[var(--bg-card)] text-[var(--text-1)] hover:bg-[var(--bg-card-hover)]'
+                                  }`}
+                                >{c.name}</button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  {/* 반 선택 완료 → 학생 리스트 드롭다운 */}
+                  <AnimatePresence initial={false}>
+                    {browseClassName && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+                        className="overflow-hidden"
+                      >
+                        <div className="max-h-60 overflow-y-auto rounded-xl border border-[var(--border)] divide-y divide-[var(--border)]">
+                          {classStudents.length === 0 ? (
+                            <div className="p-4 text-center text-xs text-[var(--text-4)]">학생이 없습니다</div>
+                          ) : classStudents.map(s => {
+                            const p = s.parent_phone || s.phone
+                            const fee = getStudentFee(s, s.class)
+                            return (
+                              <button
+                                key={s.id}
+                                onClick={() => setSelectedId(s.id)}
+                                className="w-full flex items-center gap-2 px-3 py-2 hover:bg-[var(--bg-card-hover)] text-left transition-colors"
+                              >
+                                <div className="flex-1 min-w-0 flex items-center gap-1.5">
+                                  <span className="text-sm font-semibold truncate">{s.name}</span>
+                                  {!p && <PhoneOff className="w-3 h-3 text-[var(--red)]" />}
+                                </div>
+                                <span className="text-[11px] tabular-nums text-[var(--text-3)]">{fee.toLocaleString()}원</span>
+                              </button>
+                            )
+                          })}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               ) : (
                 <>
@@ -592,50 +606,34 @@ export default function QuickBillSendModal({ students, grades, billingMonth, onC
   return createPortal(modal, document.body)
 }
 
-interface AccordionRowProps {
-  label: string
-  value: string | null
+interface PillPickerProps {
   placeholder: string
+  value: string | null
   disabled?: boolean
   open: boolean
   onToggle: () => void
-  children: React.ReactNode
 }
 
-function AccordionRow({ label, value, placeholder, disabled, open, onToggle, children }: AccordionRowProps) {
+function PillPicker({ placeholder, value, disabled, open, onToggle }: PillPickerProps) {
   return (
-    <div>
-      <button
-        type="button"
-        onClick={disabled ? undefined : onToggle}
-        disabled={disabled}
-        className={`w-full flex items-center justify-between px-3 py-2.5 text-left transition-colors ${
-          disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[var(--bg-card-hover)]'
-        }`}
-      >
-        <div className="flex items-center gap-3 min-w-0">
-          <span className="text-[11px] font-medium text-[var(--text-4)] w-8 shrink-0">{label}</span>
-          <span className={`text-sm truncate ${value ? 'font-semibold text-[var(--text-1)]' : 'text-[var(--text-4)]'}`}>
-            {value || placeholder}
-          </span>
-        </div>
-        <ChevronDown
-          className={`w-4 h-4 text-[var(--text-4)] shrink-0 transition-transform duration-200 ${open && !disabled ? 'rotate-180' : ''}`}
-        />
-      </button>
-      <AnimatePresence initial={false}>
-        {open && !disabled && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-            className="overflow-hidden bg-[var(--bg-card)]"
-          >
-            {children}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+    <button
+      type="button"
+      onClick={disabled ? undefined : onToggle}
+      disabled={disabled}
+      className={`flex-1 flex items-center justify-between gap-1 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+        disabled
+          ? 'bg-[var(--bg-elevated)] text-[var(--text-4)] opacity-50 cursor-not-allowed'
+          : value
+            ? 'bg-[var(--blue)]/15 text-[var(--blue)] ring-1 ring-[var(--blue)]/40'
+            : open
+              ? 'bg-[var(--bg-card)] text-[var(--text-1)] ring-1 ring-[var(--border)]'
+              : 'bg-[var(--bg-elevated)] text-[var(--text-3)] hover:bg-[var(--bg-card-hover)]'
+      }`}
+    >
+      <span className="truncate">{value || placeholder}</span>
+      <ChevronDown
+        className={`w-3.5 h-3.5 shrink-0 transition-transform duration-200 ${open && !disabled ? 'rotate-180' : ''}`}
+      />
+    </button>
   )
 }
