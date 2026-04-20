@@ -3,7 +3,22 @@
 > 이 파일은 Claude 세션 간 작업 연속성을 위한 컨텍스트 추적 파일입니다.
 > 작업 중 수시로 업데이트하고, 커밋 시 함께 포함시킵니다.
 
-## 현재 상태: 청구서 발송 모달 계층선택 완료
+## 현재 상태: 납부탭 이름 마커(형광펜) + 요일 크기 축소 + 선택 체크 톤다운
+
+### 2026-04-20 10:15 (진행중) — 납부탭 형광펜 이름 마커 + UX 디테일
+- msg 1058: 대시보드/납부 년월일요일 글자크기 크게 통일
+- msg 1062/1075: 년도 제거 + 월일요일 더 키움 (3rem, leading-none, tracking-tight)
+- msg 1059/1063/1067/1072: QuickBillSendModal 한 행에 과목+학년+반 pill 3개, 포탈 드롭다운(payments 날짜필터 스타일), 옵션 세로 배치, 팝오버 폭=pill 폭
+- msg 1071: 패드 로그인 화면 깨짐 (fixed inset-0로 해결), 아이디 input autoCapitalize=none
+- msg 1078/1082/1083: 형광펜이 메모 아니라 **이름 위에** 마커처럼 칠해지는 기능
+  - 첫 커밋 62a3e67: memo_color 있는데 memo 비면 안 뜨던 게이트 버그 → 색 테이프 추가 (오해)
+  - 두번째 커밋 a2eecd1: nameHighlight로 변경, 이름 span에 적용, 메모 영역은 원상복구
+- msg 1086: 적용 확인 플레이라이트로 → 이전 next-server가 구 빌드 청크 붙잡고 있던 문제, kill하고 재기동 후 확인 성공. 이세중 동명이인 아닌 같은 학생 수학S반/영어H반 2반 등록
+- msg 1093: "마킹을 찢어진 테이프 모양으로" + msg 1094: "체크표시 색상 전체톤과 안맞음"
+  - 커밋 fb3636d: clip-path polygon 불규칙 zigzag (찢어진 마스킹 테이프), inline-block, 다중선택 체크 bg-[var(--blue-bg)]+text-[var(--blue)]
+- msg 1098: 하나만 선택했을 때 저장 체크 버튼도 톤다운 요청
+  - handleSaveMemo 저장 버튼 + handleSavePayMemo 저장 버튼 둘 다 bg-[var(--blue)] white → bg-[var(--blue-bg)] text-[var(--blue)] 로 변경
+- 파일: src/app/payments/page.tsx, src/app/dashboard/page.tsx, src/app/billing/page.tsx, src/app/login/page.tsx, src/components/QuickBillSendModal.tsx
 
 ### 2026-04-20 09:30 (완료) — 청구서 발송 모달 계층 선택 행별 아코디언
 - msg 1051: "결제선생 탭에서 청구서 발송하기 누르면 학생 검색 해야되잖아 그것도 좋은데 그밑에 수학,영어 들어가면 학년 들어가면 반 이런식으로 계층화시켜서 이름선택할 수 있게 하라는거 비정규 보낼때"

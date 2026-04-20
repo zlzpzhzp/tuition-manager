@@ -1470,8 +1470,8 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                                       )
                                     })}
                                   </div>
-                                  <button onClick={() => handleSaveMemo(student.id)} className="ml-auto p-1.5 bg-[var(--blue)] hover:opacity-80 text-white rounded-full shrink-0 shadow-sm transition-opacity" aria-label="저장">
-                                    <Check className="w-3.5 h-3.5" />
+                                  <button onClick={() => handleSaveMemo(student.id)} className="ml-auto p-1.5 bg-[var(--blue-bg)] hover:bg-[var(--blue-dim)] text-[var(--blue)] rounded-full shrink-0 transition-colors" aria-label="저장">
+                                    <Check className="w-3.5 h-3.5" strokeWidth={3} />
                                   </button>
                                 </>
                               )}
@@ -1480,8 +1480,8 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                             {/* 오른쪽 패널 헤더 — "결제특이사항" 배지 + 저장 */}
                             <div data-edit-panel className="absolute inset-y-0 right-0 w-[150px] flex items-center justify-between gap-1.5 px-2 bg-[var(--bg-elevated)]" onClick={e => e.stopPropagation()}>
                               <span className="text-[10px] font-bold text-[var(--orange)] px-2 py-0.5 rounded-full bg-[var(--orange-dim)] shrink-0">결제특이사항</span>
-                              <button onClick={() => handleSavePayMemo(student.id)} className="p-1.5 bg-[var(--blue)] hover:opacity-80 text-white rounded-full shrink-0 shadow-sm transition-opacity" aria-label="저장">
-                                <Check className="w-3.5 h-3.5" />
+                              <button onClick={() => handleSavePayMemo(student.id)} className="p-1.5 bg-[var(--blue-bg)] hover:bg-[var(--blue-dim)] text-[var(--blue)] rounded-full shrink-0 transition-colors" aria-label="저장">
+                                <Check className="w-3.5 h-3.5" strokeWidth={3} />
                               </button>
                             </div>
 
