@@ -1228,6 +1228,51 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
         </motion.div>
       </div>
 
+      {/* 빈 상태 — 필터 결과 0명 */}
+      {visibleSections.length === 0 && (customDay !== null || paymentFilter !== 'all') && (
+        <div className="card p-6 flex flex-col items-center text-center gap-3 mb-4">
+          <p className="text-sm text-[var(--text-2)] font-medium">조건에 맞는 학생이 없습니다</p>
+          <div className="flex flex-wrap items-center justify-center gap-1.5 text-[11px] text-[var(--text-3)]">
+            {customDay !== null && (
+              <span className="px-2 py-0.5 rounded-full bg-[var(--blue-dim)] text-[var(--blue)] font-semibold">결제일 {customDay}일</span>
+            )}
+            {paymentFilter !== 'all' && (
+              <span className="px-2 py-0.5 rounded-full bg-[var(--bg-elevated)] text-[var(--text-2)] font-semibold">{FILTER_LABELS[paymentFilter]}</span>
+            )}
+          </div>
+          {customDay !== null && (
+            <div className="flex items-center gap-1.5">
+              <span className="text-[11px] text-[var(--text-4)]">다른 결제일로 변경</span>
+              <input
+                type="number"
+                min={1}
+                max={31}
+                value={customDay ?? ''}
+                onChange={(e) => {
+                  const v = e.target.value
+                  if (v === '') { setCustomDay(null); return }
+                  const n = parseInt(v, 10)
+                  if (Number.isNaN(n)) return
+                  setCustomDay(Math.min(31, Math.max(1, n)))
+                }}
+                aria-label="결제일 직접 입력"
+                className="w-14 px-2 py-1 rounded-full text-xs font-semibold text-center shadow-sm focus:outline-none focus:ring-1 focus:ring-[var(--blue)] bg-[var(--blue-dim)] text-[var(--blue)]"
+              />
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={() => {
+              setCustomDay(null)
+              setPaymentFilter('all')
+            }}
+            className="px-3 py-1.5 rounded-full text-xs font-bold bg-[var(--bg-elevated)] text-[var(--text-2)] hover:bg-[var(--bg-card-hover)] transition-colors"
+          >
+            필터 초기화
+          </button>
+        </div>
+      )}
+
       {/* 과목별 → 학년별 납부 현황 */}
       {subjectGradeGroups.map(({ subject, grades: subjectGrades }) => {
         // 과목 전체에 표시할 학생이 있는지 확인
