@@ -1951,7 +1951,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                                   {prevMemo && <p className="text-[11px] text-[var(--text-4)] leading-tight">지난달: {prevMemo}</p>}
                                   {prevMethodNonPayssam && (
                                     <p className="text-[11px] text-[var(--orange)] leading-tight">
-                                      지난달 결제수단: {PAYMENT_METHOD_LABELS[prevMethodNonPayssam]}
+                                      지난달: {PAYMENT_METHOD_LABELS[prevMethodNonPayssam]}
                                     </p>
                                   )}
                                 </div>

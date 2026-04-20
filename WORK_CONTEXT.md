@@ -43,6 +43,29 @@
 - Vercel API 프로덕션 배포
 - 텔레그램 확인 답변 (msg 1192/1193)
 
+### 2026-04-20 19:15~21:00 — msg 1196/1198/1201/1204 연속 수정
+
+- msg 1196: "학년 학생번호 오름차순임" (급여명세서 정렬 확인)
+  - queryGradesTree에서 이미 grade.order_index → class.order_index → student.order_index asc 보장됨을 확인
+  - teacherClasses useMemo 정렬이 이 순서와 일치 → 추가 수정 없이 확인 답변 (msg 1197)
+
+- msg 1198: "지난달 결제선생 아니었던 애들 결제수단 결제특이사항에 다 표시해줘"
+  - payments/page.tsx: prevMethodByStudentId 맵 + getPrevMethod 훅 헬퍼 신설
+  - 렌더 (line 1595~): prevMethodNonPayssam = method && method !== 'payssam' ? method : null
+  - 메모 표시 영역 (line 1932~1939) 하단에 오렌지톤 한 줄 추가: "지난달 결제수단: {label}"
+  - hasMemo에 prevMethodNonPayssam 포함 (표시 트리거)
+  - 커밋 7f144ea, 빌드+로컬 재시작(PID 3779979)+Vercel 배포
+
+- msg 1201: "지난달 비대면 이었던게 결제선생이야" (레거시 보정)
+  - HANDOFF.md state `payment_method.removed=remote (비대면→자동처리)` — remote는 예전 결제선생 표기
+  - prevMethodNonPayssam 조건에 `&& method !== 'remote'` 추가
+  - 커밋 61002aa, 빌드+재시작(PID 3780906)+배포
+
+- msg 1204: "지난달 결제수단 에서 결제수단 빼고 지난달 이라고만 써 / 지난달 : 카드결제"
+  - "지난달 결제수단:" → "지난달:" 라벨 단축
+  - 기존 prev memo 라인과 동일 포맷 ("지난달: ...")
+  - 커밋/배포 진행중
+
 ### 2026-04-20 — UI 패턴 하베스트 (amnesia Task K, msg 3153, 사일런트)
 - 목적: 원비 완성 UI 패턴을 `/root/.claude/skills/ui-patterns-lab/patterns/`에 md로 추출 (재사용 가능하도록)
 - 원본 파일 조사:
