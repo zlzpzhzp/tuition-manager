@@ -38,6 +38,9 @@ export default function QuickBillSendModal({ students, grades, billingMonth, onC
   const [browseClassName, setBrowseClassName] = useState<string | null>(null)
   const [openPicker, setOpenPicker] = useState<'subject' | 'grade' | 'class' | null>(null)
   const searchRef = useRef<HTMLInputElement>(null)
+  const subjectRef = useRef<HTMLButtonElement>(null)
+  const gradeRef = useRef<HTMLButtonElement>(null)
+  const classRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => { setMounted(true) }, [])
   useEffect(() => { if (mounted) setTimeout(() => searchRef.current?.focus(), 150) }, [mounted])
@@ -276,12 +279,14 @@ export default function QuickBillSendModal({ students, grades, billingMonth, onC
                   {/* 한 행에 과목/학년/반 선택 */}
                   <div className="flex items-center gap-2">
                     <PillPicker
+                      ref={subjectRef}
                       placeholder="과목"
                       value={browseSubject}
                       open={openPicker === 'subject'}
                       onToggle={() => setOpenPicker(openPicker === 'subject' ? null : 'subject')}
                     />
                     <PillPicker
+                      ref={gradeRef}
                       placeholder="학년"
                       value={browseGradeName}
                       disabled={!browseSubject}
@@ -289,6 +294,7 @@ export default function QuickBillSendModal({ students, grades, billingMonth, onC
                       onToggle={() => setOpenPicker(openPicker === 'grade' ? null : 'grade')}
                     />
                     <PillPicker
+                      ref={classRef}
                       placeholder="반"
                       value={browseClassName}
                       disabled={!browseGradeName}
@@ -297,83 +303,75 @@ export default function QuickBillSendModal({ students, grades, billingMonth, onC
                     />
                   </div>
 
-                  {/* 선택 팝업 (과목/학년/반 각각) */}
-                  <AnimatePresence initial={false}>
-                    {openPicker && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-                        className="overflow-hidden"
-                      >
-                        <div className="p-2 rounded-xl border border-[var(--border)] bg-[var(--bg-elevated)]">
-                          {openPicker === 'subject' && (
-                            <div className="grid grid-cols-2 gap-2">
-                              {subjectList.length === 0 ? (
-                                <div className="col-span-2 p-3 text-center text-xs text-[var(--text-4)]">학생이 없습니다</div>
-                              ) : subjectList.map(s => (
-                                <button
-                                  key={s}
-                                  onClick={() => {
-                                    if (browseSubject !== s) { setBrowseGradeName(null); setBrowseClassName(null) }
-                                    setBrowseSubject(s)
-                                    setOpenPicker('grade')
-                                  }}
-                                  className={`py-2.5 rounded-lg text-sm font-bold transition-colors ${
-                                    browseSubject === s
-                                      ? 'bg-[var(--blue)]/15 text-[var(--blue)] ring-1 ring-[var(--blue)]/40'
-                                      : 'bg-[var(--bg-card)] text-[var(--text-1)] hover:bg-[var(--bg-card-hover)]'
-                                  }`}
-                                >{s}</button>
-                              ))}
-                            </div>
-                          )}
-                          {openPicker === 'grade' && (
-                            <div className="grid grid-cols-3 gap-2">
-                              {gradeList.length === 0 ? (
-                                <div className="col-span-3 p-3 text-center text-xs text-[var(--text-4)]">학년 없음</div>
-                              ) : gradeList.map(g => (
-                                <button
-                                  key={g.id}
-                                  onClick={() => {
-                                    if (browseGradeName !== g.name) setBrowseClassName(null)
-                                    setBrowseGradeName(g.name)
-                                    setOpenPicker('class')
-                                  }}
-                                  className={`py-2.5 rounded-lg text-sm font-semibold transition-colors ${
-                                    browseGradeName === g.name
-                                      ? 'bg-[var(--blue)]/15 text-[var(--blue)] ring-1 ring-[var(--blue)]/40'
-                                      : 'bg-[var(--bg-card)] text-[var(--text-1)] hover:bg-[var(--bg-card-hover)]'
-                                  }`}
-                                >{g.name}</button>
-                              ))}
-                            </div>
-                          )}
-                          {openPicker === 'class' && (
-                            <div className="grid grid-cols-3 gap-2">
-                              {classList.length === 0 ? (
-                                <div className="col-span-3 p-3 text-center text-xs text-[var(--text-4)]">반 없음</div>
-                              ) : classList.map(c => (
-                                <button
-                                  key={c.id}
-                                  onClick={() => {
-                                    setBrowseClassName(c.name)
-                                    setOpenPicker(null)
-                                  }}
-                                  className={`py-2.5 rounded-lg text-sm font-semibold transition-colors ${
-                                    browseClassName === c.name
-                                      ? 'bg-[var(--blue)]/15 text-[var(--blue)] ring-1 ring-[var(--blue)]/40'
-                                      : 'bg-[var(--bg-card)] text-[var(--text-1)] hover:bg-[var(--bg-card-hover)]'
-                                  }`}
-                                >{c.name}</button>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                  {/* 포탈 팝오버 (납부탭 날짜 필터 스타일) */}
+                  {openPicker === 'subject' && (
+                    <PickerPopover anchorRef={subjectRef} onClose={() => setOpenPicker(null)}>
+                      <div className="grid grid-cols-2 gap-2">
+                        {subjectList.length === 0 ? (
+                          <div className="col-span-2 p-3 text-center text-xs text-[var(--text-4)]">학생이 없습니다</div>
+                        ) : subjectList.map(s => (
+                          <button
+                            key={s}
+                            onClick={() => {
+                              if (browseSubject !== s) { setBrowseGradeName(null); setBrowseClassName(null) }
+                              setBrowseSubject(s)
+                              setOpenPicker('grade')
+                            }}
+                            className={`py-2.5 rounded-lg text-sm font-bold transition-colors ${
+                              browseSubject === s
+                                ? 'bg-[var(--blue)]/15 text-[var(--blue)] ring-1 ring-[var(--blue)]/40'
+                                : 'bg-[var(--bg-elevated)] text-[var(--text-1)] hover:bg-[var(--bg-card-hover)]'
+                            }`}
+                          >{s}</button>
+                        ))}
+                      </div>
+                    </PickerPopover>
+                  )}
+                  {openPicker === 'grade' && (
+                    <PickerPopover anchorRef={gradeRef} onClose={() => setOpenPicker(null)}>
+                      <div className="grid grid-cols-3 gap-2">
+                        {gradeList.length === 0 ? (
+                          <div className="col-span-3 p-3 text-center text-xs text-[var(--text-4)]">학년 없음</div>
+                        ) : gradeList.map(g => (
+                          <button
+                            key={g.id}
+                            onClick={() => {
+                              if (browseGradeName !== g.name) setBrowseClassName(null)
+                              setBrowseGradeName(g.name)
+                              setOpenPicker('class')
+                            }}
+                            className={`py-2.5 rounded-lg text-sm font-semibold transition-colors ${
+                              browseGradeName === g.name
+                                ? 'bg-[var(--blue)]/15 text-[var(--blue)] ring-1 ring-[var(--blue)]/40'
+                                : 'bg-[var(--bg-elevated)] text-[var(--text-1)] hover:bg-[var(--bg-card-hover)]'
+                            }`}
+                          >{g.name}</button>
+                        ))}
+                      </div>
+                    </PickerPopover>
+                  )}
+                  {openPicker === 'class' && (
+                    <PickerPopover anchorRef={classRef} onClose={() => setOpenPicker(null)}>
+                      <div className="grid grid-cols-3 gap-2">
+                        {classList.length === 0 ? (
+                          <div className="col-span-3 p-3 text-center text-xs text-[var(--text-4)]">반 없음</div>
+                        ) : classList.map(c => (
+                          <button
+                            key={c.id}
+                            onClick={() => {
+                              setBrowseClassName(c.name)
+                              setOpenPicker(null)
+                            }}
+                            className={`py-2.5 rounded-lg text-sm font-semibold transition-colors ${
+                              browseClassName === c.name
+                                ? 'bg-[var(--blue)]/15 text-[var(--blue)] ring-1 ring-[var(--blue)]/40'
+                                : 'bg-[var(--bg-elevated)] text-[var(--text-1)] hover:bg-[var(--bg-card-hover)]'
+                            }`}
+                          >{c.name}</button>
+                        ))}
+                      </div>
+                    </PickerPopover>
+                  )}
 
                   {/* 반 선택 완료 → 학생 리스트 드롭다운 */}
                   <AnimatePresence initial={false}>
@@ -612,11 +610,13 @@ interface PillPickerProps {
   disabled?: boolean
   open: boolean
   onToggle: () => void
+  ref?: React.Ref<HTMLButtonElement>
 }
 
-function PillPicker({ placeholder, value, disabled, open, onToggle }: PillPickerProps) {
+function PillPicker({ placeholder, value, disabled, open, onToggle, ref }: PillPickerProps) {
   return (
     <button
+      ref={ref}
       type="button"
       onClick={disabled ? undefined : onToggle}
       disabled={disabled}
@@ -635,5 +635,54 @@ function PillPicker({ placeholder, value, disabled, open, onToggle }: PillPicker
         className={`w-3.5 h-3.5 shrink-0 transition-transform duration-200 ${open && !disabled ? 'rotate-180' : ''}`}
       />
     </button>
+  )
+}
+
+interface PickerPopoverProps {
+  anchorRef: React.RefObject<HTMLButtonElement | null>
+  onClose: () => void
+  children: React.ReactNode
+}
+
+function PickerPopover({ anchorRef, onClose, children }: PickerPopoverProps) {
+  const [pos, setPos] = useState<{ top: number; left: number; width: number } | null>(null)
+
+  useEffect(() => {
+    if (!anchorRef.current) return
+    const update = () => {
+      const el = anchorRef.current
+      if (!el) return
+      const rect = el.getBoundingClientRect()
+      const width = Math.max(rect.width, 180)
+      let left = rect.left
+      if (left + width > window.innerWidth - 8) left = window.innerWidth - width - 8
+      if (left < 8) left = 8
+      setPos({ top: rect.bottom + 6, left, width })
+    }
+    update()
+    window.addEventListener('resize', update)
+    window.addEventListener('scroll', update, true)
+    return () => {
+      window.removeEventListener('resize', update)
+      window.removeEventListener('scroll', update, true)
+    }
+  }, [anchorRef])
+
+  if (!pos) return null
+
+  return createPortal(
+    <div data-picker-portal>
+      <div className="fixed inset-0 z-[70]" onClick={onClose} />
+      <motion.div
+        initial={{ opacity: 0, y: -4, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.14, ease: [0.22, 1, 0.36, 1] }}
+        className="fixed z-[71] bg-[var(--bg-card)] border border-[var(--border)] rounded-xl shadow-xl p-2"
+        style={{ top: pos.top, left: pos.left, width: pos.width }}
+      >
+        {children}
+      </motion.div>
+    </div>,
+    document.body
   )
 }
