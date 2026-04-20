@@ -85,7 +85,7 @@ export default function DashboardPage() {
           const d = today.getDate()
           const weekday = ['일','월','화','수','목','금','토'][today.getDay()]
           return (
-            <h1 className="text-[1.5rem] font-extrabold tracking-tight text-[var(--text-1)] tabular-nums mb-1">
+            <h1 className="text-[2.25rem] font-extrabold tracking-tight leading-tight text-[var(--text-1)] tabular-nums mb-1">
               {y}년 {m}월 {d}일 {weekday}요일
             </h1>
           )
