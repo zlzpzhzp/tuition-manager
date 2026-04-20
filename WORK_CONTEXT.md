@@ -5,6 +5,26 @@
 
 ## 현재 상태: 진행 중
 
+### 2026-04-20 — UI 패턴 하베스트 (amnesia Task K, msg 3153, 사일런트)
+- 목적: 원비 완성 UI 패턴을 `/root/.claude/skills/ui-patterns-lab/patterns/`에 md로 추출 (재사용 가능하도록)
+- 원본 파일 조사:
+  - src/app/payments/page.tsx (FilterDropdownPortal 54~185, memo 349~366 / 1191~1229, torn tape 1580~1583)
+  - src/components/payments/DatePickerPopup.tsx, MethodPickerPopup.tsx
+  - src/components/QuickBillSendModal.tsx (PillPicker/PickerPopover, cascading useMemo)
+  - src/components/BillActionModal.tsx (split billing 82~294)
+  - src/lib/utils.ts (SWR swrOptions)
+  - src/app/billing/page.tsx (pull-to-refresh 285~339, 442~468)
+- 생성 md 7종:
+  - patterns/pill-dropdown-portal.md — 알약 필터 드롭다운 (anchor visibility:hidden, 2-frame rAF, height+borderRadius 보간)
+  - patterns/portal-picker-popup.md — DatePicker/MethodPicker 포탈 + 스태거드 엔트리 (viewport flip, cubic-bezier overshoot)
+  - patterns/torn-tape-memo.md — 찢어진 테이프 마커 (32-vertex clipPath polygon, skewX 스와치)
+  - patterns/memo-collapse-scroll.md — 스크롤+포커스 2축 상태머신, 3레이어 오버레이, 500ms 디바운스 PUT
+  - patterns/hierarchical-bill-picker.md — 과목→학년→반→학생 cascading useMemo + 빈옵션 가드 + 스크롤 capture 리스너
+  - patterns/split-billing-ux.md — perPart + lastAdjust 자동 균등 배분, splitValid 녹/적 피드백
+  - patterns/swr-pull-refresh.md — SWR 3-tier (focus/interval/pull) + damping 0.4, cap 120, threshold 60, passive touchmove
+- SKILL.md 색인 갱신: 7개 entry 추가, 보류(msg 3117) 블록 → 완료 이동
+- 텔레그램 보고 없음 (amnesia 지시: WORK_CONTEXT.md에만 기록)
+
 ### 2026-04-20 16:45 (완료) — 정규원비 모달 제목/메시지 편집 + 결제일 수동 필터 + 최근 활동 과목/학년/반
 - msg 1159: "정규원비 보내는 창에서도 제목하고 메세지 기본으로 써놓은거 띄워주고 수정할수 있게 해줘 금액은 수정 못하게 하고"
   - BillSendModal (src/components/BillSendModal.tsx)

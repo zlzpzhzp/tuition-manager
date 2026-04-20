@@ -618,16 +618,42 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
     return list
   }, [subjectGradeGroups, selectedMonth, passesFilter])
 
-  // 기본: 보이는 반 전부 펼침 (새 반 등장 시 추가만, 사용자 접음은 유지)
+  // 반별 납부 통계 (paidCount/totalCount/isFullyPaid)
+  const classStats = useMemo(() => {
+    const map = new Map<string, { paidCount: number; totalCount: number; isFullyPaid: boolean }>()
+    for (const g of grades) {
+      for (const cls of g.classes) {
+        const active = getActiveStudents(cls.students ?? [], selectedMonth)
+        const filtered = active.filter(s => passesFilter(s, cls))
+        const paidCount = filtered.filter(s => {
+          const paid = (paymentsByStudentId.get(s.id) ?? []).reduce((sum, p) => sum + p.amount, 0)
+          return getPaymentStatus(paid, getStudentFee(s, cls)) === 'paid'
+        }).length
+        const totalCount = filtered.length
+        map.set(cls.id, {
+          paidCount,
+          totalCount,
+          isFullyPaid: totalCount > 0 && paidCount === totalCount,
+        })
+      }
+    }
+    return map
+  }, [grades, selectedMonth, passesFilter, paymentsByStudentId])
+
+  // 기본: 보이는 반 전부 펼침 + 전원납부 완료 반은 자동 접힘
   useEffect(() => {
     const allIds = visibleSections.flatMap(s => s.classIds)
     if (allIds.length === 0) return
     setExpandedClasses(prev => {
       const next = new Set(prev)
-      allIds.forEach(id => next.add(id))
+      for (const id of allIds) {
+        const stat = classStats.get(id)
+        if (stat?.isFullyPaid) next.delete(id)
+        else next.add(id)
+      }
       return next
     })
-  }, [visibleSections])
+  }, [visibleSections, classStats])
 
   // 스티키 헤더 높이를 CSS 변수로 주입 → 학년 헤더가 그 아래로 스틱
   // memoCompact 전환 시 페인트 전 동기 갱신 → 학년바와 메모 사이 gap 차단
@@ -1454,6 +1480,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                   const paid = (paymentsByStudentId.get(s.id) ?? []).reduce((sum, p) => sum + p.amount, 0)
                   return getPaymentStatus(paid, getStudentFee(s, cls)) === 'paid'
                 }).length
+                const isFullyPaid = students.length > 0 && paidCount === students.length
                 const isClassExpanded = expandedClasses.has(cls.id)
 
                 return (
@@ -1475,7 +1502,13 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                         )
                       })()}
                       <span className="text-xs text-[var(--text-4)] ml-1.5">{cls.monthly_fee > 0 ? `${cls.monthly_fee.toLocaleString()}원` : ''}</span>
-                      <span className="text-xs text-[var(--text-4)] ml-2">{paidCount}/{students.length}</span>
+                      {isFullyPaid ? (
+                        <span className="ml-2 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[var(--paid-bg)] text-[var(--paid-text)] tracking-tight">
+                          전원납부 {paidCount}/{students.length}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-[var(--text-4)] ml-2">{paidCount}/{students.length}</span>
+                      )}
                       <span className="flex-1" />
                       {(() => {
                         const eligibleCount = students.filter(s => {
