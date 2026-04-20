@@ -1606,7 +1606,8 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                       }
                       const prevMemo = getPrevMemo(student.id)
                       const prevMethod = getPrevMethod(student.id)
-                      const prevMethodNonPayssam = prevMethod && prevMethod !== 'payssam' ? prevMethod : null
+                      // 'remote'(비대면)은 이전 결제선생 레거시 표기 → payssam과 동일 취급
+                      const prevMethodNonPayssam = prevMethod && prevMethod !== 'payssam' && prevMethod !== 'remote' ? prevMethod : null
                       const currentMemo = studentPayments[0]?.memo
                       const isExpanded = expandedStudentId === student.id && status === 'unpaid'
                       const isSuccess = inlineSuccess === student.id
