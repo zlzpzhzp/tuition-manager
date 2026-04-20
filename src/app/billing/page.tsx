@@ -158,6 +158,24 @@ export default function BillingPage() {
     return map
   }, [allVisibleStudents])
 
+  // 최근 활동 등 전체 학생 메타(필터 무관) — 과목/학년/반 표시용
+  const studentMetaById = useMemo(() => {
+    const map = new Map<string, { name: string; subject: string | null; gradeName: string; className: string }>()
+    for (const g of grades) {
+      for (const c of g.classes) {
+        for (const s of (c as ClassWithStudents).students ?? []) {
+          map.set(s.id, {
+            name: s.name,
+            subject: c.subject ?? null,
+            gradeName: g.name,
+            className: c.name,
+          })
+        }
+      }
+    }
+    return map
+  }, [grades])
+
   // Expanded stats — counts + amounts per status
   const stats = useMemo(() => {
     const expectedAmount = allVisibleStudents.reduce((sum, s) => sum + getStudentFee(s, s.class), 0)
@@ -560,19 +578,26 @@ export default function BillingPage() {
             <div className="space-y-1.5">
               {recentActivity.map(bill => {
                 const s = studentById.get(bill.student_id)
+                const meta = studentMetaById.get(bill.student_id)
                 const { label, color } = statusBadge(bill.status)
                 const isIrregular = bill.is_regular_tuition === false
                 const note = bill.bill_note
+                const metaParts = meta
+                  ? [meta.subject, meta.gradeName, meta.className].filter(Boolean)
+                  : []
                 return (
                   <div key={bill.id} className="flex items-start gap-2 py-1">
                     <span className="text-[10px] text-[var(--text-4)] w-14 shrink-0 tabular-nums mt-0.5">{timeAgo(bill.updated_at ?? bill.sent_at, nowTs)}</span>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="text-xs font-medium">{s?.name ?? '?'}</span>
+                        <span className="text-xs font-medium">{s?.name ?? meta?.name ?? '?'}</span>
                         {isIrregular && (
                           <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-[var(--orange-dim)] text-[var(--orange)] shrink-0">비정규</span>
                         )}
                       </div>
+                      {metaParts.length > 0 && (
+                        <p className="text-[10px] text-[var(--text-4)] mt-0.5 truncate">{metaParts.join(' · ')}</p>
+                      )}
                       {note && (
                         <p className="text-[10px] text-[var(--text-3)] mt-0.5 truncate" title={note}>📝 {note}</p>
                       )}

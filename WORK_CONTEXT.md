@@ -3,7 +3,33 @@
 > 이 파일은 Claude 세션 간 작업 연속성을 위한 컨텍스트 추적 파일입니다.
 > 작업 중 수시로 업데이트하고, 커밋 시 함께 포함시킵니다.
 
-## 현재 상태: 전체메모 DB 이관 (완료)
+## 현재 상태: 진행 중
+
+### 2026-04-20 16:45 (완료) — 정규원비 모달 제목/메시지 편집 + 결제일 수동 필터 + 최근 활동 과목/학년/반
+- msg 1159: "정규원비 보내는 창에서도 제목하고 메세지 기본으로 써놓은거 띄워주고 수정할수 있게 해줘 금액은 수정 못하게 하고"
+  - BillSendModal (src/components/BillSendModal.tsx)
+    - title/messageContent state 추가 (기본값: getRegularTuitionTitle / REGULAR_TUITION_MESSAGE)
+    - 제목 input (60자), 내용 textarea (200자) 추가 — QuickBillSendModal 패턴 동일
+    - 금액은 기존 유지 (read-only)
+    - API 호출 시 `productName: finalTitle`, `message: finalMessage` 전달
+- msg 1160: "접수탭 결제일 필터 수동으로 입력해서 필터 걸수있게 해줘"
+  - payments/page.tsx
+    - customDay state (1~31 number input), 입력 시 paymentFilter 우회
+    - × 버튼으로 초기화, 활성 시 드롭다운 필터 disable
+    - passesFilter에서 customDay 최우선 체크
+- msg 1161: "결제선생 최근활동 탭에서도 과목 학년 반 표시해줘"
+  - billing/page.tsx
+    - studentMetaById 맵 추가 (grades 전체 순회 → 학생별 subject/gradeName/className)
+    - 최근 활동 피드에 `subject · grade · class` 서브텍스트 표시 (text-[10px], text-4 톤)
+
+### 2026-04-20 15:53 (완료) — 데스크탑 까만 화면 버그 수정 (msg 1142~1155)
+- 증상: 노트북 Chrome / 시크릿창 모두 로그인 페이지가 까만 화면으로 뜸. 서버 응답은 정상 (200 OK, HTML 200KB)
+- 원인: PageTransition(motion.div) initial={{opacity: 0.6}}가 SSR에서 inline style로 렌더됨 → JS 하이드레이션 전까지 다크배경(#17171c)과 섞여 60% 투명 상태 = 거의 까맣게 보임
+- 수정: src/components/PageTransition.tsx에 mounted 가드 추가 → SSR/첫 클라이언트 페인트는 plain `<div>` 렌더. 이후 navigation(direction !== 'none')만 motion 애니메이션
+- 확인: tuition.dminstitute.co 재접속 시 "오 뜬다"(msg 1155) 정상 확인
+- 커밋 096ac16, HANDOFF.md 트랩 섹션에 framer-motion SSR inline style 주의사항 추가
+
+## 이전 작업: 전체메모 DB 이관 (완료)
 
 ### 2026-04-20 15:05 (완료) — 전체메모(월별 메모) 기기 간 공유 버그 수정
 - msg 1135/1136: "야 메모공유 안되는거 같은데" + "전체메모"

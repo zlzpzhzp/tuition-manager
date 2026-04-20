@@ -290,6 +290,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
   // 통합 필터 (전체/미납/1일/첫째주~넷째주)
   const [paymentFilter, setPaymentFilter] = useState<PaymentFilter>('all')
   const [filterAnchor, setFilterAnchor] = useState<HTMLButtonElement | null>(null)
+  const [customDay, setCustomDay] = useState<number | null>(null)
   const [monthMemo, setMonthMemo] = useState('')
 
   // Sun~Sat 기준 주차 범위 (billing page와 동일)
@@ -438,6 +439,11 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
 
   // ─── 통합 필터 ──────────────────────────────────────────────
   const passesFilter = useCallback((s: Student, cls: ClassWithStudents): boolean => {
+    // 수동 결제일 입력이 있으면 최우선 — 드롭다운 필터 무시
+    if (customDay !== null) {
+      const due = s.payment_due_day ?? getPaymentDueDay(s)
+      return due === customDay
+    }
     if (paymentFilter === 'all') return true
     if (paymentFilter === 'unpaid') {
       const paid = (paymentsByStudentId.get(s.id) ?? []).reduce((sum, p) => sum + p.amount, 0)
@@ -452,7 +458,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
     const [start, end] = weekRanges[paymentFilter]
     if (start > end) return false
     return due >= start && due <= end
-  }, [paymentFilter, paymentsByStudentId, selectedMonth, weekRanges])
+  }, [customDay, paymentFilter, paymentsByStudentId, selectedMonth, weekRanges])
 
   const sendOneBill = useCallback(async (student: Student, cls: ClassWithStudents): Promise<'sent' | 'scheduled' | 'failed'> => {
     const phone = student.parent_phone || student.phone || ''
@@ -1333,20 +1339,55 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                             </motion.div>
                           )}
                         </AnimatePresence>
-                        <button
-                          onClick={(e) => setFilterAnchor(prev => prev === e.currentTarget ? null : e.currentTarget)}
-                          style={{ width: 112 }}
-                          className={`relative flex items-center justify-center px-3 py-1 rounded-full text-xs font-semibold transition-colors shadow-sm ${
-                            paymentFilter === 'unpaid'
-                              ? 'bg-[var(--red-dim)] text-[var(--unpaid-text)]'
-                              : paymentFilter !== 'all'
-                                ? 'bg-[var(--blue-dim)] text-[var(--blue)]'
-                                : 'bg-[var(--bg-elevated)] text-[var(--text-2)] hover:bg-[var(--bg-card-hover)]'
-                          }`}
-                        >
-                          <span>{FILTER_LABELS[paymentFilter]}</span>
-                          <ChevronDown className={`absolute right-2 w-3 h-3 opacity-60 transition-transform ${filterAnchor ? 'rotate-180' : ''}`} />
-                        </button>
+                        <div className="flex items-center gap-1.5">
+                          <div className="relative flex items-center">
+                            <input
+                              type="number"
+                              min={1}
+                              max={31}
+                              value={customDay ?? ''}
+                              onChange={(e) => {
+                                const v = e.target.value
+                                if (v === '') { setCustomDay(null); return }
+                                const n = parseInt(v, 10)
+                                if (Number.isNaN(n)) return
+                                setCustomDay(Math.min(31, Math.max(1, n)))
+                              }}
+                              placeholder="일"
+                              aria-label="결제일 직접 입력"
+                              className={`w-14 px-2 py-1 rounded-full text-xs font-semibold text-center shadow-sm focus:outline-none focus:ring-1 focus:ring-[var(--blue)] placeholder:text-[var(--text-4)] ${
+                                customDay !== null
+                                  ? 'bg-[var(--blue-dim)] text-[var(--blue)]'
+                                  : 'bg-[var(--bg-elevated)] text-[var(--text-2)]'
+                              }`}
+                            />
+                            {customDay !== null && (
+                              <button
+                                type="button"
+                                onClick={() => setCustomDay(null)}
+                                aria-label="직접 입력 해제"
+                                className="absolute -right-1 -top-1 w-4 h-4 rounded-full bg-[var(--bg-elevated)] text-[var(--text-3)] text-[10px] leading-none flex items-center justify-center shadow-sm hover:text-[var(--text-1)]"
+                              >
+                                ×
+                              </button>
+                            )}
+                          </div>
+                          <button
+                            onClick={(e) => setFilterAnchor(prev => prev === e.currentTarget ? null : e.currentTarget)}
+                            disabled={customDay !== null}
+                            style={{ width: 112 }}
+                            className={`relative flex items-center justify-center px-3 py-1 rounded-full text-xs font-semibold transition-colors shadow-sm disabled:opacity-40 disabled:cursor-not-allowed ${
+                              paymentFilter === 'unpaid'
+                                ? 'bg-[var(--red-dim)] text-[var(--unpaid-text)]'
+                                : paymentFilter !== 'all'
+                                  ? 'bg-[var(--blue-dim)] text-[var(--blue)]'
+                                  : 'bg-[var(--bg-elevated)] text-[var(--text-2)] hover:bg-[var(--bg-card-hover)]'
+                            }`}
+                          >
+                            <span>{FILTER_LABELS[paymentFilter]}</span>
+                            <ChevronDown className={`absolute right-2 w-3 h-3 opacity-60 transition-transform ${filterAnchor ? 'rotate-180' : ''}`} />
+                          </button>
+                        </div>
                       </div>
                     )}
                   </div>

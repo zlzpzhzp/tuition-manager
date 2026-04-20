@@ -20,8 +20,10 @@ interface Props {
 type SendState = 'idle' | 'confirming' | 'sending' | 'success' | 'scheduled' | 'error'
 
 export default function BillSendModal({ studentName, studentId, phone, amount, subject, billingMonth, onClose, onSuccess }: Props) {
-  const productName = getRegularTuitionTitle(subject, billingMonth)
-  const messageContent = REGULAR_TUITION_MESSAGE
+  const defaultTitle = getRegularTuitionTitle(subject, billingMonth)
+  const defaultMessage = REGULAR_TUITION_MESSAGE
+  const [title, setTitle] = useState(defaultTitle)
+  const [messageContent, setMessageContent] = useState(defaultMessage)
   const [state, setState] = useState<SendState>('idle')
   const [errorMsg, setErrorMsg] = useState('')
   const [billId, setBillId] = useState('')
@@ -30,6 +32,8 @@ export default function BillSendModal({ studentName, studentId, phone, amount, s
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => { setMounted(true) }, [])
+  useEffect(() => { setTitle(defaultTitle) }, [defaultTitle])
+  useEffect(() => { setMessageContent(defaultMessage) }, [defaultMessage])
 
   // 전화번호 유효성 검사
   const cleanPhone = phone.replace(/-/g, '')
@@ -59,6 +63,9 @@ export default function BillSendModal({ studentName, studentId, phone, amount, s
     setErrorMsg('')
 
     try {
+      const finalTitle = title.trim() || defaultTitle
+      const finalMessage = messageContent.trim() || defaultMessage
+
       const res = await fetch('/api/payssam/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -67,8 +74,8 @@ export default function BillSendModal({ studentName, studentId, phone, amount, s
           studentName,
           phone: cleanPhone,
           amount,
-          productName,
-          message: messageContent,
+          productName: finalTitle,
+          message: finalMessage,
           billingMonth,
         }),
       })
@@ -107,7 +114,7 @@ export default function BillSendModal({ studentName, studentId, phone, amount, s
       setErrorMsg('네트워크 오류가 발생했습니다. 잠시 후 다시 시도해주세요.')
       setState('error')
     }
-  }, [state, studentId, studentName, cleanPhone, amount, billingMonth, onClose, onSuccess])
+  }, [state, studentId, studentName, cleanPhone, amount, billingMonth, title, messageContent, defaultTitle, defaultMessage, onClose, onSuccess])
 
   const formatMonth = (m: string) => {
     const [y, mo] = m.split('-')
@@ -182,6 +189,32 @@ export default function BillSendModal({ studentName, studentId, phone, amount, s
               <span className="text-sm font-medium text-[var(--text-3)]">청구 금액</span>
               <span className="text-xl font-extrabold text-[var(--blue)]">{amount.toLocaleString()}원</span>
             </div>
+          </div>
+
+          {/* 제목 (카톡 알림톡 상품명) */}
+          <div>
+            <label className="block text-xs font-medium text-[var(--text-3)] mb-1.5">제목</label>
+            <input
+              type="text"
+              value={title}
+              onChange={e => setTitle(e.target.value.slice(0, 60))}
+              disabled={state === 'sending' || state === 'success' || state === 'scheduled'}
+              placeholder={defaultTitle}
+              className="w-full px-3 py-2 bg-[var(--bg-elevated)] rounded-xl text-sm text-[var(--text-1)] placeholder:text-[var(--text-4)] focus:outline-none focus:ring-1 focus:ring-[var(--blue)] disabled:opacity-60"
+            />
+          </div>
+
+          {/* 내용 (카톡 알림톡 메시지) */}
+          <div>
+            <label className="block text-xs font-medium text-[var(--text-3)] mb-1.5">내용</label>
+            <textarea
+              value={messageContent}
+              onChange={e => setMessageContent(e.target.value.slice(0, 200))}
+              disabled={state === 'sending' || state === 'success' || state === 'scheduled'}
+              rows={2}
+              placeholder={defaultMessage}
+              className="w-full px-3 py-2 bg-[var(--bg-elevated)] rounded-xl text-sm text-[var(--text-1)] placeholder:text-[var(--text-4)] focus:outline-none focus:ring-1 focus:ring-[var(--blue)] disabled:opacity-60 resize-none"
+            />
           </div>
 
           {/* 안내 */}
