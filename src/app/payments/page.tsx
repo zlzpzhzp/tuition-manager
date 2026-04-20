@@ -1420,7 +1420,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                       const isSuccess = inlineSuccess === student.id
                       const isSubmitting = inlineSubmitting === student.id
                       const { cleanMemo } = decodePaymentMemo(currentMemo)
-                      const hasMemo = !!(prevMemo || cleanMemo || student.memo || student.memo_color)
+                      const hasMemo = !!(prevMemo || cleanMemo || student.memo)
                       const isMemoSelected = selectedMemoIds.has(student.id)
                       const isPayOpen = swipeOpenPayId === student.id
                       const isSwipeOpen = isMemoSelected || isPayOpen
@@ -1428,13 +1428,9 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                       const isMultiSelect = selectedMemoIds.size >= 2
                       const isSoleMemoSelection = isMemoSelected && selectedMemoIds.size === 1
                       const memoColor = student.memo_color ?? null
-                      const memoHighlight = memoColor === 'yellow' ? 'bg-[var(--orange-dim)] text-[var(--orange)] px-1.5 py-0.5 rounded-full font-bold'
-                        : memoColor === 'green' ? 'bg-[var(--paid-bg)] text-[var(--paid-text)] px-1.5 py-0.5 rounded-full font-bold'
-                        : memoColor === 'red' ? 'bg-[var(--unpaid-bg)] text-[var(--unpaid-text)] px-1.5 py-0.5 rounded-full font-bold'
-                        : 'text-[var(--text-3)]'
-                      const colorTapeBg = memoColor === 'yellow' ? 'bg-[var(--orange-dim)]'
-                        : memoColor === 'green' ? 'bg-[var(--paid-bg)]'
-                        : memoColor === 'red' ? 'bg-[var(--unpaid-bg)]'
+                      const nameHighlight = memoColor === 'yellow' ? 'bg-[var(--orange-dim)] text-[var(--orange)] px-1.5 py-0.5 rounded-md'
+                        : memoColor === 'green' ? 'bg-[var(--paid-bg)] text-[var(--paid-text)] px-1.5 py-0.5 rounded-md'
+                        : memoColor === 'red' ? 'bg-[var(--unpaid-bg)] text-[var(--unpaid-text)] px-1.5 py-0.5 rounded-md'
                         : ''
                       const withdrawn = isWithdrawnStudent(student)
 
@@ -1509,7 +1505,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                                 }}
                               >
                                 <span className="text-[11px] text-[var(--text-4)] mr-1 tabular-nums">{idx + 1}.</span>
-                                <span className={`text-sm font-medium ${withdrawn ? 'line-through decoration-red-500 decoration-2 text-[var(--text-4)]' : ''}`}>{student.name}</span>
+                                <span className={`text-sm font-medium ${nameHighlight} ${withdrawn ? 'line-through decoration-red-500 decoration-2 text-[var(--text-4)]' : ''}`}>{student.name}</span>
                                 {!withdrawn && !student.parent_phone && (
                                   <span className="text-[9px] ml-1 px-1 py-0.5 rounded-full bg-[var(--orange-dim)] text-[var(--orange)] font-bold" title="보호자 연락처 미등록">📵</span>
                                 )}
@@ -1521,7 +1517,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                                   <span className="text-[9px] ml-1.5 px-1.5 py-0.5 rounded-full bg-[var(--blue-bg)] text-[var(--blue)] font-bold">신규</span>
                                 )}
                                 <AnimatePresence initial={false}>
-                                  {(student.memo || memoColor) && (
+                                  {student.memo && (
                                     <motion.div
                                       key="memo"
                                       initial={{ height: 0, opacity: 0 }}
@@ -1530,16 +1526,8 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                                       transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
                                       style={{ overflow: 'hidden' }}
                                     >
-                                      <p className="text-[11px] font-medium leading-tight mt-0.5">
-                                        {student.memo ? (
-                                          <span className={memoHighlight}>{student.memo}</span>
-                                        ) : (
-                                          <span
-                                            className={`inline-block w-8 h-2.5 rounded-[2px] ${colorTapeBg}`}
-                                            style={{ transform: 'skewX(-10deg)' }}
-                                            aria-label="색상 표시"
-                                          />
-                                        )}
+                                      <p className="text-[11px] font-medium leading-tight mt-0.5 text-[var(--text-3)]">
+                                        {student.memo}
                                       </p>
                                     </motion.div>
                                   )}
