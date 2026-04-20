@@ -36,31 +36,27 @@ export default function PageTransition({ children }: { children: React.ReactNode
   const { direction } = useNavDirection()
   const prefersReducedMotion = useReducedMotion()
   const [key, setKey] = useState(pathname)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
     setKey(pathname)
   }, [pathname])
 
-  if (prefersReducedMotion) {
+  if (!mounted || prefersReducedMotion || direction === 'none') {
     return <div>{children}</div>
   }
 
-  const xOffset = direction === 'left' ? 60 : direction === 'right' ? -60 : 0
-  const hasSlide = direction !== 'none'
+  const xOffset = direction === 'left' ? 60 : -60
 
   return (
     <motion.div
       key={key}
-      initial={{
-        opacity: hasSlide ? 0.4 : 0.6,
-        x: xOffset,
-        scale: hasSlide ? 0.97 : 1,
-      }}
-      animate={{
-        opacity: 1,
-        x: 0,
-        scale: 1,
-      }}
+      initial={{ opacity: 0.4, x: xOffset, scale: 0.97 }}
+      animate={{ opacity: 1, x: 0, scale: 1 }}
       transition={springTransition}
       style={{ willChange: 'transform, opacity' }}
     >
