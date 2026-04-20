@@ -1,12 +1,12 @@
-@handoff tuition 2026-04-20T12:45+09
+@handoff tuition 2026-04-20T16:00+09
 role=원비 port=3001 stack=Next.js16,Supabase,Gemini
 
 [completed]
+096ac16 PageTransition SSR opacity fade 제거 (까만 화면 버그 수정)
+a4685ec 전체메모 localStorage→DB 이관 (기기 간 공유)
+3a6912e PaySsam 발송 타임락 + 영업시간 외 예약 큐
 9287d00 납부 페이지 대대적 UI 개선 + 학생 데이터 정비
 69fd1cb 청구서 발송 UI + 중복 발송 방지 + 안정성 강화
-e082db3 PaySsam 콜백 URL 미들웨어 인증 면제
-067a41b 결제선생(PaySsam) API 연동 — client + route + DB tables
-(pending) PaySsam 발송 타임락 + 예약 큐 + cron
 
 [state]
 paysam.api=연동완료 (스테이징서버)
@@ -42,6 +42,7 @@ rls.tuition_bill_queue=anon ALL 추가
 - payssam API는 stg.paymint.co.kr (스테이징)
 - 영업시간 외 발송 시 즉시 응답이 'SCHEDULED' (code!=0000). UI는 반드시 SCHEDULED 분기 처리
 - Vercel cron은 UTC (vercel.json). KST 11:00 = UTC 02:00, 평일 = 1-5
+- framer-motion motion.div의 initial prop은 SSR에서 inline style로 렌더됨. 다크톤 앱에서 opacity 낮추지 말 것. mounted 가드 필수
 
 [user_context]
 초능력자님이 직접 앱 테스트하며 피드백 주는 중.
