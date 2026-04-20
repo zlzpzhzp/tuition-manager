@@ -1,5 +1,41 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="96" fill="#1e2d6f"/>
-  <text x="256" y="300" text-anchor="middle" font-size="240" font-weight="700" fill="#c8c5be" font-family="sans-serif">W</text>
-  <text x="256" y="420" text-anchor="middle" font-size="100" font-weight="500" fill="#c8c5be" font-family="sans-serif">원비</text>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b1039"/>
+      <stop offset="0.55" stop-color="#1e2d6f"/>
+      <stop offset="1" stop-color="#3247b3"/>
+    </linearGradient>
+    <linearGradient id="w" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#d4d0c5"/>
+    </linearGradient>
+    <linearGradient id="trend" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#10b981"/>
+      <stop offset="1" stop-color="#6ee7b7"/>
+    </linearGradient>
+  </defs>
+
+  <!-- background -->
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+
+  <!-- subtle inner border -->
+  <rect x="6" y="6" width="500" height="500" rx="106"
+        fill="none" stroke="#ffffff" stroke-width="1" opacity="0.14"/>
+
+  <!-- chart line: swings around W, emerges at top-right -->
+  <path d="M 58 436 C 170 436 200 376 248 340 C 296 304 348 256 408 168 C 432 132 448 104 464 68"
+        fill="none" stroke="url(#trend)" stroke-width="11"
+        stroke-linecap="round" opacity="0.92"/>
+
+  <!-- endpoint dot -->
+  <circle cx="464" cy="68" r="17" fill="#34d399" opacity="0.28"/>
+  <circle cx="464" cy="68" r="10" fill="#34d399"/>
+  <circle cx="464" cy="68" r="4" fill="#ffffff"/>
+
+  <!-- ₩ (Korean won) — bold, centered -->
+  <g stroke="url(#w)" fill="none" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M 130 168 L 196 374 L 256 232 L 316 374 L 382 168" stroke-width="40"/>
+    <line x1="150" y1="238" x2="362" y2="238" stroke-width="18"/>
+    <line x1="168" y1="286" x2="344" y2="286" stroke-width="18"/>
+  </g>
 </svg>
