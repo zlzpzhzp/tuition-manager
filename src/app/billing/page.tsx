@@ -158,9 +158,9 @@ export default function BillingPage() {
     return map
   }, [allVisibleStudents])
 
-  // 최근 활동 등 전체 학생 메타(필터 무관) — 과목/학년/반 표시용
+  // 최근 활동 등 전체 학생 메타(필터 무관) — 과목/학년/반/원래결제일 표시용
   const studentMetaById = useMemo(() => {
-    const map = new Map<string, { name: string; subject: string | null; gradeName: string; className: string }>()
+    const map = new Map<string, { name: string; subject: string | null; gradeName: string; className: string; dueDay: number }>()
     for (const g of grades) {
       for (const c of g.classes) {
         for (const s of (c as ClassWithStudents).students ?? []) {
@@ -169,6 +169,7 @@ export default function BillingPage() {
             subject: c.subject ?? null,
             gradeName: g.name,
             className: c.name,
+            dueDay: s.payment_due_day ?? getPaymentDueDay(s),
           })
         }
       }
@@ -583,7 +584,7 @@ export default function BillingPage() {
                 const isIrregular = bill.is_regular_tuition === false
                 const note = bill.bill_note
                 const metaParts = meta
-                  ? [meta.subject, meta.gradeName, meta.className].filter(Boolean)
+                  ? [meta.subject, meta.gradeName, meta.className, meta.dueDay ? `${meta.dueDay}일` : null].filter(Boolean)
                   : []
                 return (
                   <div key={bill.id} className="flex items-start gap-2 py-1">
