@@ -1420,7 +1420,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                       const isSuccess = inlineSuccess === student.id
                       const isSubmitting = inlineSubmitting === student.id
                       const { cleanMemo } = decodePaymentMemo(currentMemo)
-                      const hasMemo = !!(prevMemo || cleanMemo)
+                      const hasMemo = !!(prevMemo || cleanMemo || student.memo || student.memo_color)
                       const isMemoSelected = selectedMemoIds.has(student.id)
                       const isPayOpen = swipeOpenPayId === student.id
                       const isSwipeOpen = isMemoSelected || isPayOpen
@@ -1432,6 +1432,10 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                         : memoColor === 'green' ? 'bg-[var(--paid-bg)] text-[var(--paid-text)] px-1.5 py-0.5 rounded-full font-bold'
                         : memoColor === 'red' ? 'bg-[var(--unpaid-bg)] text-[var(--unpaid-text)] px-1.5 py-0.5 rounded-full font-bold'
                         : 'text-[var(--text-3)]'
+                      const colorTapeBg = memoColor === 'yellow' ? 'bg-[var(--orange-dim)]'
+                        : memoColor === 'green' ? 'bg-[var(--paid-bg)]'
+                        : memoColor === 'red' ? 'bg-[var(--unpaid-bg)]'
+                        : ''
                       const withdrawn = isWithdrawnStudent(student)
 
                       return (
@@ -1517,7 +1521,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                                   <span className="text-[9px] ml-1.5 px-1.5 py-0.5 rounded-full bg-[var(--blue-bg)] text-[var(--blue)] font-bold">신규</span>
                                 )}
                                 <AnimatePresence initial={false}>
-                                  {student.memo && (
+                                  {(student.memo || memoColor) && (
                                     <motion.div
                                       key="memo"
                                       initial={{ height: 0, opacity: 0 }}
@@ -1527,7 +1531,15 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                                       style={{ overflow: 'hidden' }}
                                     >
                                       <p className="text-[11px] font-medium leading-tight mt-0.5">
-                                        <span className={memoHighlight}>{student.memo}</span>
+                                        {student.memo ? (
+                                          <span className={memoHighlight}>{student.memo}</span>
+                                        ) : (
+                                          <span
+                                            className={`inline-block w-8 h-2.5 rounded-[2px] ${colorTapeBg}`}
+                                            style={{ transform: 'skewX(-10deg)' }}
+                                            aria-label="색상 표시"
+                                          />
+                                        )}
                                       </p>
                                     </motion.div>
                                   )}
