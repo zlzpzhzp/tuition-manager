@@ -591,13 +591,13 @@ export default function BillingPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <span className="text-xs font-medium">{s?.name ?? meta?.name ?? '?'}</span>
+                        {metaParts.length > 0 && (
+                          <span className="text-[10px] text-[var(--text-4)] truncate">{metaParts.join(' · ')}</span>
+                        )}
                         {isIrregular && (
                           <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-[var(--orange-dim)] text-[var(--orange)] shrink-0">비정규</span>
                         )}
                       </div>
-                      {metaParts.length > 0 && (
-                        <p className="text-[10px] text-[var(--text-4)] mt-0.5 truncate">{metaParts.join(' · ')}</p>
-                      )}
                       {note && (
                         <p className="text-[10px] text-[var(--text-3)] mt-0.5 truncate" title={note}>📝 {note}</p>
                       )}
