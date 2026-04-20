@@ -28,8 +28,8 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-5 bg-[var(--bg)]">
-      <div className="w-full max-w-sm">
+    <div className="fixed inset-0 flex items-center justify-center px-5 bg-[var(--bg)] overflow-y-auto">
+      <div className="w-full max-w-sm py-10">
         <div className="text-center mb-10">
           <div className="w-16 h-16 bg-[var(--blue)] rounded-3xl flex items-center justify-center mx-auto mb-5">
             <span className="text-white text-2xl font-extrabold">W</span>
@@ -42,7 +42,7 @@ export default function LoginPage() {
           <input
             type="text" value={id} onChange={(e) => setId(e.target.value)}
             className="w-full px-5 py-4 bg-[var(--bg-card)] rounded-2xl text-[15px] text-[var(--text-1)] placeholder-[var(--text-4)] focus:outline-none focus:ring-2 focus:ring-[var(--blue)] transition-all"
-            placeholder="아이디" autoComplete="username" required
+            placeholder="아이디" autoComplete="username" autoCapitalize="none" autoCorrect="off" spellCheck={false} required
           />
           <input
             type="password" value={password} onChange={(e) => setPassword(e.target.value)}

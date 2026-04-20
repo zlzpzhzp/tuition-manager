@@ -653,11 +653,7 @@ function PickerPopover({ anchorRef, onClose, children }: PickerPopoverProps) {
       const el = anchorRef.current
       if (!el) return
       const rect = el.getBoundingClientRect()
-      const width = Math.max(rect.width, 180)
-      let left = rect.left
-      if (left + width > window.innerWidth - 8) left = window.innerWidth - width - 8
-      if (left < 8) left = 8
-      setPos({ top: rect.bottom + 6, left, width })
+      setPos({ top: rect.bottom + 6, left: rect.left, width: rect.width })
     }
     update()
     window.addEventListener('resize', update)
