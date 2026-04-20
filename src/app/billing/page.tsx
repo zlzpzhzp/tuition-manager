@@ -451,13 +451,12 @@ export default function BillingPage() {
       <div className="pt-2 pb-1">
         {(() => {
           const today = new Date()
-          const y = today.getFullYear()
           const m = today.getMonth() + 1
           const d = today.getDate()
           const weekday = ['일','월','화','수','목','금','토'][today.getDay()]
           return (
-            <h1 className="text-[2.25rem] font-extrabold tracking-tight leading-tight text-[var(--text-1)] tabular-nums mb-2">
-              {y}년 {m}월 {d}일 {weekday}요일
+            <h1 className="text-[3rem] font-extrabold tracking-tight leading-none text-[var(--text-1)] tabular-nums mb-2">
+              {m}월 {d}일 {weekday}요일
             </h1>
           )
         })()}
