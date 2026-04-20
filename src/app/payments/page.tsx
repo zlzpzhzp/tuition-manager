@@ -414,6 +414,14 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
     return map
   }, [prevPayments])
 
+  const prevMethodByStudentId = useMemo(() => {
+    const map = new Map<string, PaymentMethod>()
+    for (const p of prevPayments) {
+      if (!map.has(p.student_id)) map.set(p.student_id, p.method as PaymentMethod)
+    }
+    return map
+  }, [prevPayments])
+
   // ─── Helpers ──────────────────────────────────────────────────
   const navigateMonth = (delta: number) => {
     const [y, m] = selectedMonth.split('-').map(Number)
@@ -428,6 +436,10 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
   const getPrevMemo = useCallback((studentId: string): string | null =>
     prevMemoByStudentId.get(studentId) ?? null
   , [prevMemoByStudentId])
+
+  const getPrevMethod = useCallback((studentId: string): PaymentMethod | null =>
+    prevMethodByStudentId.get(studentId) ?? null
+  , [prevMethodByStudentId])
 
   const getDueDay = useCallback((student: Student): number =>
     student.payment_due_day ?? getPaymentDueDay(student)
@@ -1593,12 +1605,14 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                         displayLabel = PAYMENT_STATUS_LABELS[status]
                       }
                       const prevMemo = getPrevMemo(student.id)
+                      const prevMethod = getPrevMethod(student.id)
+                      const prevMethodNonPayssam = prevMethod && prevMethod !== 'payssam' ? prevMethod : null
                       const currentMemo = studentPayments[0]?.memo
                       const isExpanded = expandedStudentId === student.id && status === 'unpaid'
                       const isSuccess = inlineSuccess === student.id
                       const isSubmitting = inlineSubmitting === student.id
                       const { cleanMemo } = decodePaymentMemo(currentMemo)
-                      const hasMemo = !!(prevMemo || cleanMemo || student.memo)
+                      const hasMemo = !!(prevMemo || cleanMemo || student.memo || prevMethodNonPayssam)
                       const isMemoSelected = selectedMemoIds.has(student.id)
                       const isPayOpen = swipeOpenPayId === student.id
                       const isSwipeOpen = isMemoSelected || isPayOpen
@@ -1934,6 +1948,11 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                                 <div className="text-right">
                                   {cleanMemo && <p className="text-[11px] text-[var(--text-3)] leading-tight">{cleanMemo}</p>}
                                   {prevMemo && <p className="text-[11px] text-[var(--text-4)] leading-tight">지난달: {prevMemo}</p>}
+                                  {prevMethodNonPayssam && (
+                                    <p className="text-[11px] text-[var(--orange)] leading-tight">
+                                      지난달 결제수단: {PAYMENT_METHOD_LABELS[prevMethodNonPayssam]}
+                                    </p>
+                                  )}
                                 </div>
                               </div>
                             )}
