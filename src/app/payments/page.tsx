@@ -1428,10 +1428,14 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                       const isMultiSelect = selectedMemoIds.size >= 2
                       const isSoleMemoSelection = isMemoSelected && selectedMemoIds.size === 1
                       const memoColor = student.memo_color ?? null
-                      const nameHighlight = memoColor === 'yellow' ? 'bg-[var(--orange-dim)] text-[var(--orange)] px-1.5 py-0.5 rounded-md'
-                        : memoColor === 'green' ? 'bg-[var(--paid-bg)] text-[var(--paid-text)] px-1.5 py-0.5 rounded-md'
-                        : memoColor === 'red' ? 'bg-[var(--unpaid-bg)] text-[var(--unpaid-text)] px-1.5 py-0.5 rounded-md'
+                      const nameHighlight = memoColor === 'yellow' ? 'bg-[var(--orange-dim)] text-[var(--orange)] px-2 py-0.5'
+                        : memoColor === 'green' ? 'bg-[var(--paid-bg)] text-[var(--paid-text)] px-2 py-0.5'
+                        : memoColor === 'red' ? 'bg-[var(--unpaid-bg)] text-[var(--unpaid-text)] px-2 py-0.5'
                         : ''
+                      const tornTapeStyle = memoColor ? {
+                        clipPath: 'polygon(3% 0%, 12% 4%, 24% 0%, 38% 5%, 52% 0%, 66% 4%, 80% 0%, 92% 5%, 100% 12%, 96% 30%, 100% 50%, 97% 70%, 100% 88%, 94% 100%, 82% 96%, 68% 100%, 54% 95%, 40% 100%, 26% 96%, 12% 100%, 4% 94%, 0% 82%, 4% 64%, 0% 48%, 3% 30%, 0% 14%)',
+                        display: 'inline-block',
+                      } : undefined
                       const withdrawn = isWithdrawnStudent(student)
 
                       return (
@@ -1442,8 +1446,8 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                             <div data-edit-panel className="absolute inset-y-0 left-0 w-[160px] flex items-center gap-1.5 px-2 bg-[var(--bg-elevated)]" onClick={e => e.stopPropagation()}>
                               {isMultiSelect ? (
                                 <>
-                                  <div className="w-5 h-5 rounded-full bg-[var(--blue)] flex items-center justify-center shrink-0">
-                                    <Check className="w-3 h-3 text-white" strokeWidth={3} />
+                                  <div className="w-5 h-5 rounded-full bg-[var(--blue-bg)] flex items-center justify-center shrink-0">
+                                    <Check className="w-3 h-3 text-[var(--blue)]" strokeWidth={3} />
                                   </div>
                                   <span className="text-[11px] font-semibold text-[var(--text-2)] truncate">선택됨</span>
                                 </>
@@ -1505,7 +1509,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                                 }}
                               >
                                 <span className="text-[11px] text-[var(--text-4)] mr-1 tabular-nums">{idx + 1}.</span>
-                                <span className={`text-sm font-medium ${nameHighlight} ${withdrawn ? 'line-through decoration-red-500 decoration-2 text-[var(--text-4)]' : ''}`}>{student.name}</span>
+                                <span className={`text-sm font-medium ${nameHighlight} ${withdrawn ? 'line-through decoration-red-500 decoration-2 text-[var(--text-4)]' : ''}`} style={tornTapeStyle}>{student.name}</span>
                                 {!withdrawn && !student.parent_phone && (
                                   <span className="text-[9px] ml-1 px-1 py-0.5 rounded-full bg-[var(--orange-dim)] text-[var(--orange)] font-bold" title="보호자 연락처 미등록">📵</span>
                                 )}
