@@ -3,6 +3,21 @@
 > 이 파일은 Claude 세션 간 작업 연속성을 위한 컨텍스트 추적 파일입니다.
 > 작업 중 수시로 업데이트하고, 커밋 시 함께 포함시킵니다.
 
+## 현재 상태: 전체메모 DB 이관 (완료)
+
+### 2026-04-20 15:05 (완료) — 전체메모(월별 메모) 기기 간 공유 버그 수정
+- msg 1135/1136: "야 메모공유 안되는거 같은데" + "전체메모"
+- 원인: payments/page.tsx의 monthMemo가 localStorage.getItem/setItem만 사용 → 기기별 격리 (아이폰↔패드↔PC 동기화 불가)
+- 조치:
+  - DB: tuition_monthly_memos 테이블 (billing_month PK, content text, updated_at, RLS anon ALL)
+  - /api/monthly-memo GET/PUT 라우트 신설 (requireAdminSession 적용)
+  - payments/page.tsx: localStorage 제거 → API 호출로 대체. 편집은 500ms 디바운스 PUT
+- 파일: src/app/api/monthly-memo/route.ts (신규), src/app/payments/page.tsx
+
+### 2026-04-20 14:10 (완료) — 미납자 재발송 세팅 안내 (msg 1133)
+- /api/cron/resend 현재 세팅 보고: 평일 15:00 KST, 5일 간격, 최대 3회
+- 안전장치: 이미 결제된 건(tuition_payments 존재 + PaySsam readBill='F') 감지 시 재발송 스킵 + DB 동기화
+
 ## 현재 상태: PaySsam 발송 타임락 + 예약 발송 (완료)
 
 ### 2026-04-20 12:45 (완료) — PaySsam 발송 시간 제한 + 예약 발송

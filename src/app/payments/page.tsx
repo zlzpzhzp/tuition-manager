@@ -315,9 +315,33 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
     }
   }, [selectedMonth])
 
-  // 월별 메모 로드
+  // 월별 메모 로드 — DB에서 (기기 간 공유)
   useEffect(() => {
-    setMonthMemo(localStorage.getItem(`payment_memo_${selectedMonth}`) ?? '')
+    let cancelled = false
+    ;(async () => {
+      try {
+        const res = await fetch(`/api/monthly-memo?month=${selectedMonth}`)
+        if (!res.ok) return
+        const data = await res.json()
+        if (!cancelled) setMonthMemo(data.content ?? '')
+      } catch {
+        // 네트워크 실패 시 빈값 유지
+      }
+    })()
+    return () => { cancelled = true }
+  }, [selectedMonth])
+
+  // 편집 디바운스 저장
+  const memoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const saveMonthMemo = useCallback((content: string) => {
+    if (memoSaveTimerRef.current) clearTimeout(memoSaveTimerRef.current)
+    memoSaveTimerRef.current = setTimeout(() => {
+      fetch('/api/monthly-memo', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ month: selectedMonth, content }),
+      }).catch(() => {})
+    }, 500)
   }, [selectedMonth])
 
   // 월별 메모 스크롤 연동 (스크롤 시 1줄 축소)
@@ -1169,7 +1193,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
             value={monthMemo}
             onChange={e => {
               setMonthMemo(e.target.value)
-              localStorage.setItem(`payment_memo_${selectedMonth}`, e.target.value)
+              saveMonthMemo(e.target.value)
             }}
             onFocus={() => setMemoFocused(true)}
             onBlur={() => setMemoFocused(false)}
