@@ -19,12 +19,13 @@ interface Props {
   onSuccess?: () => void
 }
 
-type SendState = 'form' | 'confirming' | 'sending' | 'success' | 'error'
+type SendState = 'form' | 'confirming' | 'sending' | 'success' | 'scheduled' | 'error'
 
 export default function QuickBillSendModal({ students, grades, billingMonth, onClose, onSuccess }: Props) {
   const [mounted, setMounted] = useState(false)
   const [state, setState] = useState<SendState>('form')
   const [errorMsg, setErrorMsg] = useState('')
+  const [scheduledKst, setScheduledKst] = useState('')
 
   const [query, setQuery] = useState('')
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -152,6 +153,15 @@ export default function QuickBillSendModal({ students, grades, billingMonth, onC
         }),
       })
       const data = await res.json()
+      if (res.ok && data.code === 'SCHEDULED') {
+        setScheduledKst(data.scheduled_at_kst || '')
+        setState('scheduled')
+        setTimeout(() => {
+          onSuccess?.()
+          onClose()
+        }, 3500)
+        return
+      }
       if (!res.ok || data.code !== '0000') {
         setErrorMsg(data.msg || data.error || '청구서 발송에 실패했습니다')
         setState('error')
@@ -219,6 +229,22 @@ export default function QuickBillSendModal({ students, grades, billingMonth, onC
               </motion.div>
               <p className="text-base font-bold text-[var(--paid-text)]">청구서가 발송되었습니다</p>
               <p className="text-xs text-[var(--text-4)]">{selected?.name} · {amount.toLocaleString()}원</p>
+            </div>
+          ) : state === 'scheduled' ? (
+            <div className="flex flex-col items-center gap-3 py-10 px-4 text-center">
+              <motion.div
+                initial={{ scale: 0 }} animate={{ scale: 1 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                className="w-16 h-16 rounded-full bg-[var(--orange-dim)] flex items-center justify-center"
+              >
+                <Check className="w-8 h-8 text-[var(--orange)]" />
+              </motion.div>
+              <p className="text-base font-bold text-[var(--orange)]">예약 발송 등록됨</p>
+              <p className="text-xs text-[var(--text-3)]">
+                영업시간 외 요청이라<br/>
+                <strong>{scheduledKst} KST</strong>에 자동 발송됩니다.
+              </p>
+              <p className="text-[11px] text-[var(--text-4)]">업무시간: 평일 11:00 ~ 22:00</p>
             </div>
           ) : (
             <>
@@ -562,7 +588,7 @@ export default function QuickBillSendModal({ students, grades, billingMonth, onC
         </div>
 
         {/* 하단 액션 */}
-        {state !== 'success' && selected && (
+        {state !== 'success' && state !== 'scheduled' && selected && (
           <div className="px-5 py-4 border-t border-[var(--border)] flex gap-2">
             {state === 'confirming' && (
               <button

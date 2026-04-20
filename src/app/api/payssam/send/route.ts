@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { sendBill } from '@/lib/payssam'
 import { supabase } from '@/lib/supabase'
 import { requireAdminSession } from '@/lib/auth'
+import { isBusinessHourKst, nextBusinessSlot, formatKst } from '@/lib/schedule'
 
 export async function POST(request: NextRequest) {
   const unauthorized = requireAdminSession(request)
@@ -45,6 +46,38 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: '이미 발송된 청구서가 있습니다. 기존 청구서를 파기한 후 다시 발송해주세요.', code: 'ALREADY_SENT', bill_id: activeBill.bill_id }, { status: 409 })
         }
       }
+    }
+
+    // 영업시간(평일 11:00~22:00 KST) 외 요청 → 큐에 예약
+    if (!isBusinessHourKst()) {
+      const scheduledAt = nextBusinessSlot()
+      const resolvedProductName = productName || `${billingMonth.replace('-', '년 ')}월 수업료`
+      const resolvedMessage = (typeof message === 'string' && message.trim()) ? message : `${studentName} ${billingMonth.replace('-', '년 ')}월 수업료`
+
+      const { error: queueError } = await supabase.from('tuition_bill_queue').insert({
+        student_id: studentId,
+        student_name: studentName,
+        phone: cleanPhone,
+        billing_month: billingMonth,
+        is_regular_tuition: isRegular,
+        bill_note: typeof billNote === 'string' && billNote.trim() ? billNote.trim() : null,
+        send_type: 'single',
+        payload: { amount, productName: resolvedProductName, message: resolvedMessage },
+        scheduled_at: scheduledAt.toISOString(),
+        status: 'pending',
+      })
+
+      if (queueError) {
+        console.error('[PaySsam] 큐 등록 실패:', queueError)
+        return NextResponse.json({ error: '예약 등록 실패' }, { status: 500 })
+      }
+
+      return NextResponse.json({
+        code: 'SCHEDULED',
+        msg: `영업시간 외 요청 → ${formatKst(scheduledAt)} KST 에 자동 발송됩니다`,
+        scheduled_at: scheduledAt.toISOString(),
+        scheduled_at_kst: formatKst(scheduledAt),
+      })
     }
 
     const result = await sendBill({

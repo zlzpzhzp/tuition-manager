@@ -273,6 +273,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
   // ─── 청구서 일괄발송 ───────────────────────────────────────────
   const [batchSending, setBatchSending] = useState<string | null>(null)
   const [batchProgress, setBatchProgress] = useState<{ done: number; total: number } | null>(null)
+  const [batchResultToast, setBatchResultToast] = useState<string | null>(null)
   const [cancellingBatch, setCancellingBatch] = useState(false)
   const cancelBatchRef = useRef(false)
 
@@ -429,14 +430,14 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
     return due >= start && due <= end
   }, [paymentFilter, paymentsByStudentId, selectedMonth, weekRanges])
 
-  const sendOneBill = useCallback(async (student: Student, cls: ClassWithStudents) => {
+  const sendOneBill = useCallback(async (student: Student, cls: ClassWithStudents): Promise<'sent' | 'scheduled' | 'failed'> => {
     const phone = student.parent_phone || student.phone || ''
     const fee = getStudentFee(student, cls)
-    if (!phone || fee <= 0) return
+    if (!phone || fee <= 0) return 'failed'
 
     // 분할결제 설정된 학생은 저장된 금액 그대로 N개 발송
     if (student.split_billing_parts && student.split_billing_amounts && student.split_billing_amounts.length === student.split_billing_parts) {
-      await safeMutate('/api/payssam/split-send', 'POST', {
+      const { data } = await safeMutate<{ code?: string }>('/api/payssam/split-send', 'POST', {
         studentId: student.id,
         studentName: student.name,
         phone: phone.replace(/-/g, ''),
@@ -444,10 +445,12 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
         amounts: student.split_billing_amounts,
         persist: false,
       })
-      return
+      if (data?.code === 'SCHEDULED') return 'scheduled'
+      if (data?.code === '0000') return 'sent'
+      return 'failed'
     }
 
-    await safeMutate('/api/payssam/send', 'POST', {
+    const { data } = await safeMutate<{ code?: string }>('/api/payssam/send', 'POST', {
       studentId: student.id,
       studentName: student.name,
       phone: phone.replace(/-/g, ''),
@@ -456,6 +459,9 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
       message: REGULAR_TUITION_MESSAGE,
       billingMonth: selectedMonth,
     })
+    if (data?.code === 'SCHEDULED') return 'scheduled'
+    if (data?.code === '0000') return 'sent'
+    return 'failed'
   }, [selectedMonth])
 
   const openBulkBillModal = useCallback((cls: ClassWithStudents) => {
@@ -500,9 +506,11 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
     setBatchSending(batchId)
     setBatchProgress({ done: 0, total: items.length })
 
+    const counts = { sent: 0, scheduled: 0, failed: 0 }
     for (let i = 0; i < items.length; i++) {
       if (cancelBatchRef.current) break
-      await sendOneBill(items[i].student, items[i].cls)
+      const result = await sendOneBill(items[i].student, items[i].cls)
+      counts[result]++
       setBatchProgress({ done: i + 1, total: items.length })
       if (cancelBatchRef.current) break
       if (i < items.length - 1) await new Promise(r => setTimeout(r, 500))
@@ -512,6 +520,17 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
     setBatchProgress(null)
     setCancellingBatch(false)
     cancelBatchRef.current = false
+
+    // 결과 토스트
+    const parts: string[] = []
+    if (counts.sent) parts.push(`${counts.sent}건 발송`)
+    if (counts.scheduled) parts.push(`${counts.scheduled}건 예약(영업시간 외)`)
+    if (counts.failed) parts.push(`${counts.failed}건 실패`)
+    if (parts.length > 0) {
+      setBatchResultToast(parts.join(' · '))
+      setTimeout(() => setBatchResultToast(null), 4500)
+    }
+
     mutateBills()
   }, [bulkBillTarget, sendOneBill, mutateBills])
 
@@ -1951,6 +1970,13 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
         onSelect={(key) => { setPaymentFilter(key); setFilterAnchor(null) }}
         onClose={() => setFilterAnchor(null)}
       />}
+
+      {/* 일괄발송 결과 토스트 */}
+      {batchResultToast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] px-4 py-3 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl shadow-lg text-sm font-medium text-[var(--text-1)] max-w-md">
+          {batchResultToast}
+        </div>
+      )}
     </div>
   )
 }

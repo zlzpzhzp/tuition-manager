@@ -3,9 +3,39 @@
 > 이 파일은 Claude 세션 간 작업 연속성을 위한 컨텍스트 추적 파일입니다.
 > 작업 중 수시로 업데이트하고, 커밋 시 함께 포함시킵니다.
 
-## 현재 상태: 납부탭 이름 마커(형광펜) + 요일 크기 축소 + 선택 체크 톤다운
+## 현재 상태: PaySsam 발송 타임락 + 예약 발송 (완료)
 
-### 2026-04-20 10:15 (진행중) — 납부탭 형광펜 이름 마커 + UX 디테일
+### 2026-04-20 12:45 (완료) — PaySsam 발송 시간 제한 + 예약 발송
+- msg 1130: "결제선생 발송시간이 반드시 오전 11시에서 밤 10시 사이에 이루어져야함 주말은 절대 발송 불가. 이런 타임락을 걸어주고 그 외시간에 발송을 걸면 예약이 걸려서 다음날 오전 11시에 발송되도록 해."
+- 요구사항: 평일(월~금) 11:00-22:00 KST만 발송 가능. 그 외엔 다음 영업시간(= 다음 평일 11:00 KST)에 자동 예약.
+- 서버 TZ 확인: timedatectl → Asia/Seoul +0900 KST (정상)
+- 구현:
+  - src/lib/schedule.ts: isBusinessHourKst / nextBusinessSlot / formatKst (UTC+9 shift 산술, 서버 TZ 무관 — Vercel UTC에서도 동작)
+  - DB: tuition_bill_queue 신규 테이블 (student_id, phone, billing_month, send_type='single'|'split'|'reissue', payload JSONB, scheduled_at, status='pending'|'sent'|'failed'|'cancelled', bill_id, error_msg)
+  - /api/payssam/send: 영업시간 체크 → 큐 insert + {code:'SCHEDULED', scheduled_at_kst}
+  - /api/payssam/split-send: 분할도 큐에 single row로 (payload.amounts[])
+  - /api/payssam/reissue: 재발송도 큐 (기존 bill_id 보존, cron이 파기+발송 처리)
+  - /api/cron/send-queued: 평일 11:00 KST 실행, pending → sendBill/destroyBill 처리, history 반영
+  - vercel.json: cron "0 2 * * 1-5" 추가
+  - UI: BillSendModal/QuickBillSendModal scheduled state 추가 (오렌지 토스트, 3.5s 후 자동 닫힘)
+  - payments/page.tsx sendOneBill → 'sent'|'scheduled'|'failed' 반환, executeBulkSend가 집계 후 토스트
+- 파일: src/lib/schedule.ts, src/app/api/payssam/send/route.ts, split-send/route.ts, reissue/route.ts, src/app/api/cron/send-queued/route.ts, vercel.json, src/components/BillSendModal.tsx, QuickBillSendModal.tsx, BillActionModal.tsx, src/app/payments/page.tsx
+
+### 2026-04-20 12:00 (완료) — 다중선택 배지 축소 + 스와이프 해제 EASE_OUT (msg 1104/1105)
+- 피드백: 2개 이상 선택 시 회색 영역 160px 너무 길음 → 48px 배지만. 해제 시 쫀득한 복귀 애니메이션 없음
+- 업로더앱 참고 (ui_patterns_lab/patterns/swipe-multi-select) — SPRING on select, EASE_OUT on deselect
+- src/app/payments/page.tsx:
+  - BADGE_W=48, EASE_OUT 상수 추가
+  - isMultiMode 파생, rowOffset 콜백 (다중이면 BADGE_W, 단일이면 MEMO_W)
+  - 왼쪽 패널 conditional w-[48px]/w-[160px] + transition-[width] duration-300 ease-out
+  - row 인라인 스타일 항상 적용 (React 재렌더 시 애니메이션 끊김 방지)
+  - handleTouchEnd addMemoSelection/removeMemoSelection 헬퍼 추출
+  - 1→다중 전환 시 기존 행 animateRowTo(BADGE_W), 다중→1 시 남은 행 animateRowTo(MEMO_W)
+  - closeAllMemoSelections / closeSwipeEdit / left-swipe bulk clear → EASE_OUT 적용
+- 커밋 6dd7277 — 컬러 톤 전체 일관화(priority A-E) + 다중선택 UX 묶어서 배포
+- 사파리 캐시 이슈 지원: 시크릿 탭 테스트로 구 SW 캐시 확인, 사이트 데이터 삭제 안내
+
+### 2026-04-20 10:15 (완료) — 납부탭 형광펜 이름 마커 + UX 디테일
 - msg 1058: 대시보드/납부 년월일요일 글자크기 크게 통일
 - msg 1062/1075: 년도 제거 + 월일요일 더 키움 (3rem, leading-none, tracking-tight)
 - msg 1059/1063/1067/1072: QuickBillSendModal 한 행에 과목+학년+반 pill 3개, 포탈 드롭다운(payments 날짜필터 스타일), 옵션 세로 배치, 팝오버 폭=pill 폭

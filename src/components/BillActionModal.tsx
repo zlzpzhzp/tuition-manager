@@ -128,6 +128,15 @@ export default function BillActionModal({ studentId, studentName, phone, billId,
         }),
       })
       const data = await res.json()
+      if (res.ok && data.code === 'SCHEDULED') {
+        setSuccessLabel(`영업시간 외 → ${data.scheduled_at_kst} KST 예약 발송 등록됨`)
+        setState('success')
+        setTimeout(() => {
+          onSuccess?.()
+          onClose()
+        }, 3500)
+        return
+      }
       if (!res.ok || (data.code !== '0000' && data.code !== 'PARTIAL')) {
         setErrorMsg(data.msg || data.error || '분할 발송에 실패했습니다')
         setState('error')

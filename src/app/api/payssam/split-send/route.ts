@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { sendBill, destroyBill } from '@/lib/payssam'
 import { supabase } from '@/lib/supabase'
 import { requireAdminSession } from '@/lib/auth'
+import { isBusinessHourKst, nextBusinessSlot, formatKst } from '@/lib/schedule'
 
 export async function POST(request: NextRequest) {
   const unauthorized = requireAdminSession(request)
@@ -23,6 +24,34 @@ export async function POST(request: NextRequest) {
     const cleanPhone = phone.replace(/-/g, '')
     if (!/^01[016789]\d{7,8}$/.test(cleanPhone)) {
       return NextResponse.json({ error: '유효하지 않은 전화번호입니다' }, { status: 400 })
+    }
+
+    // 영업시간 외 요청 → 큐에 예약 (분할도 단일 큐 엔트리로, cron이 처리 시 분할 발송)
+    if (!isBusinessHourKst()) {
+      const scheduledAt = nextBusinessSlot()
+      const { error: queueError } = await supabase.from('tuition_bill_queue').insert({
+        student_id: studentId,
+        student_name: studentName,
+        phone: cleanPhone,
+        billing_month: billingMonth,
+        is_regular_tuition: true,
+        send_type: 'split',
+        payload: { amounts: sanitized, persist: persist !== false },
+        scheduled_at: scheduledAt.toISOString(),
+        status: 'pending',
+      })
+
+      if (queueError) {
+        console.error('[PaySsam] 분할 큐 등록 실패:', queueError)
+        return NextResponse.json({ error: '예약 등록 실패' }, { status: 500 })
+      }
+
+      return NextResponse.json({
+        code: 'SCHEDULED',
+        msg: `영업시간 외 요청 → ${formatKst(scheduledAt)} KST 에 자동 발송됩니다`,
+        scheduled_at: scheduledAt.toISOString(),
+        scheduled_at_kst: formatKst(scheduledAt),
+      })
     }
 
     // 1) 기존 sent 정규 청구서 파기

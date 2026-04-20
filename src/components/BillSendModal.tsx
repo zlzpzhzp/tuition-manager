@@ -17,7 +17,7 @@ interface Props {
   onSuccess?: () => void
 }
 
-type SendState = 'idle' | 'confirming' | 'sending' | 'success' | 'error'
+type SendState = 'idle' | 'confirming' | 'sending' | 'success' | 'scheduled' | 'error'
 
 export default function BillSendModal({ studentName, studentId, phone, amount, subject, billingMonth, onClose, onSuccess }: Props) {
   const productName = getRegularTuitionTitle(subject, billingMonth)
@@ -26,6 +26,7 @@ export default function BillSendModal({ studentName, studentId, phone, amount, s
   const [errorMsg, setErrorMsg] = useState('')
   const [billId, setBillId] = useState('')
   const [shortUrl, setShortUrl] = useState('')
+  const [scheduledKst, setScheduledKst] = useState('')
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => { setMounted(true) }, [])
@@ -73,6 +74,17 @@ export default function BillSendModal({ studentName, studentId, phone, amount, s
       })
 
       const data = await res.json()
+
+      // 영업시간 외 → 예약 등록 응답
+      if (res.ok && data.code === 'SCHEDULED') {
+        setScheduledKst(data.scheduled_at_kst || '')
+        setState('scheduled')
+        setTimeout(() => {
+          onSuccess?.()
+          onClose()
+        }, 3500)
+        return
+      }
 
       if (!res.ok || data.code !== '0000') {
         const msg = data.msg || data.error || '청구서 발송에 실패했습니다'
@@ -196,6 +208,22 @@ export default function BillSendModal({ studentName, studentId, phone, amount, s
             </div>
           )}
 
+          {/* 예약 (영업시간 외) */}
+          {state === 'scheduled' && (
+            <div className="flex items-start gap-2 p-4 bg-[var(--orange-dim)] rounded-xl">
+              <Check className="w-5 h-5 text-[var(--orange)] shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-bold text-[var(--orange)]">예약 발송 등록됨</p>
+                <p className="text-xs text-[var(--text-3)] mt-1">
+                  영업시간 외 요청이라 <strong>{scheduledKst} KST</strong>에 자동으로 발송됩니다.
+                </p>
+                <p className="text-[11px] text-[var(--text-4)] mt-1">
+                  업무시간: 평일 11:00 ~ 22:00
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* 확인 단계 경고 */}
           {state === 'confirming' && (
             <div className="flex items-start gap-2 p-3 bg-[var(--orange-dim)] rounded-xl">
@@ -207,7 +235,7 @@ export default function BillSendModal({ studentName, studentId, phone, amount, s
           )}
 
           {/* 버튼 */}
-          {state !== 'success' && (
+          {state !== 'success' && state !== 'scheduled' && (
             <div className="flex gap-2">
               {state === 'confirming' && (
                 <button

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { destroyBill, sendBill } from '@/lib/payssam'
 import { supabase } from '@/lib/supabase'
 import { requireAdminSession } from '@/lib/auth'
+import { isBusinessHourKst, nextBusinessSlot, formatKst } from '@/lib/schedule'
 
 // 기존 청구서 파기 + 같은 조건(학생·월·금액)으로 새 청구서 발송.
 // 새 bill_id가 발급되므로 PaySsam/카톡 입장에선 별개 캠페인 → 스팸 감지 안 걸림.
@@ -45,6 +46,34 @@ export async function POST(request: NextRequest) {
       .single()
     if (!student) {
       return NextResponse.json({ error: '학생을 찾을 수 없습니다' }, { status: 404 })
+    }
+
+    // 영업시간 외 → 재발송 큐 등록 (cron이 처리 시 기존 파기 + 새 발송)
+    if (!isBusinessHourKst()) {
+      const scheduledAt = nextBusinessSlot()
+      const productName = `${oldBill.billing_month.replace('-', '년 ')}월 수업료`
+      const { error: queueError } = await supabase.from('tuition_bill_queue').insert({
+        student_id: oldBill.student_id,
+        student_name: student.name,
+        phone: oldBill.phone,
+        billing_month: oldBill.billing_month,
+        is_regular_tuition: oldBill.is_regular_tuition,
+        bill_note: '수동 재발송 예약',
+        send_type: 'reissue',
+        payload: { amount, productName, message: `${student.name} ${productName}`, oldBillId: billId },
+        scheduled_at: scheduledAt.toISOString(),
+        status: 'pending',
+      })
+      if (queueError) {
+        console.error('[PaySsam reissue] 큐 등록 실패:', queueError)
+        return NextResponse.json({ error: '예약 등록 실패' }, { status: 500 })
+      }
+      return NextResponse.json({
+        code: 'SCHEDULED',
+        msg: `영업시간 외 요청 → ${formatKst(scheduledAt)} KST 에 자동 재발송됩니다`,
+        scheduled_at: scheduledAt.toISOString(),
+        scheduled_at_kst: formatKst(scheduledAt),
+      })
     }
 
     // 1단계: 기존 청구서 파기
