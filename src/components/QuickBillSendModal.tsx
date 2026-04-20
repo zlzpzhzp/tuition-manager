@@ -306,9 +306,9 @@ export default function QuickBillSendModal({ students, grades, billingMonth, onC
                   {/* 포탈 팝오버 (납부탭 날짜 필터 스타일) */}
                   {openPicker === 'subject' && (
                     <PickerPopover anchorRef={subjectRef} onClose={() => setOpenPicker(null)}>
-                      <div className="grid grid-cols-2 gap-2">
+                      <div className="flex flex-col gap-1 max-h-64 overflow-y-auto">
                         {subjectList.length === 0 ? (
-                          <div className="col-span-2 p-3 text-center text-xs text-[var(--text-4)]">학생이 없습니다</div>
+                          <div className="p-3 text-center text-xs text-[var(--text-4)]">학생이 없습니다</div>
                         ) : subjectList.map(s => (
                           <button
                             key={s}
@@ -317,10 +317,10 @@ export default function QuickBillSendModal({ students, grades, billingMonth, onC
                               setBrowseSubject(s)
                               setOpenPicker('grade')
                             }}
-                            className={`py-2.5 rounded-lg text-sm font-bold transition-colors ${
+                            className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
                               browseSubject === s
-                                ? 'bg-[var(--blue)]/15 text-[var(--blue)] ring-1 ring-[var(--blue)]/40'
-                                : 'bg-[var(--bg-elevated)] text-[var(--text-1)] hover:bg-[var(--bg-card-hover)]'
+                                ? 'bg-[var(--blue)]/15 text-[var(--blue)]'
+                                : 'text-[var(--text-1)] hover:bg-[var(--bg-elevated)]'
                             }`}
                           >{s}</button>
                         ))}
@@ -329,9 +329,9 @@ export default function QuickBillSendModal({ students, grades, billingMonth, onC
                   )}
                   {openPicker === 'grade' && (
                     <PickerPopover anchorRef={gradeRef} onClose={() => setOpenPicker(null)}>
-                      <div className="grid grid-cols-3 gap-2">
+                      <div className="flex flex-col gap-1 max-h-64 overflow-y-auto">
                         {gradeList.length === 0 ? (
-                          <div className="col-span-3 p-3 text-center text-xs text-[var(--text-4)]">학년 없음</div>
+                          <div className="p-3 text-center text-xs text-[var(--text-4)]">학년 없음</div>
                         ) : gradeList.map(g => (
                           <button
                             key={g.id}
@@ -340,10 +340,10 @@ export default function QuickBillSendModal({ students, grades, billingMonth, onC
                               setBrowseGradeName(g.name)
                               setOpenPicker('class')
                             }}
-                            className={`py-2.5 rounded-lg text-sm font-semibold transition-colors ${
+                            className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
                               browseGradeName === g.name
-                                ? 'bg-[var(--blue)]/15 text-[var(--blue)] ring-1 ring-[var(--blue)]/40'
-                                : 'bg-[var(--bg-elevated)] text-[var(--text-1)] hover:bg-[var(--bg-card-hover)]'
+                                ? 'bg-[var(--blue)]/15 text-[var(--blue)]'
+                                : 'text-[var(--text-1)] hover:bg-[var(--bg-elevated)]'
                             }`}
                           >{g.name}</button>
                         ))}
@@ -352,9 +352,9 @@ export default function QuickBillSendModal({ students, grades, billingMonth, onC
                   )}
                   {openPicker === 'class' && (
                     <PickerPopover anchorRef={classRef} onClose={() => setOpenPicker(null)}>
-                      <div className="grid grid-cols-3 gap-2">
+                      <div className="flex flex-col gap-1 max-h-64 overflow-y-auto">
                         {classList.length === 0 ? (
-                          <div className="col-span-3 p-3 text-center text-xs text-[var(--text-4)]">반 없음</div>
+                          <div className="p-3 text-center text-xs text-[var(--text-4)]">반 없음</div>
                         ) : classList.map(c => (
                           <button
                             key={c.id}
@@ -362,10 +362,10 @@ export default function QuickBillSendModal({ students, grades, billingMonth, onC
                               setBrowseClassName(c.name)
                               setOpenPicker(null)
                             }}
-                            className={`py-2.5 rounded-lg text-sm font-semibold transition-colors ${
+                            className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
                               browseClassName === c.name
-                                ? 'bg-[var(--blue)]/15 text-[var(--blue)] ring-1 ring-[var(--blue)]/40'
-                                : 'bg-[var(--bg-elevated)] text-[var(--text-1)] hover:bg-[var(--bg-card-hover)]'
+                                ? 'bg-[var(--blue)]/15 text-[var(--blue)]'
+                                : 'text-[var(--text-1)] hover:bg-[var(--bg-elevated)]'
                             }`}
                           >{c.name}</button>
                         ))}
