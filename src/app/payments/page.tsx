@@ -646,11 +646,15 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
 
   // ─── Swipe handlers (swipe-action-guide.md 기반) ──────────────
   const SPRING = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
-  const MEMO_W = 160  // 왼쪽 비고 패널 너비 (헤더: 라벨+색상테이프+저장)
+  const EASE_OUT = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+  const MEMO_W = 160  // 왼쪽 비고 패널 너비 (단일 선택: 라벨+색상테이프+저장)
+  const BADGE_W = 48  // 다중 선택 시 배지만 표시하는 너비
   const PAY_W = 150   // 오른쪽 결제 특이사항 패널 너비 (헤더: 배지+저장)
 
+  const isMultiMode = selectedMemoIds.size >= 2
+
   const rowOffset = useCallback((id: string): number => {
-    if (selectedMemoIds.has(id)) return MEMO_W
+    if (selectedMemoIds.has(id)) return selectedMemoIds.size >= 2 ? BADGE_W : MEMO_W
     if (swipeOpenPayId === id) return -PAY_W
     return 0
   }, [selectedMemoIds, swipeOpenPayId])
@@ -686,17 +690,18 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
     const baseOffset = touchRef.current.baseOffset ?? 0
     let raw = baseOffset + dx
 
-    // sqrt 감쇠 — 왼쪽 한계 -PAY_W, 오른쪽 한계 +MEMO_W
+    // sqrt 감쇠 — 왼쪽 한계 -PAY_W, 오른쪽 한계 +MEMO_W (다중선택 중에도 rubber-band는 MEMO_W까지)
+    const rightLimit = MEMO_W
     if (raw < -PAY_W) raw = -PAY_W - Math.sqrt(Math.abs(raw + PAY_W)) * 2
-    else if (raw > MEMO_W) raw = MEMO_W + Math.sqrt(raw - MEMO_W) * 2
+    else if (raw > rightLimit) raw = rightLimit + Math.sqrt(raw - rightLimit) * 2
 
     touchRef.current.el.style.transition = 'none'
     touchRef.current.el.style.transform = `translateX(${raw}px)`
   }
 
-  const animateRowTo = (id: string, x: number) => {
+  const animateRowTo = (id: string, x: number, transition: string = SPRING) => {
     const el = document.querySelector(`[data-swipe-row="${id}"]`) as HTMLElement | null
-    if (el) { el.style.transition = SPRING; el.style.transform = `translateX(${x}px)` }
+    if (el) { el.style.transition = transition; el.style.transform = `translateX(${x}px)` }
   }
 
   const handleTouchEnd = () => {
@@ -707,6 +712,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
     const wasOpen = touchRef.current.wasOpen
     const wasMemoSelected = selectedMemoIds.has(id)
     const wasPayOpen = swipeOpenPayId === id
+    const prevCount = selectedMemoIds.size
 
     el.style.transition = SPRING
 
@@ -721,57 +727,67 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
       return
     }
 
+    const addMemoSelection = () => {
+      // 2번째 추가 시 기존 선택 행을 MEMO_W → BADGE_W 축소
+      if (prevCount === 1) {
+        selectedMemoIds.forEach(prevId => animateRowTo(prevId, BADGE_W))
+      }
+      const target = prevCount >= 1 ? BADGE_W : MEMO_W
+      el.style.transform = `translateX(${target}px)`
+      const student = allStudents.find(s => s.id === id)
+      setSelectedMemoIds(prev => {
+        const next = new Set(prev); next.add(id); return next
+      })
+      if (student && prevCount === 0) {
+        setEditMemoValue(student.memo ?? '')
+        setEditMemoColor(student.memo_color ?? null)
+      }
+    }
+
+    const removeMemoSelection = () => {
+      // 재스와이프로 해제 — EASE_OUT 부드러운 복귀
+      el.style.transition = EASE_OUT
+      el.style.transform = 'translateX(0)'
+      setSelectedMemoIds(prev => {
+        const next = new Set(prev); next.delete(id); return next
+      })
+      // 2개 → 1개 축소 시 남은 행을 BADGE_W → MEMO_W 확장
+      if (prevCount === 2) {
+        const remaining = Array.from(selectedMemoIds).find(sid => sid !== id)
+        if (remaining) animateRowTo(remaining, MEMO_W)
+      }
+    }
+
     // 우로 밀기
     if (dx > 60) {
       if (wasPayOpen) {
         // 결제특이사항 닫고 비고 선택으로 전환
-        el.style.transform = `translateX(${MEMO_W}px)`
         setSwipeOpenPayId(null)
-        const student = allStudents.find(s => s.id === id)
-        setSelectedMemoIds(prev => {
-          const next = new Set(prev); next.add(id); return next
-        })
-        if (student && selectedMemoIds.size === 0) {
-          setEditMemoValue(student.memo ?? '')
-          setEditMemoColor(student.memo_color ?? null)
-        }
+        addMemoSelection()
       } else if (!wasMemoSelected) {
         // 비고 선택에 추가
-        el.style.transform = `translateX(${MEMO_W}px)`
-        const student = allStudents.find(s => s.id === id)
-        setSelectedMemoIds(prev => {
-          const next = new Set(prev); next.add(id); return next
-        })
-        // 첫 선택이면 해당 학생 값으로 초기화
-        if (student && selectedMemoIds.size === 0) {
-          setEditMemoValue(student.memo ?? '')
-          setEditMemoColor(student.memo_color ?? null)
-        }
+        addMemoSelection()
       } else {
         // 이미 선택됨 → 재스와이프로 해제
-        el.style.transform = 'translateX(0)'
-        setSelectedMemoIds(prev => {
-          const next = new Set(prev); next.delete(id); return next
-        })
+        removeMemoSelection()
       }
     }
     // 좌로 밀기
     else if (dx < -60) {
       if (wasMemoSelected) {
         // 비고 선택에서 해제 (해당 학생만)
-        el.style.transform = 'translateX(0)'
-        setSelectedMemoIds(prev => {
-          const next = new Set(prev); next.delete(id); return next
-        })
+        removeMemoSelection()
       } else if (selectedMemoIds.size > 0) {
-        // 다른 학생이 비고 활성화 중 → 전체 해제만, 결제특이사항 열지 않음
+        // 다른 학생이 비고 활성화 중 → 전체 해제 (EASE_OUT)
+        el.style.transition = EASE_OUT
         el.style.transform = wasOpen ? `translateX(${baseOffset}px)` : 'translateX(0)'
-        selectedMemoIds.forEach(prevId => animateRowTo(prevId, 0))
+        selectedMemoIds.forEach(prevId => animateRowTo(prevId, 0, EASE_OUT))
         setSelectedMemoIds(new Set())
         setEditMemoValue('')
         setEditMemoColor(null)
       } else if (wasPayOpen) {
         // 결제특이사항 닫기
+        el.style.transition = EASE_OUT
         el.style.transform = 'translateX(0)'
         setSwipeOpenPayId(null)
       } else {
@@ -792,7 +808,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
   }
 
   const closeAllMemoSelections = () => {
-    selectedMemoIds.forEach(id => animateRowTo(id, 0))
+    selectedMemoIds.forEach(id => animateRowTo(id, 0, EASE_OUT))
     setSelectedMemoIds(new Set())
     setEditMemoValue('')
     setEditMemoColor(null)
@@ -800,7 +816,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
 
   const closeSwipeEdit = () => {
     if (swipeOpenPayId) {
-      animateRowTo(swipeOpenPayId, 0)
+      animateRowTo(swipeOpenPayId, 0, EASE_OUT)
       setSwipeOpenPayId(null)
     }
     if (selectedMemoIds.size > 0) closeAllMemoSelections()
@@ -1442,15 +1458,12 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                         <div key={student.id} data-student-row={student.id} className="relative">
                           {/* 위층: 행 높이 (좌/우 패널 헤더 + 메인 콘텐츠) */}
                           <div className="relative overflow-hidden">
-                            {/* 왼쪽 패널 헤더 — 비고 라벨 + 색상 테이프 + 저장 (다중선택 시 체크마크만) */}
-                            <div data-edit-panel className="absolute inset-y-0 left-0 w-[160px] flex items-center gap-1.5 px-2 bg-[var(--bg-elevated)]" onClick={e => e.stopPropagation()}>
+                            {/* 왼쪽 패널 헤더 — 비고 라벨 + 색상 테이프 + 저장 (다중선택 시 배지만) */}
+                            <div data-edit-panel className={`absolute inset-y-0 left-0 ${isMultiSelect ? 'w-[48px] justify-center' : 'w-[160px] gap-1.5 px-2'} flex items-center bg-[var(--bg-elevated)] transition-[width] duration-300 ease-out`} onClick={e => e.stopPropagation()}>
                               {isMultiSelect ? (
-                                <>
-                                  <div className="w-5 h-5 rounded-full bg-[var(--blue-bg)] flex items-center justify-center shrink-0">
-                                    <Check className="w-3 h-3 text-[var(--blue)]" strokeWidth={3} />
-                                  </div>
-                                  <span className="text-[11px] font-semibold text-[var(--text-2)] truncate">선택됨</span>
-                                </>
+                                <div className="w-6 h-6 rounded-full bg-[var(--blue-bg)] flex items-center justify-center">
+                                  <Check className="w-3.5 h-3.5 text-[var(--blue)]" strokeWidth={3} />
+                                </div>
                               ) : (
                                 <>
                                   <span className="text-[10px] font-bold text-[var(--text-3)] shrink-0">비고</span>
@@ -1492,7 +1505,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                               onTouchStart={e => handleTouchStart(e, student.id)}
                               onTouchMove={handleTouchMove}
                               onTouchEnd={handleTouchEnd}
-                              style={isSwipeOpen ? { transform: `translateX(${openSide === 'left' ? MEMO_W : -PAY_W}px)`, transition: SPRING } : undefined}
+                              style={{ transform: `translateX(${rowOffset(student.id)}px)`, transition: SPRING }}
                             >
                             <div className={`flex items-center gap-2 px-4 ${hasMemo && !isExpanded ? 'pt-1.5 pb-0.5' : 'py-1.5'} ${
                               status === 'unpaid' && !isExpanded && !withdrawn ? 'cursor-pointer active:bg-[var(--bg-card-hover)]' : ''

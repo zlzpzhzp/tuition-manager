@@ -229,7 +229,7 @@ export default function StudentDetailModal({ studentId, onClose, onChange }: Pro
                   <span className="text-xs text-[var(--text-4)]">비고</span>
                   <div className="flex items-center gap-2">
                     {(['yellow', 'green', 'red'] as const).map(c => {
-                      const dot = c === 'yellow' ? 'bg-yellow-400' : c === 'green' ? 'bg-green-400' : 'bg-red-400'
+                      const dot = c === 'yellow' ? 'bg-[var(--orange)]' : c === 'green' ? 'bg-[var(--paid-text)]' : 'bg-[var(--unpaid-text)]'
                       const active = memoColor === c
                       return (
                         <button

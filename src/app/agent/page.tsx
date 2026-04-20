@@ -113,7 +113,7 @@ export default function AgentPage() {
                 <button
                   key={i}
                   onClick={() => sendMessage(ex)}
-                  className="w-full text-left px-4 py-2.5 bg-white rounded-xl border text-sm text-gray-600 hover:border-[#1e2d6f] hover:text-[#1e2d6f] transition-colors"
+                  className="w-full text-left px-4 py-2.5 bg-white rounded-xl border text-sm text-gray-600 hover:border-[var(--blue)] hover:text-[var(--blue)] transition-colors"
                 >
                   &ldquo;{ex}&rdquo;
                 </button>
@@ -125,7 +125,7 @@ export default function AgentPage() {
         {messages.map((msg, i) => (
           <div key={i} className={`flex gap-2 ${msg.role === 'user' ? 'justify-end' : ''}`}>
             {msg.role === 'assistant' && (
-              <div className="w-7 h-7 rounded-full bg-[#1e2d6f] flex items-center justify-center flex-shrink-0 mt-1">
+              <div className="w-7 h-7 rounded-full bg-[var(--blue)] flex items-center justify-center flex-shrink-0 mt-1">
                 <Bot className="w-4 h-4 text-white" />
               </div>
             )}
@@ -133,10 +133,10 @@ export default function AgentPage() {
               <div
                 className={`px-4 py-2.5 rounded-2xl text-sm whitespace-pre-wrap ${
                   msg.role === 'user'
-                    ? 'bg-[#1e2d6f] text-white rounded-br-md'
+                    ? 'bg-[var(--blue)] text-white rounded-br-md'
                     : msg.error
-                    ? 'bg-red-50 text-red-700 border border-red-200 rounded-bl-md'
-                    : 'bg-white border rounded-bl-md'
+                    ? 'bg-[var(--unpaid-bg)] text-[var(--unpaid-text)] border border-[var(--red-dim)] rounded-bl-md'
+                    : 'bg-[var(--bg-card)] border border-[var(--border)] rounded-bl-md'
                 }`}
               >
                 {msg.error && <AlertCircle className="w-4 h-4 inline mr-1" />}
@@ -180,7 +180,7 @@ export default function AgentPage() {
 
         {loading && (
           <div className="flex gap-2">
-            <div className="w-7 h-7 rounded-full bg-[#1e2d6f] flex items-center justify-center flex-shrink-0">
+            <div className="w-7 h-7 rounded-full bg-[var(--blue)] flex items-center justify-center flex-shrink-0">
               <Bot className="w-4 h-4 text-white" />
             </div>
             <div className="px-4 py-2.5 bg-white border rounded-2xl rounded-bl-md">
@@ -202,13 +202,13 @@ export default function AgentPage() {
           onKeyDown={e => e.key === 'Enter' && !e.nativeEvent.isComposing && sendMessage()}
           placeholder="명령을 입력하세요..."
           disabled={loading}
-          className="flex-1 px-4 py-3 bg-white border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1e2d6f] disabled:opacity-50"
+          className="flex-1 px-4 py-3 bg-white border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)] disabled:opacity-50"
           autoFocus
         />
         <button
           onClick={() => sendMessage()}
           disabled={loading || !input.trim()}
-          className="px-4 py-3 bg-[#1e2d6f] text-white rounded-xl hover:opacity-90 disabled:opacity-50 transition-opacity"
+          className="px-4 py-3 bg-[var(--blue)] text-white rounded-xl hover:opacity-90 disabled:opacity-50 transition-opacity"
         >
           <Send className="w-4 h-4" />
         </button>

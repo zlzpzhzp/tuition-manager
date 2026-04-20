@@ -161,7 +161,7 @@ export default function DashboardPage() {
                       <span className="text-[13px] text-[var(--text-4)] ml-2">{s.gradeName} · {s.class?.name}</span>
                     </div>
                     <span className="text-[13px] text-[var(--text-4)] tabular-nums">{(fee - paid).toLocaleString()}원</span>
-                    <span className="px-2.5 py-1 rounded-lg text-[12px] font-bold" style={{ backgroundColor: '#351c20', color: '#e8656d' }}>
+                    <span className="px-2.5 py-1 rounded-lg text-[12px] font-bold bg-[var(--unpaid-bg)] text-[var(--unpaid-text)]">
                       {month}/{dueDay} 미납
                     </span>
                   </Link>
@@ -202,7 +202,7 @@ export default function DashboardPage() {
                       <span className="text-[13px] text-[var(--text-4)] ml-2">{s.gradeName} · {s.class?.name}</span>
                     </div>
                     <span className="text-[13px] text-[var(--text-4)] tabular-nums">{(fee - paid).toLocaleString()}원</span>
-                    <span className="px-2.5 py-1 rounded-lg text-[12px] font-bold" style={{ backgroundColor: '#302a1a', color: '#e5a731' }}>
+                    <span className="px-2.5 py-1 rounded-lg text-[12px] font-bold bg-[var(--scheduled-bg)] text-[var(--scheduled-text)]">
                       {month}/{dueDay} 예정
                     </span>
                   </Link>

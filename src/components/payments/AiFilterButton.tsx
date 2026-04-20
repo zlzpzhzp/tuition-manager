@@ -249,11 +249,11 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
   if (aiFilterIds !== null) {
     return (
       <div className="fixed right-3 z-[60]" style={{ top: '38%' }}>
-        <div className="flex items-center gap-1.5 bg-[#212126] text-[#34d399] pl-2 pr-1.5 py-1.5 rounded-full shadow-[0_2px_12px_rgba(0,0,0,0.15)] border border-[#2c2c33]">
+        <div className="flex items-center gap-1.5 bg-[var(--bg-card)] text-[var(--paid-text)] pl-2 pr-1.5 py-1.5 rounded-full shadow-[0_2px_12px_rgba(0,0,0,0.15)] border border-[var(--border)]">
           <FairyIcon size={14} color="#34d399" />
           <span className="text-[10px] font-medium max-w-[100px] truncate">{aiFilterDesc}</span>
-          <button onClick={handleClear} className="p-0.5 hover:bg-[#36363e] rounded-full ml-0.5" aria-label="필터 해제">
-            <X className="w-3.5 h-3.5 text-[#5e5e6e]" />
+          <button onClick={handleClear} className="p-0.5 hover:bg-[var(--border-light)] rounded-full ml-0.5" aria-label="필터 해제">
+            <X className="w-3.5 h-3.5 text-[var(--text-4)]" />
           </button>
         </div>
       </div>
@@ -321,7 +321,7 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
                 if (e.key === 'Escape') { setOpen(false); setQuery('') }
               }}
               placeholder="15일 이후 미납, 7일이상 미납..."
-              className="text-xs w-full outline-none bg-transparent pl-3 pr-1 text-white placeholder:text-[#c8c5be]/60"
+              className="text-xs w-full outline-none bg-transparent pl-3 pr-1 text-white placeholder:text-white/60"
               style={{ height: BTN }}
               aria-label="AI 필터 검색어"
             />
@@ -331,7 +331,7 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
           {open && (
             <button
               onClick={() => { setOpen(false); setQuery('') }}
-              className="shrink-0 flex items-center justify-center text-[#c8c5be] hover:text-white"
+              className="shrink-0 flex items-center justify-center text-white/70 hover:text-white"
               style={{ width: 28, height: BTN }}
               aria-label="닫기"
             >
@@ -351,7 +351,7 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
             }}
             disabled={open && loading}
             className={`shrink-0 flex items-center justify-center rounded-full disabled:opacity-50 ${
-              open ? 'bg-[#212126]/15 text-white' : ''
+              open ? 'bg-black/15 text-white' : ''
             }`}
             style={{ width: BTN, height: BTN }}
             aria-label={open ? 'AI 필터 실행' : 'AI 필터 열기'}

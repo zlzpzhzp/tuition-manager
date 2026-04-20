@@ -171,16 +171,16 @@ export default function TeacherDetailPage({ params }: { params: Promise<{ id: st
   @page { size: A4; margin: 15mm; }
   body { font-family: -apple-system, 'Malgun Gothic', sans-serif; color: #1a1a1a; line-height: 1.5; }
   table { width: 100%; border-collapse: collapse; }
-  .header { text-align: center; margin-bottom: 24px; border-bottom: 3px solid #1e2d6f; padding-bottom: 16px; }
-  .header h1 { font-size: 22px; color: #1e2d6f; margin: 0 0 4px; }
+  .header { text-align: center; margin-bottom: 24px; border-bottom: 3px solid var(--blue); padding-bottom: 16px; }
+  .header h1 { font-size: 22px; color: var(--blue); margin: 0 0 4px; }
   .header p { font-size: 13px; color: #666; margin: 0; }
   .section { margin-bottom: 20px; }
-  .section h2 { font-size: 14px; font-weight: 700; color: #1e2d6f; margin: 0 0 8px; padding-bottom: 4px; border-bottom: 2px solid #1e2d6f; }
+  .section h2 { font-size: 14px; font-weight: 700; color: var(--blue); margin: 0 0 8px; padding-bottom: 4px; border-bottom: 2px solid var(--blue); }
   .summary-table td { padding: 8px; font-size: 13px; }
   .summary-label { color: #666; width: 40%; }
   .summary-value { text-align: right; font-weight: 600; }
   .total-row { background: #f0f2f8; }
-  .total-row td { font-weight: 700 !important; font-size: 15px !important; color: #1e2d6f; }
+  .total-row td { font-weight: 700 !important; font-size: 15px !important; color: var(--blue); }
   th { background: #f3f4f6; font-size: 11px; font-weight: 600; color: #555; padding: 6px 8px; text-align: left; }
   .footer { margin-top: 32px; text-align: center; font-size: 11px; color: #999; }
   .badge { display: inline-block; padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: 600; }
@@ -289,8 +289,8 @@ export default function TeacherDetailPage({ params }: { params: Promise<{ id: st
 
   if (!teacher) return (
     <div className="animate-pulse">
-      <div className="h-6 bg-gray-200 rounded w-32 mb-4"></div>
-      <div className="h-40 bg-[#36363e] rounded-xl"></div>
+      <div className="h-6 bg-[var(--bg-card-hover)] rounded w-32 mb-4"></div>
+      <div className="h-40 bg-[var(--bg-elevated)] rounded-xl"></div>
     </div>
   )
 
@@ -298,85 +298,85 @@ export default function TeacherDetailPage({ params }: { params: Promise<{ id: st
     <div>
       {/* 헤더 */}
       <div className="flex items-center gap-3 mb-4">
-        <button onClick={() => router.back()} className="p-1 text-[#5e5e6e] hover:text-[#8b8b9a]">
+        <button onClick={() => router.back()} className="p-1 text-[var(--text-4)] hover:text-[var(--text-3)]">
           <ChevronLeft className="w-5 h-5" />
         </button>
         <div>
           <h1 className="text-xl font-bold">{teacher.name}</h1>
-          {teacher.subject && <p className="text-xs text-[#5e5e6e]">{teacher.subject}</p>}
+          {teacher.subject && <p className="text-xs text-[var(--text-4)]">{teacher.subject}</p>}
         </div>
       </div>
 
       {/* 월 선택 */}
       <div className="flex items-center justify-center gap-3 mb-6">
-        <button onClick={() => navigateMonth(-1)} className="p-2 hover:bg-[#36363e] rounded-lg">
+        <button onClick={() => navigateMonth(-1)} className="p-2 hover:bg-[var(--bg-elevated)] rounded-lg">
           <ChevronLeft className="w-5 h-5" />
         </button>
         <span className="text-lg font-bold">{formatMonth(selectedMonth)}</span>
-        <button onClick={() => navigateMonth(1)} className="p-2 hover:bg-[#36363e] rounded-lg">
+        <button onClick={() => navigateMonth(1)} className="p-2 hover:bg-[var(--bg-elevated)] rounded-lg">
           <ChevronRight className="w-5 h-5" />
         </button>
       </div>
 
       {/* 급여명세서 */}
-      <div className="bg-[#212126] rounded-xl border p-5 mb-4">
+      <div className="bg-[var(--bg-card)] rounded-xl border p-5 mb-4">
         <h2 className="font-bold text-sm mb-4">급여명세서</h2>
         <div className="space-y-2 text-sm">
           <div className="flex justify-between py-1.5 border-b">
-            <span className="text-[#5e5e6e]">담당 반</span>
+            <span className="text-[var(--text-4)]">담당 반</span>
             <span className="font-medium">{teacherClasses.length}개 ({teacherStudents.length}명)</span>
           </div>
           <div className="flex justify-between py-1.5 border-b">
-            <span className="text-[#5e5e6e]">총 원비</span>
+            <span className="text-[var(--text-4)]">총 원비</span>
             <span className="font-medium">{payroll.totalFee.toLocaleString()}원</span>
           </div>
           <div className="flex justify-between py-1.5 border-b">
-            <span className="text-[#5e5e6e]">수납액</span>
+            <span className="text-[var(--text-4)]">수납액</span>
             <span className="font-medium">{payroll.totalPaid.toLocaleString()}원</span>
           </div>
           <div className="flex justify-between items-center py-1.5 border-b">
             <div className="flex items-center gap-1">
-              <span className="text-[#5e5e6e]">선생님 배분</span>
+              <span className="text-[var(--text-4)]">선생님 배분</span>
               {editingRatio ? (
                 <span className="flex items-center gap-1">
-                  <span className="text-[#5e5e6e]">(</span>
+                  <span className="text-[var(--text-4)]">(</span>
                   <input
                     type="number"
                     value={ratioInput}
                     onChange={e => setRatioInput(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && saveRatio()}
-                    className="w-12 px-1 py-0.5 border rounded text-sm text-center focus:outline-none focus:ring-2 focus:ring-[#1e2d6f]"
+                    className="w-12 px-1 py-0.5 border rounded text-sm text-center focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
                     min={0} max={100} autoFocus
                   />
-                  <span className="text-[#5e5e6e]">%)</span>
-                  <button onClick={saveRatio} className="text-green-600"><Check className="w-3.5 h-3.5" /></button>
-                  <button onClick={() => setEditingRatio(false)} className="text-[#5e5e6e]"><X className="w-3.5 h-3.5" /></button>
+                  <span className="text-[var(--text-4)]">%)</span>
+                  <button onClick={saveRatio} className="p-1.5 bg-[var(--blue-bg)] hover:bg-[var(--blue-dim)] text-[var(--blue)] rounded-full transition-colors"><Check className="w-3.5 h-3.5" strokeWidth={3} /></button>
+                  <button onClick={() => setEditingRatio(false)} className="text-[var(--text-4)]"><X className="w-3.5 h-3.5" /></button>
                 </span>
               ) : (
                 <button
                   onClick={() => { setEditingRatio(true); setRatioInput(String(payRatio)) }}
-                  className="text-[#1e2d6f] hover:underline text-sm"
+                  className="text-[var(--blue)] hover:underline text-sm"
                 >
                   ({payRatio}%)
                 </button>
               )}
             </div>
-            <span className="font-medium text-[#1e2d6f]">{payroll.teacherShare.toLocaleString()}원</span>
+            <span className="font-medium text-[var(--blue)]">{payroll.teacherShare.toLocaleString()}원</span>
           </div>
 
           {/* 보너스 */}
           <div className="flex justify-between items-center py-1.5 border-b">
-            <span className="text-[#5e5e6e]">보너스</span>
-            <span className="font-medium text-green-600">+{payroll.totalBonus.toLocaleString()}원</span>
+            <span className="text-[var(--text-4)]">보너스</span>
+            <span className="font-medium text-[var(--paid-text)]">+{payroll.totalBonus.toLocaleString()}원</span>
           </div>
           {bonuses.length > 0 && (
             <div className="pl-2 space-y-1 pb-1">
               {bonuses.map(b => (
-                <div key={b.id} className="flex items-center justify-between text-xs text-[#8b8b9a]">
+                <div key={b.id} className="flex items-center justify-between text-xs text-[var(--text-3)]">
                   <span>{b.memo || '보너스'}</span>
                   <div className="flex items-center gap-1">
                     <span>+{b.amount.toLocaleString()}원</span>
-                    <button onClick={() => deleteBonus(b.id)} className="p-0.5 text-[#5e5e6e] hover:text-red-400">
+                    <button onClick={() => deleteBonus(b.id)} className="p-0.5 text-[var(--text-4)] hover:text-[var(--unpaid-text)]">
                       <Trash2 className="w-3 h-3" />
                     </button>
                   </div>
@@ -392,7 +392,7 @@ export default function TeacherDetailPage({ params }: { params: Promise<{ id: st
                 value={bonusMemo}
                 onChange={e => setBonusMemo(e.target.value)}
                 placeholder="항목명"
-                className="flex-1 px-2 py-1 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1e2d6f]"
+                className="flex-1 px-2 py-1 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
                 autoFocus
               />
               <input
@@ -401,31 +401,31 @@ export default function TeacherDetailPage({ params }: { params: Promise<{ id: st
                 onChange={e => setBonusAmount(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && addBonus()}
                 placeholder="금액"
-                className="w-24 px-2 py-1 border rounded text-sm text-right focus:outline-none focus:ring-2 focus:ring-[#1e2d6f]"
+                className="w-24 px-2 py-1 border rounded text-sm text-right focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
               />
-              <button onClick={addBonus} className="text-green-600"><Check className="w-4 h-4" /></button>
-              <button onClick={() => setAddingBonus(false)} className="text-[#5e5e6e]"><X className="w-4 h-4" /></button>
+              <button onClick={addBonus} className="p-1.5 bg-[var(--blue-bg)] hover:bg-[var(--blue-dim)] text-[var(--blue)] rounded-full transition-colors"><Check className="w-3.5 h-3.5" strokeWidth={3} /></button>
+              <button onClick={() => setAddingBonus(false)} className="text-[var(--text-4)]"><X className="w-4 h-4" /></button>
             </div>
           ) : (
             <button
               onClick={() => setAddingBonus(true)}
-              className="flex items-center gap-1 text-xs text-[#1e2d6f] font-medium hover:opacity-70 py-1"
+              className="flex items-center gap-1 text-xs text-[var(--blue)] font-medium hover:opacity-70 py-1"
             >
               <Plus className="w-3.5 h-3.5" /> 보너스 추가
             </button>
           )}
 
           <div className="flex justify-between py-1.5 border-b">
-            <span className="text-[#5e5e6e]">세전 합계</span>
+            <span className="text-[var(--text-4)]">세전 합계</span>
             <span className="font-bold">{payroll.grossPay.toLocaleString()}원</span>
           </div>
           <div className="flex justify-between py-1.5 border-b">
-            <span className="text-[#5e5e6e]">원천징수 (3.3%)</span>
-            <span className="font-medium text-red-500">-{payroll.tax.toLocaleString()}원</span>
+            <span className="text-[var(--text-4)]">원천징수 (3.3%)</span>
+            <span className="font-medium text-[var(--unpaid-text)]">-{payroll.tax.toLocaleString()}원</span>
           </div>
-          <div className="flex justify-between py-2 mt-1 bg-[#2c2c33] -mx-5 px-5 rounded-b-xl">
+          <div className="flex justify-between py-2 mt-1 bg-[var(--bg-card-hover)] -mx-5 px-5 rounded-b-xl">
             <span className="font-bold">실수령액</span>
-            <span className="font-bold text-lg text-[#1e2d6f]">{payroll.netPay.toLocaleString()}원</span>
+            <span className="font-bold text-lg text-[var(--blue)]">{payroll.netPay.toLocaleString()}원</span>
           </div>
         </div>
       </div>
@@ -433,7 +433,7 @@ export default function TeacherDetailPage({ params }: { params: Promise<{ id: st
       {/* PDF 다운로드 버튼 */}
       <button
         onClick={downloadPayslipPDF}
-        className="w-full py-3 mb-4 text-[#1e2d6f] bg-[#212126] border border-[#1e2d6f] rounded-xl text-sm font-medium hover:bg-[#f0f2f8] flex items-center justify-center gap-2"
+        className="w-full py-3 mb-4 text-[var(--blue)] bg-[var(--bg-card)] border border-[var(--blue)] rounded-xl text-sm font-medium hover:bg-[#f0f2f8] flex items-center justify-center gap-2"
       >
         <Download className="w-4 h-4" />
         급여명세서 PDF 다운로드
@@ -441,26 +441,26 @@ export default function TeacherDetailPage({ params }: { params: Promise<{ id: st
 
       {/* 반별 학생 상세 */}
       {classDetails.map(({ cls, students, sessionCount, days, clsFee, clsPaid }) => (
-        <div key={cls.id} className="bg-[#212126] rounded-xl border mb-4 overflow-hidden">
-          <div className="px-4 py-3 bg-[#2c2c33] border-b">
+        <div key={cls.id} className="bg-[var(--bg-card)] rounded-xl border mb-4 overflow-hidden">
+          <div className="px-4 py-3 bg-[var(--bg-card-hover)] border-b">
             <div className="flex items-center justify-between">
               <div>
                 <span className="text-sm font-bold">{cls.name}</span>
-                <span className="text-xs text-[#5e5e6e] ml-2">{students.length}명</span>
+                <span className="text-xs text-[var(--text-4)] ml-2">{students.length}명</span>
               </div>
               <div className="text-right">
-                <p className="text-sm font-medium">{clsPaid.toLocaleString()} <span className="text-xs text-[#5e5e6e]">/ {clsFee.toLocaleString()}원</span></p>
+                <p className="text-sm font-medium">{clsPaid.toLocaleString()} <span className="text-xs text-[var(--text-4)]">/ {clsFee.toLocaleString()}원</span></p>
               </div>
             </div>
             {(days || sessionCount) && (
               <div className="flex gap-3 mt-1">
                 {days && (
-                  <span className="text-[11px] text-[#5e5e6e]">
+                  <span className="text-[11px] text-[var(--text-4)]">
                     수업요일: {days.map(d => DAY_LABELS[d]).join(', ')}
                   </span>
                 )}
                 {sessionCount != null && (
-                  <span className="text-[11px] text-[#5e5e6e]">
+                  <span className="text-[11px] text-[var(--text-4)]">
                     이번달 {sessionCount}회
                   </span>
                 )}
@@ -486,12 +486,12 @@ export default function TeacherDetailPage({ params }: { params: Promise<{ id: st
                 </div>
                 <div className="text-right">
                   <span className="text-sm font-medium">{s.paid.toLocaleString()}</span>
-                  <span className="text-xs text-[#5e5e6e]"> / {s.fee.toLocaleString()}원</span>
+                  <span className="text-xs text-[var(--text-4)]"> / {s.fee.toLocaleString()}원</span>
                 </div>
               </div>
             ))}
             {students.length === 0 && (
-              <p className="text-xs text-[#5e5e6e] text-center py-3">학생이 없습니다</p>
+              <p className="text-xs text-[var(--text-4)] text-center py-3">학생이 없습니다</p>
             )}
           </div>
         </div>

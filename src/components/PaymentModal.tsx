@@ -165,7 +165,7 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
                           type="button"
                           onClick={() => setEditMethod(val)}
                           className={`px-2 py-1 rounded text-[11px] font-medium border transition-colors ${
-                            editMethod === val ? 'bg-[var(--blue)] text-white border-[#3182f6]' : 'bg-[var(--bg-card)] text-[var(--text-3)] border-gray-300'
+                            editMethod === val ? 'bg-[var(--blue)] text-white border-[var(--blue)]' : 'bg-[var(--bg-card)] text-[var(--text-3)] border-[var(--border)]'
                           }`}
                         >
                           {label}
@@ -179,10 +179,10 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
                         }
                         setEditingMethod(false)
                       }}
-                      className="p-1 text-[var(--paid-text)] hover:text-green-700"
+                      className="p-1.5 bg-[var(--blue-bg)] hover:bg-[var(--blue-dim)] text-[var(--blue)] rounded-full transition-colors"
                       aria-label="저장"
                     >
-                      <Check className="w-4 h-4" />
+                      <Check className="w-3.5 h-3.5" strokeWidth={3} />
                     </button>
                     <button
                       onClick={() => { setEditingMethod(false); setEditMethod(payment.method as PaymentMethod) }}
@@ -218,10 +218,10 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
                         }
                         setEditingDate(false)
                       }}
-                      className="p-1 text-[var(--paid-text)] hover:text-green-700"
+                      className="p-1.5 bg-[var(--blue-bg)] hover:bg-[var(--blue-dim)] text-[var(--blue)] rounded-full transition-colors"
                       aria-label="저장"
                     >
-                      <Check className="w-4 h-4" />
+                      <Check className="w-3.5 h-3.5" strokeWidth={3} />
                     </button>
                     <button
                       onClick={() => { setEditingDate(false); setEditDate(payment.payment_date) }}
@@ -299,7 +299,7 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
 
             <button
               onClick={() => setShowConfirmDelete(true)}
-              className="w-full py-2.5 bg-red-50 border border-red-300 text-red-600 rounded-lg font-medium text-sm hover:bg-red-100 flex items-center justify-center gap-2"
+              className="w-full py-2.5 bg-[var(--unpaid-bg)] border border-[var(--red-dim)] text-[var(--unpaid-text)] rounded-lg font-medium text-sm hover:opacity-80 flex items-center justify-center gap-2 transition-opacity"
             >
               <Trash2 className="w-4 h-4" />
               납부 취소
@@ -307,20 +307,20 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
           </div>
         ) : payment && showConfirmDelete ? (
           <div className="p-5 space-y-4">
-            <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-center">
-              <p className="text-red-800 font-bold">납부 기록을 삭제하시겠습니까?</p>
-              <p className="text-red-600 text-sm mt-1">이 작업은 되돌릴 수 없습니다</p>
+            <div className="bg-[var(--unpaid-bg)] border border-[var(--red-dim)] rounded-xl p-4 text-center">
+              <p className="text-[var(--unpaid-text)] font-bold">납부 기록을 삭제하시겠습니까?</p>
+              <p className="text-[var(--unpaid-text)] text-sm mt-1 opacity-80">이 작업은 되돌릴 수 없습니다</p>
             </div>
             <div className="flex gap-3">
               <button
                 onClick={() => setShowConfirmDelete(false)}
-                className="flex-1 py-2.5 border rounded-lg font-medium text-sm text-[var(--text-3)] hover:bg-[var(--bg-card-hover)]"
+                className="flex-1 py-2.5 border border-[var(--border)] rounded-lg font-medium text-sm text-[var(--text-3)] hover:bg-[var(--bg-card-hover)]"
               >
                 돌아가기
               </button>
               <button
                 onClick={handleDelete}
-                className="flex-1 py-2.5 bg-[var(--red)] text-white rounded-lg font-medium text-sm hover:bg-[#d93a47]"
+                className="flex-1 py-2.5 bg-[var(--unpaid-bg)] border border-[var(--red-dim)] text-[var(--unpaid-text)] rounded-lg font-medium text-sm hover:opacity-80 transition-opacity"
               >
                 삭제
               </button>
@@ -362,7 +362,7 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
                     type="button"
                     onClick={() => setMethod(val)}
                     className={`py-2 rounded-lg text-xs font-medium border transition-colors ${
-                      method === val ? 'bg-[var(--blue)] text-white border-[#3182f6]' : 'bg-[var(--bg-card)] text-[var(--text-3)] border-gray-300 hover:bg-[var(--bg-card-hover)]'
+                      method === val ? 'bg-[var(--blue)] text-white border-[var(--blue)]' : 'bg-[var(--bg-card)] text-[var(--text-3)] border-[var(--border)] hover:bg-[var(--bg-card-hover)]'
                     }`}
                   >
                     {label}
@@ -379,7 +379,7 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
                     type="button"
                     onClick={() => setCashReceipt('issued')}
                     className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-colors ${
-                      cashReceipt === 'issued' ? 'bg-green-600 text-white border-green-600' : 'bg-[var(--bg-card)] text-[var(--text-3)] border-gray-300 hover:bg-[var(--bg-card-hover)]'
+                      cashReceipt === 'issued' ? 'bg-[var(--paid-bg)] text-[var(--paid-text)] border-[var(--paid-text)]' : 'bg-[var(--bg-card)] text-[var(--text-3)] border-[var(--border)] hover:bg-[var(--bg-card-hover)]'
                     }`}
                   >
                     발행완료
@@ -388,7 +388,7 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
                     type="button"
                     onClick={() => setCashReceipt('pending')}
                     className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-colors ${
-                      cashReceipt === 'pending' ? 'bg-orange-500 text-white border-orange-500' : 'bg-[var(--bg-card)] text-[var(--text-3)] border-gray-300 hover:bg-[var(--bg-card-hover)]'
+                      cashReceipt === 'pending' ? 'bg-[var(--scheduled-bg)] text-[var(--scheduled-text)] border-[var(--scheduled-text)]' : 'bg-[var(--bg-card)] text-[var(--text-3)] border-[var(--border)] hover:bg-[var(--bg-card-hover)]'
                     }`}
                   >
                     미발행

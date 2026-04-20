@@ -163,7 +163,7 @@ export default function FinancePage() {
                   <input type="text" value={editName} onChange={e => setEditName(e.target.value)} className="flex-1 px-2.5 py-1.5 bg-[var(--bg-card-hover)] border border-[var(--border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)] focus:bg-[var(--bg-card)]" autoFocus />
                   <input type="number" value={editAmount} onChange={e => setEditAmount(e.target.value)} onKeyDown={e => e.key === 'Enter' && updateExpense(item.id)} className="w-28 px-2.5 py-1.5 bg-[var(--bg-card-hover)] border border-[var(--border)] rounded-lg text-sm text-right focus:outline-none focus:ring-2 focus:ring-[var(--blue)] focus:bg-[var(--bg-card)]" />
                   <span className="text-xs text-[var(--text-4)]">원</span>
-                  <button onClick={() => updateExpense(item.id)} className="p-1.5 text-green-600 hover:bg-[var(--bg-elevated)] rounded-lg"><Check className="w-4 h-4" /></button>
+                  <button onClick={() => updateExpense(item.id)} className="p-1.5 bg-[var(--blue-bg)] hover:bg-[var(--blue-dim)] text-[var(--blue)] rounded-full transition-colors"><Check className="w-3.5 h-3.5" strokeWidth={3} /></button>
                   <button onClick={() => setEditingId(null)} className="p-1.5 text-[var(--text-4)] hover:bg-[var(--bg-elevated)] rounded-lg"><X className="w-4 h-4" /></button>
                 </>
               ) : (
@@ -174,7 +174,7 @@ export default function FinancePage() {
                   <button onClick={() => { setEditingId(item.id); setEditName(item.name); setEditAmount(String(item.amount)) }} className="p-2 -m-1 text-[var(--text-4)] hover:text-[var(--text-3)] transition-colors">
                     <Pencil className="w-4 h-4" />
                   </button>
-                  <button onClick={() => deleteExpense(item.id, item.name)} className="p-2 -m-1 text-[var(--text-4)] hover:text-red-500 transition-colors">
+                  <button onClick={() => deleteExpense(item.id, item.name)} className="p-2 -m-1 text-[var(--text-4)] hover:text-[var(--unpaid-text)] transition-colors">
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </>
@@ -193,7 +193,7 @@ export default function FinancePage() {
           </div>
           <div className="flex items-center gap-2">
             <input type="text" value={newMemo} onChange={e => setNewMemo(e.target.value)} onKeyDown={e => e.key === 'Enter' && addExpense()} placeholder="비고 (선택)" className="flex-1 px-2.5 py-1.5 bg-[var(--bg-card-hover)] border border-[var(--border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)] focus:bg-[var(--bg-card)]" />
-            <button onClick={addExpense} className="p-1.5 text-green-600 hover:bg-[var(--bg-elevated)] rounded-lg"><Check className="w-4 h-4" /></button>
+            <button onClick={addExpense} className="p-1.5 bg-[var(--blue-bg)] hover:bg-[var(--blue-dim)] text-[var(--blue)] rounded-full transition-colors"><Check className="w-3.5 h-3.5" strokeWidth={3} /></button>
             <button onClick={() => { setAddingCategory(null); setNewName(''); setNewAmount(''); setNewMemo('') }} className="p-1.5 text-[var(--text-4)] hover:bg-[var(--bg-elevated)] rounded-lg"><X className="w-4 h-4" /></button>
           </div>
         </div>
@@ -238,13 +238,13 @@ export default function FinancePage() {
             }}
             onKeyDown={e => e.key === 'Enter' && handlePinSubmit()}
             placeholder="••••••"
-            className={`w-full text-center text-2xl tracking-[0.5em] px-4 py-3.5 bg-[var(--bg-card-hover)] border rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--blue)] focus:bg-[var(--bg-card)] transition-all ${pinError ? 'border-red-400 bg-[var(--red-dim)]' : 'border-[var(--border)]'}`}
+            className={`w-full text-center text-2xl tracking-[0.5em] px-4 py-3.5 bg-[var(--bg-card-hover)] border rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--blue)] focus:bg-[var(--bg-card)] transition-all ${pinError ? 'border-[var(--unpaid-text)] bg-[var(--unpaid-bg)]' : 'border-[var(--border)]'}`}
             autoFocus
           />
-          {pinError && <p className="text-xs text-red-500 mt-2">PIN이 올바르지 않습니다</p>}
+          {pinError && <p className="text-xs text-[var(--unpaid-text)] mt-2">PIN이 올바르지 않습니다</p>}
           <button
             onClick={handlePinSubmit}
-            className="w-full mt-4 py-3 rounded-xl text-white font-semibold text-sm bg-[var(--blue)] hover:bg-[#2970dd] transition-colors active:scale-[0.98]"
+            className="w-full mt-4 py-3 rounded-xl text-white font-semibold text-sm bg-[var(--blue)] hover:opacity-90 transition-opacity active:scale-[0.98]"
           >
             확인
           </button>
@@ -277,29 +277,29 @@ export default function FinancePage() {
             </div>
             <div className="flex justify-between py-2.5 border-b border-[var(--border)]">
               <span className="text-[var(--text-3)] font-medium">총 수입 (수납액)</span>
-              <span className="font-bold text-blue-600 tabular-nums">{totalRevenue.toLocaleString()}원</span>
+              <span className="font-bold text-[var(--blue)] tabular-nums">{totalRevenue.toLocaleString()}원</span>
             </div>
             <div className="flex justify-between py-2.5 border-b border-[var(--border)]">
               <span className="text-[var(--text-4)]">선생님 급여 (실지급)</span>
-              <span className="font-medium text-red-500 tabular-nums">-{totalTeacherPay.toLocaleString()}원</span>
+              <span className="font-medium text-[var(--unpaid-text)] tabular-nums">-{totalTeacherPay.toLocaleString()}원</span>
             </div>
             <div className="flex justify-between py-2.5 border-b border-[var(--border)]">
               <span className="text-[var(--text-4)]">원천징수세 (3.3%)</span>
-              <span className="font-medium text-red-500 tabular-nums">-{totalTeacherTax.toLocaleString()}원</span>
+              <span className="font-medium text-[var(--unpaid-text)] tabular-nums">-{totalTeacherTax.toLocaleString()}원</span>
             </div>
             <div className="flex justify-between py-2.5 border-b border-[var(--border)]">
               <span className="text-[var(--text-4)]">고정비</span>
-              <span className="font-medium text-red-500 tabular-nums">-{totalFixed.toLocaleString()}원</span>
+              <span className="font-medium text-[var(--unpaid-text)] tabular-nums">-{totalFixed.toLocaleString()}원</span>
             </div>
             <div className="flex justify-between py-2.5">
               <span className="text-[var(--text-4)]">변동비</span>
-              <span className="font-medium text-red-500 tabular-nums">-{totalVariable.toLocaleString()}원</span>
+              <span className="font-medium text-[var(--unpaid-text)] tabular-nums">-{totalVariable.toLocaleString()}원</span>
             </div>
           </div>
         </div>
         <div className={`flex justify-between items-center py-4 px-5 mt-2 ${profit >= 0 ? 'bg-[var(--blue-bg)]' : 'bg-[var(--red-dim)]'}`}>
           <span className="font-bold text-sm">순이익</span>
-          <span className={`font-bold text-xl tabular-nums ${profit >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+          <span className={`font-bold text-xl tabular-nums ${profit >= 0 ? 'text-[var(--blue)]' : 'text-[var(--unpaid-text)]'}`}>
             {profit >= 0 ? '+' : ''}{profit.toLocaleString()}원
           </span>
         </div>

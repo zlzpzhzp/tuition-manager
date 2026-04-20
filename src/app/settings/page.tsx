@@ -271,17 +271,17 @@ export default function SettingsPage() {
 
   if (loading) return (
     <div className="animate-pulse">
-      <div className="h-6 bg-gray-200 rounded w-32 mb-6"></div>
+      <div className="h-6 bg-[var(--bg-card-hover)] rounded w-32 mb-6"></div>
       <div className="flex gap-2 mb-6">
         <div className="flex-1 h-10 bg-[var(--bg-elevated)] rounded-lg"></div>
-        <div className="h-10 bg-gray-200 rounded-lg w-28"></div>
+        <div className="h-10 bg-[var(--bg-card-hover)] rounded-lg w-28"></div>
       </div>
       <div className="space-y-3">
         {Array.from({ length: 3 }, (_, gi) => (
           <div key={gi} className="bg-[var(--bg-card)] rounded-xl border overflow-hidden">
             <div className="flex items-center gap-2 px-4 py-3">
-              <div className="w-5 h-5 bg-gray-200 rounded"></div>
-              <div className="h-4 bg-gray-200 rounded w-28 flex-1"></div>
+              <div className="w-5 h-5 bg-[var(--bg-card-hover)] rounded"></div>
+              <div className="h-4 bg-[var(--bg-card-hover)] rounded w-28 flex-1"></div>
             </div>
           </div>
         ))}
@@ -364,7 +364,7 @@ export default function SettingsPage() {
                                     <option value="__custom__">직접입력</option>
                                   </select>
                                 )}
-                                <button onClick={() => updateClass(cls.id)} className="shrink-0 text-green-600 p-1" aria-label="저장"><Check className="w-4 h-4" /></button>
+                                <button onClick={() => updateClass(cls.id)} className="shrink-0 p-1.5 bg-[var(--blue-bg)] hover:bg-[var(--blue-dim)] text-[var(--blue)] rounded-full transition-colors" aria-label="저장"><Check className="w-3.5 h-3.5" strokeWidth={3} /></button>
                                 <button onClick={() => setEditingClassId(null)} className="shrink-0 text-[var(--text-4)] p-1" aria-label="취소"><X className="w-4 h-4" /></button>
                               </div>
                               <div className="flex items-center gap-2 pl-1 min-w-0">
@@ -425,7 +425,7 @@ export default function SettingsPage() {
                               <button onClick={() => { setEditingClassId(cls.id); setEditClassName(cls.name); setEditClassFee(String(cls.monthly_fee)); setEditClassSubject(cls.subject || ''); setEditClassDays(parseClassDays(cls.class_days) ?? []); setEditClassTeacherId(cls.teacher_id || '') }} className="p-0.5 sm:p-1 text-[var(--text-4)] hover:text-[var(--text-3)] shrink-0" aria-label="반 수정">
                                 <Pencil className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                               </button>
-                              <button onClick={() => deleteClass(cls.id, cls.name)} className="p-0.5 sm:p-1 text-[var(--text-4)] hover:text-red-500 shrink-0" aria-label="반 삭제">
+                              <button onClick={() => deleteClass(cls.id, cls.name)} className="p-0.5 sm:p-1 text-[var(--text-4)] hover:text-[var(--unpaid-text)] shrink-0" aria-label="반 삭제">
                                 <Trash2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                               </button>
                             </>
@@ -476,7 +476,7 @@ export default function SettingsPage() {
                             <option value="__custom__">직접입력</option>
                           </select>
                         )}
-                        <button onClick={() => addClass()} className="shrink-0 text-green-600 p-1" aria-label="저장"><Check className="w-4 h-4" /></button>
+                        <button onClick={() => addClass()} className="shrink-0 p-1.5 bg-[var(--blue-bg)] hover:bg-[var(--blue-dim)] text-[var(--blue)] rounded-full transition-colors" aria-label="저장"><Check className="w-3.5 h-3.5" strokeWidth={3} /></button>
                         <button onClick={() => { setAddingClassToGrade(null); resetClassForm() }} className="shrink-0 text-[var(--text-4)] p-1" aria-label="취소"><X className="w-4 h-4" /></button>
                       </div>
                       <div className="flex items-center gap-2 pl-1 min-w-0">
@@ -539,7 +539,7 @@ export default function SettingsPage() {
                           <input type="text" value={editTeacherName} onChange={e => setEditTeacherName(e.target.value)} placeholder="이름" className="w-20 px-2 py-1 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)]" autoFocus />
                           <input type="text" value={editTeacherSubject} onChange={e => setEditTeacherSubject(e.target.value)} placeholder="담당 과목" className="w-20 px-2 py-1 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)]" />
                           <input type="tel" value={editTeacherPhone} onChange={e => setEditTeacherPhone(e.target.value)} placeholder="연락처" className="w-28 px-2 py-1 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)]" />
-                          <button onClick={() => updateTeacher(teacher.id)} className="text-green-600 shrink-0" aria-label="저장"><Check className="w-4 h-4" /></button>
+                          <button onClick={() => updateTeacher(teacher.id)} className="shrink-0 p-1.5 bg-[var(--blue-bg)] hover:bg-[var(--blue-dim)] text-[var(--blue)] rounded-full transition-colors" aria-label="저장"><Check className="w-3.5 h-3.5" strokeWidth={3} /></button>
                           <button onClick={() => setEditingTeacherId(null)} className="text-[var(--text-4)] shrink-0" aria-label="취소"><X className="w-4 h-4" /></button>
                         </div>
                       ) : (
@@ -562,7 +562,7 @@ export default function SettingsPage() {
                           <button onClick={() => { setEditingTeacherId(teacher.id); setEditTeacherName(teacher.name); setEditTeacherPhone(teacher.phone || ''); setEditTeacherSubject(teacher.subject || '') }} className="p-1 text-[var(--text-4)] hover:text-[var(--text-3)]" aria-label="수정">
                             <Pencil className="w-3.5 h-3.5" />
                           </button>
-                          <button onClick={() => deleteTeacher(teacher.id, teacher.name)} className="p-1 text-[var(--text-4)] hover:text-red-500" aria-label="삭제">
+                          <button onClick={() => deleteTeacher(teacher.id, teacher.name)} className="p-1 text-[var(--text-4)] hover:text-[var(--unpaid-text)]" aria-label="삭제">
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </>
@@ -577,7 +577,7 @@ export default function SettingsPage() {
                   <input type="text" value={newTeacherName} onChange={e => setNewTeacherName(e.target.value)} onKeyDown={e => e.key === 'Enter' && addTeacher()} placeholder="이름" className="w-20 px-2 py-1.5 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)]" autoFocus />
                   <input type="text" value={newTeacherSubject} onChange={e => setNewTeacherSubject(e.target.value)} onKeyDown={e => e.key === 'Enter' && addTeacher()} placeholder="담당 과목" className="w-20 px-2 py-1.5 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)]" />
                   <input type="tel" value={newTeacherPhone} onChange={e => setNewTeacherPhone(e.target.value)} onKeyDown={e => e.key === 'Enter' && addTeacher()} placeholder="연락처" className="w-28 px-2 py-1.5 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)]" />
-                  <button onClick={addTeacher} className="text-green-600 shrink-0" aria-label="저장"><Check className="w-4 h-4" /></button>
+                  <button onClick={addTeacher} className="shrink-0 p-1.5 bg-[var(--blue-bg)] hover:bg-[var(--blue-dim)] text-[var(--blue)] rounded-full transition-colors" aria-label="저장"><Check className="w-3.5 h-3.5" strokeWidth={3} /></button>
                   <button onClick={() => { setAddingTeacher(false); setNewTeacherName(''); setNewTeacherPhone(''); setNewTeacherSubject('') }} className="text-[var(--text-4)] shrink-0" aria-label="취소"><X className="w-4 h-4" /></button>
                 </div>
               ) : (
@@ -654,7 +654,7 @@ export default function SettingsPage() {
                           }`}
                         >
                           <div className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${
-                            selectedStudents.has(s.id) ? 'bg-[var(--blue)] border-[#3182f6]' : 'border-gray-300'
+                            selectedStudents.has(s.id) ? 'bg-[var(--blue)] border-[var(--blue)]' : 'border-[var(--border)]'
                           }`}>
                             {selectedStudents.has(s.id) && <Check className="w-3 h-3 text-white" />}
                           </div>
