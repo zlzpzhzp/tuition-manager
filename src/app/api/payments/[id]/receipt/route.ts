@@ -19,30 +19,39 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if (file.size > MAX_FILE_SIZE) return NextResponse.json({ error: '5MB 이하만 가능' }, { status: 400 })
   if (!ALLOWED_TYPES.includes(file.type)) return NextResponse.json({ error: 'JPG/PNG/WebP만 가능' }, { status: 400 })
 
-  const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
+  const ext = (file.name.split('.').pop()?.toLowerCase() || 'jpg').replace(/[^a-z0-9]/g, '')
   const fileName = `${id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
-  const buffer = new Uint8Array(await file.arrayBuffer())
 
   const { error: uploadErr } = await supabase.storage
     .from(BUCKET)
-    .upload(fileName, buffer, { contentType: file.type, upsert: false })
-  if (uploadErr) return NextResponse.json({ error: uploadErr.message }, { status: 500 })
+    .upload(fileName, file, { contentType: file.type, upsert: false, cacheControl: '3600' })
+  if (uploadErr) {
+    console.error('[receipt-upload] storage 실패:', { id, fileName, size: file.size, type: file.type, err: uploadErr })
+    return NextResponse.json({ error: `업로드 실패: ${uploadErr.message}` }, { status: 500 })
+  }
 
   const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(fileName)
   const url = urlData.publicUrl
 
-  const { data: existing } = await supabase
+  const { data: existing, error: selectErr } = await supabase
     .from('tuition_payments')
     .select('receipt_images')
     .eq('id', id)
     .single()
+  if (selectErr) {
+    console.error('[receipt-upload] select 실패:', { id, err: selectErr })
+    return NextResponse.json({ error: `DB 조회 실패: ${selectErr.message}` }, { status: 500 })
+  }
   const next = [...((existing?.receipt_images as string[] | null) ?? []), url]
 
   const { error: updateErr } = await supabase
     .from('tuition_payments')
     .update({ receipt_images: next })
     .eq('id', id)
-  if (updateErr) return NextResponse.json({ error: updateErr.message }, { status: 500 })
+  if (updateErr) {
+    console.error('[receipt-upload] update 실패:', { id, err: updateErr })
+    return NextResponse.json({ error: `DB 업데이트 실패: ${updateErr.message}` }, { status: 500 })
+  }
 
   writeAuditLog('payment', id, 'update', `영수증 사진 추가 (${next.length}장)`, { added: url })
   return NextResponse.json({ url, receipt_images: next })

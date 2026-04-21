@@ -30,6 +30,11 @@
   - src/types/index.ts Payment.receipt_images 타입, src/app/api/payments/route.ts GET select 컬럼 추가
   - src/components/PaymentModal.tsx: 뷰모드 카드영수증 섹션 신설 (Camera/ImagePlus 둥근버튼 2개 + 4열 썸네일 그리드 + 풀스크린 AnimatePresence 뷰어 + 삭제버튼), 파일 input capture="environment"
   - 빌드+로컬:3001 재시작+커밋 53c2a24+배포 dpl_3N8yvEsFXDdAGQxvzvAVamJa1Qkb READY
+- msg 1300: "영수증 사진찍었더니" + 스크린샷 → "The connection to the database timed out" 에러
+  - 스토리지 정책(anon INSERT/DELETE), 버킷(public=t) 모두 정상. 서버에서 직접 curl 업로드는 1.3s 성공
+  - 빌드(12:28) < commit 53c2a24(12:31) 타임스탬프로 봤을 때 실제로는 커밋시점에 이미 receipt route 포함된 상태로 빌드됨 (src 파일 12:26에 존재)
+  - 원인 추정: supabase.storage.upload()에 Uint8Array 전달 → 일부 케이스에서 연결 타임아웃 유발
+  - 수정: File 직접 전달, cacheControl 추가, uploadErr/selectErr/updateErr 각각 console.error + 구체적 에러메시지 반환 (진단용)
 
 ### 2026-04-20 밤 — 전원납부 배지 + 학생 추가 순서 + 급여명세서 정렬 (msg 1183/1192/1193)
 
