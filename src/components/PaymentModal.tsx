@@ -2,12 +2,13 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { createPortal } from 'react-dom'
-import { motion } from 'framer-motion'
-import { X, Trash2, AlertTriangle, Check } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { X, Trash2, AlertTriangle, Check, Camera, ImagePlus, Loader2 } from 'lucide-react'
 import type { Payment, PaymentMethod } from '@/types'
 import { PAYMENT_METHOD_LABELS } from '@/types'
 import { METHOD_OPTIONS } from '@/lib/constants'
 import { getTodayString } from '@/lib/utils'
+import { compressImage } from '@/lib/compressImage'
 
 interface Props {
   payment?: Payment | null
@@ -43,6 +44,54 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
   const [editMethod, setEditMethod] = useState<PaymentMethod>(payment?.method as PaymentMethod ?? prevMethod ?? 'remote')
   const modalRef = useRef<HTMLDivElement>(null)
   const needsCashReceipt = method === 'transfer' || method === 'cash'
+
+  const [receiptImages, setReceiptImages] = useState<string[]>(payment?.receipt_images ?? [])
+  const [uploading, setUploading] = useState(false)
+  const [viewImage, setViewImage] = useState<string | null>(null)
+  const cameraInputRef = useRef<HTMLInputElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleReceiptFiles = useCallback(async (files: FileList | null) => {
+    if (!files || files.length === 0 || !payment?.id) return
+    setUploading(true)
+    try {
+      for (const file of Array.from(files)) {
+        const dataUrl = await compressImage(file, 1200, 0.8)
+        const blob = await (await fetch(dataUrl)).blob()
+        const fd = new FormData()
+        fd.append('file', new File([blob], `receipt-${Date.now()}.jpg`, { type: 'image/jpeg' }))
+        const res = await fetch(`/api/payments/${payment.id}/receipt`, { method: 'POST', body: fd })
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ error: '업로드 실패' }))
+          alert(err.error || '업로드 실패')
+          continue
+        }
+        const { receipt_images } = await res.json()
+        setReceiptImages(receipt_images)
+      }
+    } finally {
+      setUploading(false)
+      if (cameraInputRef.current) cameraInputRef.current.value = ''
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }, [payment?.id])
+
+  const handleReceiptRemove = useCallback(async (url: string) => {
+    if (!payment?.id) return
+    if (!confirm('이 영수증 사진을 삭제할까요?')) return
+    const res = await fetch(`/api/payments/${payment.id}/receipt`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url }),
+    })
+    if (res.ok) {
+      const { receipt_images } = await res.json()
+      setReceiptImages(receipt_images)
+      setViewImage(null)
+    } else {
+      alert('삭제 실패')
+    }
+  }, [payment?.id])
 
   useEffect(() => {
     if (!needsCashReceipt) {
@@ -252,6 +301,70 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
               )}
             </div>
 
+            {/* 영수증 사진 — 현장 카드결제 증빙 */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-[var(--text-2)]">영수증 사진</span>
+                <div className="flex gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => cameraInputRef.current?.click()}
+                    disabled={uploading}
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-[var(--blue-dim)] text-[var(--blue)] hover:opacity-80 disabled:opacity-50"
+                    aria-label="영수증 촬영"
+                  >
+                    {uploading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Camera className="w-3 h-3" />}
+                    촬영
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-[var(--orange-dim)] text-[var(--orange)] hover:opacity-80 disabled:opacity-50"
+                    aria-label="영수증 업로드"
+                  >
+                    {uploading ? <Loader2 className="w-3 h-3 animate-spin" /> : <ImagePlus className="w-3 h-3" />}
+                    업로드
+                  </button>
+                </div>
+              </div>
+              <input
+                ref={cameraInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                hidden
+                onChange={e => handleReceiptFiles(e.target.files)}
+              />
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                hidden
+                onChange={e => handleReceiptFiles(e.target.files)}
+              />
+              {receiptImages.length === 0 ? (
+                <div className="text-center py-4 text-xs text-[var(--text-4)] bg-[var(--bg-elevated)] rounded-lg border border-dashed border-[var(--border)]">
+                  촬영 또는 업로드해서 영수증을 첨부하세요
+                </div>
+              ) : (
+                <div className="grid grid-cols-4 gap-2">
+                  {receiptImages.map(url => (
+                    <button
+                      key={url}
+                      type="button"
+                      onClick={() => setViewImage(url)}
+                      className="relative aspect-square overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--bg-elevated)] hover:opacity-90 transition-opacity"
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={url} alt="영수증" className="w-full h-full object-cover" />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <div className="flex justify-between items-center py-2">
               <span className="text-sm text-[var(--text-4)] shrink-0">비고</span>
               {editingMemo ? (
@@ -437,6 +550,43 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
           </form>
         )}
       </motion.div>
+
+      {/* 영수증 풀스크린 뷰어 */}
+      <AnimatePresence>
+        {viewImage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="fixed inset-0 bg-black/90 z-[60] flex items-center justify-center"
+            onClick={() => setViewImage(null)}
+          >
+            <button
+              onClick={e => { e.stopPropagation(); setViewImage(null) }}
+              className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 text-white rounded-full"
+              aria-label="닫기"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <button
+              onClick={e => { e.stopPropagation(); if (viewImage) handleReceiptRemove(viewImage) }}
+              className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-4 py-2 bg-[var(--unpaid-bg)] text-[var(--unpaid-text)] rounded-full font-medium text-sm shadow-lg hover:opacity-90"
+              aria-label="영수증 삭제"
+            >
+              <Trash2 className="w-4 h-4" />
+              삭제
+            </button>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={viewImage}
+              alt="영수증"
+              className="max-w-[95vw] max-h-[90vh] object-contain"
+              onClick={e => e.stopPropagation()}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>,
     document.body
   )

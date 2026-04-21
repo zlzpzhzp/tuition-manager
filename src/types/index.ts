@@ -63,6 +63,7 @@ export interface Payment {
   payment_date: string
   billing_month: string
   cash_receipt?: 'issued' | 'pending' | null
+  receipt_images?: string[]
   memo?: string
   created_at: string
   student?: Student
