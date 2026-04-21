@@ -59,7 +59,7 @@ export default function QuickBillSendModal({ students, grades, billingMonth, onC
   // 정규/비정규 · 학생 변경 시 제목/내용 기본값 자동 세팅 (사용자 편집 전까지)
   const autoTitle = useMemo(() => {
     if (!selected) return ''
-    if (isRegular) return getRegularTuitionTitle(selected.class?.subject ?? null, billingMonth)
+    if (isRegular) return getRegularTuitionTitle(selected.class?.subject ?? null, billingMonth, selected.class?.name ?? null)
     return ''
   }, [selected, isRegular, billingMonth])
   const autoMessage = isRegular ? REGULAR_TUITION_MESSAGE : ''

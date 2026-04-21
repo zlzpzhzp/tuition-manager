@@ -66,19 +66,39 @@
   - 기존 prev memo 라인과 동일 포맷 ("지난달: ...")
   - 커밋 8db9971, 배포 완료
 
-### 2026-04-21 00:32 — 앱 아이콘 리디자인 (msg 1207, DM 크레스트 탈피)
+### 2026-04-21 10:19~ — msg 1226 정규 결제선생 발송에 반이름 포함 (진행 중)
+
+- msg 1226 (초능력자님): "정규 결제선생 발송할때 각자 반이름 넣어서 보내는거 좋을듯"
+- 현재 productName: `디엠수학 4월 정규원비` (cls.subject + month)
+- 변경안: `디엠수학 고2A 4월 정규원비` (subject + className + month)
+- 구현:
+  - src/lib/billing-title.ts `getRegularTuitionTitle(subject, billingMonth, className?)` — className 3번째 선택 인자 추가 (있으면 삽입, 없으면 기존 포맷 유지)
+  - src/app/payments/page.tsx sendOneBill: `getRegularTuitionTitle(cls.subject, selectedMonth, cls.name)` 전달
+  - billSendTarget state + BillSendModal props에 className 추가 필요
+- TODO: payments 페이지 단건 발송 버튼(line 1780, 1910), BillSendModal.tsx props+defaultTitle 갱신, 빌드+재시작+커밋+배포
+
+### 2026-04-21 00:45~01:20 — 아이콘 2차 이터레이션 + 확정 + 배포 (msg 1211~1224)
+
+- msg 1211 (초능력자님): "구려 다음거" (1차 아이콘 리젝)
+- msg 1214 (초능력자님): "오 좀낫네 또 있어?" (막대그래프 방향 수용 + 추가 요청)
+- 2차 4개 옵션 /tmp/icon-options/ 생성:
+  - opt-a-gold: 블랙 차콜 + 골드 그라디언트 ₩ + 골드 보더
+  - opt-b-sunset: 퍼플→핑크→오렌지 + 화이트 코인 + 핑크 ₩
+  - opt-c-mono: 코발트 블루 + 굵은 화이트 ₩ + 업 화살표 액센트
+  - opt-d-coin: 티얼 배경 + 스택 3D 코인 + 브라운 ₩
+- msg 1220/1222: "이게 좋은듯" / "아 너 답장은 못읽는구나 4개 전에준거" → 4개 옵션 아닌 그 전의 막대그래프 아이콘(현재 icon.svg) 확정
+- 현재 icon.svg 구성:
+  - 차콜 그라디언트 배경 (#1e293b → #0b1226), rx=112
+  - 3개 상승 막대: cyan(#0891b2→#22d3ee) / emerald(#059669→#34d399) / amber(#d97706→#fbbf24)
+  - 최상위 막대 위 골드 성취 도트 (3-layer: 글로우/코어/하이라이트)
+  - 베이스라인 그리드 + 서브틀 이너 보더
+- 배포: 5개 PNG(512/192/180/32/favicon) 생성 완료 상태, 커밋 7d0fcff "design: 앱 아이콘 재디자인 — 상승 막대그래프 + 성취 도트", push, Vercel API dpl_CDyudt, 로컬 :3001 재시작(PID 3819649)
+
+### 2026-04-21 00:32 — 앱 아이콘 리디자인 1차 (msg 1207, DM 크레스트 탈피)
 
 - msg 1207: "야 아이콘좀 멋있게 만들어봐라 우리앱 우리 로고에서 좀 벗어나보자"
-- 현재 icon-512x512.png: DM 원형 크레스트 + WONBI MANAGER + SINCE 2014 (너무 브랜드 종속적)
-- 현재 icon.svg: 네이비 박스에 "W" + "원비" 텍스트 (단조로움)
-- 목표: 핀테크/토스 스타일의 모던한 전용 아이콘 (DM 크레스트 없이, 원비 앱 정체성 살리기)
-- 디자인:
-  - 512 rounded square, rx=112 (iOS 느낌)
-  - 배경 그라디언트: #0f1547 → #1e2d6f → #2e3fa0 (브랜드 네이비 유지)
-  - 서브틀 이너링 (ffffff opacity 0.1)
-  - 뒤쪽 트렌드라인: 에메랄드 그라디언트 (#10b981 → #6ee7b7), 좌하→우상 Q+T 곡선, 끝점 dot
-  - 원화 심볼 ₩: path 기반 (폰트 독립), 흰색→크림 그라디언트 스트로크 (width 38), 가로바 2줄 (width 18)
-- 변환: imagemagick convert → rsvg-convert 내부 delegate로 512/192/apple-touch/favicon-32 생성 예정
+- 1차: 네이비 + ₩ path + 에메랄드 트렌드라인 (commit 8f64415)
+- msg 1211 리젝 → 2차 이터레이션으로 (위)
 
 ### 2026-04-20 — UI 패턴 하베스트 (amnesia Task K, msg 3153, 사일런트)
 - 목적: 원비 완성 UI 패턴을 `/root/.claude/skills/ui-patterns-lab/patterns/`에 md로 추출 (재사용 가능하도록)

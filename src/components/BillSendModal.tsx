@@ -12,6 +12,7 @@ interface Props {
   phone: string
   amount: number
   subject: string | null
+  className?: string | null
   billingMonth: string
   onClose: () => void
   onSuccess?: () => void
@@ -29,8 +30,8 @@ function buildAmountAdjustNote(original: number, modified: number): string {
   return `${todayKstLabel()} 금액 수정 발송 (기본 ${original.toLocaleString()}원 → ${modified.toLocaleString()}원)`
 }
 
-export default function BillSendModal({ studentName, studentId, phone, amount, subject, billingMonth, onClose, onSuccess }: Props) {
-  const defaultTitle = getRegularTuitionTitle(subject, billingMonth)
+export default function BillSendModal({ studentName, studentId, phone, amount, subject, className, billingMonth, onClose, onSuccess }: Props) {
+  const defaultTitle = getRegularTuitionTitle(subject, billingMonth, className)
   const defaultMessage = REGULAR_TUITION_MESSAGE
   const [title, setTitle] = useState(defaultTitle)
   const [messageContent, setMessageContent] = useState(defaultMessage)
