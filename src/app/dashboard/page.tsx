@@ -257,24 +257,40 @@ export default function DashboardPage() {
       {grades.length > 0 && (() => {
         const classData = grades.flatMap(g =>
           g.classes.map(c => ({
-            name: c.name, count: getActiveStudents(c.students ?? [], currentMonth).filter(s => !s.withdrawal_date).length,
+            name: c.name,
+            grade: g.name,
+            subject: c.subject ?? null,
+            count: getActiveStudents(c.students ?? [], currentMonth).filter(s => !s.withdrawal_date).length,
           }))
         ).filter(c => c.count > 0)
         const maxCount = Math.max(...classData.map(c => c.count), 1)
+        const subjectColor = (s: string | null) =>
+          s === '수학' ? 'var(--blue)' : s === '영어' ? 'var(--green)' : 'var(--text-4)'
         return (
           <FadeInUp delay={0.3} className="card p-5">
             <h2 className="text-[17px] font-bold text-[var(--text-1)] mb-5">반별 인원</h2>
             <div className="space-y-3">
               {classData.map((c, i) => (
                 <div key={i} className="flex items-center gap-3">
-                  <div className="w-16 text-[13px] text-[var(--text-3)] font-medium truncate shrink-0">{c.name}</div>
+                  <div className="w-24 shrink-0 min-w-0">
+                    <div className="text-[10px] font-medium leading-tight truncate flex items-center gap-1">
+                      <span className="text-[var(--text-4)]">{c.grade}</span>
+                      {c.subject && (
+                        <>
+                          <span className="text-[var(--text-4)] opacity-50">·</span>
+                          <span style={{ color: subjectColor(c.subject) }}>{c.subject}</span>
+                        </>
+                      )}
+                    </div>
+                    <div className="text-[13px] text-[var(--text-2)] font-semibold leading-tight truncate">{c.name}</div>
+                  </div>
                   <div className="flex-1 h-8 bg-[var(--bg-card-hover)] rounded-xl overflow-hidden relative">
                     <motion.div
                       className="h-full rounded-xl"
                       initial={{ width: 0 }}
                       animate={{ width: `${Math.max((c.count / maxCount) * 100, 10)}%` }}
                       transition={{ type: 'spring', stiffness: 80, damping: 20, delay: i * 0.05 }}
-                      style={{ background: 'var(--blue)' }}
+                      style={{ background: subjectColor(c.subject) }}
                     />
                     <span className="absolute inset-y-0 right-3 flex items-center text-[13px] font-bold text-[var(--text-3)]">{c.count}</span>
                   </div>
