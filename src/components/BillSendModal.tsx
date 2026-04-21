@@ -326,7 +326,7 @@ export default function BillSendModal({ studentName, studentId, phone, amount, s
                   영업시간 외 요청이라 <strong>{scheduledKst} KST</strong>에 자동으로 발송됩니다.
                 </p>
                 <p className="text-[11px] text-[var(--text-4)] mt-1">
-                  업무시간: 평일 11:00 ~ 22:00
+                  업무시간: 평일 11:00~22:00 · 토 11:00~20:00
                 </p>
               </div>
             </div>

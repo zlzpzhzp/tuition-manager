@@ -6,7 +6,7 @@
     },
     {
       "path": "/api/cron/send-queued",
-      "schedule": "0 2 * * 1-5"
+      "schedule": "0 2 * * 1-6"
     }
   ]
 }

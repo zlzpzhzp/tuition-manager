@@ -244,7 +244,7 @@ export default function QuickBillSendModal({ students, grades, billingMonth, onC
                 영업시간 외 요청이라<br/>
                 <strong>{scheduledKst} KST</strong>에 자동 발송됩니다.
               </p>
-              <p className="text-[11px] text-[var(--text-4)]">업무시간: 평일 11:00 ~ 22:00</p>
+              <p className="text-[11px] text-[var(--text-4)]">업무시간: 평일 11:00~22:00 · 토 11:00~20:00</p>
             </div>
           ) : (
             <>

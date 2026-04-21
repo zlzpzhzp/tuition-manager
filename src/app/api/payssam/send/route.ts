@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 영업시간(평일 11:00~22:00 KST) 외 요청 → 큐에 예약
+    // 영업시간(평일 11:00~22:00, 토 11:00~20:00 KST) 외 요청 → 큐에 예약
     if (!isBusinessHourKst()) {
       const scheduledAt = nextBusinessSlot()
       const resolvedProductName = productName || `${billingMonth.replace('-', '년 ')}월 수업료`
