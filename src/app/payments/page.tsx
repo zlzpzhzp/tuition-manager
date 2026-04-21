@@ -1768,7 +1768,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                                 <span className="text-[11px] text-[var(--text-4)] mr-1 tabular-nums">{idx + 1}.</span>
                                 <span className={`text-sm font-medium ${nameHighlight} ${withdrawn ? 'line-through decoration-red-500 decoration-2 text-[var(--text-4)]' : ''}`} style={tornTapeStyle}>{student.name}</span>
                                 {(student.electives ?? []).length > 0 && (
-                                  <span className="text-[11px] text-[var(--text-4)] ml-1.5">+{(student.electives ?? []).join('/')}</span>
+                                  <span className="text-[11px] text-[var(--text-4)] ml-1.5">{(student.electives ?? []).join('/')}</span>
                                 )}
                                 {!withdrawn && !student.parent_phone && (
                                   <span className="text-[9px] ml-1 px-1 py-0.5 rounded-full bg-[var(--orange-dim)] text-[var(--orange)] font-bold" title="보호자 연락처 미등록">📵</span>
