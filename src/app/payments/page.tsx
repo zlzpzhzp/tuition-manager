@@ -241,6 +241,8 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
   const [editMemoColor, setEditMemoColor] = useState<string | null>(null)
   const [editPayMemoValue, setEditPayMemoValue] = useState('')
   const [bulkSaving, setBulkSaving] = useState(false)
+  const [bulkToolbarTop, setBulkToolbarTop] = useState(8)
+  const bulkToolbarRef = useRef<HTMLDivElement>(null)
   const touchRef = useRef<{
     startX: number; startY: number; currentX: number
     id: string; el: HTMLElement
@@ -777,6 +779,37 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
     return 0
   }, [selectedMemoIds, swipeOpenPayId])
 
+  // 다중선택 툴바를 제일 위 선택 학생 행 위에 플로팅 — 아래쪽에서 선택해도 가깝게 뜨도록
+  useLayoutEffect(() => {
+    if (selectedMemoIds.size < 2) return
+    let rafId: number | null = null
+    const update = () => {
+      rafId = null
+      let topY = Infinity
+      for (const id of selectedMemoIds) {
+        const el = document.querySelector(`[data-student-row="${id}"]`) as HTMLElement | null
+        if (!el) continue
+        const rect = el.getBoundingClientRect()
+        if (rect.top < topY) topY = rect.top
+      }
+      if (!isFinite(topY)) return
+      const h = bulkToolbarRef.current?.offsetHeight ?? 50
+      setBulkToolbarTop(Math.max(topY - h - 6, 8))
+    }
+    const schedule = () => {
+      if (rafId !== null) return
+      rafId = requestAnimationFrame(update)
+    }
+    update()
+    window.addEventListener('scroll', schedule, { passive: true })
+    window.addEventListener('resize', schedule)
+    return () => {
+      if (rafId !== null) cancelAnimationFrame(rafId)
+      window.removeEventListener('scroll', schedule)
+      window.removeEventListener('resize', schedule)
+    }
+  }, [selectedMemoIds])
+
   const handleTouchStart = (e: React.TouchEvent, studentId: string) => {
     if (expandedStudentId) return
     const touch = e.touches[0]
@@ -1133,16 +1166,18 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
 
   return (
     <div ref={containerRef} onClick={() => { if (selectedMemoIds.size > 0 || swipeOpenPayId) closeSwipeEdit() }}>
-      {/* 다중 선택 상단 툴바 — 2개 이상 선택 시 고정 */}
+      {/* 다중 선택 툴바 — 제일 위 선택된 학생 행 위에 플로팅 */}
       <AnimatePresence>
         {selectedMemoIds.size >= 2 && (
           <motion.div
             key="bulk-toolbar"
-            initial={{ y: -80, opacity: 0 }}
+            ref={bulkToolbarRef}
+            initial={{ y: -20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            exit={{ y: -80, opacity: 0 }}
+            exit={{ y: -20, opacity: 0 }}
             transition={{ type: 'spring', stiffness: 420, damping: 34, mass: 0.8 }}
-            className="fixed top-0 left-0 right-0 z-50 bg-[var(--bg-elevated)] border-b border-[var(--border)] shadow-lg"
+            className="fixed left-2 right-2 z-50 bg-[var(--bg-elevated)] border border-[var(--border)] rounded-xl shadow-xl"
+            style={{ top: bulkToolbarTop }}
             onClick={e => e.stopPropagation()}
           >
             <div className="max-w-3xl mx-auto px-3 py-2 flex items-center gap-2">
