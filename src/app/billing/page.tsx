@@ -274,12 +274,12 @@ export default function BillingPage() {
     return { overdue, cancelled, noPhone }
   }, [bills, allVisibleStudents, studentById, weekFilter, nowTs])
 
-  // 최근 활동 (최대 30건)
+  // 발송 수납 전체 내역 (내부 스크롤 영역)
   const recentActivity = useMemo(() => {
     const scoped = weekFilter === 'all'
       ? bills
       : bills.filter(b => studentById.has(b.student_id))
-    return scoped.slice(0, 30)
+    return scoped
   }, [bills, weekFilter, studentById])
 
   // ─── Pull-to-refresh ──────────────────────────────────────
@@ -572,11 +572,14 @@ export default function BillingPage() {
           </div>
         )}
 
-        {/* 최근 활동 피드 */}
+        {/* 발송 수납 내역 — 내부 스크롤 */}
         {recentActivity.length > 0 && (
           <div className="card p-4 mb-3">
-            <h2 className="text-sm font-semibold text-[var(--text-2)] mb-3">최근 활동</h2>
-            <div className="space-y-1.5">
+            <div className="flex items-baseline justify-between mb-3">
+              <h2 className="text-sm font-semibold text-[var(--text-2)]">발송 수납</h2>
+              <span className="text-[10px] text-[var(--text-4)] tabular-nums">{recentActivity.length}건</span>
+            </div>
+            <div className="space-y-1.5 max-h-[420px] overflow-y-auto pr-1 -mr-1">
               {recentActivity.map(bill => {
                 const s = studentById.get(bill.student_id)
                 const meta = studentMetaById.get(bill.student_id)
