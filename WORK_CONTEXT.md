@@ -23,6 +23,13 @@
 - msg 1274: "결제선생 탭에서 최근활동이라 하지말고 발송 수납 이라고 해가지 계속해서 모든내역 열람할수 있도록" → billing/page.tsx recentActivity slice(30) 제거, 섹션명 "최근 활동"→"발송 수납", max-h-[420px] overflow-y-auto 내부 스크롤 (c2c1716 배포)
 - msg 1277/1282/1284: "수동 결제완료 표시 1시간 후 청구서 파기 (착각 입력 복구 버퍼)" → /api/payments POST destroyBill 즉시 호출 제거, tuition_bill_queue send_type='destroy' scheduled_at=now+1h 큐잉. /api/payments/[id] DELETE는 payload->>paymentId 매칭 pending destroy를 cancelled 처리. 실행: cron/send-queued 'destroy' 분기 + src/lib/deferredDestroy.ts processOverdueDestroys + /api/billing/queue GET에서 fire-and-forget lazy 호출 (Vercel Hobby cron 일1회 제약 보완). project_delayed_destroy.md 메모리. (f55e568 배포 완료)
 - msg 1288/1289: "다중선택 색칠 툴바가 제일 위 선택된 학생 위에 플로팅 (아래서 선택하면 손 멀어)" → payments/page.tsx bulkToolbarTop state + useLayoutEffect: 선택된 행들 data-student-row 쿼리해서 최소 rect.top 찾음 → `Math.max(topY - h - 6, 8)` 로 클램프. 스크롤/리사이즈 rAF 스케줄링. 툴바 fixed left-2 right-2 rounded-xl shadow-xl로 변경. (2fa0824 배포 완료)
+- msg 1294/1296: "현장 카드결제 영수증 증빙 — 카드결제 기입 후 파란카드아이콘 터치하면 촬영/업로드" → 영수증 사진 첨부 기능
+  - DB: tuition_payments.receipt_images (text[]) 추가, storage.buckets 'tuition-receipts' + public read + anon write/update/delete 정책
+  - src/lib/compressImage.ts (워라에서 이식, maxWidth=1200/quality=0.8 사용)
+  - src/app/api/payments/[id]/receipt/route.ts (POST 업로드 / DELETE URL 기준 제거 + Storage 객체 제거)
+  - src/types/index.ts Payment.receipt_images 타입, src/app/api/payments/route.ts GET select 컬럼 추가
+  - src/components/PaymentModal.tsx: 뷰모드 카드영수증 섹션 신설 (Camera/ImagePlus 둥근버튼 2개 + 4열 썸네일 그리드 + 풀스크린 AnimatePresence 뷰어 + 삭제버튼), 파일 input capture="environment"
+  - 빌드+로컬:3001 재시작+커밋 53c2a24+배포 dpl_3N8yvEsFXDdAGQxvzvAVamJa1Qkb READY
 
 ### 2026-04-20 밤 — 전원납부 배지 + 학생 추가 순서 + 급여명세서 정렬 (msg 1183/1192/1193)
 
