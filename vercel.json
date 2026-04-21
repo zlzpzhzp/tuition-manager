@@ -1,10 +1,6 @@
 {
   "crons": [
     {
-      "path": "/api/cron/resend",
-      "schedule": "0 6 * * *"
-    },
-    {
       "path": "/api/cron/send-queued",
       "schedule": "0 2 * * 1-6"
     }
