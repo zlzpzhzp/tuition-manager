@@ -5,6 +5,28 @@
 
 ## 현재 상태: 진행 중
 
+### 2026-04-21 — 예약발송 감시 + BillActionModal 재발송 버튼 primary (msg 1253~1272)
+
+**세션 흐름 (속기사 모드)**
+
+- msg 1245: "결제가능 시간대에 진입하면 발송되면서 아이콘 바뀌는거지?" → cron 동작 재확인
+- msg 1246: "아이콘에서 시계모양만 오른쪽 아래로 옮기자" → payments/page.tsx 시계 배지 top-right → bottom-right. formatKstFromIso 누락 버그 수정 (formatKst로 교체)
+- msg 1250: "대쉬보드에 반별인원 그래프 과목이랑 학년 없으면 못알아봄" → dashboard/page.tsx 반별 차트에 학년·과목 라벨 + 과목별 색상 막대 (수학=blue, 영어=green)
+- msg 1253: "야 11시 됐는데 왜 오세정 발송 안됐지?" → 11:00 KST 예약발송 실패 조사. tuition_bill_queue status='failed' 1건 (오세정). 동일 페이로드 직접 API 호출하니 code=0000 정상 → 결제선생 일시 오류 확정. UI 수동 재발송도 성공. project_scheduled_send_watch.md 메모리 저장
+- msg 1255: "엥 뭔말이야 앱에서 등록해야돼? 학부모?" → 학부모 등록 불필요 사과. 번호만으로 카톡 발송 OK
+- msg 1259: "결제선생 앱에서 보낼때는 발급처가 주식회사 디엠교육 으로 보냈는데 지금 우리앱으로 보내면 디엠학원" → payssam.ts bill_issuer 기본값 '디엠학원'→'주식회사 디엠교육' 변경
+- msg 1262: "예약발송 신경써야겠네" → project 메모리 저장
+- msg 1266: "결제선생이 구분할수 있어?" → API 요청 방식 동일, 구분불가 답변
+- msg 1268~1270: "그냥 보내니까 또 잘 보내지네" → 일시 오류 확정
+- msg 1272: "재발송을 수동으로 하기로햇으니 발송상태에서 터치했을때 재발송 버튼이 메인으로 있어야할듯" → BillActionModal 재발송 primary 버튼 추가 작업 중
+- msg 1273: "다른결제수단으로 결제가 되었다고 표시하면 자동으로 청구서 파기가 되도록 설정되어있나?" → src/app/api/payments/route.ts POST에 이미 구현되어있음 (68~97줄). 비-payssam 결제 저장시 해당 월 sent bill 자동 destroyBill + status='destroyed'
+
+**현재 작업 (msg 1272 in_progress):**
+- [x] /api/payssam/resend/route.ts 신설 (resendBill /if/bill/resend 호출, bill_id 유지)
+- [ ] cron/send-queued에 send_type='resend' 처리 추가
+- [ ] BillActionModal.tsx: 'confirming-resend' 상태 + PRIMARY blue "재발송(카톡 다시 보내기)" Bell 아이콘 버튼 + 기존 "파기 후 재발송" 2차색으로 강등
+- [ ] 빌드 + 로컬 :3001 재시작 + commit/push + Vercel API 배포 + 텔레그램 보고
+
 ### 2026-04-20 밤 — 전원납부 배지 + 학생 추가 순서 + 급여명세서 정렬 (msg 1183/1192/1193)
 
 **세션 흐름 (속기사 모드 — 텔레그램 전문)**

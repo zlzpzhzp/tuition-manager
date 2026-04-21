@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { motion } from 'framer-motion'
-import { X, Trash2, Undo2, AlertTriangle, Check, Loader2, RefreshCw, Split } from 'lucide-react'
+import { X, Trash2, Undo2, AlertTriangle, Check, Loader2, RefreshCw, Split, Bell } from 'lucide-react'
 
 interface Props {
   studentId: string
@@ -17,7 +17,7 @@ interface Props {
   onSuccess?: () => void
 }
 
-type ActionState = 'idle' | 'confirming-destroy' | 'confirming-cancel' | 'confirming-reissue' | 'configuring-split' | 'submitting' | 'success' | 'error'
+type ActionState = 'idle' | 'confirming-destroy' | 'confirming-cancel' | 'confirming-reissue' | 'confirming-resend' | 'configuring-split' | 'submitting' | 'success' | 'error'
 
 export default function BillActionModal({ studentId, studentName, phone, billId, amount, status, billingMonth, onClose, onSuccess }: Props) {
   const [state, setState] = useState<ActionState>('idle')
@@ -43,13 +43,14 @@ export default function BillActionModal({ studentId, studentName, phone, billId,
     })
   }, [parts])
 
-  const submit = useCallback(async (kind: 'destroy' | 'cancel' | 'reissue') => {
+  const submit = useCallback(async (kind: 'destroy' | 'cancel' | 'reissue' | 'resend') => {
     setState('submitting')
     setErrorMsg('')
     try {
       const url =
         kind === 'destroy' ? '/api/payssam/destroy' :
         kind === 'cancel' ? '/api/payssam/cancel' :
+        kind === 'resend' ? '/api/payssam/resend' :
         '/api/payssam/reissue'
       const body = { billId, amount }
       const res = await fetch(url, {
@@ -58,6 +59,12 @@ export default function BillActionModal({ studentId, studentName, phone, billId,
         body: JSON.stringify(body),
       })
       const data = await res.json()
+      if (res.ok && data.code === 'SCHEDULED') {
+        setSuccessLabel(`영업시간 외 → ${data.scheduled_at_kst} KST 예약 재발송 등록됨`)
+        setState('success')
+        setTimeout(() => { onSuccess?.(); onClose() }, 3500)
+        return
+      }
       if (!res.ok || data.code !== '0000') {
         setErrorMsg(data.msg || data.error || '처리에 실패했습니다')
         setState('error')
@@ -66,6 +73,7 @@ export default function BillActionModal({ studentId, studentName, phone, billId,
       setSuccessLabel(
         kind === 'destroy' ? '청구서가 파기되었습니다' :
         kind === 'cancel' ? '결제가 취소되었습니다' :
+        kind === 'resend' ? '카톡 알림을 다시 보냈습니다' :
         '새 청구서가 발송되었습니다'
       )
       setState('success')
@@ -230,7 +238,7 @@ export default function BillActionModal({ studentId, studentName, phone, billId,
             </div>
           )}
 
-          {(state === 'confirming-destroy' || state === 'confirming-cancel' || state === 'confirming-reissue') && (
+          {(state === 'confirming-destroy' || state === 'confirming-cancel' || state === 'confirming-reissue' || state === 'confirming-resend') && (
             <div className="flex items-start gap-2 p-3 bg-[var(--orange-dim)] rounded-xl">
               <AlertTriangle className="w-4 h-4 text-[var(--orange)] shrink-0 mt-0.5" />
               <p className="text-sm text-[var(--orange)]">
@@ -238,6 +246,8 @@ export default function BillActionModal({ studentId, studentName, phone, billId,
                   ? <>청구서를 <strong>파기</strong>합니다. 학부모는 더이상 이 청구서로 결제할 수 없습니다.</>
                   : state === 'confirming-cancel'
                   ? <><strong>{amount.toLocaleString()}원</strong> 결제를 취소합니다. 학부모에게 환불 처리됩니다.</>
+                  : state === 'confirming-resend'
+                  ? <>같은 청구서 링크로 <strong>카톡 알림을 다시 보냅니다</strong>. 결제 금액과 bill_id는 그대로입니다.</>
                   : <>기존 청구서를 파기하고 <strong>새 청구서를 발송</strong>합니다. 학부모 카톡에 새 결제 링크가 전송됩니다.</>}
               </p>
             </div>
@@ -295,7 +305,7 @@ export default function BillActionModal({ studentId, studentName, phone, billId,
 
           {state !== 'success' && (
             <div className="flex flex-col gap-2">
-              {(state === 'confirming-destroy' || state === 'confirming-cancel' || state === 'confirming-reissue') ? (
+              {(state === 'confirming-destroy' || state === 'confirming-cancel' || state === 'confirming-reissue' || state === 'confirming-resend') ? (
                 <div className="flex gap-2">
                   <button
                     onClick={() => setState('idle')}
@@ -304,9 +314,14 @@ export default function BillActionModal({ studentId, studentName, phone, billId,
                     돌아가기
                   </button>
                   <button
-                    onClick={() => submit(state === 'confirming-destroy' ? 'destroy' : state === 'confirming-cancel' ? 'cancel' : 'reissue')}
+                    onClick={() => submit(
+                      state === 'confirming-destroy' ? 'destroy' :
+                      state === 'confirming-cancel' ? 'cancel' :
+                      state === 'confirming-resend' ? 'resend' :
+                      'reissue'
+                    )}
                     className="flex-1 py-3 rounded-xl text-sm font-bold text-white hover:opacity-90"
-                    style={{ background: state === 'confirming-reissue' ? 'var(--blue)' : 'var(--red)' }}
+                    style={{ background: (state === 'confirming-reissue' || state === 'confirming-resend') ? 'var(--blue)' : 'var(--red)' }}
                   >
                     확인, 진행합니다
                   </button>
@@ -337,8 +352,15 @@ export default function BillActionModal({ studentId, studentName, phone, billId,
                   {canDestroy && (
                     <>
                       <button
-                        onClick={() => setState('confirming-reissue')}
+                        onClick={() => setState('confirming-resend')}
                         className="w-full py-3 rounded-xl text-sm font-bold bg-[var(--blue)] text-white hover:opacity-90 flex items-center justify-center gap-2"
+                      >
+                        <Bell className="w-4 h-4" />
+                        재발송 (카톡 다시 보내기)
+                      </button>
+                      <button
+                        onClick={() => setState('confirming-reissue')}
+                        className="w-full py-3 rounded-xl text-sm font-bold bg-[var(--bg-elevated)] text-[var(--text-2)] hover:bg-[var(--border-light)] flex items-center justify-center gap-2"
                       >
                         <RefreshCw className="w-4 h-4" />
                         파기 후 재발송 (새 청구서)

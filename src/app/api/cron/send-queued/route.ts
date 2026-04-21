@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { sendBill, destroyBill } from '@/lib/payssam'
+import { sendBill, destroyBill, resendBill } from '@/lib/payssam'
 import { supabase } from '@/lib/supabase'
 import { isBusinessHourKst } from '@/lib/schedule'
 
@@ -144,6 +144,46 @@ export async function GET(request: NextRequest) {
           await supabase
             .from('tuition_bill_queue')
             .update({ status: 'failed', error_msg: sendResult.msg || '재발송 실패', sent_at: now.toISOString() })
+            .eq('id', row.id)
+          summary.failed++
+        }
+      } else if (row.send_type === 'resend') {
+        const { billId } = row.payload as { billId: string }
+
+        const { data: bill } = await supabase
+          .from('tuition_bill_history')
+          .select('status, resend_count')
+          .eq('bill_id', billId)
+          .single()
+
+        if (!bill || bill.status !== 'sent') {
+          await supabase
+            .from('tuition_bill_queue')
+            .update({ status: 'cancelled', error_msg: '대상 청구서 상태 변동', sent_at: now.toISOString() })
+            .eq('id', row.id)
+          summary.skipped_duplicate++
+          continue
+        }
+
+        const result = await resendBill(billId)
+        if (result.code === '0000') {
+          await supabase
+            .from('tuition_bill_history')
+            .update({
+              resend_count: (bill.resend_count ?? 0) + 1,
+              last_resend_at: now.toISOString(),
+              updated_at: now.toISOString(),
+            })
+            .eq('bill_id', billId)
+          await supabase
+            .from('tuition_bill_queue')
+            .update({ status: 'sent', bill_id: billId, sent_at: now.toISOString() })
+            .eq('id', row.id)
+          summary.sent++
+        } else {
+          await supabase
+            .from('tuition_bill_queue')
+            .update({ status: 'failed', error_msg: result.msg || '재발송 실패', sent_at: now.toISOString() })
             .eq('id', row.id)
           summary.failed++
         }
