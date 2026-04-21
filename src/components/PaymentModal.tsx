@@ -399,7 +399,7 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
               }}
               className={`w-full py-3 rounded-lg font-medium text-sm transition-all duration-500 flex items-center justify-center gap-2 ${
                 showConfirmSuccess
-                  ? 'bg-[var(--green)] text-white scale-105'
+                  ? 'bg-[var(--paid-bg)] border border-[var(--paid-text)] text-[var(--paid-text)] scale-105'
                   : 'bg-[var(--green-dim)] border border-[var(--green)] text-[var(--paid-text)] hover:bg-[var(--green-dim)]'
               }`}
             >
@@ -536,7 +536,7 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
               disabled={showSuccess}
               className={`w-full py-3 rounded-lg font-medium text-sm transition-all duration-500 flex items-center justify-center gap-2 ${
                 showSuccess
-                  ? 'bg-[var(--green)] text-white scale-105'
+                  ? 'bg-[var(--paid-bg)] border border-[var(--paid-text)] text-[var(--paid-text)] scale-105'
                   : 'bg-[var(--blue)] text-white hover:opacity-90'
               }`}
             >

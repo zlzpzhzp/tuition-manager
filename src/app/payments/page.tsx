@@ -1830,14 +1830,14 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                                       onClick={() => handleInlineSubmit(student.id, fee)}
                                       disabled={!!inlineSuccess || !!inlineSubmitting}
                                       className={`fan-item px-2.5 py-0.5 rounded-full text-xs font-medium transition-all duration-300 ${
-                                        isSuccess ? 'bg-[var(--green)] text-white scale-110' : isSubmitting ? 'bg-[var(--green)] text-white opacity-60 scale-100' : 'bg-[var(--green-dim)] text-[var(--paid-text)] hover:opacity-80'
+                                        isSuccess ? 'bg-[var(--paid-bg)] text-[var(--paid-text)] scale-110' : isSubmitting ? 'bg-[var(--paid-bg)] text-[var(--paid-text)] opacity-60 scale-100' : 'bg-[var(--green-dim)] text-[var(--paid-text)] hover:opacity-80'
                                       }`}
                                       aria-label="납부 처리"
                                     >
                                       {isSuccess ? (
                                         <Check className="w-3.5 h-3.5 animate-[checkBounce_0.3s_ease-out]" strokeWidth={3} />
                                       ) : isSubmitting ? (
-                                        <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                        <div className="w-3.5 h-3.5 border-2 border-[var(--paid-text)] border-t-transparent rounded-full animate-spin" />
                                       ) : '납부'}
                                     </button>
                                     <button

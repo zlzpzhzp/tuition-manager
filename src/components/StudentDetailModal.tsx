@@ -255,7 +255,7 @@ export default function StudentDetailModal({ studentId, onClose, onChange }: Pro
                   <button
                     onClick={handleSaveMemo}
                     disabled={memoSaving}
-                    className={`p-2 rounded-lg text-white shrink-0 transition-all ${memoSavedFlash ? 'bg-[var(--green)] scale-110' : 'bg-[var(--blue)] hover:opacity-80'}`}
+                    className={`p-2 rounded-lg shrink-0 transition-all ${memoSavedFlash ? 'bg-[var(--paid-bg)] text-[var(--paid-text)] scale-110' : 'bg-[var(--blue)] text-white hover:opacity-80'}`}
                     aria-label="비고 저장"
                   >
                     <Check className="w-4 h-4" />
