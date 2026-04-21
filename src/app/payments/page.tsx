@@ -810,24 +810,24 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
     }
   }, [selectedMemoIds])
 
-  const handleTouchStart = (e: React.TouchEvent, studentId: string) => {
+  const handleTouchStart = (e: React.PointerEvent, studentId: string) => {
     if (expandedStudentId) return
-    const touch = e.touches[0]
+    if (e.pointerType === 'mouse' && e.button !== 0) return
     const el = e.currentTarget as HTMLElement
     const baseOffset = rowOffset(studentId)
     touchRef.current = {
-      startX: touch.clientX, startY: touch.clientY, currentX: touch.clientX,
+      startX: e.clientX, startY: e.clientY, currentX: e.clientX,
       id: studentId, el, decided: false, isHorizontal: false,
       baseOffset, wasOpen: baseOffset !== 0,
     }
+    try { el.setPointerCapture(e.pointerId) } catch {}
   }
 
-  const handleTouchMove = (e: React.TouchEvent) => {
+  const handleTouchMove = (e: React.PointerEvent) => {
     if (!touchRef.current) return
-    const touch = e.touches[0]
-    const dx = touch.clientX - touchRef.current.startX
-    const dy = touch.clientY - touchRef.current.startY
-    touchRef.current.currentX = touch.clientX
+    const dx = e.clientX - touchRef.current.startX
+    const dy = e.clientY - touchRef.current.startY
+    touchRef.current.currentX = e.clientX
 
     if (!touchRef.current.decided) {
       if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
@@ -1745,10 +1745,11 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                             <div
                               data-swipe-row={student.id}
                               className="relative bg-[var(--bg-card)] z-10"
-                              onTouchStart={e => handleTouchStart(e, student.id)}
-                              onTouchMove={handleTouchMove}
-                              onTouchEnd={handleTouchEnd}
-                              style={{ transform: `translateX(${rowOffset(student.id)}px)`, transition: SPRING }}
+                              onPointerDown={e => handleTouchStart(e, student.id)}
+                              onPointerMove={handleTouchMove}
+                              onPointerUp={handleTouchEnd}
+                              onPointerCancel={handleTouchEnd}
+                              style={{ transform: `translateX(${rowOffset(student.id)}px)`, transition: SPRING, touchAction: 'pan-y', userSelect: 'none', WebkitUserSelect: 'none' }}
                             >
                             <div className={`flex items-center gap-2 px-4 ${hasMemo && !isExpanded ? 'pt-1.5 pb-0.5' : 'py-1.5'} ${
                               status === 'unpaid' && !isExpanded && !withdrawn ? 'cursor-pointer active:bg-[var(--bg-card-hover)]' : ''
@@ -1766,9 +1767,9 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                               >
                                 <span className="text-[11px] text-[var(--text-4)] mr-1 tabular-nums">{idx + 1}.</span>
                                 <span className={`text-sm font-medium ${nameHighlight} ${withdrawn ? 'line-through decoration-red-500 decoration-2 text-[var(--text-4)]' : ''}`} style={tornTapeStyle}>{student.name}</span>
-                                {(student.electives ?? []).map(el => (
-                                  <span key={el} className="text-[9px] ml-1 px-1.5 py-0.5 rounded-full bg-[var(--blue-dim)] text-[var(--blue)] font-bold">{el}</span>
-                                ))}
+                                {(student.electives ?? []).length > 0 && (
+                                  <span className="text-[11px] text-[var(--text-4)] ml-1.5">+{(student.electives ?? []).join('/')}</span>
+                                )}
                                 {!withdrawn && !student.parent_phone && (
                                   <span className="text-[9px] ml-1 px-1 py-0.5 rounded-full bg-[var(--orange-dim)] text-[var(--orange)] font-bold" title="보호자 연락처 미등록">📵</span>
                                 )}
