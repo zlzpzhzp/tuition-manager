@@ -63,7 +63,7 @@ export async function sendBill(params: SendBillParams) {
     member: MEMBER(),
     merchant: MERCHANT(),
     bill: {
-      bill_issuer: params.billIssuer || '디엠학원',
+      bill_issuer: params.billIssuer || '주식회사 디엠교육',
       bill_id: billId,
       product_nm: params.productName,
       message: params.message || `${params.studentName} ${params.productName}`,
