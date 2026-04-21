@@ -147,6 +147,46 @@ export async function GET(request: NextRequest) {
             .eq('id', row.id)
           summary.failed++
         }
+      } else if (row.send_type === 'destroy') {
+        const { billId, amount, methodLabel } = row.payload as { billId: string; amount: number; methodLabel?: string }
+
+        const { data: bill } = await supabase
+          .from('tuition_bill_history')
+          .select('status')
+          .eq('bill_id', billId)
+          .single()
+
+        if (!bill || bill.status !== 'sent') {
+          await supabase
+            .from('tuition_bill_queue')
+            .update({ status: 'cancelled', error_msg: '대상 청구서 상태 변동', sent_at: now.toISOString() })
+            .eq('id', row.id)
+          summary.skipped_duplicate++
+          continue
+        }
+
+        const result = await destroyBill(billId, amount)
+        if (result.code === '0000') {
+          await supabase
+            .from('tuition_bill_history')
+            .update({
+              status: 'destroyed',
+              bill_note: `${methodLabel ?? '타 결제수단'} 결제로 자동 파기`,
+              updated_at: now.toISOString(),
+            })
+            .eq('bill_id', billId)
+          await supabase
+            .from('tuition_bill_queue')
+            .update({ status: 'sent', bill_id: billId, sent_at: now.toISOString() })
+            .eq('id', row.id)
+          summary.sent++
+        } else {
+          await supabase
+            .from('tuition_bill_queue')
+            .update({ status: 'failed', error_msg: result.msg || '파기 실패', sent_at: now.toISOString() })
+            .eq('id', row.id)
+          summary.failed++
+        }
       } else if (row.send_type === 'resend') {
         const { billId } = row.payload as { billId: string }
 

@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { validateInput, rules } from '@/lib/validate'
 import { writeAuditLog } from '@/lib/auditLog'
-import { destroyBill } from '@/lib/payssam'
+
+const DESTROY_DELAY_MS = 60 * 60 * 1000 // 1시간 (착각 복구용 버퍼)
 
 const METHOD_LABEL: Record<string, string> = {
   card: '카드',
@@ -64,11 +65,12 @@ export async function POST(request: Request) {
     `납부 등록: ${studentName} ${body.billing_month} ${body.amount?.toLocaleString()}원`,
     { ...payload, student_name: studentName })
 
-  // 다른 결제수단으로 저장 시 같은 학생·월의 미결제 PaySsam 청구서 자동 파기
+  // 다른 결제수단으로 저장 시 같은 학생·월의 미결제 PaySsam 청구서 1시간 뒤 파기 예약
+  // 즉시 파기하지 않는 이유: 착각 입력을 1시간 이내 취소하면 청구서 복구 가능해야 함.
   if (body.method !== 'payssam') {
     const { data: sentBills } = await supabase
       .from('tuition_bill_history')
-      .select('bill_id, amount')
+      .select('bill_id, amount, phone')
       .eq('student_id', body.student_id)
       .eq('billing_month', body.billing_month)
       .eq('is_regular_tuition', true)
@@ -76,21 +78,28 @@ export async function POST(request: Request) {
 
     if (sentBills && sentBills.length > 0) {
       const methodLabel = METHOD_LABEL[body.method] || body.method
+      const { data: studentRow } = await supabase
+        .from('tuition_students')
+        .select('name')
+        .eq('id', body.student_id)
+        .single()
+      const studentName = studentRow?.name ?? ''
+      const scheduledAt = new Date(Date.now() + DESTROY_DELAY_MS)
       for (const bill of sentBills) {
-        try {
-          const result = await destroyBill(bill.bill_id, bill.amount)
-          if (result.code === '0000') {
-            await supabase
-              .from('tuition_bill_history')
-              .update({
-                status: 'destroyed',
-                bill_note: `${methodLabel} 결제로 자동 파기`,
-                updated_at: new Date().toISOString(),
-              })
-              .eq('bill_id', bill.bill_id)
-          }
-        } catch (e) {
-          console.error('[auto-destroy] bill 파기 실패:', bill.bill_id, e)
+        const { error: queueError } = await supabase.from('tuition_bill_queue').insert({
+          student_id: body.student_id,
+          student_name: studentName,
+          phone: bill.phone ?? '',
+          billing_month: body.billing_month,
+          is_regular_tuition: true,
+          bill_note: `${methodLabel} 결제 — 1시간 뒤 청구서 자동 파기`,
+          send_type: 'destroy',
+          payload: { billId: bill.bill_id, amount: bill.amount, methodLabel, paymentId: data.id },
+          scheduled_at: scheduledAt.toISOString(),
+          status: 'pending',
+        })
+        if (queueError) {
+          console.error('[delayed-destroy] 큐 등록 실패:', bill.bill_id, queueError)
         }
       }
     }

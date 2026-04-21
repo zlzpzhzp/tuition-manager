@@ -54,6 +54,14 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
   const { error } = await supabase.from('tuition_payments').delete().eq('id', id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
+  // 아직 실행되지 않은 파기 예약 취소 (1시간 버퍼 안에서 삭제하면 청구서 복구)
+  await supabase
+    .from('tuition_bill_queue')
+    .update({ status: 'cancelled', error_msg: '납부 취소로 파기 예약 해제', sent_at: new Date().toISOString() })
+    .eq('send_type', 'destroy')
+    .eq('status', 'pending')
+    .filter('payload->>paymentId', 'eq', id)
+
   if (existing) {
     const existingWithStudent = existing as { student?: { name?: string } | null; billing_month?: string; amount?: number } | null
     const studentName = existingWithStudent?.student?.name ?? ''
