@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef, useMemo, useEffect, useLayoutEffect } from 'react'
 import { createPortal } from 'react-dom'
-import { ChevronLeft, ChevronRight, Check, ChevronDown, ClipboardList, Download, Plus, Send, Mail, Loader2, CreditCard, Banknote, ArrowLeftRight, X } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Check, ChevronDown, ClipboardList, Download, Plus, Send, Mail, Loader2, CreditCard, Banknote, ArrowLeftRight, X, Clock } from 'lucide-react'
 import type { Student, Payment, PaymentMethod, GradeWithClasses } from '@/types'
 import { getStudentFee, getPaymentStatus, PAYMENT_STATUS_LABELS, PAYMENT_STATUS_COLORS, PAYMENT_METHOD_LABELS, parseClassDays, DAY_LABELS } from '@/types'
 import PaymentModal from '@/components/PaymentModal'
@@ -12,6 +12,7 @@ import MethodPickerPopup from '@/components/payments/MethodPickerPopup'
 import { getPrevMonth, getPaymentDueDay, isPaymentScheduled, getUnpaidLabelText, getActiveStudents, isWithdrawnStudent, safeMutate, decodePaymentMemo, useGrades, usePayments, revalidateGrades, revalidatePayments, getTodayString } from '@/lib/utils'
 import { METHOD_OPTIONS_SHORT } from '@/lib/constants'
 import { getRegularTuitionTitle, REGULAR_TUITION_MESSAGE } from '@/lib/billing-title'
+import { formatKst } from '@/lib/schedule'
 import { PaymentsSkeleton } from '@/components/Skeleton'
 import BillSendModal from '@/components/BillSendModal'
 import BulkBillSendModal, { type BulkBillTarget } from '@/components/BulkBillSendModal'
@@ -35,7 +36,17 @@ interface BillRecord {
   last_resend_at?: string | null
 }
 
-type BillStatus = 'unsent' | 'sent' | 'paid' | 'cancelled'
+type BillStatus = 'unsent' | 'sent' | 'paid' | 'cancelled' | 'scheduled'
+
+interface QueueEntry {
+  id: string
+  student_id: string
+  billing_month: string
+  send_type: 'single' | 'split' | 'reissue'
+  scheduled_at: string
+  is_regular_tuition: boolean
+  created_at: string
+}
 
 type PaymentFilter = 'all' | 'unpaid' | 'day1' | 'week1' | 'week2' | 'week3' | 'week4'
 
@@ -262,13 +273,33 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
     }
     return map
   }, [bills])
+
+  // 타임락 예약 큐 (pending 상태 — 영업시간 외 발송 요청)
+  const { data: queueEntries = [] } = useSWR<QueueEntry[]>(
+    `/api/billing/queue?month=${selectedMonth}`,
+    (url: string) => fetch(url).then(r => r.json()),
+    { refreshInterval: 30000 }
+  )
+  const queueByStudent = useMemo(() => {
+    const map = new Map<string, QueueEntry>()
+    for (const q of queueEntries) {
+      if (q.is_regular_tuition === false) continue
+      if (!map.has(q.student_id)) map.set(q.student_id, q)
+    }
+    return map
+  }, [queueEntries])
+
   const getBillStatus = useCallback((studentId: string): BillStatus => {
     const bill = billByStudent.get(studentId)
-    if (!bill) return 'unsent'
+    if (!bill) {
+      // 이력 없음 + 큐에 pending이면 예약 상태
+      if (queueByStudent.has(studentId)) return 'scheduled'
+      return 'unsent'
+    }
     if (bill.status === 'paid') return 'paid'
     if (bill.status === 'cancelled' || bill.status === 'destroyed') return 'cancelled'
     return 'sent'
-  }, [billByStudent])
+  }, [billByStudent, queueByStudent])
 
   // ─── 청구서 일괄발송 ───────────────────────────────────────────
   const [batchSending, setBatchSending] = useState<string | null>(null)
@@ -1883,9 +1914,12 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                                     if (!(student.parent_phone || student.phone)) return null
                                     const billStatus = getBillStatus(student.id)
                                     const bill = billByStudent.get(student.id)
+                                    const queueEntry = queueByStudent.get(student.id)
+                                    const scheduledAtKst = queueEntry ? formatKst(new Date(queueEntry.scheduled_at)) : null
                                     const styles: Record<BillStatus, { fg: string; bg: string; title: string }> = {
                                       unsent:    { fg: 'var(--text-4)', bg: 'var(--bg-elevated)', title: '카톡 청구서 발송' },
                                       sent:      { fg: 'var(--orange)', bg: 'var(--orange-dim)',  title: '발송됨 — 탭하여 파기' },
+                                      scheduled: { fg: 'var(--orange)', bg: 'var(--orange-dim)',  title: scheduledAtKst ? `타임락 예약 — ${scheduledAtKst} KST 자동 발송` : '타임락 예약됨' },
                                       paid:      { fg: 'white',         bg: 'var(--blue)',        title: '수납 완료 — 탭하여 취소' },
                                       cancelled: { fg: 'var(--red)',    bg: 'var(--red-dim)',     title: '취소됨 — 탭하여 재발송' },
                                     }
@@ -1896,6 +1930,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                                       <button
                                         onClick={(e) => {
                                           e.stopPropagation()
+                                          if (billStatus === 'scheduled') return // 예약건은 상호작용 없음 (정보 표시만)
                                           if ((billStatus === 'sent' || billStatus === 'paid') && bill) {
                                             setBillActionTarget({
                                               studentId: student.id,
@@ -1928,6 +1963,15 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                                           </svg>
                                         ) : (
                                           <Send className="w-3.5 h-3.5" />
+                                        )}
+                                        {billStatus === 'scheduled' && (
+                                          <span
+                                            className="absolute -top-1 -right-1 w-[12px] h-[12px] rounded-full flex items-center justify-center"
+                                            style={{ background: 'var(--orange)', color: 'white' }}
+                                            aria-hidden
+                                          >
+                                            <Clock className="w-[8px] h-[8px]" strokeWidth={3} />
+                                          </span>
                                         )}
                                         {showBadge && (
                                           <span
