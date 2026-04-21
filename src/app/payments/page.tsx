@@ -256,7 +256,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
   const [addStudentClassId, setAddStudentClassId] = useState<string | null>(null)
 
   // 청구서 발송 모달
-  const [billSendTarget, setBillSendTarget] = useState<{ studentId: string; studentName: string; phone: string; amount: number; subject: string | null; className: string | null } | null>(null)
+  const [billSendTarget, setBillSendTarget] = useState<{ studentId: string; studentName: string; phone: string; amount: number; subject: string | null; className: string | null; electives: string[] } | null>(null)
   const [billActionTarget, setBillActionTarget] = useState<{ studentId: string; studentName: string; phone: string; billId: string; amount: number; status: 'sent' | 'paid' | 'cancelled' } | null>(null)
   const [bulkBillTarget, setBulkBillTarget] = useState<{ cls: ClassWithStudents | null; className: string; targets: BulkBillTarget[]; studentClsMap?: Map<string, ClassWithStudents> } | null>(null)
 
@@ -530,7 +530,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
       studentName: student.name,
       phone: phone.replace(/-/g, ''),
       amount: fee,
-      productName: getRegularTuitionTitle(cls.subject, selectedMonth, cls.name),
+      productName: getRegularTuitionTitle(cls.subject, selectedMonth, cls.name, student.electives),
       message: REGULAR_TUITION_MESSAGE,
       billingMonth: selectedMonth,
     })
@@ -1766,6 +1766,9 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                               >
                                 <span className="text-[11px] text-[var(--text-4)] mr-1 tabular-nums">{idx + 1}.</span>
                                 <span className={`text-sm font-medium ${nameHighlight} ${withdrawn ? 'line-through decoration-red-500 decoration-2 text-[var(--text-4)]' : ''}`} style={tornTapeStyle}>{student.name}</span>
+                                {(student.electives ?? []).map(el => (
+                                  <span key={el} className="text-[9px] ml-1 px-1.5 py-0.5 rounded-full bg-[var(--blue-dim)] text-[var(--blue)] font-bold">{el}</span>
+                                ))}
                                 {!withdrawn && !student.parent_phone && (
                                   <span className="text-[9px] ml-1 px-1 py-0.5 rounded-full bg-[var(--orange-dim)] text-[var(--orange)] font-bold" title="보호자 연락처 미등록">📵</span>
                                 )}
@@ -1843,7 +1846,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                                     <button
                                       onClick={() => {
                                         const parentPhone = student.parent_phone || student.phone || ''
-                                        setBillSendTarget({ studentId: student.id, studentName: student.name, phone: parentPhone, amount: fee, subject: cls.subject ?? null, className: cls.name ?? null })
+                                        setBillSendTarget({ studentId: student.id, studentName: student.name, phone: parentPhone, amount: fee, subject: cls.subject ?? null, className: cls.name ?? null, electives: student.electives ?? [] })
                                       }}
                                       className="fan-item p-1 text-[var(--orange)] hover:opacity-70"
                                       aria-label="청구서 발송"
@@ -1977,7 +1980,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                                             })
                                           } else {
                                             const parentPhone = student.parent_phone || student.phone || ''
-                                            setBillSendTarget({ studentId: student.id, studentName: student.name, phone: parentPhone, amount: fee, subject: cls.subject ?? null, className: cls.name ?? null })
+                                            setBillSendTarget({ studentId: student.id, studentName: student.name, phone: parentPhone, amount: fee, subject: cls.subject ?? null, className: cls.name ?? null, electives: student.electives ?? [] })
                                           }
                                         }}
                                         className="relative p-1 rounded-lg transition-colors shrink-0 hover:opacity-80 flex items-center justify-center"
@@ -2151,6 +2154,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
           subject={billSendTarget.subject}
           className={billSendTarget.className}
           billingMonth={selectedMonth}
+          electives={billSendTarget.electives}
           onClose={() => setBillSendTarget(null)}
           onSuccess={() => { fetchData(); mutateBills() }}
         />

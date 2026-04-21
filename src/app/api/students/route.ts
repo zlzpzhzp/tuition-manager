@@ -49,6 +49,7 @@ export async function POST(request: Request) {
       custom_fee: body.custom_fee ?? null,
       memo: body.memo || null,
       order_index: nextOrder,
+      electives: Array.isArray(body.electives) ? body.electives : [],
     })
     .select('*, class:tuition_classes(*, grade:tuition_grades(*))')
     .single()

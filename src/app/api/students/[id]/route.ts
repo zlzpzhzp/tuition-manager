@@ -43,6 +43,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   if (body.memo_color !== undefined) updates.memo_color = body.memo_color || null
   if (body.split_billing_parts !== undefined) updates.split_billing_parts = body.split_billing_parts
   if (body.split_billing_amounts !== undefined) updates.split_billing_amounts = body.split_billing_amounts
+  if (body.electives !== undefined) updates.electives = Array.isArray(body.electives) ? body.electives : []
 
   const { data, error } = await supabase
     .from('tuition_students')

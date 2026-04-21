@@ -49,9 +49,12 @@ export interface Student {
   order_index?: number
   split_billing_parts?: number | null
   split_billing_amounts?: number[] | null
+  electives?: string[]
   created_at: string
   class?: Class
 }
+
+export const ELECTIVE_FEE = 100000
 
 export type GradeWithClasses = Grade & { classes: (Class & { students: Student[] })[] }
 
@@ -98,8 +101,9 @@ export const PAYMENT_STATUS_COLORS: Record<PaymentStatus, { bg: string; text: st
 }
 
 export function getStudentFee(student: Student, cls?: Class | null): number {
-  if (student.custom_fee != null) return student.custom_fee
-  return cls?.monthly_fee ?? 0
+  const base = student.custom_fee != null ? student.custom_fee : (cls?.monthly_fee ?? 0)
+  const electiveCount = student.electives?.length ?? 0
+  return base + electiveCount * ELECTIVE_FEE
 }
 
 export function getPaymentStatus(totalPaid: number, fee: number): PaymentStatus {

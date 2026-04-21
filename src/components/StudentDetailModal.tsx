@@ -29,6 +29,7 @@ export default function StudentDetailModal({ studentId, onClose, onChange }: Pro
   const [memoColor, setMemoColor] = useState<'yellow' | 'green' | 'red' | null>(null)
   const [memoSaving, setMemoSaving] = useState(false)
   const [memoSavedFlash, setMemoSavedFlash] = useState(false)
+  const [electivesSaving, setElectivesSaving] = useState(false)
 
   const fetchData = useCallback(async () => {
     const [studentResult, paymentsResult] = await Promise.all([
@@ -45,6 +46,18 @@ export default function StudentDetailModal({ studentId, onClose, onChange }: Pro
     setMemoColor(studentResult.data?.memo_color ?? null)
     setLoading(false)
   }, [studentId])
+
+  const handleToggleElective = async (name: string) => {
+    if (!student || electivesSaving) return
+    const current = student.electives ?? []
+    const next = current.includes(name) ? current.filter(e => e !== name) : [...current, name]
+    setElectivesSaving(true)
+    const { error } = await safeMutate(`/api/students/${studentId}`, 'PUT', { electives: next })
+    setElectivesSaving(false)
+    if (error) { alert(`선택과목 저장 실패: ${error}`); return }
+    await fetchData()
+    notifyChange()
+  }
 
   const handleSaveMemo = async () => {
     setMemoSaving(true)
@@ -222,6 +235,33 @@ export default function StudentDetailModal({ studentId, onClose, onChange }: Pro
                   </div>
                 )}
               </div>
+
+              {/* 선택과목 — 고2 전용 */}
+              {student.class?.grade?.name === '고2' && (
+                <div className="mt-4 space-y-2">
+                  <span className="text-xs text-[var(--text-4)]">선택과목 (+10만/과목)</span>
+                  <div className="flex gap-2">
+                    {['기하', '확통'].map(name => {
+                      const active = (student.electives ?? []).includes(name)
+                      return (
+                        <button
+                          key={name}
+                          type="button"
+                          onClick={() => handleToggleElective(name)}
+                          disabled={electivesSaving}
+                          className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
+                            active
+                              ? 'bg-[var(--blue-dim)] text-[var(--blue)] border-[var(--blue)]'
+                              : 'bg-[var(--bg)] text-[var(--text-4)] border-[var(--border)] hover:text-[var(--text-1)]'
+                          } ${electivesSaving ? 'opacity-50' : ''}`}
+                        >
+                          {name}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
 
               {/* 비고 인라인 편집 */}
               <div className="mt-4 space-y-2">

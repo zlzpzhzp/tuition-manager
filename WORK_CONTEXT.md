@@ -5,6 +5,39 @@
 
 ## 현재 상태: 진행 중
 
+### 2026-04-21 오후 — 고2 선택과목 리팩터 + 동규 청구서 파기 (msg 1310~1321)
+
+**세션 흐름 (속기사 모드)**
+
+- msg 1310: "또안됨 까만화면뜸" → 납부탭 까만화면 재발 (fetch failed 간헐)
+  - 전 세션 src/lib/supabase.ts retryFetch 래퍼(3회 재시도) 배포 완료. 문제 재발시 추가 진단 필요
+- msg 1313/1315/1316: "동규가 결제 했는데 왜 안된걸로 떠있는지" + "앱으로 보냈고 결제해서 결제선생에선 결제한걸로 뜨는데" + "우리 앱에선 안떠"
+  - DB 조회: 3월만 결제 기록, 4/20 발송 청구서 2건 (DM-mo6twbd9 H 45만 + DM-mo6twwie 확통 10만) 모두 status=sent appr_num=null
+  - PaySsam readBill 직접 호출 → 양쪽 모두 appr_state="W"(waiting) 확인 (스테이징 URL 404 → PAYSSAM_API_URL=https://erp-api.payssam.kr 로 교정)
+- msg 1318: "고2 선택과목 정리 — 기하(원장)/기하(류)/확통 반 없애고 H/N 유지. 학생모달에서 선택과목 체크, 10만원씩 가산, 이름 우측 라벨"
+- msg 1320: "동규 영수증파기해 버리고 합쳐버려. 동규 우리 앱 만들기 전에 나갔던 링크로 결제해버렸어 오늘. 드래서 합쳐버리고 결제선생으로 결제되었다고 표시하면 됨"
+- msg 1321: "결제일은 4 21일"
+
+**실행 내역**
+
+1. 동규 PaySsam bill 2건 destroyBill 호출 → code=0000 성공
+2. DB:
+   - tuition_bill_history 2건 status='destroyed'
+   - tuition_payments INSERT: H 이동규(12886135) 2026-04 55만 payssam 2026-04-21 (memo="기존 결제선생 링크로 결제 (H 45만 + 확통 10만)")
+3. 고2 선택과목 리팩터 — 단일 트랜잭션:
+   - `ALTER TABLE tuition_students ADD COLUMN electives text[] DEFAULT '{}'`
+   - 12명 H/N 학생에 electives 세팅: 기하 9명 (김유현/박채원/서지후/성시은/이선재 N + 구현서/박지훈/이지유/현가은 H), 확통 3명 (이동규/이상헌/이승훈 H)
+   - bill_history 1건 이관(성시은 N). 전 학년 payments 중 기존 H/N에 동일 월 payment 존재시 amount 합산 (22건 merge + 22건 delete), 없으면 student_id 교체(1건)
+   - 선택과목 학생 12명 + 반 3개 삭제 (학생 200→188, 반 26→23)
+4. 코드 업데이트 진행 중:
+   - [x] src/types/index.ts: Student.electives?: string[], ELECTIVE_FEE=100000
+   - [ ] src/lib/queries.ts: electives 매핑
+   - [ ] src/app/api/students/route.ts + [id]/route.ts: electives 저장
+   - [ ] StudentDetailModal: 고2 학생에게 기하/확통 체크박스
+   - [ ] payments/page.tsx: 학생명 우측 뱃지 + 총액 = base + 10만*electives.length
+   - [ ] BillSendModal/BulkBillSendModal: 계산된 금액 사용
+   - [ ] 빌드/배포/텔레그램 보고
+
 ### 2026-04-21 — 예약발송 감시 + BillActionModal 재발송 버튼 primary (msg 1253~1272)
 
 **세션 흐름 (속기사 모드)**
