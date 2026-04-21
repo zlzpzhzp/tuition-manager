@@ -1,4 +1,7 @@
-export const REGULAR_TUITION_MESSAGE = '안녕하세요. 디엠학원 결제링크입니다. 감사합니다😁'
+export const REGULAR_TUITION_MESSAGE = `안녕하세요. 디엠학원 결제링크입니다. 감사합니다😁
+
+☀️문의 : 02-6203-7725
+☀️홈페이지 : https://dminstitute.co`
 
 export function getRegularTuitionTitle(
   subject: string | null | undefined,
