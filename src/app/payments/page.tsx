@@ -1966,7 +1966,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                                         )}
                                         {billStatus === 'scheduled' && (
                                           <span
-                                            className="absolute -top-1 -right-1 w-[12px] h-[12px] rounded-full flex items-center justify-center"
+                                            className="absolute -bottom-1 -right-1 w-[12px] h-[12px] rounded-full flex items-center justify-center"
                                             style={{ background: 'var(--orange)', color: 'white' }}
                                             aria-hidden
                                           >
