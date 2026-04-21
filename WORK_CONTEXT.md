@@ -35,6 +35,19 @@
   - 빌드(12:28) < commit 53c2a24(12:31) 타임스탬프로 봤을 때 실제로는 커밋시점에 이미 receipt route 포함된 상태로 빌드됨 (src 파일 12:26에 존재)
   - 원인 추정: supabase.storage.upload()에 Uint8Array 전달 → 일부 케이스에서 연결 타임아웃 유발
   - 수정: File 직접 전달, cacheControl 추가, uploadErr/selectErr/updateErr 각각 console.error + 구체적 에러메시지 반환 (진단용)
+- msg 1303: "야 근데 내가 워라 보면서 따라하라그랫는데 그거 숙제 사진 업로드처럼 세팅 한거야?" → academy-manager 패턴 재확인. 업로드 루트는 동일, 단 내 route가 DB select/update 단계를 추가로 하는 차이 있음
+- msg 1304: "야 됐음 근데 체크표시가 색상이 안맞음 형광초록색이 떠야지" → 892dd0c로 영수증 업로드 정상화 확인. 성공 체크 색상 통일
+  - PaymentModal.tsx(확인 버튼, 납부 버튼 success state): `bg-[var(--green)] text-white` → `bg-[var(--paid-bg)] border [var(--paid-text)] text-[var(--paid-text)]`
+  - StudentDetailModal.tsx(메모 저장 플래시): 동일 패턴, 평상시엔 text-white 유지
+  - payments/page.tsx(인라인 납부 버튼 스피너): `border-white` → `border-[var(--paid-text)]`
+  - 커밋 7f73f78 배포 완료
+- msg 1307/1308: "왜이래" + "납부탭 ㅠ" → 납부 탭 "문제가 발생했습니다" 에러 바운더리
+  - Playwright 모바일 390x844 재현 성공: /api/monthly-memo, /api/grades, /api/payments?billing_month 3개가 500 `{"error":"TypeError: fetch failed"}`
+  - 서버 로그 /tmp/tuition-3001.log 무소음(stdout에 안 찍힘). 단일 curl 200이지만 병렬/브라우저 로드 시 간헐 500
+  - 원인 진단: Supabase DNS/네트워크 지연 측정. `nslookup pasycnvfdotcdzzysqbz.supabase.co` (시스템 기본): 40초 걸림. IPv6 DNS(2001:4860:4860::8888) glibc parallel query 지연 추정
+  - curl connect 시간: 정상일 땐 0.05s, 지연날 땐 8초+. undici fetch 기본 connectTimeout 10s 걸쳐서 "TypeError: fetch failed" 발생
+  - 수정: src/lib/supabase.ts에 retryFetch 래퍼 추가 (최대 3회, 200ms/400ms 백오프) + createClient global.fetch로 주입
+  - 빌드 진행 중(bq292ga4x) → 로컬 :3001 kill + 재기동 → 커밋/푸시/Vercel 배포 예정
 
 ### 2026-04-20 밤 — 전원납부 배지 + 학생 추가 순서 + 급여명세서 정렬 (msg 1183/1192/1193)
 
