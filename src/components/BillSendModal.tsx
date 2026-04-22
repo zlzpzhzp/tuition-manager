@@ -40,8 +40,6 @@ export default function BillSendModal({ studentName, studentId, phone, amount, s
   const [billNote, setBillNote] = useState('')
   const [state, setState] = useState<SendState>('idle')
   const [errorMsg, setErrorMsg] = useState('')
-  const [billId, setBillId] = useState('')
-  const [shortUrl, setShortUrl] = useState('')
   const [scheduledKst, setScheduledKst] = useState('')
   const [mounted, setMounted] = useState(false)
 
@@ -130,8 +128,6 @@ export default function BillSendModal({ studentName, studentId, phone, amount, s
         return
       }
 
-      setBillId(data.bill_id || '')
-      setShortUrl(data.shortURL || '')
       setState('success')
 
       // 성공 후 2초 뒤 자동 닫기
@@ -140,7 +136,7 @@ export default function BillSendModal({ studentName, studentId, phone, amount, s
         onClose()
       }, 2500)
 
-    } catch (err) {
+    } catch {
       setErrorMsg('네트워크 오류가 발생했습니다. 잠시 후 다시 시도해주세요.')
       setState('error')
     }

@@ -58,7 +58,7 @@ function timeAgo(iso: string, now: number): string {
 }
 
 export default function BillingPage() {
-  const [selectedMonth, setSelectedMonth] = useState(() => {
+  const [selectedMonth] = useState(() => {
     const now = new Date()
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
   })
@@ -429,8 +429,6 @@ export default function BillingPage() {
   if (gradesLoading) {
     return <div className="flex items-center justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-[var(--text-4)]" /></div>
   }
-
-  const filterOrder: WeekFilter[] = ['all', 'day1', 'week1', 'week2', 'week3', 'week4']
 
   const formatRange = (r: [number, number]) =>
     r[0] > r[1] ? '-' : r[0] === r[1] ? `${r[0]}일` : `${r[0]}~${r[1]}`

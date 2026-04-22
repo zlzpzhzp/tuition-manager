@@ -93,8 +93,9 @@ function FilterDropdownPortal({
     return () => { cancelAnimationFrame(id1); if (id2) cancelAnimationFrame(id2) }
   }, [rect])
 
-  // 앵커 버튼 본체를 포탈이 덮음
+  // 앵커 버튼 본체를 포탈이 덮음 (드롭다운 포탈이 원본 버튼을 가려야 하는 고의적 DOM 조작)
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/immutability
     anchor.style.visibility = 'hidden'
     return () => { anchor.style.visibility = '' }
   }, [anchor])
@@ -107,8 +108,6 @@ function FilterDropdownPortal({
   const ROW_H = rect.height
   const totalH = ROW_H * orderedKeys.length
   const BORDER_R = Math.round(ROW_H / 2)
-  // 알약과 동일한 폭 유지 — 좌우 여백 없애기
-  const OPEN_W = rect.width
   const portalLeft = rect.left
   const portalW = rect.width
 
@@ -770,8 +769,6 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
   const MEMO_W = 160  // 왼쪽 비고 패널 너비 (단일 선택: 라벨+색상테이프+저장)
   const BADGE_W = 48  // 다중 선택 시 배지만 표시하는 너비
   const PAY_W = 150   // 오른쪽 결제 특이사항 패널 너비 (헤더: 배지+저장)
-
-  const isMultiMode = selectedMemoIds.size >= 2
 
   const rowOffset = useCallback((id: string): number => {
     if (selectedMemoIds.has(id)) return selectedMemoIds.size >= 2 ? BADGE_W : MEMO_W

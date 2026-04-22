@@ -119,7 +119,7 @@ export default function BulkBillSendModal({ className, targets, onClose, onConfi
 
         <div className="px-5 py-4 border-t border-[var(--border)] flex gap-2">
           <button
-            onClick={() => { if (state !== 'sending') { state === 'confirming' ? setState('idle') : onClose() } }}
+            onClick={() => { if (state === 'sending') return; if (state === 'confirming') setState('idle'); else onClose() }}
             disabled={state === 'sending'}
             className="flex-1 py-3 rounded-xl text-sm font-semibold bg-[var(--bg-elevated)] text-[var(--text-3)] hover:bg-[var(--border-light)] transition-colors disabled:opacity-40"
           >

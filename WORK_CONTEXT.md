@@ -1112,3 +1112,27 @@
 ## 참고사항
 - AI 필터 버튼 관련 작업이 최근 집중적으로 진행됨 (별먼지 파티클, 크기 통일, 슬라이드 애니메이션 등)
 - Agent/Students 페이지는 Navbar에서 의도적으로 제거된 상태
+
+---
+
+## 2026-04-23 06:52 KST — 주2회 린트 정기점검 + 1 에러 + 9 워닝 수정
+
+### 입력
+- amnesia 크론: `npx eslint . --max-warnings 0` (월·목 04:11)
+- 초능력자님 지시: "아뭘 지시야 그냥 고쳐" — 수정 대신 지시 대기한 점 교정받음
+
+### 에러 1건
+- `src/app/payments/page.tsx:98` react-hooks/immutability
+  - 원인: FilterDropdownPortal에서 `useEffect`로 `anchor.style.visibility = 'hidden'` 설정 (포탈이 원본 버튼 덮는 고의적 DOM 조작)
+  - 조치: 해당 라인에 `// eslint-disable-next-line react-hooks/immutability` + 설명 주석. 전역 비활성화 아님 — 규칙은 유지해서 실제 버그 잡게
+
+### 워닝 9건 수정
+- `payments/page.tsx`: 사용안되는 `OPEN_W` (111), `isMultiMode` (774) → 삭제
+- `billing/page.tsx`: `setSelectedMonth` 미사용 (61) → `[selectedMonth]`로 destructure. `filterOrder` (433) 죽은코드 → 삭제
+- `components/BillSendModal.tsx`: `billId`/`shortUrl` useState가 write-only 상태 (setter만 호출, 값은 never read) → useState 선언 + 2개 setter 호출 모두 삭제. `catch (err)` → `catch` (ES2019 optional binding)
+- `components/BulkBillSendModal.tsx:122` 삼항연산자 expression statement → `if/else`로 변환
+- `coverage/block-navigation.js`: Jest 자동생성 파일 → `eslint.config.mjs globalIgnores`에 `coverage/**` 추가
+
+### 후속
+- 린트 재실행 검증 중
+- WORK_CONTEXT 갱신 (본 항목)
