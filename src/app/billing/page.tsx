@@ -576,7 +576,7 @@ export default function BillingPage() {
         {recentActivity.length > 0 && (
           <div className="card p-4 mb-3">
             <div className="flex items-baseline justify-between mb-3">
-              <h2 className="text-sm font-semibold text-[var(--text-2)]">발송 수납</h2>
+              <h2 className="text-sm font-semibold text-[var(--text-2)]">발송 · 수납</h2>
               <span className="text-[10px] text-[var(--text-4)] tabular-nums">{recentActivity.length}건</span>
             </div>
             <div className="space-y-1.5 max-h-[420px] overflow-y-auto pr-1 -mr-1">
