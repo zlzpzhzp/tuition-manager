@@ -18,8 +18,10 @@ function sign(data: string): string {
 
 export function createSessionToken(): string {
   const adminId = process.env.ADMIN_ID || ''
-  const payload = Buffer.from(adminId).toString('base64url')
-  const signature = sign(adminId)
+  const exp = Math.floor(Date.now() / 1000) + MAX_AGE
+  const body = `${adminId}|${exp}`
+  const payload = Buffer.from(body).toString('base64url')
+  const signature = sign(body)
   return `${payload}.${signature}`
 }
 
@@ -31,9 +33,14 @@ export function verifySessionToken(token: string): boolean {
   try {
     const payload = token.slice(0, dotIdx)
     const signature = token.slice(dotIdx + 1)
-    const adminId = Buffer.from(payload, 'base64url').toString('utf-8')
+    const body = Buffer.from(payload, 'base64url').toString('utf-8')
+    const pipeIdx = body.lastIndexOf('|')
+    if (pipeIdx < 0) return false
+    const adminId = body.slice(0, pipeIdx)
+    const exp = Number(body.slice(pipeIdx + 1))
     if (!adminId || !adminId.trim()) return false
-    const expected = sign(adminId)
+    if (!Number.isFinite(exp) || exp <= Math.floor(Date.now() / 1000)) return false
+    const expected = sign(body)
     return signature === expected
   } catch {
     return false

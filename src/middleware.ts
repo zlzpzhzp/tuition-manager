@@ -20,10 +20,15 @@ async function verifyToken(token: string): Promise<boolean> {
   try {
     const payload = token.slice(0, dotIdx)
     const signature = token.slice(dotIdx + 1)
-    const adminId = atob(payload.replace(/-/g, '+').replace(/_/g, '/'))
+    const body = atob(payload.replace(/-/g, '+').replace(/_/g, '/'))
+    const pipeIdx = body.lastIndexOf('|')
+    if (pipeIdx < 0) return false
+    const adminId = body.slice(0, pipeIdx)
+    const exp = Number(body.slice(pipeIdx + 1))
     if (!adminId || !adminId.trim()) return false
+    if (!Number.isFinite(exp) || exp <= Math.floor(Date.now() / 1000)) return false
     const key = await getHmacKey()
-    const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(adminId))
+    const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(body))
     const expected = btoa(String.fromCharCode(...new Uint8Array(sig))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
     return signature === expected
   } catch {

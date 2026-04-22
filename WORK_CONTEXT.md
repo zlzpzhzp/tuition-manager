@@ -5,6 +5,30 @@
 
 ## 현재 상태: 진행 중
 
+### 2026-04-22 밤 — HMAC 세션 토큰에 만료 타임스탬프 추가 (amnesia 세션 주도, msg 3261 "해그럼")
+
+**세션 흐름**
+
+- 어제(2026-04-21) msg 3222에서 "원비 HMAC에 exp 없음 — 2026-04-22 오전 처리" 확정
+- 오늘 하루 drop됨 (amnesia가 Gemini CLI 설치 + 교과서 PDF 병합 같은 다른 작업에 밀림). 22:27 독립 비판자가 포착 → msg 3260 알림
+- msg 3261 "해그럼" 재확인 지시 → 밤에 진행
+
+**실행 내역 (진행 중)**
+
+1. `src/lib/auth.ts`
+   - `createSessionToken()`: 페이로드 `adminId` → `adminId|exp` (exp = Unix초, now + MAX_AGE=30일)
+   - `verifySessionToken()`: `|` 기준 split, exp 숫자 파싱 후 현재시각 비교. 만료 시 false
+2. `src/middleware.ts` (Edge runtime, WebCrypto): 동일 포맷/검증 로직 미러링
+3. 시그니처 대상도 `adminId` → `adminId|exp` (기존 토큰은 모두 무효화됨)
+4. 부작용: **현 세션 admin 재로그인 필수** — 원장님께 안내 필요
+
+**검증 대기**
+
+- [ ] 로컬 빌드 통과 (`next build`)
+- [ ] Playwright로 /login → 로그인 성공 → 대시보드 접근 골든패스 확인 (feedback_playwright_verify_before_ask.md 규칙)
+- [ ] 조작된 토큰(만료된 exp, 시그 불일치) 리다이렉트 확인
+- [ ] 커밋 + 배포
+
 ### 2026-04-22 — 스와이프 데스크탑 드래그 + 선택과목 회색표시 + 발송·수납 (msg 1322~1340)
 
 **세션 흐름 (속기사 모드)**
