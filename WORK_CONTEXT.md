@@ -5,6 +5,27 @@
 
 ## 현재 상태: 진행 중
 
+### 2026-04-22 — 스와이프 데스크탑 드래그 + 선택과목 회색표시 + 발송·수납 (msg 1322~1340)
+
+**세션 흐름 (속기사 모드)**
+
+- msg 1322: "선택과목 있는 학생들은 발송할때 정규 + 선택과목 이라는거 타이틀에 넣어야겠네" → getRegularTuitionTitle에 electives 파라미터 추가, BillSendModal/QuickBillSendModal/payments 경로에 전파
+- msg 1325: "다른학생들도 선택과목 추가 가능한거지?" → StudentDetailModal 체크박스 현재 고2만 가능. 다른 학년도 열지 확인 요청 (msg 1327)
+- msg 1326: "좌우 스와이프 데스크탑에서는 드래그로 구현해줘" → payments/page.tsx handleTouchStart/Move → PointerEvent로 마이그레이션. onTouchStart/Move/End → onPointerDown/Move/Up/Cancel. setPointerCapture, touch-action: pan-y, user-select: none. 커밋 17cbe5b
+- msg 1328: "일단은 고2만 있으면 되긴해 근데 배찌로 표시할 필요없고 그냥 회색글씨로 표시해 안튀게" → 파란 배지 → 회색 작은 글씨 "+기하/확통". 같은 커밋 17cbe5b
+- msg 1331: "선택과목 앞 + 없애" → "+" 제거. 커밋 74e17cc
+- msg 1334: "안지워졌잖아" → **원인: next build 없이 next start만 재시작해 이전 빌드 서빙**. rebuild + 재시작으로 해결
+- msg 1336/1337: "시발 너 뭐 하고나면 됐는지 확인하고 했다고해" "바빠죽겠는데 시발" → 검증 누락 사과. 서빙 번들 직접 curl로 검증. `feedback_verify_before_report.md` 메모리 저장 (완료보고 전 curl로 번들 검증 필수)
+- msg 1339/1340: "발송 수납 사이에 점찍어줘" + "결제선생탭" → billing/page.tsx L579 "발송 수납" → "발송 · 수납". 커밋 baf7398
+
+**실행 내역**
+
+1. Pointer Events 통합 — 데스크탑 마우스 드래그 + 모바일 터치 통합, setPointerCapture
+2. 선택과목 표시 파란 배지 → 회색 작은 글씨 "기하/확통" (+ 프리픽스 없음)
+3. 결제선생 탭 "발송 수납" → "발송 · 수납"
+4. 커밋 17cbe5b → 74e17cc → baf7398, Vercel 3회 배포, 로컬 :3001 매번 rebuild+재시작
+5. 메모리: feedback_verify_before_report.md 추가 (완료보고 전 서빙 번들 curl 검증)
+
 ### 2026-04-21 오후 — 고2 선택과목 리팩터 + 동규 청구서 파기 (msg 1310~1321)
 
 **세션 흐름 (속기사 모드)**
