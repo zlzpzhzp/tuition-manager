@@ -18,6 +18,7 @@ import BillSendModal from '@/components/BillSendModal'
 import BulkBillSendModal, { type BulkBillTarget } from '@/components/BulkBillSendModal'
 import BillActionModal from '@/components/BillActionModal'
 import StudentDetailModal from '@/components/StudentDetailModal'
+import AiFilterButton from '@/components/payments/AiFilterButton'
 import { motion, AnimatePresence } from 'framer-motion'
 import useSWR from 'swr'
 
@@ -325,6 +326,11 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
   const [customDay, setCustomDay] = useState<number | null>(null)
   const [monthMemo, setMonthMemo] = useState('')
 
+  // AI 필터 (검색요정)
+  const [aiFilterIds, setAiFilterIds] = useState<Set<string> | null>(null)
+  const [aiFilterDesc, setAiFilterDesc] = useState('')
+  const [aiFilterLoading, setAiFilterLoading] = useState(false)
+
   // Sun~Sat 기준 주차 범위 (billing page와 동일)
   const weekRanges = useMemo(() => {
     const [y, m] = selectedMonth.split('-').map(Number)
@@ -483,6 +489,8 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
 
   // ─── 통합 필터 ──────────────────────────────────────────────
   const passesFilter = useCallback((s: Student, cls: ClassWithStudents): boolean => {
+    // AI 필터가 적용중이면 최우선
+    if (aiFilterIds !== null && !aiFilterIds.has(s.id)) return false
     // 수동 결제일 입력이 있으면 최우선 — 드롭다운 필터 무시
     if (customDay !== null) {
       const due = s.payment_due_day ?? getPaymentDueDay(s)
@@ -502,7 +510,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
     const [start, end] = weekRanges[paymentFilter]
     if (start > end) return false
     return due >= start && due <= end
-  }, [customDay, paymentFilter, paymentsByStudentId, selectedMonth, weekRanges])
+  }, [aiFilterIds, customDay, paymentFilter, paymentsByStudentId, selectedMonth, weekRanges])
 
   const sendOneBill = useCallback(async (student: Student, cls: ClassWithStudents): Promise<'sent' | 'scheduled' | 'failed'> => {
     const phone = student.parent_phone || student.phone || ''
@@ -611,6 +619,85 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
   const cancelBatch = useCallback(() => {
     cancelBatchRef.current = true
     setCancellingBatch(true)
+  }, [])
+
+  // ─── AI 필터 (검색요정) — 납부 컨텍스트 기반 ──
+  const handleAiFilter = useCallback(async (query: string) => {
+    setAiFilterLoading(true)
+    const allForFilter = grades.flatMap(g => g.classes.flatMap(c =>
+      getActiveStudents((c as ClassWithStudents).students ?? [], selectedMonth).map(s => ({ ...s, class: c as ClassWithStudents }))
+    ))
+
+    const [prevY, prevM] = prevMonth.split('-').map(Number)
+    const studentContext = allForFilter.map(s => {
+      const currPays = paymentsByStudentId.get(s.id) ?? []
+      const prevPays = prevPayments.filter(p => p.student_id === s.id)
+      const fee = getStudentFee(s, s.class)
+      const dueDay = getDueDay(s)
+      const paid = currPays.reduce((sum, p) => sum + p.amount, 0)
+      const status = getPaymentStatus(paid, fee)
+      const currMemo = currPays.find(p => p.memo && p.memo.trim())?.memo?.trim() || null
+      const prevMemo = prevPays.find(p => p.memo && p.memo.trim())?.memo?.trim() || null
+      const currMethod = currPays[0]?.method || null
+      const prevMethod = prevPays[0]?.method || null
+      const paymentDate = currPays[0]?.payment_date ?? null
+      const prevPayDate = prevPays
+        .map(p => p.payment_date)
+        .filter(Boolean)
+        .sort()[0] || null
+
+      // 지난달 결제일 대비 지연일수 (due_day 없으면 null)
+      let prevDaysLate: number | null = null
+      if (prevPayDate && dueDay) {
+        const payD = new Date(prevPayDate + 'T00:00:00')
+        const dueD = new Date(prevY, prevM - 1, dueDay)
+        prevDaysLate = Math.floor((payD.getTime() - dueD.getTime()) / (24 * 60 * 60 * 1000))
+      }
+
+      return {
+        id: s.id,
+        name: s.name,
+        grade: '',
+        class_name: s.class?.name || '',
+        subject: s.class?.subject || null,
+        fee,
+        due_day: dueDay,
+        paid,
+        status,
+        payment_method: currMethod,
+        payment_date: paymentDate,
+        current_memo: currMemo,
+        prev_memo: prevMemo,
+        prev_payment_method: prevMethod,
+        prev_payment_date: prevPayDate,
+        prev_days_late: prevDaysLate,
+        is_amount_modified: s.custom_fee != null,
+      }
+    })
+
+    try {
+      const res = await fetch('/api/agent/filter', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query, context: { students: studentContext, billing_month: selectedMonth } }),
+      })
+      const data = await res.json()
+      if (data.student_ids && data.student_ids.length > 0) {
+        setAiFilterIds(new Set(data.student_ids))
+        setAiFilterDesc(data.description || '필터 적용')
+      } else {
+        setAiFilterIds(new Set())
+        setAiFilterDesc(data.description || '결과 없음')
+      }
+    } catch {
+      alert('AI 필터 처리 중 오류가 발생했습니다.')
+    }
+    setAiFilterLoading(false)
+  }, [grades, selectedMonth, prevMonth, paymentsByStudentId, prevPayments, getDueDay])
+
+  const clearAiFilter = useCallback(() => {
+    setAiFilterIds(null)
+    setAiFilterDesc('')
   }, [])
 
   // 현재 필터에 해당하는 모든 반의 미납 학생을 한방에 발송
@@ -2222,6 +2309,14 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
           {batchResultToast}
         </div>
       )}
+
+      <AiFilterButton
+        aiFilterIds={aiFilterIds}
+        aiFilterDesc={aiFilterDesc}
+        onFilter={handleAiFilter}
+        onClear={clearAiFilter}
+        loading={aiFilterLoading}
+      />
     </div>
   )
 }

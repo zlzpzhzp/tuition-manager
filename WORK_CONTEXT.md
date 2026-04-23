@@ -5,6 +5,23 @@
 
 ## 현재 상태: 진행 중
 
+### 2026-04-23 새벽 — AI 필터(요정) 결제선생→납부 이전 + 3가지 쿼리 지원 (msg 1343~1346)
+
+**세션 흐름 (속기사 모드)**
+
+- msg 1343 (00:58): "야 결제선생 탭에 있는 요정을 다시 납부 탭에 가져와서 ai필터로 활용하는거 어때 자연어로 검색 요청하면 그런 애들만 검색해 주기 뭐 지난달 카드결제 학생 뭐 이런식"
+- msg 1344 (assistant): 제안/트레이드오프 응답
+- msg 1346 (01:13): "1.결제선생에선 없어도 돼 2.\"비고 작성학생\" \"금액 수정학생\" \"지난달 결제 5일이상 늦은 학생\""
+- 컨텍스트 요약 이후 재개
+
+**실행 내역 (진행 중)**
+
+1. `src/app/billing/page.tsx` — AiFilterButton import/state/handleAiFilter/clearAiFilter/JSX 전부 제거
+2. `src/app/payments/page.tsx` — aiFilterIds/Desc/Loading state 추가, passesFilter에 aiFilterIds 체크 추가
+3. 다음: handleAiFilter (payments 컨텍스트 — current_memo, prev_memo, is_amount_modified, prev_payment_date, prev_days_late) + `<AiFilterButton>` JSX 추가
+4. API SYSTEM_PROMPT에 신규 필드 문서화 (is_amount_modified, prev_days_late)
+5. 빌드 + 로컬 :3001 재시작 + Vercel 배포 + curl 번들 검증 (feedback_verify_before_report.md)
+
 ### 2026-04-22 밤 — HMAC 세션 토큰에 만료 타임스탬프 추가 (amnesia 세션 주도, msg 3261 "해그럼")
 
 **세션 흐름**

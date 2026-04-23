@@ -7,7 +7,6 @@ import Link from 'next/link'
 import type { Student, GradeWithClasses } from '@/types'
 import { getStudentFee } from '@/types'
 import { useGrades, getActiveStudents, getPaymentDueDay } from '@/lib/utils'
-import AiFilterButton from '@/components/payments/AiFilterButton'
 import QuickBillSendModal from '@/components/QuickBillSendModal'
 import useSWR from 'swr'
 
@@ -128,11 +127,6 @@ export default function BillingPage() {
     return map
   }, [bills])
 
-  // AI 필터 (검색요정)
-  const [aiFilterIds, setAiFilterIds] = useState<Set<string> | null>(null)
-  const [aiFilterDesc, setAiFilterDesc] = useState('')
-  const [aiFilterLoading, setAiFilterLoading] = useState(false)
-
   // 청구서 발송 모달
   const [showSendModal, setShowSendModal] = useState(false)
 
@@ -141,9 +135,8 @@ export default function BillingPage() {
       const active = getActiveStudents((c as ClassWithStudents).students ?? [], selectedMonth)
       return active
         .filter(s => matchesWeekFilter(getDueDay(s)))
-        .filter(s => aiFilterIds ? aiFilterIds.has(s.id) : true)
         .map(s => ({ ...s, class: c as ClassWithStudents }))
-    })), [grades, selectedMonth, matchesWeekFilter, getDueDay, aiFilterIds])
+    })), [grades, selectedMonth, matchesWeekFilter, getDueDay])
 
   // 발송 모달용: 모든 활성 학생 (필터 미적용)
   const allForSendModal = useMemo<StudentWithClass[]>(() =>
@@ -337,69 +330,6 @@ export default function BillingPage() {
       el.removeEventListener('touchend', handlePullEnd)
     }
   }, [handlePullStart, handlePullMove, handlePullEnd])
-
-  // ─── AI 필터 (검색요정) — 청구서 컨텍스트 기반 ──
-  const handleAiFilter = useCallback(async (query: string) => {
-    setAiFilterLoading(true)
-    const allForFilter = grades.flatMap(g => g.classes.flatMap(c => {
-      const active = getActiveStudents((c as ClassWithStudents).students ?? [], selectedMonth)
-      return active.map(s => ({ ...s, class: c as ClassWithStudents }))
-    }))
-
-    const nowMs = Date.now()
-    const studentContext = allForFilter.map(s => {
-      const bill = bills.find(b => b.student_id === s.id)
-      const fee = getStudentFee(s, s.class)
-      const dueDay = getDueDay(s)
-      const status = bill
-        ? (bill.status === 'paid' ? 'paid'
-          : (bill.status === 'cancelled' || bill.status === 'destroyed') ? 'cancelled'
-          : 'sent')
-        : 'unsent'
-      const daysSinceSent = bill?.sent_at
-        ? Math.floor((nowMs - new Date(bill.sent_at).getTime()) / (24 * 60 * 60 * 1000))
-        : null
-      return {
-        id: s.id,
-        name: s.name,
-        grade: '',
-        class_name: s.class?.name || '',
-        fee,
-        status,
-        due_day: dueDay,
-        bill_amount: bill?.amount ?? null,
-        paid_amount: bill?.appr_price ?? null,
-        sent_at: bill?.sent_at ?? null,
-        paid_at: bill?.appr_dt ?? null,
-        days_since_sent: daysSinceSent,
-        phone_available: !!(s.parent_phone || s.phone),
-      }
-    })
-
-    try {
-      const res = await fetch('/api/agent/filter', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query, context: { students: studentContext, billing_month: selectedMonth } }),
-      })
-      const data = await res.json()
-      if (data.student_ids && data.student_ids.length > 0) {
-        setAiFilterIds(new Set(data.student_ids))
-        setAiFilterDesc(data.description || '필터 적용')
-      } else {
-        setAiFilterIds(new Set())
-        setAiFilterDesc(data.description || '결과 없음')
-      }
-    } catch {
-      alert('AI 필터 처리 중 오류가 발생했습니다.')
-    }
-    setAiFilterLoading(false)
-  }, [grades, bills, selectedMonth, getDueDay])
-
-  const clearAiFilter = useCallback(() => {
-    setAiFilterIds(null)
-    setAiFilterDesc('')
-  }, [])
 
   const exportCsv = useCallback(() => {
     const rows = [
@@ -773,14 +703,6 @@ export default function BillingPage() {
           </AnimatePresence>
         </div>
       </div>
-
-      <AiFilterButton
-        aiFilterIds={aiFilterIds}
-        aiFilterDesc={aiFilterDesc}
-        onFilter={handleAiFilter}
-        onClear={clearAiFilter}
-        loading={aiFilterLoading}
-      />
 
       {showSendModal && (
         <QuickBillSendModal
