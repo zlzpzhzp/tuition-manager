@@ -172,7 +172,7 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
         </div>
         <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)]">
           <h2 className="text-lg font-bold tracking-tight">{payment ? '납부 정보' : '납부'}</h2>
-          <button onClick={onClose} className="p-1.5 text-[var(--text-4)] hover:text-[var(--text-3)] hover:bg-[var(--bg-elevated)] rounded-lg transition-colors"><X className="w-5 h-5" /></button>
+          <button onClick={onClose} aria-label="닫기" className="p-1.5 text-[var(--text-4)] hover:text-[var(--text-3)] hover:bg-[var(--bg-elevated)] rounded-lg transition-colors"><X className="w-5 h-5" /></button>
         </div>
 
         {/* 전달 비고 내용 알림 */}

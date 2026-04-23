@@ -379,7 +379,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ month: selectedMonth, content }),
-      }).catch(() => {})
+      }).catch(err => console.warn('[payments] 월별 메모 자동저장 실패', err))
     }, 500)
   }, [selectedMonth])
 
