@@ -5,6 +5,25 @@
 
 ## 현재 상태: 진행 중
 
+### 2026-04-23 오전 — 요정 초기 위치 + 관성 제거 (msg 1357)
+
+**msg 1357 (10:40):** "요정 초기 위치를 일필터 옆에다 놓고 스크롤 해도 안움직이게해 터치드래그 해야만 움직이게"
+
+**실행 내역**
+
+1. `src/components/payments/AiFilterButton.tsx`
+   - 초기 위치: `right-80, top-38%` → `right-52px, top-144px` (일필터 sticky 140px 옆)
+   - `handleEnd` 관성 시뮬레이션 제거 — 드래그 릴리즈 시 즉시 정지. 던져도 안 날아감
+2. 빌드 + 로컬 :3001 재시작 + 번들 검증 + 배포 예정
+
+### 2026-04-23 새벽 — AI 필터(요정) 결제선생→납부 이전 + 전체 쿼리 지원 (msg 1343~1354)
+
+**msg 1353 (선택과목/연락처) + msg 1354 (학부모 연락처 필수) 완료**
+
+- 검색요정: `electives`, `phone_available` 필드 추가 → "선택과목 듣는 학생", "기하 듣는 학생", "연락처 없는 학생" 쿼리 지원
+- StudentModal: 신규 등록 시 `parent_phone` 필수 (required + 제출 시 alert + label `*`)
+- 커밋 eb07182 + 43e7eb3 → Vercel prod READY
+
 ### 2026-04-23 새벽 — AI 필터(요정) 결제선생→납부 이전 + 3가지 쿼리 지원 (msg 1343~1346)
 
 **세션 흐름 (속기사 모드)**
@@ -1177,3 +1196,11 @@
 **Claude**: 로컬 번들 검증 완료. 커밋+배포 진행합니다.
 
 **Claude**: 2건 완료 — msg 1353 (선택과목/연락처 필터) + msg 1354 (학부모 연락처 필수 검증). 로컬 번들 + Vercel prod 배포 모두 검증 완료.
+
+### 2026-04-23 15:47 KST — amnesia 세션에서 CLAUDE.md 에 dm-ui 포인터 추가
+
+amnesia 세션이 UI 디스커버리 개선 중 (초능력자님 msg 3361 — 각 앱 Claude들이 알아듣게). 원비 CLAUDE.md 에 dm-ui 재사용 규칙 섹션 추가:
+- 원비는 dm-ui 실사용 0 상태 (결제 중심, 자체 모달)
+- 원비 StudentModal ≠ dm-ui StudentModal (결제필드 유무)
+- dm-ui 수정은 원본에서 + sync.sh (직접 수정 금지)
+- 앞으로 UI 키워드 나오면 `/root/dm-ui/README.md` 카탈로그 먼저 확인

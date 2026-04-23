@@ -73,8 +73,9 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
   useEffect(() => {
     if (initialized.current) return
     initialized.current = true
-    const x = window.innerWidth - 80
-    const y = window.innerHeight * 0.38
+    // 일필터(sticky top:140px) 왼쪽 옆. 콘텐츠 밖 우측 여백에 배치
+    const x = window.innerWidth - 52
+    const y = 144
     posRef.current = { x, y }
     setPos({ x, y })
   }, [])
@@ -200,22 +201,8 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
   const handleEnd = useCallback(() => {
     if (!dragging.current) return
     dragging.current = false
-
-    const dt = (performance.now() - prevTouch.current.t) || 1
-    const dx = lastTouch.current.x - prevTouch.current.x
-    const dy = lastTouch.current.y - prevTouch.current.y
-
-    velRef.current = { x: (dx / dt) * 16, y: (dy / dt) * 16 }
-
-    const maxVel = 35
-    const speed = Math.sqrt(velRef.current.x ** 2 + velRef.current.y ** 2)
-    if (speed > maxVel) {
-      velRef.current.x = (velRef.current.x / speed) * maxVel
-      velRef.current.y = (velRef.current.y / speed) * maxVel
-    }
-
-    animFrame.current = requestAnimationFrame(simulate)
-  }, [simulate])
+    velRef.current = { x: 0, y: 0 }
+  }, [])
 
   useEffect(() => {
     window.addEventListener('mousemove', handleMove)
