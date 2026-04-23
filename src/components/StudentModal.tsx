@@ -36,6 +36,10 @@ export default function StudentModal({ student, grades, defaultClassId, onSave, 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!name.trim()) return
+    if (!student && !parentPhone.trim()) {
+      alert('학부모 연락처는 필수입니다. 청구서 발송에 필요합니다.')
+      return
+    }
     const dueDayNum = paymentDueDay ? parseInt(paymentDueDay) : null
     const dueDay = dueDayNum != null && dueDayNum >= 1 && dueDayNum <= 31 ? dueDayNum : null
     onSave({
@@ -159,13 +163,16 @@ export default function StudentModal({ student, grades, defaultClassId, onSave, 
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[var(--text-2)] mb-1">학부모 연락처</label>
+              <label className="block text-sm font-medium text-[var(--text-2)] mb-1">
+                학부모 연락처{!student && ' *'}
+              </label>
               <input
                 type="tel"
                 inputMode="numeric"
                 value={parentPhone}
                 onChange={e => setParentPhone(formatPhone(e.target.value))}
                 placeholder="010-0000-0000"
+                required={!student}
                 className="w-full px-3 py-2 border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-1)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
               />
             </div>
