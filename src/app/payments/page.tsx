@@ -2015,7 +2015,12 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                                       const s = methodSymbol[method] ?? { Icon: Check, title: '납부 완료 — 탭하여 편집' }
                                       const IconComp = s.Icon
                                       return (
-                                        <button
+                                        <motion.button
+                                          layout
+                                          initial={{ scale: 0.6, opacity: 0 }}
+                                          animate={{ scale: 1, opacity: 1 }}
+                                          transition={{ type: 'spring', stiffness: 520, damping: 22 }}
+                                          whileTap={{ scale: 0.92 }}
                                           onClick={(e) => {
                                             e.stopPropagation()
                                             if (method === 'payssam' && bill?.status === 'paid') {
@@ -2037,7 +2042,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                                           title={s.title}
                                         >
                                           <IconComp className="w-3.5 h-3.5" style={s.rotate ? { transform: `rotate(${s.rotate}deg)` } : undefined} />
-                                        </button>
+                                        </motion.button>
                                       )
                                     }
 
@@ -2058,7 +2063,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                                     const resendCount = bill?.resend_count ?? 0
                                     const showBadge = billStatus === 'sent' && resendCount > 0
                                     return (
-                                      <button
+                                      <motion.button
                                         onClick={(e) => {
                                           e.stopPropagation()
                                           if (billStatus === 'scheduled') return // 예약건은 상호작용 없음 (정보 표시만)
@@ -2076,44 +2081,64 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                                             setBillSendTarget({ studentId: student.id, studentName: student.name, phone: parentPhone, amount: fee, subject: cls.subject ?? null, className: cls.name ?? null, electives: student.electives ?? [] })
                                           }
                                         }}
-                                        className="relative p-1 rounded-lg transition-colors shrink-0 hover:opacity-80 flex items-center justify-center"
-                                        style={{ color: s.fg, background: s.bg }}
+                                        className="relative p-1 rounded-lg shrink-0 hover:opacity-80 flex items-center justify-center overflow-visible"
+                                        animate={{ color: s.fg, backgroundColor: s.bg }}
+                                        transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                                        whileTap={{ scale: 0.92 }}
                                         aria-label={showBadge ? `${s.title} — 재발송 ${resendCount}회` : s.title}
                                         title={showBadge ? `${s.title} · 재발송 ${resendCount}회` : s.title}
                                       >
-                                        {billStatus === 'sent' ? (
-                                          <Mail className="w-3.5 h-3.5" />
-                                        ) : billStatus === 'cancelled' ? (
-                                          // 종이비행기 180° 회전 (앞코가 좌하단) + 대각선 취소선(╲) (inline SVG)
-                                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                                            <g opacity="0.5" transform="rotate(180 12 12)">
-                                              <path d="m22 2-7 20-4-9-9-4Z" />
-                                              <path d="M22 2 11 13" />
-                                            </g>
-                                            <line x1="3.5" y1="3.5" x2="20.5" y2="20.5" />
-                                          </svg>
-                                        ) : (
-                                          <Send className="w-3.5 h-3.5" />
-                                        )}
+                                        <AnimatePresence mode="wait" initial={false}>
+                                          <motion.span
+                                            key={billStatus}
+                                            initial={{ opacity: 0, scale: 0.4, rotate: -25 }}
+                                            animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                                            exit={{ opacity: 0, scale: 0.4, rotate: 25 }}
+                                            transition={{ type: 'spring', stiffness: 420, damping: 24 }}
+                                            className="flex items-center justify-center"
+                                          >
+                                            {billStatus === 'sent' ? (
+                                              <Mail className="w-3.5 h-3.5" />
+                                            ) : billStatus === 'cancelled' ? (
+                                              // 종이비행기 180° 회전 (앞코가 좌하단) + 대각선 취소선(╲) (inline SVG)
+                                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                                                <g opacity="0.5" transform="rotate(180 12 12)">
+                                                  <path d="m22 2-7 20-4-9-9-4Z" />
+                                                  <path d="M22 2 11 13" />
+                                                </g>
+                                                <line x1="3.5" y1="3.5" x2="20.5" y2="20.5" />
+                                              </svg>
+                                            ) : (
+                                              <Send className="w-3.5 h-3.5" />
+                                            )}
+                                          </motion.span>
+                                        </AnimatePresence>
                                         {billStatus === 'scheduled' && (
-                                          <span
+                                          <motion.span
+                                            initial={{ opacity: 0, scale: 0 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            exit={{ opacity: 0, scale: 0 }}
+                                            transition={{ type: 'spring', stiffness: 500, damping: 22 }}
                                             className="absolute -bottom-1 -right-1 w-[12px] h-[12px] rounded-full flex items-center justify-center"
                                             style={{ background: 'var(--orange)', color: 'white' }}
                                             aria-hidden
                                           >
                                             <Clock className="w-[8px] h-[8px]" strokeWidth={3} />
-                                          </span>
+                                          </motion.span>
                                         )}
                                         {showBadge && (
-                                          <span
+                                          <motion.span
+                                            initial={{ opacity: 0, scale: 0 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            transition={{ type: 'spring', stiffness: 500, damping: 18 }}
                                             className="absolute -top-1 -right-1 min-w-[14px] h-[14px] px-1 rounded-full flex items-center justify-center text-[9px] font-bold leading-none"
                                             style={{ background: 'var(--red)', color: 'white' }}
                                             aria-hidden
                                           >
                                             {resendCount}
-                                          </span>
+                                          </motion.span>
                                         )}
-                                      </button>
+                                      </motion.button>
                                     )
                                   })()}
                                 </>
@@ -2213,76 +2238,88 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
         <div className="text-center py-12 text-[var(--text-4)]">등록된 학생이 없습니다</div>
       )}
 
-      {showPaymentModal && selectedStudentId && (
-        <PaymentModal
-          payment={selectedPayment}
-          studentId={selectedStudentId}
-          defaultBillingMonth={selectedMonth}
-          defaultAmount={selectedStudentFee}
-          prevMemo={selectedPrevMemo}
-          prevMethod={selectedPrevMethod}
-          onSave={handleSavePayment}
-          onUpdate={handleUpdatePayment}
-          onDelete={handleDeletePayment}
-          onClose={() => { setShowPaymentModal(false); setSelectedPayment(null); setExpandedStudentId(null) }}
-        />
-      )}
+      <AnimatePresence>
+        {showPaymentModal && selectedStudentId && (
+          <PaymentModal
+            payment={selectedPayment}
+            studentId={selectedStudentId}
+            defaultBillingMonth={selectedMonth}
+            defaultAmount={selectedStudentFee}
+            prevMemo={selectedPrevMemo}
+            prevMethod={selectedPrevMethod}
+            onSave={handleSavePayment}
+            onUpdate={handleUpdatePayment}
+            onDelete={handleDeletePayment}
+            onClose={() => { setShowPaymentModal(false); setSelectedPayment(null); setExpandedStudentId(null) }}
+          />
+        )}
+      </AnimatePresence>
 
 
-      {showStudentModal && (
-        <StudentModal
-          grades={grades}
-          defaultClassId={addStudentClassId}
-          onSave={handleSaveStudent}
-          onClose={() => setShowStudentModal(false)}
-        />
-      )}
+      <AnimatePresence>
+        {showStudentModal && (
+          <StudentModal
+            grades={grades}
+            defaultClassId={addStudentClassId}
+            onSave={handleSaveStudent}
+            onClose={() => setShowStudentModal(false)}
+          />
+        )}
+      </AnimatePresence>
 
-      {billSendTarget && (
-        <BillSendModal
-          studentId={billSendTarget.studentId}
-          studentName={billSendTarget.studentName}
-          phone={billSendTarget.phone}
-          amount={billSendTarget.amount}
-          subject={billSendTarget.subject}
-          className={billSendTarget.className}
-          billingMonth={selectedMonth}
-          electives={billSendTarget.electives}
-          onClose={() => setBillSendTarget(null)}
-          onSuccess={() => { fetchData(); mutateBills() }}
-        />
-      )}
+      <AnimatePresence>
+        {billSendTarget && (
+          <BillSendModal
+            studentId={billSendTarget.studentId}
+            studentName={billSendTarget.studentName}
+            phone={billSendTarget.phone}
+            amount={billSendTarget.amount}
+            subject={billSendTarget.subject}
+            className={billSendTarget.className}
+            billingMonth={selectedMonth}
+            electives={billSendTarget.electives}
+            onClose={() => setBillSendTarget(null)}
+            onSuccess={() => { fetchData(); mutateBills() }}
+          />
+        )}
+      </AnimatePresence>
 
-      {detailStudentId && (
-        <StudentDetailModal
-          studentId={detailStudentId}
-          onClose={() => setDetailStudentId(null)}
-          onChange={fetchData}
-        />
-      )}
+      <AnimatePresence>
+        {detailStudentId && (
+          <StudentDetailModal
+            studentId={detailStudentId}
+            onClose={() => setDetailStudentId(null)}
+            onChange={fetchData}
+          />
+        )}
+      </AnimatePresence>
 
-      {billActionTarget && (
-        <BillActionModal
-          studentId={billActionTarget.studentId}
-          studentName={billActionTarget.studentName}
-          phone={billActionTarget.phone}
-          billId={billActionTarget.billId}
-          amount={billActionTarget.amount}
-          status={billActionTarget.status}
-          billingMonth={selectedMonth}
-          onClose={() => setBillActionTarget(null)}
-          onSuccess={() => { fetchData(); mutateBills() }}
-        />
-      )}
+      <AnimatePresence>
+        {billActionTarget && (
+          <BillActionModal
+            studentId={billActionTarget.studentId}
+            studentName={billActionTarget.studentName}
+            phone={billActionTarget.phone}
+            billId={billActionTarget.billId}
+            amount={billActionTarget.amount}
+            status={billActionTarget.status}
+            billingMonth={selectedMonth}
+            onClose={() => setBillActionTarget(null)}
+            onSuccess={() => { fetchData(); mutateBills() }}
+          />
+        )}
+      </AnimatePresence>
 
-      {bulkBillTarget && (
-        <BulkBillSendModal
-          className={bulkBillTarget.className}
-          targets={bulkBillTarget.targets}
-          onClose={() => setBulkBillTarget(null)}
-          onConfirm={executeBulkSend}
-        />
-      )}
+      <AnimatePresence>
+        {bulkBillTarget && (
+          <BulkBillSendModal
+            className={bulkBillTarget.className}
+            targets={bulkBillTarget.targets}
+            onClose={() => setBulkBillTarget(null)}
+            onConfirm={executeBulkSend}
+          />
+        )}
+      </AnimatePresence>
 
       {showDatePicker && (
         <DatePickerPopup
