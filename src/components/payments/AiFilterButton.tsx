@@ -73,8 +73,10 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
   useEffect(() => {
     if (initialized.current) return
     initialized.current = true
-    // 일필터(sticky top:140px) 왼쪽 옆. 콘텐츠 밖 우측 여백에 배치
-    const x = window.innerWidth - 52
+    // 일필터(sticky top:140px) 옆. layout max-w-4xl(896px) + px-4 고려 — 콘텐츠 우측 가장자리 기준
+    const MAX_W = 896
+    const contentRight = Math.min(window.innerWidth, window.innerWidth / 2 + MAX_W / 2)
+    const x = Math.max(12, contentRight - 52)
     const y = 144
     posRef.current = { x, y }
     setPos({ x, y })
