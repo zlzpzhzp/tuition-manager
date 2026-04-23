@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { X, Loader2, ArrowRight } from 'lucide-react'
 
 /** 요정 SVG — 날개 달린 실루엣 + 지팡이 */
@@ -280,9 +281,11 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
   const speed = Math.sqrt(velRef.current.x ** 2 + velRef.current.y ** 2)
   const BTN = 36
 
+  if (typeof document === 'undefined') return null
+
   // 필터 적용 상태 (배지)
   if (aiFilterIds !== null) {
-    return (
+    return createPortal(
       <div className="fixed right-3 z-[60]" style={{ top: '38%' }}>
         <div className="flex items-center gap-1.5 bg-[var(--bg-card)] text-[var(--paid-text)] pl-2 pr-1.5 py-1.5 rounded-full shadow-[0_2px_12px_rgba(0,0,0,0.15)] border border-[var(--border)]">
           <FairyIcon size={14} color="#34d399" />
@@ -291,11 +294,12 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
             <X className="w-3.5 h-3.5 text-[var(--text-4)]" />
           </button>
         </div>
-      </div>
+      </div>,
+      document.body,
     )
   }
 
-  return (
+  return createPortal(
     <>
       {/* 흰색 스타더스트 */}
       <svg className="fixed inset-0 pointer-events-none z-[55]" width="100%" height="100%">
@@ -398,6 +402,7 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
           </button>
         </div>
       </div>
-    </>
+    </>,
+    document.body,
   )
 }
