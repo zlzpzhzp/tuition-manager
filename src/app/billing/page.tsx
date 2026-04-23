@@ -267,12 +267,16 @@ export default function BillingPage() {
     return { overdue, cancelled, noPhone }
   }, [bills, allVisibleStudents, studentById, weekFilter, nowTs])
 
-  // 발송 수납 전체 내역 (내부 스크롤 영역)
+  // 발송 수납 전체 내역 (내부 스크롤 영역) — 최신 상태 변경순(updated_at desc)
   const recentActivity = useMemo(() => {
     const scoped = weekFilter === 'all'
       ? bills
       : bills.filter(b => studentById.has(b.student_id))
-    return scoped
+    return [...scoped].sort((a, b) => {
+      const ta = new Date(a.updated_at ?? a.sent_at ?? 0).getTime()
+      const tb = new Date(b.updated_at ?? b.sent_at ?? 0).getTime()
+      return tb - ta
+    })
   }, [bills, weekFilter, studentById])
 
   // ─── Pull-to-refresh ──────────────────────────────────────
