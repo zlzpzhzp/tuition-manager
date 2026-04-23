@@ -72,14 +72,44 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
 
   useEffect(() => {
     if (initialized.current) return
-    initialized.current = true
-    // 일필터(sticky top:140px) 옆. layout max-w-4xl(896px) + px-4 고려 — 콘텐츠 우측 가장자리 기준
-    const MAX_W = 896
-    const contentRight = Math.min(window.innerWidth, window.innerWidth / 2 + MAX_W / 2)
-    const x = Math.max(12, contentRight - 52)
-    const y = 144
-    posRef.current = { x, y }
-    setPos({ x, y })
+    const FAIRY = 36
+    const GAP = 8
+    const fallback = () => {
+      // 일필터 DOM 없으면 콘텐츠 우측 가장자리 기준
+      const MAX_W = 896
+      const contentRight = Math.min(window.innerWidth, window.innerWidth / 2 + MAX_W / 2)
+      return { x: Math.max(12, contentRight - 52), y: 144 }
+    }
+    const tryPlace = () => {
+      const el = document.querySelector('[data-day-filter]') as HTMLElement | null
+      if (!el) return false
+      const rect = el.getBoundingClientRect()
+      if (rect.width === 0) return false
+      // 일필터 버튼 왼쪽 옆에, sticky top(140) 기준 수직 정렬
+      const stickyTop = 140
+      const x = Math.max(12, rect.left - FAIRY - GAP)
+      const y = stickyTop + Math.max(0, (rect.height - FAIRY) / 2)
+      posRef.current = { x, y }
+      setPos({ x, y })
+      initialized.current = true
+      return true
+    }
+    if (tryPlace()) return
+    // DOM이 아직 없으면 재시도 (최대 60프레임 ≈ 1초)
+    let frames = 0
+    const tick = () => {
+      if (initialized.current) return
+      if (tryPlace()) return
+      if (frames++ > 60) {
+        const p = fallback()
+        posRef.current = p
+        setPos(p)
+        initialized.current = true
+        return
+      }
+      requestAnimationFrame(tick)
+    }
+    requestAnimationFrame(tick)
   }, [])
 
   // 페이지 숨김 시 정지

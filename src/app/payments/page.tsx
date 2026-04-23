@@ -1614,6 +1614,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                             )}
                           </div>
                           <button
+                            data-day-filter
                             onClick={(e) => setFilterAnchor(prev => prev === e.currentTarget ? null : e.currentTarget)}
                             disabled={customDay !== null}
                             style={{ width: 112 }}

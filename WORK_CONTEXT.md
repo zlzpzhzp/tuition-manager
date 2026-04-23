@@ -5,6 +5,21 @@
 
 ## 현재 상태: 진행 중
 
+### 2026-04-24 오전 — 요정 일필터 옆 정확 배치 (msg 1372, 1375)
+
+**msg 1372 (전): "데스크 탑에서 납부탭" → 콘텐츠 우측(max-w-4xl) 기준으로 x 계산**
+- `innerWidth - 52`로 잡아서 max-w-4xl 중앙정렬 바깥 여백에 떠 있던 문제 수정
+- `Math.min(innerWidth, innerWidth/2 + 448) - 52`
+- 커밋 f19431b → Vercel READY
+
+**msg 1375: "모바일 에서 일 필터 옆에 띄우라고 그리고 스크롤 안딸려 올라가게 하라고"**
+- 모바일에서도 요정이 일필터와 동떨어진 위치에 떠있던 문제
+- 해결: 일필터 버튼 DOM (`[data-day-filter]`)을 querySelector로 찾아서 rect.left 기준 왼쪽에 배치
+- `src/app/payments/page.tsx`: 일필터 버튼에 `data-day-filter` 속성 추가
+- `src/components/payments/AiFilterButton.tsx`: tryPlace() + rAF 재시도(최대 60프레임) + fallback
+- y는 sticky top(140) 기준으로 버튼 세로 중앙에 정렬
+- position: fixed 유지 (스크롤 무관 고정) — 이미 `className="fixed z-[60]"` 였음
+
 ### 2026-04-23 오후 — 발송수납 25% 확장 + 요정 관성 원복 (msg 1360, 1363)
 
 **msg 1360 (10:48):** "아냐 관성 왜 제거해 스크롤 할때 위로 안딸려 갈뿐 똑같애 초기 위치만 변경된거지"
