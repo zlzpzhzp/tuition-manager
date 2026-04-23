@@ -1161,3 +1161,19 @@
 ### 2026-04-23 10:33 KST (auto-recorded, session 7bc0c632)
 
 **Claude**: 데이터 범위 안의 새 쿼리는 OK, 그 범위 밖은 컨텍스트 확장이 필요하다고 답변했습니다.
+
+### 2026-04-23 10:42 KST (auto-recorded, session 7bc0c632)
+
+**Claude**: 이유 없이 빼먹었습니다. 바로 추가합니다.
+
+**Claude**: Finish current: build + deploy. Then tackle the new request.
+
+**Claude**: 로컬 번들 검증 완료 — electives/phone_available/is_amount_modified 모두 서빙 중. 이제 커밋+배포 후 msg 1354 착수합니다.
+
+**Claude**: 배포 트리거됨. 이제 msg 1354 작업 시작 — 학생 등록 모달에 parent_phone 필수 검증 추가.
+
+**Claude**: 학부모 연락처 필수 검증을 추가합니다. 신규 등록 시에만 적용 (기존 학생 수정은 영향 없음).
+
+**Claude**: 로컬 번들 검증 완료. 커밋+배포 진행합니다.
+
+**Claude**: 2건 완료 — msg 1353 (선택과목/연락처 필터) + msg 1354 (학부모 연락처 필수 검증). 로컬 번들 + Vercel prod 배포 모두 검증 완료.
