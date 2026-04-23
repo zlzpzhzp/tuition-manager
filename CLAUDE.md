@@ -14,6 +14,16 @@
 - 텔레그램 메시지 포함, 시간순으로 원문에 가깝게 남긴다
 - 다음 세션에서 맥락을 정확하게 이어가기 위함
 
+## 🎨 UI 컴포넌트 재사용 (먼저 확인)
+
+스와이프/모달/알림/토스트/테마/배지/검색/전환 **키워드 나오면** 무조건 먼저 읽을것:
+- `/root/dm-ui/README.md` — 12개 공유 컴포넌트 카탈로그 + 앱별 실제 사용처 맵
+- **원비는 현재 dm-ui 실사용 0**. 결제 중심이라 BillActionModal/PaymentModal/StudentModal 등 **원비 자체 컴포넌트** 유지. dm-ui StudentModal과 원비 StudentModal은 다름 (결제필드 유무).
+- 원비엔 스와이프 UI 없음. 있다면 `src/components/` 자체 컴포넌트.
+- 새 UI 만들때: 원비 자체 스타일 우선 → 그래도 범용이면 dm-ui 참조 고려
+- 수정은 dm-ui 원본에서 하고 `bash /root/dm-ui/sync.sh` 로 배포 (직접 수정 금지 — drift 발생)
+- 없으면 ui-patterns-lab 스킬 폴백
+
 ## 메모리 시스템 (memory/)
 - **세션 시작 시**: `WORK_CONTEXT.md`를 읽어서 전체 맥락 파악
 - **작업 중**: 중요 작업 완료 시 `WORK_CONTEXT.md`의 "최근 작업" 섹션 갱신
