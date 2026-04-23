@@ -201,8 +201,22 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
   const handleEnd = useCallback(() => {
     if (!dragging.current) return
     dragging.current = false
-    velRef.current = { x: 0, y: 0 }
-  }, [])
+
+    const dt = (performance.now() - prevTouch.current.t) || 1
+    const dx = lastTouch.current.x - prevTouch.current.x
+    const dy = lastTouch.current.y - prevTouch.current.y
+
+    velRef.current = { x: (dx / dt) * 16, y: (dy / dt) * 16 }
+
+    const maxVel = 35
+    const speed = Math.sqrt(velRef.current.x ** 2 + velRef.current.y ** 2)
+    if (speed > maxVel) {
+      velRef.current.x = (velRef.current.x / speed) * maxVel
+      velRef.current.y = (velRef.current.y / speed) * maxVel
+    }
+
+    animFrame.current = requestAnimationFrame(simulate)
+  }, [simulate])
 
   useEffect(() => {
     window.addEventListener('mousemove', handleMove)
