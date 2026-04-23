@@ -1,5 +1,6 @@
 'use client'
 
+import { toast } from 'sonner'
 import { useState, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { motion } from 'framer-motion'
@@ -54,7 +55,7 @@ export default function StudentDetailModal({ studentId, onClose, onChange }: Pro
     setElectivesSaving(true)
     const { error } = await safeMutate(`/api/students/${studentId}`, 'PUT', { electives: next })
     setElectivesSaving(false)
-    if (error) { alert(`선택과목 저장 실패: ${error}`); return }
+    if (error) { toast.error(`선택과목 저장 실패: ${error}`); return }
     await fetchData()
     notifyChange()
   }
@@ -64,7 +65,7 @@ export default function StudentDetailModal({ studentId, onClose, onChange }: Pro
     const memo = memoValue.trim() || null
     const { error } = await safeMutate(`/api/students/${studentId}`, 'PUT', { memo, memo_color: memoColor })
     setMemoSaving(false)
-    if (error) { alert(`저장 실패: ${error}`); return }
+    if (error) { toast.error(`저장 실패: ${error}`); return }
     setMemoSavedFlash(true)
     setTimeout(() => setMemoSavedFlash(false), 1200)
     await fetchData()
@@ -89,7 +90,7 @@ export default function StudentDetailModal({ studentId, onClose, onChange }: Pro
 
   const handleUpdateStudent = async (data: Partial<Student>) => {
     const { error } = await safeMutate(`/api/students/${studentId}`, 'PUT', data)
-    if (error) { alert(`수정 실패: ${error}`); return }
+    if (error) { toast.error(`수정 실패: ${error}`); return }
     setShowEditModal(false)
     await fetchData()
     notifyChange()
@@ -98,7 +99,7 @@ export default function StudentDetailModal({ studentId, onClose, onChange }: Pro
   const handleDeleteStudent = async () => {
     if (!confirm(`"${student?.name}" 학생을 삭제하시겠습니까?`)) return
     const { error } = await safeMutate(`/api/students/${studentId}`, 'DELETE')
-    if (error) { alert(`삭제 실패: ${error}`); return }
+    if (error) { toast.error(`삭제 실패: ${error}`); return }
     notifyChange()
     onClose()
   }
@@ -108,21 +109,21 @@ export default function StudentDetailModal({ studentId, onClose, onChange }: Pro
     const date = prompt('퇴원일을 입력하세요 (YYYY-MM-DD)', getTodayString())
     if (!date) return
     const { error } = await safeMutate(`/api/students/${studentId}`, 'PUT', { withdrawal_date: date })
-    if (error) { alert(`퇴원 처리 실패: ${error}`); return }
+    if (error) { toast.error(`퇴원 처리 실패: ${error}`); return }
     await fetchData()
     notifyChange()
   }
 
   const handleReenroll = async () => {
     const { error } = await safeMutate(`/api/students/${studentId}`, 'PUT', { withdrawal_date: null })
-    if (error) { alert(`재등록 실패: ${error}`); return }
+    if (error) { toast.error(`재등록 실패: ${error}`); return }
     await fetchData()
     notifyChange()
   }
 
   const handleSavePayment = async (data: Partial<Payment>) => {
     const { error } = await safeMutate('/api/payments', 'POST', data)
-    if (error) { alert(`납부 기록 실패: ${error}`); return }
+    if (error) { toast.error(`납부 기록 실패: ${error}`); return }
     setShowPaymentModal(false)
     await fetchData()
     notifyChange()
@@ -131,7 +132,7 @@ export default function StudentDetailModal({ studentId, onClose, onChange }: Pro
   const handleDeletePayment = async (paymentId: string) => {
     if (!confirm('이 납부 기록을 삭제하시겠습니까?')) return
     const { error } = await safeMutate(`/api/payments/${paymentId}`, 'DELETE')
-    if (error) { alert(`삭제 실패: ${error}`); return }
+    if (error) { toast.error(`삭제 실패: ${error}`); return }
     await fetchData()
     notifyChange()
   }

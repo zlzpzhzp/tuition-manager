@@ -1,5 +1,6 @@
 'use client'
 
+import { toast } from 'sonner'
 import { useState, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -126,7 +127,7 @@ export default function SettingsPage() {
       class_days: newClassDays.length > 0 ? newClassDays.join(',') : null,
       teacher_id: newClassTeacherId || null,
     })
-    if (error) { alert(`반 추가 실패: ${error}`); return }
+    if (error) { toast.error(`반 추가 실패: ${error}`); return }
     setAddingClassToGrade(null)
     resetClassForm()
     fetchGrades()
@@ -141,7 +142,7 @@ export default function SettingsPage() {
       class_days: editClassDays.length > 0 ? editClassDays.join(',') : null,
       teacher_id: editClassTeacherId || null,
     })
-    if (error) { alert(`반 수정 실패: ${error}`); return }
+    if (error) { toast.error(`반 수정 실패: ${error}`); return }
     setEditingClassId(null)
     fetchGrades()
   }
@@ -149,7 +150,7 @@ export default function SettingsPage() {
   const deleteClass = async (id: string, name: string) => {
     if (!confirm(`"${name}" 반을 삭제하시겠습니까?`)) return
     const { error } = await safeMutate(`/api/classes/${id}`, 'DELETE')
-    if (error) { alert(`반 삭제 실패: ${error}`); return }
+    if (error) { toast.error(`반 삭제 실패: ${error}`); return }
     fetchGrades()
   }
 
@@ -187,7 +188,7 @@ export default function SettingsPage() {
     const results = await Promise.all(promises)
     const failed = results.filter(r => r.error)
     if (failed.length > 0) {
-      alert(`${failed.length}명 이동 실패`)
+      toast.error(`${failed.length}명 이동 실패`)
     }
     setTransferring(false)
     setTransferClass(null)
@@ -217,7 +218,7 @@ export default function SettingsPage() {
       phone: newTeacherPhone || null,
       subject: newTeacherSubject || null,
     })
-    if (error) { alert(`선생님 등록 실패: ${error}`); return }
+    if (error) { toast.error(`선생님 등록 실패: ${error}`); return }
     setAddingTeacher(false)
     setNewTeacherName(''); setNewTeacherPhone(''); setNewTeacherSubject('')
     revalidateTeachers()
@@ -230,7 +231,7 @@ export default function SettingsPage() {
       phone: editTeacherPhone || null,
       subject: editTeacherSubject || null,
     })
-    if (error) { alert(`선생님 수정 실패: ${error}`); return }
+    if (error) { toast.error(`선생님 수정 실패: ${error}`); return }
     setEditingTeacherId(null)
     revalidateTeachers()
   }
@@ -238,7 +239,7 @@ export default function SettingsPage() {
   const deleteTeacher = async (id: string, name: string) => {
     if (!confirm(`"${name}" 선생님을 삭제하시겠습니까?\n배정된 반에서도 해제됩니다.`)) return
     const { error } = await safeMutate(`/api/teachers/${id}`, 'DELETE')
-    if (error) { alert(`선생님 삭제 실패: ${error}`); return }
+    if (error) { toast.error(`선생님 삭제 실패: ${error}`); return }
     revalidateTeachers()
     fetchGrades()
   }

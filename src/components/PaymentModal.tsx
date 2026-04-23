@@ -1,5 +1,6 @@
 'use client'
 
+import { toast } from 'sonner'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -63,7 +64,7 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
         const res = await fetch(`/api/payments/${payment.id}/receipt`, { method: 'POST', body: fd })
         if (!res.ok) {
           const err = await res.json().catch(() => ({ error: '업로드 실패' }))
-          alert(err.error || '업로드 실패')
+          toast.error(err.error || '업로드 실패')
           continue
         }
         const { receipt_images } = await res.json()
@@ -89,7 +90,7 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
       setReceiptImages(receipt_images)
       setViewImage(null)
     } else {
-      alert('삭제 실패')
+      toast.error('삭제 실패')
     }
   }, [payment?.id])
 

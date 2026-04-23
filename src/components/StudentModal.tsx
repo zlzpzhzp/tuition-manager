@@ -1,5 +1,6 @@
 'use client'
 
+import { toast } from 'sonner'
 import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { motion } from 'framer-motion'
@@ -37,7 +38,7 @@ export default function StudentModal({ student, grades, defaultClassId, onSave, 
     e.preventDefault()
     if (!name.trim()) return
     if (!student && !parentPhone.trim()) {
-      alert('학부모 연락처는 필수입니다. 청구서 발송에 필요합니다.')
+      toast.error('학부모 연락처는 필수입니다. 청구서 발송에 필요합니다.')
       return
     }
     const dueDayNum = paymentDueDay ? parseInt(paymentDueDay) : null

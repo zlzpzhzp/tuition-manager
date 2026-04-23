@@ -1,5 +1,6 @@
 'use client'
 
+import { toast } from 'sonner'
 import { useState, useCallback, useRef, useMemo, useEffect, useLayoutEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { ChevronLeft, ChevronRight, Check, ChevronDown, ClipboardList, Download, Plus, Send, Mail, Loader2, CreditCard, Banknote, ArrowLeftRight, X, Clock } from 'lucide-react'
@@ -692,7 +693,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
         setAiFilterDesc(data.description || '결과 없음')
       }
     } catch {
-      alert('AI 필터 처리 중 오류가 발생했습니다.')
+      toast.error('AI 필터 처리 중 오류가 발생했습니다.')
     }
     setAiFilterLoading(false)
   }, [grades, selectedMonth, prevMonth, paymentsByStudentId, prevPayments, getDueDay])
@@ -1062,7 +1063,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
   const handleSaveMemo = async (studentId: string) => {
     const memo = editMemoValue.trim() || null
     const { error } = await safeMutate(`/api/students/${studentId}`, 'PUT', { memo, memo_color: editMemoColor })
-    if (error) { alert('저장 실패'); return }
+    if (error) { toast.error('저장 실패'); return }
     closeSwipeEdit()
     await fetchData()
   }
@@ -1077,7 +1078,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
     )
     setBulkSaving(false)
     const failed = results.filter(r => r.error).length
-    if (failed > 0) { alert(`${failed}건 저장 실패`); return }
+    if (failed > 0) { toast.error(`${failed}건 저장 실패`); return }
     closeAllMemoSelections()
     await fetchData()
   }
@@ -1085,10 +1086,10 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
   const handleSavePayMemo = async (studentId: string) => {
     const sp = paymentsByStudentId.get(studentId) ?? []
     const payment = sp[0]
-    if (!payment) { alert('이번 달 납부 기록이 없어 결제 특이사항을 저장할 수 없습니다'); return }
+    if (!payment) { toast.error('이번 달 납부 기록이 없어 결제 특이사항을 저장할 수 없습니다'); return }
     const memo = editPayMemoValue.trim() || null
     const { error } = await safeMutate(`/api/payments/${payment.id}`, 'PUT', { memo })
-    if (error) { alert('저장 실패'); return }
+    if (error) { toast.error('저장 실패'); return }
     closeSwipeEdit()
     await fetchData()
   }
@@ -1119,7 +1120,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
     })
     setInlineSubmitting(null)
     if (error) {
-      alert(`결제 처리 실패: ${error}`)
+      toast.error(`결제 처리 실패: ${error}`)
       return
     }
     setInlineSuccess(studentId)
@@ -1150,19 +1151,19 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
 
   const handleSavePayment = async (data: Partial<Payment>) => {
     const { error } = await safeMutate('/api/payments', 'POST', data)
-    if (error) { alert(`납부 저장 실패: ${error}`); return }
+    if (error) { toast.error(`납부 저장 실패: ${error}`); return }
     fetchData()
   }
 
   const handleUpdatePayment = async (paymentId: string, data: Partial<Payment>) => {
     const { error } = await safeMutate(`/api/payments/${paymentId}`, 'PUT', data)
-    if (error) { alert(`수정 실패: ${error}`); return }
+    if (error) { toast.error(`수정 실패: ${error}`); return }
     fetchData()
   }
 
   const handleDeletePayment = async (paymentId: string) => {
     const { error } = await safeMutate(`/api/payments/${paymentId}`, 'DELETE')
-    if (error) { alert(`삭제 실패: ${error}`); return }
+    if (error) { toast.error(`삭제 실패: ${error}`); return }
     setShowPaymentModal(false)
     setSelectedPayment(null)
     fetchData()
@@ -1235,7 +1236,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
 
   const handleSaveStudent = async (data: Partial<Student>) => {
     const { error } = await safeMutate('/api/students', 'POST', data)
-    if (error) { alert(`학생 등록 실패: ${error}`); return }
+    if (error) { toast.error(`학생 등록 실패: ${error}`); return }
     setShowStudentModal(false)
     fetchData()
   }
@@ -1703,7 +1704,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                             onClick={(e) => {
                               e.stopPropagation()
                               if (isAllFilter) {
-                                alert('결제일을 선택해주세요! 전체 상태에서는 일괄 발송이 불가합니다.')
+                                toast.error('결제일을 선택해주세요! 전체 상태에서는 일괄 발송이 불가합니다.')
                                 return
                               }
                               openBulkBillModal(cls)

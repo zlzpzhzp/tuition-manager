@@ -1,5 +1,6 @@
 'use client'
 
+import { toast } from 'sonner'
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { Plus, ChevronDown, ChevronRight, UserCircle } from 'lucide-react'
@@ -20,7 +21,7 @@ export default function StudentsPage() {
   const fetchData = useCallback(async () => {
     const { data, error } = await safeFetch<GradeWithClasses[]>('/api/grades')
     if (error) {
-      alert(`데이터 로딩 실패: ${error}`)
+      toast.error(`데이터 로딩 실패: ${error}`)
       setLoading(false)
       return
     }
@@ -61,7 +62,7 @@ export default function StudentsPage() {
     const method = editingStudent ? 'PUT' : 'POST'
     const { error } = await safeMutate(url, method, data)
     if (error) {
-      alert(`저장 실패: ${error}`)
+      toast.error(`저장 실패: ${error}`)
       return
     }
     setShowModal(false)

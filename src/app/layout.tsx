@@ -5,6 +5,7 @@ import Navbar from "@/components/Navbar";
 import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration";
 import SWRProvider from "@/components/SWRProvider";
 import PageTransition, { NavDirectionProvider } from "@/components/PageTransition";
+import { Toaster } from "sonner";
 import { queryGradesTree, mapGradesTree } from "@/lib/queries";
 import { supabase } from "@/lib/supabase";
 
@@ -75,6 +76,7 @@ export default async function RootLayout({
                 {children}
               </PageTransition>
             </main>
+            <Toaster position="top-center" theme="dark" richColors closeButton duration={4000} />
           </NavDirectionProvider>
         </SWRProvider>
       </body>

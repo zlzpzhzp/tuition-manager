@@ -1,5 +1,6 @@
 'use client'
 
+import { toast } from 'sonner'
 import { useState, useEffect, useCallback, use } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Pencil, Trash2, Plus, CreditCard, Calculator, LogOut } from 'lucide-react'
@@ -46,7 +47,7 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
   const handleUpdateStudent = async (data: Partial<Student>) => {
     const { error } = await safeMutate(`/api/students/${id}`, 'PUT', data)
     if (error) {
-      alert(`수정 실패: ${error}`)
+      toast.error(`수정 실패: ${error}`)
       return
     }
     setShowEditModal(false)
@@ -57,7 +58,7 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
     if (!confirm(`"${student?.name}" 학생을 삭제하시겠습니까?`)) return
     const { error } = await safeMutate(`/api/students/${id}`, 'DELETE')
     if (error) {
-      alert(`삭제 실패: ${error}`)
+      toast.error(`삭제 실패: ${error}`)
       return
     }
     router.push('/payments')
@@ -69,7 +70,7 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
     if (!date) return
     const { error } = await safeMutate(`/api/students/${id}`, 'PUT', { withdrawal_date: date })
     if (error) {
-      alert(`퇴원 처리 실패: ${error}`)
+      toast.error(`퇴원 처리 실패: ${error}`)
       return
     }
     fetchData()
@@ -78,7 +79,7 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
   const handleReenroll = async () => {
     const { error } = await safeMutate(`/api/students/${id}`, 'PUT', { withdrawal_date: null })
     if (error) {
-      alert(`재등록 실패: ${error}`)
+      toast.error(`재등록 실패: ${error}`)
       return
     }
     fetchData()
@@ -87,7 +88,7 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
   const handleSavePayment = async (data: Partial<Payment>) => {
     const { error } = await safeMutate('/api/payments', 'POST', data)
     if (error) {
-      alert(`납부 기록 실패: ${error}`)
+      toast.error(`납부 기록 실패: ${error}`)
       return
     }
     setShowPaymentModal(false)
@@ -98,7 +99,7 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
     if (!confirm('이 납부 기록을 삭제하시겠습니까?')) return
     const { error } = await safeMutate(`/api/payments/${paymentId}`, 'DELETE')
     if (error) {
-      alert(`삭제 실패: ${error}`)
+      toast.error(`삭제 실패: ${error}`)
       return
     }
     fetchData()

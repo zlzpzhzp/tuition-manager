@@ -1,5 +1,6 @@
 'use client'
 
+import { toast } from 'sonner'
 import { useState, useMemo, useCallback, use } from 'react'
 import { useRouter } from 'next/navigation'
 import { ChevronLeft, ChevronRight, Plus, Trash2, X, Check, Download } from 'lucide-react'
@@ -254,7 +255,7 @@ export default function TeacherDetailPage({ params }: { params: Promise<{ id: st
       document.body.appendChild(iframe)
     }
     const doc = iframe.contentDocument || iframe.contentWindow?.document
-    if (!doc) { alert('인쇄를 열 수 없습니다.'); return }
+    if (!doc) { toast.error('인쇄를 열 수 없습니다.'); return }
     doc.open()
     doc.write(html)
     doc.close()
