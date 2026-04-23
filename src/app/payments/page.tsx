@@ -672,6 +672,8 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
         prev_payment_date: prevPayDate,
         prev_days_late: prevDaysLate,
         is_amount_modified: s.custom_fee != null,
+        electives: s.electives ?? [],
+        phone_available: !!(s.parent_phone || s.phone),
       }
     })
 
