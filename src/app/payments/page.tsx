@@ -38,6 +38,11 @@ interface BillRecord {
   last_resend_at?: string | null
 }
 
+// BillStatus는 "이 학생에게 이번 달 청구서를 어떤 상태로 처리했는가" (청구서 레벨).
+// types/index.ts 의 PaymentStatus('paid'|'partial'|'unpaid')와는 다른 도메인:
+//   - BillStatus.paid = 청구서가 '완납 처리'된 상태 (청구 행위의 결과)
+//   - PaymentStatus.paid = 실제 납부 합계가 수업료 이상인 상태 (납부 레벨)
+// 둘 다 'paid' 문자열을 쓰지만 결코 섞지 말 것. 항상 변수 맥락으로 구분.
 type BillStatus = 'unsent' | 'sent' | 'paid' | 'cancelled' | 'scheduled'
 
 interface QueueEntry {
