@@ -507,7 +507,7 @@ export default function BillingPage() {
               <h2 className="text-sm font-semibold text-[var(--text-2)]">발송 · 수납</h2>
               <span className="text-[10px] text-[var(--text-4)] tabular-nums">{recentActivity.length}건</span>
             </div>
-            <div className="space-y-1.5 max-h-[420px] overflow-y-auto pr-1 -mr-1">
+            <div className="space-y-1.5 max-h-[525px] overflow-y-auto pr-1 -mr-1">
               {recentActivity.map(bill => {
                 const s = studentById.get(bill.student_id)
                 const meta = studentMetaById.get(bill.student_id)
