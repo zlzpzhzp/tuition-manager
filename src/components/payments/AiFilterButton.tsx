@@ -85,31 +85,33 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
       if (!el) return false
       const rect = el.getBoundingClientRect()
       if (rect.width === 0) return false
-      // 일필터 버튼 왼쪽 옆에, sticky top(140) 기준 수직 정렬
-      const stickyTop = 140
+      // 첫 로드 시 필터 자연 위치 옆에. 이후 요정은 fixed라 스크롤과 무관하게 그 자리에 떠있음
       const x = Math.max(12, rect.left - FAIRY - GAP)
-      const y = stickyTop + Math.max(0, (rect.height - FAIRY) / 2)
+      const y = Math.max(12, rect.top + (rect.height - FAIRY) / 2)
       posRef.current = { x, y }
       setPos({ x, y })
       initialized.current = true
       return true
     }
     if (tryPlace()) return
-    // DOM이 아직 없으면 재시도 (최대 60프레임 ≈ 1초)
-    let frames = 0
-    const tick = () => {
-      if (initialized.current) return
-      if (tryPlace()) return
-      if (frames++ > 60) {
+    // DOM이 아직 없으면 MutationObserver로 추적 + 5초 timeout fallback
+    const obs = new MutationObserver(() => {
+      if (tryPlace()) obs.disconnect()
+    })
+    obs.observe(document.body, { childList: true, subtree: true })
+    const timeoutId = window.setTimeout(() => {
+      obs.disconnect()
+      if (!initialized.current) {
         const p = fallback()
         posRef.current = p
         setPos(p)
         initialized.current = true
-        return
       }
-      requestAnimationFrame(tick)
+    }, 5000)
+    return () => {
+      obs.disconnect()
+      clearTimeout(timeoutId)
     }
-    requestAnimationFrame(tick)
   }, [])
 
   // 페이지 숨김 시 정지
