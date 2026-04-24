@@ -109,7 +109,8 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
   if (!student) return <div className="text-center py-12 text-[var(--text-4)]">학생을 찾을 수 없습니다</div>
 
   const fee = getStudentFee(student, student.class as Class | undefined)
-  const currentMonth = new Date().toISOString().slice(0, 7)
+  const _now = new Date()
+  const currentMonth = `${_now.getFullYear()}-${String(_now.getMonth() + 1).padStart(2, '0')}`
   const currentMonthPayments = payments.filter(p => p.billing_month === currentMonth)
   const currentMonthTotal = currentMonthPayments.reduce((s, p) => s + p.amount, 0)
   const status = getPaymentStatus(currentMonthTotal, fee)

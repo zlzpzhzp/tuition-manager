@@ -140,7 +140,8 @@ export default function StudentDetailModal({ studentId, onClose, onChange }: Pro
   if (typeof document === 'undefined') return null
 
   const fee = student ? getStudentFee(student, student.class as Class | undefined) : 0
-  const currentMonth = new Date().toISOString().slice(0, 7)
+  const _now = new Date()
+  const currentMonth = `${_now.getFullYear()}-${String(_now.getMonth() + 1).padStart(2, '0')}`
   const currentMonthPayments = payments.filter(p => p.billing_month === currentMonth)
   const currentMonthTotal = currentMonthPayments.reduce((s, p) => s + p.amount, 0)
   const status = student ? getPaymentStatus(currentMonthTotal, fee) : 'unpaid'
