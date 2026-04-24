@@ -102,6 +102,7 @@ export default function Navbar() {
               </div>
               <Link
                 href="/finance"
+                data-finance-nav
                 aria-label="재정"
                 className={`p-2.5 rounded-xl transition-all ${
                   isActive('/finance')

@@ -76,17 +76,17 @@ export default function AiFilterButton({ aiFilterIds, aiFilterDesc, onFilter, on
     const FAIRY = 36
     const GAP = 8
     const fallback = () => {
-      // 일필터 DOM 없으면 콘텐츠 우측 가장자리 기준
+      // 재정 아이콘 DOM 없으면 우측 상단 기준
       const MAX_W = 896
       const contentRight = Math.min(window.innerWidth, window.innerWidth / 2 + MAX_W / 2)
-      return { x: Math.max(12, contentRight - 52), y: 144 }
+      return { x: Math.max(12, contentRight - 52), y: 14 }
     }
     const tryPlace = () => {
-      const el = document.querySelector('[data-day-filter]') as HTMLElement | null
+      const el = document.querySelector('[data-finance-nav]') as HTMLElement | null
       if (!el) return false
       const rect = el.getBoundingClientRect()
       if (rect.width === 0) return false
-      // 첫 로드 시 필터 자연 위치 옆에. 이후 요정은 fixed라 스크롤과 무관하게 그 자리에 떠있음
+      // 재정 아이콘 왼쪽에 붙임. fixed라 스크롤과 무관하게 뷰포트에 떠있음
       const x = Math.max(12, rect.left - FAIRY - GAP)
       const y = Math.max(12, rect.top + (rect.height - FAIRY) / 2)
       posRef.current = { x, y }
