@@ -21,6 +21,7 @@ import BillActionModal from '@/components/BillActionModal'
 import StudentDetailModal from '@/components/StudentDetailModal'
 import AiFilterButton from '@/components/payments/AiFilterButton'
 import { motion, AnimatePresence } from 'framer-motion'
+import { TButton } from '@/components/motion'
 import useSWR from 'swr'
 
 interface BillRecord {
@@ -164,7 +165,7 @@ function FilterDropdownPortal({
           // 주차 행은 펼침 시 좌측 정렬 (첫글자 x좌표 통일), 비주차/현재행은 중앙 정렬
           const alignLeft = isWeek && show
           return (
-            <button
+            <TButton
               key={key}
               type="button"
               onClick={() => onSelect(key)}
@@ -192,7 +193,7 @@ function FilterDropdownPortal({
                   <ChevronDown className="w-3 h-3 opacity-60" />
                 </motion.div>
               )}
-            </button>
+            </TButton>
           )
         })}
       </motion.div>
@@ -1253,7 +1254,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
   if (error) return (
     <div className="text-center py-12">
       <p className="text-[var(--red)] mb-4">{error?.message || '데이터 로딩 실패'}</p>
-      <button onClick={fetchData} className="px-4 py-2 bg-[var(--blue)] text-white rounded-lg hover:opacity-90">다시 시도</button>
+      <TButton onClick={fetchData} className="px-4 py-2 bg-[var(--blue)] text-white rounded-lg hover:opacity-90">다시 시도</TButton>
     </div>
   )
 
@@ -1274,13 +1275,13 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
             onClick={e => e.stopPropagation()}
           >
             <div className="max-w-3xl mx-auto px-3 py-2 flex items-center gap-2">
-              <button
+              <TButton
                 onClick={closeAllMemoSelections}
                 className="p-1.5 rounded-full hover:bg-[var(--bg-card-hover)] text-[var(--text-3)] shrink-0"
                 aria-label="선택 취소"
               >
                 <X className="w-4 h-4" />
-              </button>
+              </TButton>
               <span className="text-xs font-bold text-[var(--text-1)] tabular-nums shrink-0">
                 {selectedMemoIds.size}명
               </span>
@@ -1289,7 +1290,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                   const bg = c === 'yellow' ? 'bg-[var(--orange-dim)]' : c === 'green' ? 'bg-[var(--paid-bg)]' : 'bg-[var(--unpaid-bg)]'
                   const active = editMemoColor === c
                   return (
-                    <button
+                    <TButton
                       key={c}
                       type="button"
                       onClick={() => setEditMemoColor(active ? null : c)}
@@ -1308,7 +1309,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                 placeholder="비고 (일괄 적용)"
                 className="flex-1 min-w-0 px-2.5 py-1 rounded-lg text-xs border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-1)] focus:outline-none focus:ring-1 focus:ring-[var(--blue)] placeholder-[var(--text-4)]"
               />
-              <button
+              <TButton
                 onClick={handleBulkSaveMemo}
                 disabled={bulkSaving}
                 className="p-1.5 bg-[var(--blue)] hover:opacity-80 text-white rounded-full shrink-0 shadow-sm transition-opacity disabled:opacity-50"
@@ -1319,7 +1320,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                 ) : (
                   <Check className="w-3.5 h-3.5" />
                 )}
-              </button>
+              </TButton>
             </div>
           </motion.div>
         )}
@@ -1355,21 +1356,21 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
           )}
         </AnimatePresence>
         <div className="flex items-center justify-center gap-3 mb-1">
-          <button onClick={() => navigateMonth(-1)} className="p-2 hover:bg-[var(--bg-elevated)] rounded-lg" aria-label="이전 달">
+          <TButton onClick={() => navigateMonth(-1)} className="p-2 hover:bg-[var(--bg-elevated)] rounded-lg" aria-label="이전 달">
             <ChevronLeft className="w-7 h-7" />
-          </button>
+          </TButton>
           <h1 className="font-extrabold tracking-tight text-center">
             <span className="text-[2.6rem] sm:text-[3.2rem] leading-none">{selectedMonth.split('-')[0]}</span>
             <span className="text-[1.8rem] sm:text-[2.2rem] text-[var(--text-3)]">년 </span>
             <span className="text-5xl sm:text-6xl">{parseInt(selectedMonth.split('-')[1])}</span>
             <span className="text-[1.8rem] sm:text-[2.2rem] text-[var(--text-3)]">월</span>
           </h1>
-          <button onClick={() => navigateMonth(1)} className="p-2 hover:bg-[var(--bg-elevated)] rounded-lg" aria-label="다음 달">
+          <TButton onClick={() => navigateMonth(1)} className="p-2 hover:bg-[var(--bg-elevated)] rounded-lg" aria-label="다음 달">
             <ChevronRight className="w-7 h-7" />
-          </button>
+          </TButton>
         </div>
         <div className="flex justify-center">
-          <button
+          <TButton
             onClick={() => {
               const a = document.createElement('a')
               a.href = `/api/payments/export?billing_month=${selectedMonth}`
@@ -1380,7 +1381,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
           >
             <Download className="w-3 h-3" />
             <span>내보내기</span>
-          </button>
+          </TButton>
         </div>
 
       </div>
@@ -1457,7 +1458,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
               />
             </div>
           )}
-          <button
+          <TButton
             type="button"
             onClick={() => {
               setCustomDay(null)
@@ -1466,7 +1467,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
             className="px-3 py-1.5 rounded-full text-xs font-bold bg-[var(--bg-elevated)] text-[var(--text-2)] hover:bg-[var(--bg-card-hover)] transition-colors"
           >
             필터 초기화
-          </button>
+          </TButton>
         </div>
       )}
 
@@ -1516,7 +1517,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                     className="sticky z-20 bg-[var(--bg)] -mx-4 px-5 pt-1.5 pb-1.5 mb-1 flex items-center justify-between gap-3"
                     style={{ top: 'var(--grade-sticky-top, 140px)' }}
                   >
-                    <button
+                    <TButton
                       onClick={toggleGradeExpand}
                       className="flex items-center gap-1 active:opacity-70"
                     >
@@ -1524,7 +1525,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                         <ChevronRight className="w-4 h-4 text-[var(--text-3)]" />
                       </motion.div>
                       <span className="text-[15px] font-bold text-[var(--text-1)] tracking-tight">{gradeName}</span>
-                    </button>
+                    </TButton>
                     {isFirstGrade && (
                       <div className="flex items-center gap-2">
                         <AnimatePresence initial={false}>
@@ -1571,13 +1572,13 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                             >
                               <Loader2 className="w-3 h-3 animate-spin text-[var(--orange)]" />
                               <span className="text-[11px] font-bold text-[var(--orange)] tabular-nums">{batchProgress.done}/{batchProgress.total}</span>
-                              <button
+                              <TButton
                                 onClick={cancelBatch}
                                 disabled={cancellingBatch}
                                 className="px-1.5 py-0.5 rounded-md bg-[var(--red-dim)] text-[var(--red)] text-[10px] font-bold hover:opacity-80 disabled:opacity-50"
                               >
                                 {cancellingBatch ? '중단중' : '중단'}
-                              </button>
+                              </TButton>
                             </motion.div>
                           )}
                         </AnimatePresence>
@@ -1604,17 +1605,17 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                               }`}
                             />
                             {customDay !== null && (
-                              <button
+                              <TButton
                                 type="button"
                                 onClick={() => setCustomDay(null)}
                                 aria-label="직접 입력 해제"
                                 className="absolute -right-1 -top-1 w-4 h-4 rounded-full bg-[var(--bg-elevated)] text-[var(--text-3)] text-[10px] leading-none flex items-center justify-center shadow-sm hover:text-[var(--text-1)]"
                               >
                                 ×
-                              </button>
+                              </TButton>
                             )}
                           </div>
-                          <button
+                          <TButton
                             onClick={(e) => setFilterAnchor(prev => prev === e.currentTarget ? null : e.currentTarget)}
                             disabled={customDay !== null}
                             style={{ width: 112 }}
@@ -1628,7 +1629,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                           >
                             <span>{FILTER_LABELS[paymentFilter]}</span>
                             <ChevronDown className={`absolute right-2 w-3 h-3 opacity-60 transition-transform ${filterAnchor ? 'rotate-180' : ''}`} />
-                          </button>
+                          </TButton>
                         </div>
                       </div>
                     )}
@@ -1693,20 +1694,20 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                             <div className="flex items-center gap-1.5 mr-1" onClick={e => e.stopPropagation()}>
                               <Loader2 className="w-3 h-3 animate-spin text-[var(--orange)]" />
                               <span className="text-[10px] font-bold text-[var(--orange)] tabular-nums">{batchProgress.done}/{batchProgress.total}</span>
-                              <button
+                              <TButton
                                 onClick={cancelBatch}
                                 disabled={cancellingBatch}
                                 className="px-1.5 py-0.5 rounded-md bg-[var(--red-dim)] text-[var(--red)] text-[10px] font-bold hover:opacity-80 disabled:opacity-50"
                               >
                                 {cancellingBatch ? '중단중' : '중단'}
-                              </button>
+                              </TButton>
                             </div>
                           )
                         }
                         if (eligibleCount === 0) return null
                         const isAllFilter = paymentFilter === 'all'
                         return (
-                          <button
+                          <TButton
                             onClick={(e) => {
                               e.stopPropagation()
                               if (isAllFilter) {
@@ -1726,16 +1727,16 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                           >
                             <Send className="w-3 h-3" />
                             <span>일괄 {eligibleCount}</span>
-                          </button>
+                          </TButton>
                         )
                       })()}
-                      <button
+                      <TButton
                         onClick={(e) => { e.stopPropagation(); handleAddStudent(cls.id) }}
                         className="p-0.5 text-[var(--text-4)] hover:text-[var(--blue)] transition-colors"
                         aria-label={`${cls.name}에 학생 추가`}
                       >
                         <Plus className="w-3.5 h-3.5" />
-                      </button>
+                      </TButton>
                     </div>
                     <AnimatePresence initial={false}>
                     {isClassExpanded && (
@@ -1808,7 +1809,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                                       const bg = c === 'yellow' ? 'bg-[var(--orange-dim)]' : c === 'green' ? 'bg-[var(--paid-bg)]' : 'bg-[var(--unpaid-bg)]'
                                       const active = editMemoColor === c
                                       return (
-                                        <button
+                                        <TButton
                                           key={c}
                                           type="button"
                                           onClick={() => setEditMemoColor(active ? null : c)}
@@ -1819,9 +1820,9 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                                       )
                                     })}
                                   </div>
-                                  <button onClick={() => handleSaveMemo(student.id)} className="ml-auto p-1.5 bg-[var(--blue-bg)] hover:bg-[var(--blue-dim)] text-[var(--blue)] rounded-full shrink-0 transition-colors" aria-label="저장">
+                                  <TButton onClick={() => handleSaveMemo(student.id)} className="ml-auto p-1.5 bg-[var(--blue-bg)] hover:bg-[var(--blue-dim)] text-[var(--blue)] rounded-full shrink-0 transition-colors" aria-label="저장">
                                     <Check className="w-3.5 h-3.5" strokeWidth={3} />
-                                  </button>
+                                  </TButton>
                                 </>
                               )}
                             </div>
@@ -1829,9 +1830,9 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                             {/* 오른쪽 패널 헤더 — "결제특이사항" 배지 + 저장 */}
                             <div data-edit-panel className="absolute inset-y-0 right-0 w-[150px] flex items-center justify-between gap-1.5 px-2 bg-[var(--bg-elevated)]" onClick={e => e.stopPropagation()}>
                               <span className="text-[10px] font-bold text-[var(--orange)] px-2 py-0.5 rounded-full bg-[var(--orange-dim)] shrink-0">결제특이사항</span>
-                              <button onClick={() => handleSavePayMemo(student.id)} className="p-1.5 bg-[var(--blue-bg)] hover:bg-[var(--blue-dim)] text-[var(--blue)] rounded-full shrink-0 transition-colors" aria-label="저장">
+                              <TButton onClick={() => handleSavePayMemo(student.id)} className="p-1.5 bg-[var(--blue-bg)] hover:bg-[var(--blue-dim)] text-[var(--blue)] rounded-full shrink-0 transition-colors" aria-label="저장">
                                 <Check className="w-3.5 h-3.5" strokeWidth={3} />
-                              </button>
+                              </TButton>
                             </div>
 
                             {/* 메인 콘텐츠 */}
@@ -1849,7 +1850,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                             } ${withdrawn ? 'opacity-60' : ''}`}
                               onClick={status === 'unpaid' && !isExpanded && !withdrawn ? () => handleExpand(student.id) : undefined}
                             >
-                              <button
+                              <TButton
                                 type="button"
                                 className="flex-1 min-w-0 text-left"
                                 onClick={e => {
@@ -1889,7 +1890,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                                     </motion.div>
                                   )}
                                 </AnimatePresence>
-                              </button>
+                              </TButton>
 
                               {isExpanded ? (
                                 <div
@@ -1898,7 +1899,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                                   onClick={e => e.stopPropagation()}
                                 >
                                   <div className="flex items-center gap-1.5">
-                                    <button
+                                    <TButton
                                       ref={dateButtonRef}
                                       type="button"
                                       onClick={() => {
@@ -1910,8 +1911,8 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                                     >
                                       {(() => { const d = new Date(inlineDate); return `${d.getMonth()+1}/${d.getDate()}` })()}
                                       <span className="text-[9px] opacity-50 ml-0.5">▼</span>
-                                    </button>
-                                    <button
+                                    </TButton>
+                                    <TButton
                                       ref={methodButtonRef}
                                       type="button"
                                       onClick={() => {
@@ -1922,8 +1923,8 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                                       aria-label="결제수단 선택"
                                     >
                                       {METHOD_OPTIONS_SHORT.find(([v]) => v === inlineMethod)?.[1]}
-                                    </button>
-                                    <button
+                                    </TButton>
+                                    <TButton
                                       onClick={() => handleInlineSubmit(student.id, fee)}
                                       disabled={!!inlineSuccess || !!inlineSubmitting}
                                       className={`fan-item px-2.5 py-0.5 rounded-full text-xs font-medium transition-all duration-300 ${
@@ -1936,8 +1937,8 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                                       ) : isSubmitting ? (
                                         <div className="w-3.5 h-3.5 border-2 border-[var(--paid-text)] border-t-transparent rounded-full animate-spin" />
                                       ) : '납부'}
-                                    </button>
-                                    <button
+                                    </TButton>
+                                    <TButton
                                       onClick={() => {
                                         const parentPhone = student.parent_phone || student.phone || ''
                                         setBillSendTarget({ studentId: student.id, studentName: student.name, phone: parentPhone, amount: fee, subject: cls.subject ?? null, className: cls.name ?? null, electives: student.electives ?? [] })
@@ -1947,14 +1948,14 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                                       title="카톡 청구서 발송"
                                     >
                                       <Send className="w-3.5 h-3.5" />
-                                    </button>
-                                    <button
+                                    </TButton>
+                                    <TButton
                                       onClick={() => handleOpenModal(student.id, fee)}
                                       className="fan-item p-1 text-[var(--blue)] hover:opacity-70"
                                       aria-label="상세 납부 기록"
                                     >
                                       <ClipboardList className="w-3.5 h-3.5" />
-                                    </button>
+                                    </TButton>
                                   </div>
                                   <div className="fan-item w-full relative">
                                     {inlineMemoFromPrev && inlineMemo && (
@@ -1985,14 +1986,14 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                                     )
                                   })()}
                                   {status !== 'unpaid' ? (
-                                    <button
+                                    <TButton
                                       onClick={(e) => { e.stopPropagation(); handleOpenModal(student.id, fee) }}
                                       className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap cursor-pointer hover:opacity-80 transition-opacity"
                                       style={{ backgroundColor: displayColors.bg, color: displayColors.text }}
                                       role="status"
                                     >
                                       {displayLabel}
-                                    </button>
+                                    </TButton>
                                   ) : (
                                     <span
                                       className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap"

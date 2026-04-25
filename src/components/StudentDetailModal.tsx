@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { motion } from 'framer-motion'
 import { X, Pencil, Trash2, Plus, CreditCard, Calculator, LogOut, Check } from 'lucide-react'
+import { TButton } from '@/components/motion'
 import type { Student, Payment, Grade, Class } from '@/types'
 import { getStudentFee, calcRefund, parseClassDays, DAY_LABELS, PAYMENT_METHOD_LABELS, CASH_RECEIPT_LABELS, getPaymentStatus, PAYMENT_STATUS_LABELS, PAYMENT_STATUS_COLORS } from '@/types'
 import StudentModal from '@/components/StudentModal'
@@ -187,9 +188,9 @@ export default function StudentDetailModal({ studentId, onClose, onChange }: Pro
 
         <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--border)] sticky top-0 bg-[var(--bg)] z-10">
           <h2 className="font-bold text-base">{student?.name ?? '학생'}</h2>
-          <button onClick={onClose} className="p-1 text-[var(--text-4)] hover:text-[var(--text-1)]" aria-label="닫기">
+          <TButton onClick={onClose} className="p-1 text-[var(--text-4)] hover:text-[var(--text-1)]" aria-label="닫기">
             <X className="w-5 h-5" />
-          </button>
+          </TButton>
         </div>
 
         {loading ? (
@@ -206,12 +207,12 @@ export default function StudentDetailModal({ studentId, onClose, onChange }: Pro
                   </p>
                 </div>
                 <div className="flex gap-1">
-                  <button onClick={async () => { await ensureGrades(); setShowEditModal(true) }} className="p-2 text-[var(--text-4)] hover:text-[var(--text-1)]" aria-label="학생 정보 수정">
+                  <TButton onClick={async () => { await ensureGrades(); setShowEditModal(true) }} className="p-2 text-[var(--text-4)] hover:text-[var(--text-1)]" aria-label="학생 정보 수정">
                     <Pencil className="w-4 h-4" />
-                  </button>
-                  <button onClick={handleDeleteStudent} className="p-2 text-[var(--text-4)] hover:text-[var(--red)]" aria-label="학생 삭제">
+                  </TButton>
+                  <TButton onClick={handleDeleteStudent} className="p-2 text-[var(--text-4)] hover:text-[var(--red)]" aria-label="학생 삭제">
                     <Trash2 className="w-4 h-4" />
-                  </button>
+                  </TButton>
                 </div>
               </div>
 
@@ -246,7 +247,7 @@ export default function StudentDetailModal({ studentId, onClose, onChange }: Pro
                     {['기하', '확통'].map(name => {
                       const active = (student.electives ?? []).includes(name)
                       return (
-                        <button
+                        <TButton
                           key={name}
                           type="button"
                           onClick={() => handleToggleElective(name)}
@@ -258,7 +259,7 @@ export default function StudentDetailModal({ studentId, onClose, onChange }: Pro
                           } ${electivesSaving ? 'opacity-50' : ''}`}
                         >
                           {name}
-                        </button>
+                        </TButton>
                       )
                     })}
                   </div>
@@ -274,7 +275,7 @@ export default function StudentDetailModal({ studentId, onClose, onChange }: Pro
                       const dot = c === 'yellow' ? 'bg-[var(--orange)]' : c === 'green' ? 'bg-[var(--paid-text)]' : 'bg-[var(--unpaid-text)]'
                       const active = memoColor === c
                       return (
-                        <button
+                        <TButton
                           key={c}
                           type="button"
                           onClick={() => setMemoColor(active ? null : c)}
@@ -294,29 +295,29 @@ export default function StudentDetailModal({ studentId, onClose, onChange }: Pro
                     placeholder="학생에 대한 메모"
                     className="flex-1 px-3 py-2 text-sm border border-[var(--border)] rounded-lg bg-[var(--bg)] focus:outline-none focus:ring-1 focus:ring-[var(--blue)]"
                   />
-                  <button
+                  <TButton
                     onClick={handleSaveMemo}
                     disabled={memoSaving}
                     className={`p-2 rounded-lg shrink-0 transition-all ${memoSavedFlash ? 'bg-[var(--paid-bg)] text-[var(--paid-text)] scale-110' : 'bg-[var(--blue)] text-white hover:opacity-80'}`}
                     aria-label="비고 저장"
                   >
                     <Check className="w-4 h-4" />
-                  </button>
+                  </TButton>
                 </div>
               </div>
 
               {student.withdrawal_date ? (
                 <div className="mt-4 p-3 bg-[var(--red-dim)] rounded-lg">
                   <p className="text-sm text-[var(--red)] font-medium">퇴원: {student.withdrawal_date}</p>
-                  <button onClick={handleReenroll} className="text-xs text-[var(--red)] underline mt-1">재등록</button>
+                  <TButton onClick={handleReenroll} className="text-xs text-[var(--red)] underline mt-1">재등록</TButton>
                 </div>
               ) : (
-                <button
+                <TButton
                   onClick={handleWithdraw}
                   className="mt-4 flex items-center gap-1 text-sm text-[var(--red)] hover:opacity-80"
                 >
                   <LogOut className="w-4 h-4" /> 퇴원 처리
-                </button>
+                </TButton>
               )}
             </div>
 
@@ -336,23 +337,23 @@ export default function StudentDetailModal({ studentId, onClose, onChange }: Pro
                   <p className="text-2xl font-bold">{currentMonthTotal.toLocaleString()}원</p>
                   <p className="text-sm text-[var(--text-4)]">/ {fee.toLocaleString()}원</p>
                 </div>
-                <button
+                <TButton
                   onClick={() => setShowPaymentModal(true)}
                   className="px-3 py-2 bg-[var(--blue)] text-white rounded-lg text-sm font-medium flex items-center gap-1 hover:opacity-90"
                 >
                   <CreditCard className="w-4 h-4" /> 납부 기록
-                </button>
+                </TButton>
               </div>
             </div>
 
             <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border)] p-4">
-              <button
+              <TButton
                 onClick={() => setShowRefundCalc(!showRefundCalc)}
                 className="flex items-center gap-2 font-bold text-sm w-full text-left"
                 aria-expanded={showRefundCalc}
               >
                 <Calculator className="w-4 h-4" /> 환불 계산기
-              </button>
+              </TButton>
               {showRefundCalc && refund && (
                 <div className="mt-4 space-y-3">
                   <div>
@@ -398,12 +399,12 @@ export default function StudentDetailModal({ studentId, onClose, onChange }: Pro
             <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border)] p-4">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="font-bold text-sm">납부 내역</h3>
-                <button
+                <TButton
                   onClick={() => setShowPaymentModal(true)}
                   className="text-sm text-[var(--blue)] font-medium flex items-center gap-1 hover:opacity-70"
                 >
                   <Plus className="w-4 h-4" /> 추가
-                </button>
+                </TButton>
               </div>
 
               {payments.length === 0 ? (
@@ -441,13 +442,13 @@ export default function StudentDetailModal({ studentId, onClose, onChange }: Pro
                                 <span className="text-[var(--text-4)] ml-2">{p.payment_date}</span>
                                 {p.memo && <span className="text-[var(--text-4)] ml-2">· {p.memo}</span>}
                               </div>
-                              <button
+                              <TButton
                                 onClick={() => handleDeletePayment(p.id)}
                                 className="p-1 text-[var(--text-4)] hover:text-[var(--red)] opacity-0 group-hover:opacity-100 transition-opacity"
                                 aria-label="납부 기록 삭제"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
-                              </button>
+                              </TButton>
                             </div>
                           ))}
                         </div>

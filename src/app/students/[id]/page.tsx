@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import { useState, useEffect, useCallback, use } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Pencil, Trash2, Plus, CreditCard, Calculator, LogOut } from 'lucide-react'
+import { TButton } from '@/components/motion'
 import type { Student, Payment, Grade, Class } from '@/types'
 import { getStudentFee, calcRefund, parseClassDays, DAY_LABELS, PAYMENT_METHOD_LABELS, CASH_RECEIPT_LABELS, getPaymentStatus, PAYMENT_STATUS_LABELS, PAYMENT_STATUS_COLORS } from '@/types'
 import StudentModal from '@/components/StudentModal'
@@ -129,9 +130,9 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
 
   return (
     <div>
-      <button onClick={() => router.back()} className="flex items-center gap-1 text-sm text-[var(--text-3)] mb-4 hover:text-[var(--text-2)]" aria-label="돌아가기">
+      <TButton onClick={() => router.back()} className="flex items-center gap-1 text-sm text-[var(--text-3)] mb-4 hover:text-[var(--text-2)]" aria-label="돌아가기">
         <ArrowLeft className="w-4 h-4" /> 돌아가기
-      </button>
+      </TButton>
 
       {/* 학생 정보 카드 */}
       <div className="bg-[var(--bg-card)] rounded-xl border p-5 mb-4">
@@ -143,12 +144,12 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
             </p>
           </div>
           <div className="flex gap-1">
-            <button onClick={async () => { await ensureGrades(); setShowEditModal(true) }} className="p-2 text-[var(--text-4)] hover:text-[var(--text-3)]" aria-label="학생 정보 수정">
+            <TButton onClick={async () => { await ensureGrades(); setShowEditModal(true) }} className="p-2 text-[var(--text-4)] hover:text-[var(--text-3)]" aria-label="학생 정보 수정">
               <Pencil className="w-4 h-4" />
-            </button>
-            <button onClick={handleDeleteStudent} className="p-2 text-[var(--text-4)] hover:text-[var(--unpaid-text)]" aria-label="학생 삭제">
+            </TButton>
+            <TButton onClick={handleDeleteStudent} className="p-2 text-[var(--text-4)] hover:text-[var(--unpaid-text)]" aria-label="학생 삭제">
               <Trash2 className="w-4 h-4" />
-            </button>
+            </TButton>
           </div>
         </div>
 
@@ -178,15 +179,15 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
         {student.withdrawal_date ? (
           <div className="mt-4 p-3 bg-[var(--unpaid-bg)] rounded-lg">
             <p className="text-sm text-[var(--unpaid-text)] font-medium">퇴원: {student.withdrawal_date}</p>
-            <button onClick={handleReenroll} className="text-xs text-[var(--unpaid-text)] underline mt-1 opacity-80">재등록</button>
+            <TButton onClick={handleReenroll} className="text-xs text-[var(--unpaid-text)] underline mt-1 opacity-80">재등록</TButton>
           </div>
         ) : (
-          <button
+          <TButton
             onClick={handleWithdraw}
             className="mt-4 flex items-center gap-1 text-sm text-[var(--unpaid-text)] hover:opacity-80 transition-opacity"
           >
             <LogOut className="w-4 h-4" /> 퇴원 처리
-          </button>
+          </TButton>
         )}
       </div>
 
@@ -207,24 +208,24 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
             <p className="text-2xl font-bold">{currentMonthTotal.toLocaleString()}원</p>
             <p className="text-sm text-[var(--text-4)]">/ {fee.toLocaleString()}원</p>
           </div>
-          <button
+          <TButton
             onClick={() => setShowPaymentModal(true)}
             className="px-3 py-2 bg-[var(--blue)] text-white rounded-lg text-sm font-medium flex items-center gap-1 hover:opacity-90 transition-opacity"
           >
             <CreditCard className="w-4 h-4" /> 납부 기록
-          </button>
+          </TButton>
         </div>
       </div>
 
       {/* 환불 계산기 */}
       <div className="bg-[var(--bg-card)] rounded-xl border p-5 mb-4">
-        <button
+        <TButton
           onClick={() => setShowRefundCalc(!showRefundCalc)}
           className="flex items-center gap-2 font-bold text-sm w-full text-left"
           aria-expanded={showRefundCalc}
         >
           <Calculator className="w-4 h-4" /> 환불 계산기
-        </button>
+        </TButton>
         {showRefundCalc && refund && (
           <div className="mt-4 space-y-3">
             <div>
@@ -271,12 +272,12 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
       <div className="bg-[var(--bg-card)] rounded-xl border p-5">
         <div className="flex items-center justify-between mb-3">
           <h2 className="font-bold text-sm">납부 내역</h2>
-          <button
+          <TButton
             onClick={() => setShowPaymentModal(true)}
             className="text-sm text-[var(--blue)] font-medium flex items-center gap-1 hover:opacity-70"
           >
             <Plus className="w-4 h-4" /> 추가
-          </button>
+          </TButton>
         </div>
 
         {payments.length === 0 ? (
@@ -314,13 +315,13 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
                           <span className="text-[var(--text-4)] ml-2">{p.payment_date}</span>
                           {p.memo && <span className="text-[var(--text-4)] ml-2">· {p.memo}</span>}
                         </div>
-                        <button
+                        <TButton
                           onClick={() => handleDeletePayment(p.id)}
                           className="p-1 text-[var(--text-4)] hover:text-[var(--unpaid-text)] opacity-0 group-hover:opacity-100 transition-opacity"
                           aria-label="납부 기록 삭제"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                        </TButton>
                       </div>
                     ))}
                   </div>

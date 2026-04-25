@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Send, AlertTriangle, Check, Loader2 } from 'lucide-react'
+import { TButton } from '@/components/motion'
 
 export interface BulkBillTarget {
   studentId: string
@@ -67,13 +68,13 @@ export default function BulkBillSendModal({ className, targets, onClose, onConfi
             일괄 청구서 발송
             <span className="text-xs font-normal text-[var(--text-4)]">{className}</span>
           </h2>
-          <button
+          <TButton
             onClick={() => { if (state !== 'sending') onClose() }}
             disabled={state === 'sending'}
             className="p-1.5 text-[var(--text-4)] hover:text-[var(--text-3)] hover:bg-[var(--bg-elevated)] rounded-lg transition-colors disabled:opacity-40"
           >
             <X className="w-4 h-4" />
-          </button>
+          </TButton>
         </div>
 
         <div className="flex-1 overflow-y-auto p-5 space-y-3">
@@ -118,14 +119,14 @@ export default function BulkBillSendModal({ className, targets, onClose, onConfi
         </div>
 
         <div className="px-5 py-4 border-t border-[var(--border)] flex gap-2">
-          <button
+          <TButton
             onClick={() => { if (state === 'sending') return; if (state === 'confirming') setState('idle'); else onClose() }}
             disabled={state === 'sending'}
             className="flex-1 py-3 rounded-xl text-sm font-semibold bg-[var(--bg-elevated)] text-[var(--text-3)] hover:bg-[var(--border-light)] transition-colors disabled:opacity-40"
           >
             {state === 'confirming' ? '뒤로' : '취소'}
-          </button>
-          <button
+          </TButton>
+          <TButton
             onClick={handlePrimary}
             disabled={state === 'sending' || targets.length === 0}
             className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${
@@ -143,7 +144,7 @@ export default function BulkBillSendModal({ className, targets, onClose, onConfi
             ) : (
               <><Send className="w-4 h-4" />일괄 발송</>
             )}
-          </button>
+          </TButton>
         </div>
       </motion.div>
     </motion.div>

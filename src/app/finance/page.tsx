@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react'
 import { ChevronLeft, ChevronRight, Plus, Trash2, Pencil, Check, X, Lock } from 'lucide-react'
+import { TButton } from '@/components/motion'
 import type { Payment, GradeWithClasses, Teacher } from '@/types'
 import { getStudentFee } from '@/types'
 import { getActiveStudents, useGrades, usePayments, useTeachers, getCurrentMonth, formatMonth, safeMutate } from '@/lib/utils'
@@ -163,20 +164,20 @@ export default function FinancePage() {
                   <input type="text" value={editName} onChange={e => setEditName(e.target.value)} className="flex-1 px-2.5 py-1.5 bg-[var(--bg-card-hover)] border border-[var(--border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)] focus:bg-[var(--bg-card)]" autoFocus />
                   <input type="number" value={editAmount} onChange={e => setEditAmount(e.target.value)} onKeyDown={e => e.key === 'Enter' && updateExpense(item.id)} className="w-28 px-2.5 py-1.5 bg-[var(--bg-card-hover)] border border-[var(--border)] rounded-lg text-sm text-right focus:outline-none focus:ring-2 focus:ring-[var(--blue)] focus:bg-[var(--bg-card)]" />
                   <span className="text-xs text-[var(--text-4)]">원</span>
-                  <button onClick={() => updateExpense(item.id)} className="p-1.5 bg-[var(--blue-bg)] hover:bg-[var(--blue-dim)] text-[var(--blue)] rounded-full transition-colors"><Check className="w-3.5 h-3.5" strokeWidth={3} /></button>
-                  <button onClick={() => setEditingId(null)} className="p-1.5 text-[var(--text-4)] hover:bg-[var(--bg-elevated)] rounded-lg"><X className="w-4 h-4" /></button>
+                  <TButton onClick={() => updateExpense(item.id)} className="p-1.5 bg-[var(--blue-bg)] hover:bg-[var(--blue-dim)] text-[var(--blue)] rounded-full transition-colors"><Check className="w-3.5 h-3.5" strokeWidth={3} /></TButton>
+                  <TButton onClick={() => setEditingId(null)} className="p-1.5 text-[var(--text-4)] hover:bg-[var(--bg-elevated)] rounded-lg"><X className="w-4 h-4" /></TButton>
                 </>
               ) : (
                 <>
                   <span className="flex-1 text-sm">{item.name}</span>
                   {item.memo && <span className="text-xs text-[var(--text-4)]">{item.memo}</span>}
                   <span className="text-sm font-semibold tabular-nums">{item.amount.toLocaleString()}원</span>
-                  <button onClick={() => { setEditingId(item.id); setEditName(item.name); setEditAmount(String(item.amount)) }} className="p-2 -m-1 text-[var(--text-4)] hover:text-[var(--text-3)] transition-colors">
+                  <TButton onClick={() => { setEditingId(item.id); setEditName(item.name); setEditAmount(String(item.amount)) }} className="p-2 -m-1 text-[var(--text-4)] hover:text-[var(--text-3)] transition-colors">
                     <Pencil className="w-4 h-4" />
-                  </button>
-                  <button onClick={() => deleteExpense(item.id, item.name)} className="p-2 -m-1 text-[var(--text-4)] hover:text-[var(--unpaid-text)] transition-colors">
+                  </TButton>
+                  <TButton onClick={() => deleteExpense(item.id, item.name)} className="p-2 -m-1 text-[var(--text-4)] hover:text-[var(--unpaid-text)] transition-colors">
                     <Trash2 className="w-4 h-4" />
-                  </button>
+                  </TButton>
                 </>
               )}
             </div>
@@ -193,17 +194,17 @@ export default function FinancePage() {
           </div>
           <div className="flex items-center gap-2">
             <input type="text" value={newMemo} onChange={e => setNewMemo(e.target.value)} onKeyDown={e => e.key === 'Enter' && addExpense()} placeholder="비고 (선택)" className="flex-1 px-2.5 py-1.5 bg-[var(--bg-card-hover)] border border-[var(--border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)] focus:bg-[var(--bg-card)]" />
-            <button onClick={addExpense} className="p-1.5 bg-[var(--blue-bg)] hover:bg-[var(--blue-dim)] text-[var(--blue)] rounded-full transition-colors"><Check className="w-3.5 h-3.5" strokeWidth={3} /></button>
-            <button onClick={() => { setAddingCategory(null); setNewName(''); setNewAmount(''); setNewMemo('') }} className="p-1.5 text-[var(--text-4)] hover:bg-[var(--bg-elevated)] rounded-lg"><X className="w-4 h-4" /></button>
+            <TButton onClick={addExpense} className="p-1.5 bg-[var(--blue-bg)] hover:bg-[var(--blue-dim)] text-[var(--blue)] rounded-full transition-colors"><Check className="w-3.5 h-3.5" strokeWidth={3} /></TButton>
+            <TButton onClick={() => { setAddingCategory(null); setNewName(''); setNewAmount(''); setNewMemo('') }} className="p-1.5 text-[var(--text-4)] hover:bg-[var(--bg-elevated)] rounded-lg"><X className="w-4 h-4" /></TButton>
           </div>
         </div>
       ) : (
-        <button
+        <TButton
           onClick={() => setAddingCategory(category)}
           className="flex items-center gap-1 text-sm text-[var(--blue)] font-semibold hover:opacity-70 transition-opacity"
         >
           <Plus className="w-4 h-4" /> 항목 추가
-        </button>
+        </TButton>
       )}
     </div>
   )
@@ -242,12 +243,12 @@ export default function FinancePage() {
             autoFocus
           />
           {pinError && <p className="text-xs text-[var(--unpaid-text)] mt-2">PIN이 올바르지 않습니다</p>}
-          <button
+          <TButton
             onClick={handlePinSubmit}
             className="w-full mt-4 py-3 rounded-xl text-white font-semibold text-sm bg-[var(--blue)] hover:opacity-90 transition-opacity active:scale-[0.98]"
           >
             확인
-          </button>
+          </TButton>
         </div>
       </div>
     )
@@ -257,13 +258,13 @@ export default function FinancePage() {
     <div className="space-y-4">
       {/* 월 선택 */}
       <div className="flex items-center justify-center gap-4 mb-2">
-        <button onClick={() => navigateMonth(-1)} className="p-2 hover:bg-[var(--bg-elevated)] rounded-xl transition-colors">
+        <TButton onClick={() => navigateMonth(-1)} className="p-2 hover:bg-[var(--bg-elevated)] rounded-xl transition-colors">
           <ChevronLeft className="w-5 h-5 text-[var(--text-3)]" />
-        </button>
+        </TButton>
         <h1 className="text-lg font-bold tracking-tight">{formatMonth(selectedMonth)} 재정</h1>
-        <button onClick={() => navigateMonth(1)} className="p-2 hover:bg-[var(--bg-elevated)] rounded-xl transition-colors">
+        <TButton onClick={() => navigateMonth(1)} className="p-2 hover:bg-[var(--bg-elevated)] rounded-xl transition-colors">
           <ChevronRight className="w-5 h-5 text-[var(--text-3)]" />
-        </button>
+        </TButton>
       </div>
 
       {/* 손익 요약 */}

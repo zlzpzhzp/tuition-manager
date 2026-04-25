@@ -1,7 +1,19 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { motion, AnimatePresence, useMotionValue, useTransform, useSpring } from 'framer-motion'
+import { motion, AnimatePresence, useMotionValue, useTransform, useSpring, type HTMLMotionProps } from 'framer-motion'
+
+// 모든 버튼에 기본 탭 피드백을 주기 위한 공용 래퍼.
+// whileTap, transition을 props로 덮어쓸 수 있음.
+export function TButton(props: HTMLMotionProps<'button'>) {
+  return (
+    <motion.button
+      whileTap={{ scale: 0.96 }}
+      transition={{ type: 'spring', stiffness: 600, damping: 25 }}
+      {...props}
+    />
+  )
+}
 
 export function TapScale({
   children,

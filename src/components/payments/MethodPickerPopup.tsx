@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { PaymentMethod } from '@/types'
 import { METHOD_OPTIONS_SHORT } from '@/lib/constants'
+import { TButton } from '@/components/motion'
 
 interface Props {
   currentMethod: PaymentMethod
@@ -39,7 +40,7 @@ export default function MethodPickerPopup({ currentMethod, onMethodChange, onClo
         aria-label="결제수단 선택"
       >
         {METHOD_OPTIONS_SHORT.map(([val, label], i) => (
-          <button
+          <TButton
             key={val}
             type="button"
             onClick={() => { onMethodChange(val); onClose() }}
@@ -57,7 +58,7 @@ export default function MethodPickerPopup({ currentMethod, onMethodChange, onClo
             }}
           >
             {label}
-          </button>
+          </TButton>
         ))}
       </div>
     </div>,

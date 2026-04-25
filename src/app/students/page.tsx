@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { Plus, ChevronDown, ChevronRight, UserCircle } from 'lucide-react'
+import { TButton } from '@/components/motion'
 import type { Grade, Student, GradeWithClasses } from '@/types'
 import { getStudentFee } from '@/types'
 import StudentModal from '@/components/StudentModal'
@@ -127,12 +128,12 @@ export default function StudentsPage() {
           <h1 className="text-xl font-bold">학생 관리</h1>
           <p className="text-sm text-gray-400 mt-1">재원생 {totalStudents}명</p>
         </div>
-        <button
+        <TButton
           onClick={() => handleAddStudent()}
           className="px-4 py-2 bg-[#1e2d6f] text-white rounded-lg text-sm font-medium flex items-center gap-1 hover:opacity-90"
         >
           <Plus className="w-4 h-4" /> 학생 등록
-        </button>
+        </TButton>
       </div>
 
       {grades.length === 0 ? (
@@ -143,7 +144,7 @@ export default function StudentsPage() {
         <div className="space-y-3">
           {grades.map(grade => (
             <div key={grade.id} className="bg-white rounded-xl border overflow-hidden">
-              <button
+              <TButton
                 onClick={() => toggleGrade(grade.id)}
                 className="w-full flex items-center gap-2 px-4 py-3 text-left"
                 aria-expanded={expandedGrades.has(grade.id)}
@@ -153,7 +154,7 @@ export default function StudentsPage() {
                 <span className="text-xs text-gray-400">
                   {grade.classes.reduce((s, c) => s + getActiveStudents(c.students ?? []).length, 0)}명
                 </span>
-              </button>
+              </TButton>
 
               {expandedGrades.has(grade.id) && (
                 <div className="border-t">
@@ -161,7 +162,7 @@ export default function StudentsPage() {
                     const activeStudents = getActiveStudents(cls.students ?? [])
                     return (
                       <div key={cls.id} className="border-b last:border-b-0">
-                        <button
+                        <TButton
                           onClick={() => toggleClass(cls.id)}
                           className="w-full flex items-center gap-2 px-6 py-2.5 text-left bg-gray-50 hover:bg-gray-100"
                           aria-expanded={expandedClasses.has(cls.id)}
@@ -170,7 +171,7 @@ export default function StudentsPage() {
                           <span className="text-sm font-medium flex-1">{cls.name}</span>
                           <span className="text-xs text-[#1e2d6f] font-medium mr-2">{cls.monthly_fee.toLocaleString()}원</span>
                           <span className="text-xs text-gray-400">{activeStudents.length}명</span>
-                        </button>
+                        </TButton>
 
                         {expandedClasses.has(cls.id) && (
                           <div className="px-6 py-2">
@@ -195,12 +196,12 @@ export default function StudentsPage() {
                             ) : (
                               <p className="text-xs text-gray-400 py-2">등록된 학생이 없습니다</p>
                             )}
-                            <button
+                            <TButton
                               onClick={() => handleAddStudent(cls.id)}
                               className="flex items-center gap-1 text-xs text-[#1e2d6f] font-medium mt-2 mb-1 hover:opacity-70"
                             >
                               <Plus className="w-3.5 h-3.5" /> 이 반에 학생 추가
-                            </button>
+                            </TButton>
                           </div>
                         )}
                       </div>

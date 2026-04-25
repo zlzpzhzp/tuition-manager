@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom'
 import { motion } from 'framer-motion'
 import { X, Send, AlertTriangle, Check, Loader2 } from 'lucide-react'
 import { getRegularTuitionTitle, REGULAR_TUITION_MESSAGE } from '@/lib/billing-title'
+import { TButton } from '@/components/motion'
 
 interface Props {
   studentName: string
@@ -172,13 +173,13 @@ export default function BillSendModal({ studentName, studentId, phone, amount, s
             <Send className="w-5 h-5 text-[var(--blue)]" />
             청구서 발송
           </h2>
-          <button
+          <TButton
             onClick={() => { if (state !== 'sending') onClose() }}
             className="p-1.5 text-[var(--text-4)] hover:text-[var(--text-3)] hover:bg-[var(--bg-elevated)] rounded-lg transition-colors"
             disabled={state === 'sending'}
           >
             <X className="w-5 h-5" />
-          </button>
+          </TButton>
         </div>
 
         <div className="p-5 space-y-4">
@@ -233,14 +234,14 @@ export default function BillSendModal({ studentName, studentId, phone, amount, s
             {amountValue !== amount && (
               <div className="flex items-center justify-end gap-1.5 -mt-1">
                 <span className="text-[10px] text-[var(--text-4)] line-through tabular-nums">{amount.toLocaleString()}원</span>
-                <button
+                <TButton
                   type="button"
                   onClick={() => setAmountValue(amount)}
                   className="text-[10px] text-[var(--blue)] hover:underline"
                   disabled={state === 'sending' || state === 'success' || state === 'scheduled'}
                 >
                   기본값 복원
-                </button>
+                </TButton>
               </div>
             )}
           </div>
@@ -343,14 +344,14 @@ export default function BillSendModal({ studentName, studentId, phone, amount, s
           {state !== 'success' && state !== 'scheduled' && (
             <div className="flex gap-2">
               {state === 'confirming' && (
-                <button
+                <TButton
                   onClick={() => setState('idle')}
                   className="flex-1 py-3 rounded-xl text-sm font-semibold bg-[var(--bg-elevated)] text-[var(--text-3)] transition-colors hover:bg-[var(--border-light)]"
                 >
                   취소
-                </button>
+                </TButton>
               )}
-              <button
+              <TButton
                 onClick={handleSend}
                 disabled={!isPhoneValid || !isAmountValid || state === 'sending'}
                 className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2
@@ -378,7 +379,7 @@ export default function BillSendModal({ studentName, studentId, phone, amount, s
                     청구서 발송
                   </>
                 )}
-              </button>
+              </TButton>
             </div>
           )}
         </div>

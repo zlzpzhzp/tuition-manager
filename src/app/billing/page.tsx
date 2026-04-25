@@ -3,6 +3,7 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import { ChevronDown, Loader2, AlertCircle, Clock, PhoneOff, Lock, Download, FileText, Ban, Send } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { TButton } from '@/components/motion'
 import Link from 'next/link'
 import type { Student, GradeWithClasses } from '@/types'
 import { getStudentFee } from '@/types'
@@ -412,13 +413,13 @@ export default function BillingPage() {
         })()}
 
         {/* 청구서 발송 — 메인 진입점 */}
-        <button
+        <TButton
           onClick={() => setShowSendModal(true)}
           className="w-full mt-2 flex items-center justify-center gap-2 py-3 rounded-2xl bg-[var(--blue)] text-white text-sm font-bold hover:opacity-90 active:scale-[0.98] transition-all shadow-[0_2px_12px_rgba(59,130,246,0.2)]"
         >
           <Send className="w-4 h-4" />
           청구서 발송하기
-        </button>
+        </TButton>
 
         {isTestMode && (
           <div className="mt-3 mb-2">
@@ -653,7 +654,7 @@ export default function BillingPage() {
 
         {/* 도구 (접힘) */}
         <div className="card overflow-hidden mb-4">
-          <button
+          <TButton
             onClick={() => setShowTools(v => !v)}
             className="w-full flex items-center justify-between px-4 py-3 text-sm font-semibold text-[var(--text-2)] hover:bg-[var(--bg-card-hover)] transition-colors"
           >
@@ -661,7 +662,7 @@ export default function BillingPage() {
             <motion.div animate={{ rotate: showTools ? 180 : 0 }} transition={{ type: 'spring', stiffness: 300, damping: 25 }}>
               <ChevronDown className="w-4 h-4 text-[var(--text-4)]" />
             </motion.div>
-          </button>
+          </TButton>
           <AnimatePresence initial={false}>
             {showTools && (
               <motion.div
@@ -679,14 +680,14 @@ export default function BillingPage() {
                     <FileText className="w-4 h-4 text-[var(--blue)]" />
                     납부 탭으로 이동 (발송 · 결제 관리)
                   </Link>
-                  <button
+                  <TButton
                     onClick={exportCsv}
                     disabled={bills.length === 0}
                     className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-[var(--bg-elevated)] hover:bg-[var(--bg-card-hover)] text-sm font-medium text-[var(--text-2)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     <Download className="w-4 h-4 text-[var(--blue)]" />
                     CSV 내보내기 ({bills.length}건)
-                  </button>
+                  </TButton>
                   <div className="flex items-start gap-2 px-3 py-2.5 rounded-lg bg-[var(--orange-dim)]">
                     <AlertCircle className="w-4 h-4 text-[var(--orange)] shrink-0 mt-0.5" />
                     <div className="text-xs text-[var(--orange)]">
@@ -732,7 +733,7 @@ function ActionRow({ icon, color, bg, label, count, expanded, onToggle, children
 }) {
   return (
     <div className="border-t border-[var(--border)] first:border-t-0">
-      <button
+      <TButton
         onClick={onToggle}
         className="w-full flex items-center gap-2.5 px-4 py-3 hover:bg-[var(--bg-card-hover)] transition-colors"
       >
@@ -747,7 +748,7 @@ function ActionRow({ icon, color, bg, label, count, expanded, onToggle, children
         <motion.div animate={{ rotate: expanded ? 180 : 0 }} transition={{ type: 'spring', stiffness: 300, damping: 25 }}>
           <ChevronDown className="w-4 h-4 text-[var(--text-4)]" />
         </motion.div>
-      </button>
+      </TButton>
       <AnimatePresence initial={false}>
         {expanded && (
           <motion.div

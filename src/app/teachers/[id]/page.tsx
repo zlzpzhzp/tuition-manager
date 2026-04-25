@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import { useState, useMemo, useCallback, use } from 'react'
 import { useRouter } from 'next/navigation'
 import { ChevronLeft, ChevronRight, Plus, Trash2, X, Check, Download } from 'lucide-react'
+import { TButton } from '@/components/motion'
 import type { GradeWithClasses, Payment, Teacher } from '@/types'
 import { getStudentFee, getPaymentStatus, PAYMENT_STATUS_LABELS, parseClassDays, countClassDays, DAY_LABELS } from '@/types'
 import { getActiveStudents, useGrades, usePayments, getCurrentMonth, formatMonth, safeMutate } from '@/lib/utils'
@@ -304,9 +305,9 @@ export default function TeacherDetailPage({ params }: { params: Promise<{ id: st
     <div>
       {/* 헤더 */}
       <div className="flex items-center gap-3 mb-4">
-        <button onClick={() => router.back()} className="p-1 text-[var(--text-4)] hover:text-[var(--text-3)]">
+        <TButton onClick={() => router.back()} className="p-1 text-[var(--text-4)] hover:text-[var(--text-3)]">
           <ChevronLeft className="w-5 h-5" />
-        </button>
+        </TButton>
         <div>
           <h1 className="text-xl font-bold">{teacher.name}</h1>
           {teacher.subject && <p className="text-xs text-[var(--text-4)]">{teacher.subject}</p>}
@@ -315,13 +316,13 @@ export default function TeacherDetailPage({ params }: { params: Promise<{ id: st
 
       {/* 월 선택 */}
       <div className="flex items-center justify-center gap-3 mb-6">
-        <button onClick={() => navigateMonth(-1)} className="p-2 hover:bg-[var(--bg-elevated)] rounded-lg">
+        <TButton onClick={() => navigateMonth(-1)} className="p-2 hover:bg-[var(--bg-elevated)] rounded-lg">
           <ChevronLeft className="w-5 h-5" />
-        </button>
+        </TButton>
         <span className="text-lg font-bold">{formatMonth(selectedMonth)}</span>
-        <button onClick={() => navigateMonth(1)} className="p-2 hover:bg-[var(--bg-elevated)] rounded-lg">
+        <TButton onClick={() => navigateMonth(1)} className="p-2 hover:bg-[var(--bg-elevated)] rounded-lg">
           <ChevronRight className="w-5 h-5" />
-        </button>
+        </TButton>
       </div>
 
       {/* 급여명세서 */}
@@ -355,16 +356,16 @@ export default function TeacherDetailPage({ params }: { params: Promise<{ id: st
                     min={0} max={100} autoFocus
                   />
                   <span className="text-[var(--text-4)]">%)</span>
-                  <button onClick={saveRatio} className="p-1.5 bg-[var(--blue-bg)] hover:bg-[var(--blue-dim)] text-[var(--blue)] rounded-full transition-colors"><Check className="w-3.5 h-3.5" strokeWidth={3} /></button>
-                  <button onClick={() => setEditingRatio(false)} className="text-[var(--text-4)]"><X className="w-3.5 h-3.5" /></button>
+                  <TButton onClick={saveRatio} className="p-1.5 bg-[var(--blue-bg)] hover:bg-[var(--blue-dim)] text-[var(--blue)] rounded-full transition-colors"><Check className="w-3.5 h-3.5" strokeWidth={3} /></TButton>
+                  <TButton onClick={() => setEditingRatio(false)} className="text-[var(--text-4)]"><X className="w-3.5 h-3.5" /></TButton>
                 </span>
               ) : (
-                <button
+                <TButton
                   onClick={() => { setEditingRatio(true); setRatioInput(String(payRatio)) }}
                   className="text-[var(--blue)] hover:underline text-sm"
                 >
                   ({payRatio}%)
-                </button>
+                </TButton>
               )}
             </div>
             <span className="font-medium text-[var(--blue)]">{payroll.teacherShare.toLocaleString()}원</span>
@@ -382,9 +383,9 @@ export default function TeacherDetailPage({ params }: { params: Promise<{ id: st
                   <span>{b.memo || '보너스'}</span>
                   <div className="flex items-center gap-1">
                     <span>+{b.amount.toLocaleString()}원</span>
-                    <button onClick={() => deleteBonus(b.id)} className="p-0.5 text-[var(--text-4)] hover:text-[var(--unpaid-text)]">
+                    <TButton onClick={() => deleteBonus(b.id)} className="p-0.5 text-[var(--text-4)] hover:text-[var(--unpaid-text)]">
                       <Trash2 className="w-3 h-3" />
-                    </button>
+                    </TButton>
                   </div>
                 </div>
               ))}
@@ -409,16 +410,16 @@ export default function TeacherDetailPage({ params }: { params: Promise<{ id: st
                 placeholder="금액"
                 className="w-24 px-2 py-1 border rounded text-sm text-right focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
               />
-              <button onClick={addBonus} className="p-1.5 bg-[var(--blue-bg)] hover:bg-[var(--blue-dim)] text-[var(--blue)] rounded-full transition-colors"><Check className="w-3.5 h-3.5" strokeWidth={3} /></button>
-              <button onClick={() => setAddingBonus(false)} className="text-[var(--text-4)]"><X className="w-4 h-4" /></button>
+              <TButton onClick={addBonus} className="p-1.5 bg-[var(--blue-bg)] hover:bg-[var(--blue-dim)] text-[var(--blue)] rounded-full transition-colors"><Check className="w-3.5 h-3.5" strokeWidth={3} /></TButton>
+              <TButton onClick={() => setAddingBonus(false)} className="text-[var(--text-4)]"><X className="w-4 h-4" /></TButton>
             </div>
           ) : (
-            <button
+            <TButton
               onClick={() => setAddingBonus(true)}
               className="flex items-center gap-1 text-xs text-[var(--blue)] font-medium hover:opacity-70 py-1"
             >
               <Plus className="w-3.5 h-3.5" /> 보너스 추가
-            </button>
+            </TButton>
           )}
 
           <div className="flex justify-between py-1.5 border-b">
@@ -437,13 +438,13 @@ export default function TeacherDetailPage({ params }: { params: Promise<{ id: st
       </div>
 
       {/* PDF 다운로드 버튼 */}
-      <button
+      <TButton
         onClick={downloadPayslipPDF}
         className="w-full py-3 mb-4 text-[var(--blue)] bg-[var(--bg-card)] border border-[var(--blue)] rounded-xl text-sm font-medium hover:bg-[#f0f2f8] flex items-center justify-center gap-2"
       >
         <Download className="w-4 h-4" />
         급여명세서 PDF 다운로드
-      </button>
+      </TButton>
 
       {/* 반별 학생 상세 */}
       {classDetails.map(({ cls, students, sessionCount, days, clsFee, clsPaid }) => (

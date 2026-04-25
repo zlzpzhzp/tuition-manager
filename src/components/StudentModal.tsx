@@ -7,6 +7,7 @@ import { motion } from 'framer-motion'
 import { X, Split } from 'lucide-react'
 import type { Student, Grade, Class } from '@/types'
 import { getTodayString, formatPhone } from '@/lib/utils'
+import { TButton } from '@/components/motion'
 
 interface Props {
   student?: Student | null
@@ -90,7 +91,7 @@ export default function StudentModal({ student, grades, defaultClassId, onSave, 
         </div>
         <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)]">
           <h2 className="text-lg font-bold tracking-tight">{student ? '학생 수정' : '학생 등록'}</h2>
-          <button onClick={onClose} aria-label="닫기" className="p-1.5 text-[var(--text-4)] hover:text-[var(--text-3)] hover:bg-[var(--bg-elevated)] rounded-lg transition-colors"><X className="w-5 h-5" /></button>
+          <TButton onClick={onClose} aria-label="닫기" className="p-1.5 text-[var(--text-4)] hover:text-[var(--text-3)] hover:bg-[var(--bg-elevated)] rounded-lg transition-colors"><X className="w-5 h-5" /></TButton>
         </div>
 
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
@@ -204,13 +205,13 @@ export default function StudentModal({ student, grades, defaultClassId, onSave, 
                   {splitAmounts.map(a => a.toLocaleString()).join(' + ')} = {splitAmounts.reduce((s, a) => s + a, 0).toLocaleString()}원 ({splitParts}회 분할)
                 </p>
               </div>
-              <button
+              <TButton
                 type="button"
                 onClick={() => { setSplitParts(null); setSplitAmounts(null) }}
                 className="shrink-0 px-2 py-1 rounded-md text-xs font-semibold bg-[var(--red-dim)] text-[var(--red)] hover:opacity-80"
               >
                 해제
-              </button>
+              </TButton>
             </div>
           )}
 
@@ -224,12 +225,12 @@ export default function StudentModal({ student, grades, defaultClassId, onSave, 
             />
           </div>
 
-          <button
+          <TButton
             type="submit"
             className="w-full py-2.5 bg-[var(--blue)] text-white rounded-lg font-medium text-sm hover:opacity-90"
           >
             {student ? '수정' : '등록'}
-          </button>
+          </TButton>
         </form>
       </motion.div>
     </motion.div>,

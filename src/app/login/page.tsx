@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { TButton } from '@/components/motion'
 
 export default function LoginPage() {
   const [id, setId] = useState('')
@@ -50,10 +51,10 @@ export default function LoginPage() {
             placeholder="비밀번호" autoComplete="current-password" required
           />
           {error && <p className="text-[var(--red)] text-[14px] text-center py-1">{error}</p>}
-          <button type="submit" disabled={loading}
+          <TButton type="submit" disabled={loading}
             className="w-full py-4 bg-[var(--blue)] text-white rounded-2xl text-[16px] font-bold hover:bg-[#2970dd] disabled:bg-[var(--bg-card-hover)] disabled:text-[var(--text-4)] transition-all active:scale-[0.98]">
             {loading ? '로그인 중...' : '로그인'}
-          </button>
+          </TButton>
         </form>
       </div>
     </div>

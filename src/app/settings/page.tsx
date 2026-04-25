@@ -5,6 +5,7 @@ import { useState, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Plus, Pencil, Trash2, ChevronDown, X, Check, ArrowRightLeft, ChevronUp, LogOut, ScrollText, UserCircle, FileText } from 'lucide-react'
+import { TButton } from '@/components/motion'
 import type { Class, Student, Teacher } from '@/types'
 import { DAY_LABELS, parseClassDays } from '@/types'
 import { getActiveStudents, safeMutate, safeFetch, useGrades, revalidateGrades, useTeachers, revalidateTeachers } from '@/lib/utils'
@@ -87,7 +88,7 @@ export default function SettingsPage() {
   const DayPicker = ({ days, setDays }: { days: number[]; setDays: (d: number[]) => void }) => (
     <div className="flex gap-0.5" role="group" aria-label="수업 요일 선택">
       {[1, 2, 3, 4, 5, 6].map(d => (
-        <button
+        <TButton
           key={d}
           type="button"
           onClick={() => toggleDay(days, setDays, d)}
@@ -98,7 +99,7 @@ export default function SettingsPage() {
           aria-label={DAY_LABELS[d]}
         >
           {DAY_LABELS[d]}
-        </button>
+        </TButton>
       ))}
     </div>
   )
@@ -297,7 +298,7 @@ export default function SettingsPage() {
       {/* 과목 탭 */}
       <div className="flex gap-1.5 mb-4 overflow-x-auto pb-1 -mx-1 px-1">
         {allSubjectsInUse.map(subject => (
-          <button
+          <TButton
             key={subject}
             onClick={() => setSelectedSubject(subject)}
             className={`shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold transition-colors ${
@@ -307,7 +308,7 @@ export default function SettingsPage() {
             }`}
           >
             {subject}
-          </button>
+          </TButton>
         ))}
       </div>
 
@@ -365,8 +366,8 @@ export default function SettingsPage() {
                                     <option value="__custom__">직접입력</option>
                                   </select>
                                 )}
-                                <button onClick={() => updateClass(cls.id)} className="shrink-0 p-1.5 bg-[var(--blue-bg)] hover:bg-[var(--blue-dim)] text-[var(--blue)] rounded-full transition-colors" aria-label="저장"><Check className="w-3.5 h-3.5" strokeWidth={3} /></button>
-                                <button onClick={() => setEditingClassId(null)} className="shrink-0 text-[var(--text-4)] p-1" aria-label="취소"><X className="w-4 h-4" /></button>
+                                <TButton onClick={() => updateClass(cls.id)} className="shrink-0 p-1.5 bg-[var(--blue-bg)] hover:bg-[var(--blue-dim)] text-[var(--blue)] rounded-full transition-colors" aria-label="저장"><Check className="w-3.5 h-3.5" strokeWidth={3} /></TButton>
+                                <TButton onClick={() => setEditingClassId(null)} className="shrink-0 text-[var(--text-4)] p-1" aria-label="취소"><X className="w-4 h-4" /></TButton>
                               </div>
                               <div className="flex items-center gap-2 pl-1 min-w-0">
                                 <span className="text-xs text-[var(--text-3)] shrink-0">원비</span>
@@ -391,22 +392,22 @@ export default function SettingsPage() {
                             <>
                               {/* 순서 변경 버튼 */}
                               <div className="flex flex-col shrink-0">
-                                <button
+                                <TButton
                                   onClick={() => swapClassOrder(classesInSubject, clsIdx, -1)}
                                   disabled={clsIdx === 0}
                                   className="p-0 text-[var(--text-4)] hover:text-[var(--text-3)] disabled:opacity-20 disabled:hover:text-[var(--text-4)]"
                                   aria-label="위로"
                                 >
                                   <ChevronUp className="w-3.5 h-3.5" />
-                                </button>
-                                <button
+                                </TButton>
+                                <TButton
                                   onClick={() => swapClassOrder(classesInSubject, clsIdx, 1)}
                                   disabled={clsIdx === classesInSubject.length - 1}
                                   className="p-0 text-[var(--text-4)] hover:text-[var(--text-3)] disabled:opacity-20 disabled:hover:text-[var(--text-4)]"
                                   aria-label="아래로"
                                 >
                                   <ChevronDown className="w-3.5 h-3.5" />
-                                </button>
+                                </TButton>
                               </div>
                               {cls.subject && (
                                 <span className={`text-[10px] sm:text-xs px-1.5 py-0.5 rounded-full shrink-0 ${getSubjectColor(cls.subject)}`}>{cls.subject}</span>
@@ -420,15 +421,15 @@ export default function SettingsPage() {
                               )}
                               <span className="text-xs sm:text-sm font-medium text-[var(--blue)] shrink-0">{formatFee(cls.monthly_fee)}</span>
                               <span className="text-[10px] sm:text-xs text-[var(--text-4)] shrink-0">{getActiveStudents(cls.students ?? []).length}명</span>
-                              <button onClick={() => openTransfer(cls)} className="p-0.5 sm:p-1 text-[var(--text-4)] hover:text-[var(--blue)] shrink-0" aria-label="학생 반이동" title="학생 반이동">
+                              <TButton onClick={() => openTransfer(cls)} className="p-0.5 sm:p-1 text-[var(--text-4)] hover:text-[var(--blue)] shrink-0" aria-label="학생 반이동" title="학생 반이동">
                                 <ArrowRightLeft className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                              </button>
-                              <button onClick={() => { setEditingClassId(cls.id); setEditClassName(cls.name); setEditClassFee(String(cls.monthly_fee)); setEditClassSubject(cls.subject || ''); setEditClassDays(parseClassDays(cls.class_days) ?? []); setEditClassTeacherId(cls.teacher_id || '') }} className="p-0.5 sm:p-1 text-[var(--text-4)] hover:text-[var(--text-3)] shrink-0" aria-label="반 수정">
+                              </TButton>
+                              <TButton onClick={() => { setEditingClassId(cls.id); setEditClassName(cls.name); setEditClassFee(String(cls.monthly_fee)); setEditClassSubject(cls.subject || ''); setEditClassDays(parseClassDays(cls.class_days) ?? []); setEditClassTeacherId(cls.teacher_id || '') }} className="p-0.5 sm:p-1 text-[var(--text-4)] hover:text-[var(--text-3)] shrink-0" aria-label="반 수정">
                                 <Pencil className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                              </button>
-                              <button onClick={() => deleteClass(cls.id, cls.name)} className="p-0.5 sm:p-1 text-[var(--text-4)] hover:text-[var(--unpaid-text)] shrink-0" aria-label="반 삭제">
+                              </TButton>
+                              <TButton onClick={() => deleteClass(cls.id, cls.name)} className="p-0.5 sm:p-1 text-[var(--text-4)] hover:text-[var(--unpaid-text)] shrink-0" aria-label="반 삭제">
                                 <Trash2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                              </button>
+                              </TButton>
                             </>
                           )}
                         </div>
@@ -477,8 +478,8 @@ export default function SettingsPage() {
                             <option value="__custom__">직접입력</option>
                           </select>
                         )}
-                        <button onClick={() => addClass()} className="shrink-0 p-1.5 bg-[var(--blue-bg)] hover:bg-[var(--blue-dim)] text-[var(--blue)] rounded-full transition-colors" aria-label="저장"><Check className="w-3.5 h-3.5" strokeWidth={3} /></button>
-                        <button onClick={() => { setAddingClassToGrade(null); resetClassForm() }} className="shrink-0 text-[var(--text-4)] p-1" aria-label="취소"><X className="w-4 h-4" /></button>
+                        <TButton onClick={() => addClass()} className="shrink-0 p-1.5 bg-[var(--blue-bg)] hover:bg-[var(--blue-dim)] text-[var(--blue)] rounded-full transition-colors" aria-label="저장"><Check className="w-3.5 h-3.5" strokeWidth={3} /></TButton>
+                        <TButton onClick={() => { setAddingClassToGrade(null); resetClassForm() }} className="shrink-0 text-[var(--text-4)] p-1" aria-label="취소"><X className="w-4 h-4" /></TButton>
                       </div>
                       <div className="flex items-center gap-2 pl-1 min-w-0">
                         <span className="text-xs text-[var(--text-3)] shrink-0">원비</span>
@@ -504,12 +505,12 @@ export default function SettingsPage() {
                       )}
                     </div>
                   ) : (
-                    <button
+                    <TButton
                       onClick={() => openClassFormForGrade(grade.id)}
                       className="flex items-center gap-1 text-sm text-[var(--blue)] font-medium hover:opacity-70"
                     >
                       <Plus className="w-4 h-4" /> 반 추가
-                    </button>
+                    </TButton>
                   )}
                 </div>
               </div>
@@ -540,18 +541,18 @@ export default function SettingsPage() {
                           <input type="text" value={editTeacherName} onChange={e => setEditTeacherName(e.target.value)} placeholder="이름" className="w-20 px-2 py-1 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)]" autoFocus />
                           <input type="text" value={editTeacherSubject} onChange={e => setEditTeacherSubject(e.target.value)} placeholder="담당 과목" className="w-20 px-2 py-1 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)]" />
                           <input type="tel" value={editTeacherPhone} onChange={e => setEditTeacherPhone(e.target.value)} placeholder="연락처" className="w-28 px-2 py-1 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)]" />
-                          <button onClick={() => updateTeacher(teacher.id)} className="shrink-0 p-1.5 bg-[var(--blue-bg)] hover:bg-[var(--blue-dim)] text-[var(--blue)] rounded-full transition-colors" aria-label="저장"><Check className="w-3.5 h-3.5" strokeWidth={3} /></button>
-                          <button onClick={() => setEditingTeacherId(null)} className="text-[var(--text-4)] shrink-0" aria-label="취소"><X className="w-4 h-4" /></button>
+                          <TButton onClick={() => updateTeacher(teacher.id)} className="shrink-0 p-1.5 bg-[var(--blue-bg)] hover:bg-[var(--blue-dim)] text-[var(--blue)] rounded-full transition-colors" aria-label="저장"><Check className="w-3.5 h-3.5" strokeWidth={3} /></TButton>
+                          <TButton onClick={() => setEditingTeacherId(null)} className="text-[var(--text-4)] shrink-0" aria-label="취소"><X className="w-4 h-4" /></TButton>
                         </div>
                       ) : (
                         <>
                           <div className="flex flex-col shrink-0">
-                            <button onClick={() => swapTeacherOrder(tIdx, -1)} disabled={tIdx === 0} className="p-0 text-[var(--text-4)] hover:text-[var(--text-3)] disabled:opacity-20" aria-label="위로">
+                            <TButton onClick={() => swapTeacherOrder(tIdx, -1)} disabled={tIdx === 0} className="p-0 text-[var(--text-4)] hover:text-[var(--text-3)] disabled:opacity-20" aria-label="위로">
                               <ChevronUp className="w-3.5 h-3.5" />
-                            </button>
-                            <button onClick={() => swapTeacherOrder(tIdx, 1)} disabled={tIdx === teachers.length - 1} className="p-0 text-[var(--text-4)] hover:text-[var(--text-3)] disabled:opacity-20" aria-label="아래로">
+                            </TButton>
+                            <TButton onClick={() => swapTeacherOrder(tIdx, 1)} disabled={tIdx === teachers.length - 1} className="p-0 text-[var(--text-4)] hover:text-[var(--text-3)] disabled:opacity-20" aria-label="아래로">
                               <ChevronDown className="w-3.5 h-3.5" />
-                            </button>
+                            </TButton>
                           </div>
                           <span className="text-sm font-medium">{teacher.name}</span>
                           {teacher.subject && <span className="text-xs text-[var(--text-4)]">{teacher.subject}</span>}
@@ -560,12 +561,12 @@ export default function SettingsPage() {
                           <Link href={`/teachers/${teacher.id}`} className="p-1 text-[var(--text-4)] hover:text-[var(--blue)]" aria-label="급여명세서" title="급여명세서">
                             <FileText className="w-3.5 h-3.5" />
                           </Link>
-                          <button onClick={() => { setEditingTeacherId(teacher.id); setEditTeacherName(teacher.name); setEditTeacherPhone(teacher.phone || ''); setEditTeacherSubject(teacher.subject || '') }} className="p-1 text-[var(--text-4)] hover:text-[var(--text-3)]" aria-label="수정">
+                          <TButton onClick={() => { setEditingTeacherId(teacher.id); setEditTeacherName(teacher.name); setEditTeacherPhone(teacher.phone || ''); setEditTeacherSubject(teacher.subject || '') }} className="p-1 text-[var(--text-4)] hover:text-[var(--text-3)]" aria-label="수정">
                             <Pencil className="w-3.5 h-3.5" />
-                          </button>
-                          <button onClick={() => deleteTeacher(teacher.id, teacher.name)} className="p-1 text-[var(--text-4)] hover:text-[var(--unpaid-text)]" aria-label="삭제">
+                          </TButton>
+                          <TButton onClick={() => deleteTeacher(teacher.id, teacher.name)} className="p-1 text-[var(--text-4)] hover:text-[var(--unpaid-text)]" aria-label="삭제">
                             <Trash2 className="w-3.5 h-3.5" />
-                          </button>
+                          </TButton>
                         </>
                       )}
                     </div>
@@ -578,16 +579,16 @@ export default function SettingsPage() {
                   <input type="text" value={newTeacherName} onChange={e => setNewTeacherName(e.target.value)} onKeyDown={e => e.key === 'Enter' && addTeacher()} placeholder="이름" className="w-20 px-2 py-1.5 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)]" autoFocus />
                   <input type="text" value={newTeacherSubject} onChange={e => setNewTeacherSubject(e.target.value)} onKeyDown={e => e.key === 'Enter' && addTeacher()} placeholder="담당 과목" className="w-20 px-2 py-1.5 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)]" />
                   <input type="tel" value={newTeacherPhone} onChange={e => setNewTeacherPhone(e.target.value)} onKeyDown={e => e.key === 'Enter' && addTeacher()} placeholder="연락처" className="w-28 px-2 py-1.5 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)]" />
-                  <button onClick={addTeacher} className="shrink-0 p-1.5 bg-[var(--blue-bg)] hover:bg-[var(--blue-dim)] text-[var(--blue)] rounded-full transition-colors" aria-label="저장"><Check className="w-3.5 h-3.5" strokeWidth={3} /></button>
-                  <button onClick={() => { setAddingTeacher(false); setNewTeacherName(''); setNewTeacherPhone(''); setNewTeacherSubject('') }} className="text-[var(--text-4)] shrink-0" aria-label="취소"><X className="w-4 h-4" /></button>
+                  <TButton onClick={addTeacher} className="shrink-0 p-1.5 bg-[var(--blue-bg)] hover:bg-[var(--blue-dim)] text-[var(--blue)] rounded-full transition-colors" aria-label="저장"><Check className="w-3.5 h-3.5" strokeWidth={3} /></TButton>
+                  <TButton onClick={() => { setAddingTeacher(false); setNewTeacherName(''); setNewTeacherPhone(''); setNewTeacherSubject('') }} className="text-[var(--text-4)] shrink-0" aria-label="취소"><X className="w-4 h-4" /></TButton>
                 </div>
               ) : (
-                <button
+                <TButton
                   onClick={() => setAddingTeacher(true)}
                   className="flex items-center gap-1 text-sm text-[var(--blue)] font-medium hover:opacity-70"
                 >
                   <Plus className="w-4 h-4" /> 선생님 추가
-                </button>
+                </TButton>
               )}
             </div>
           </div>
@@ -595,14 +596,14 @@ export default function SettingsPage() {
 
       {/* 로그 & 로그아웃 */}
       <div className="mt-12 pt-6 border-t border-[var(--border)] space-y-3">
-        <button
+        <TButton
           onClick={loadLogs}
           className="w-full py-3 text-[var(--text-3)] card text-sm font-medium hover:bg-[var(--bg-card-hover)] flex items-center justify-center gap-2 transition-colors"
         >
           <ScrollText className="w-4 h-4" />
           변경 로그
-        </button>
-        <button
+        </TButton>
+        <TButton
           onClick={async () => {
             if (!confirm('로그아웃 하시겠습니까?')) return
             await fetch('/api/auth/logout', { method: 'POST' })
@@ -613,7 +614,7 @@ export default function SettingsPage() {
         >
           <LogOut className="w-4 h-4" />
           로그아웃
-        </button>
+        </TButton>
       </div>
 
       {/* 학생 반이동 모달 */}
@@ -625,9 +626,9 @@ export default function SettingsPage() {
                 <h2 className="font-bold text-sm">학생 반이동</h2>
                 <p className="text-xs text-[var(--text-4)] mt-0.5">{transferClass.name}</p>
               </div>
-              <button onClick={() => setTransferClass(null)} className="p-1 text-[var(--text-4)] hover:text-[var(--text-3)]" aria-label="닫기">
+              <TButton onClick={() => setTransferClass(null)} className="p-1 text-[var(--text-4)] hover:text-[var(--text-3)]" aria-label="닫기">
                 <X className="w-5 h-5" />
-              </button>
+              </TButton>
             </div>
 
             <div className="flex-1 overflow-y-auto px-5 py-3">
@@ -641,13 +642,13 @@ export default function SettingsPage() {
                   <>
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-xs text-[var(--text-3)]">{selectedStudents.size}명 선택</span>
-                      <button onClick={selectAllStudents} className="text-xs text-[var(--blue)] font-medium">
+                      <TButton onClick={selectAllStudents} className="text-xs text-[var(--blue)] font-medium">
                         {selectedStudents.size === activeStudents.length ? '선택 해제' : '전체 선택'}
-                      </button>
+                      </TButton>
                     </div>
                     <div className="space-y-1 mb-4">
                       {activeStudents.map(s => (
-                        <button
+                        <TButton
                           key={s.id}
                           onClick={() => toggleStudentSelect(s.id)}
                           className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm text-left transition-colors ${
@@ -660,7 +661,7 @@ export default function SettingsPage() {
                             {selectedStudents.has(s.id) && <Check className="w-3 h-3 text-white" />}
                           </div>
                           <span className="font-medium">{s.name}</span>
-                        </button>
+                        </TButton>
                       ))}
                     </div>
                   </>
@@ -688,7 +689,7 @@ export default function SettingsPage() {
             {/* 하단 실행 버튼 */}
             {selectedStudents.size > 0 && targetClassId && (
               <div className="px-5 py-4 border-t shrink-0">
-                <button
+                <TButton
                   onClick={executeTransfer}
                   disabled={transferring}
                   className="w-full py-2.5 bg-[var(--blue)] text-white rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
@@ -701,7 +702,7 @@ export default function SettingsPage() {
                       {selectedStudents.size}명 반이동
                     </>
                   )}
-                </button>
+                </TButton>
               </div>
             )}
           </div>
@@ -714,9 +715,9 @@ export default function SettingsPage() {
           <div className="bg-[var(--bg-card)] w-full sm:max-w-lg sm:rounded-xl rounded-t-xl max-h-[85vh] flex flex-col" onClick={e => e.stopPropagation()}>
             <div className="px-5 py-4 border-b flex items-center justify-between shrink-0">
               <h2 className="font-bold text-sm">변경 로그</h2>
-              <button onClick={() => setShowLogs(false)} className="p-1 text-[var(--text-4)] hover:text-[var(--text-3)]" aria-label="닫기">
+              <TButton onClick={() => setShowLogs(false)} className="p-1 text-[var(--text-4)] hover:text-[var(--text-3)]" aria-label="닫기">
                 <X className="w-5 h-5" />
-              </button>
+              </TButton>
             </div>
             <div className="flex-1 overflow-y-auto px-5 py-3">
               {logsLoading ? (

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { motion } from 'framer-motion'
 import { X, Trash2, Undo2, AlertTriangle, Check, Loader2, RefreshCw, Split, Bell } from 'lucide-react'
+import { TButton } from '@/components/motion'
 
 interface Props {
   studentId: string
@@ -194,13 +195,13 @@ export default function BillActionModal({ studentId, studentName, phone, billId,
           <h2 className="text-lg font-bold tracking-tight">
             {state === 'configuring-split' ? '분할결제 설정' : '청구서 관리'}
           </h2>
-          <button
+          <TButton
             onClick={() => { if (state !== 'submitting') onClose() }}
             className="p-1.5 text-[var(--text-4)] hover:text-[var(--text-3)] hover:bg-[var(--bg-elevated)] rounded-lg transition-colors"
             disabled={state === 'submitting'}
           >
             <X className="w-5 h-5" />
-          </button>
+          </TButton>
         </div>
 
         <div className="p-5 space-y-4">
@@ -259,7 +260,7 @@ export default function BillActionModal({ studentId, studentName, phone, billId,
                 <span className="text-sm font-medium text-[var(--text-2)]">분할 개수</span>
                 <div className="flex gap-1">
                   {[2, 3, 4].map(n => (
-                    <button
+                    <TButton
                       key={n}
                       type="button"
                       onClick={() => setParts(n as 2 | 3 | 4)}
@@ -270,7 +271,7 @@ export default function BillActionModal({ studentId, studentName, phone, billId,
                       }`}
                     >
                       {n}
-                    </button>
+                    </TButton>
                   ))}
                 </div>
               </div>
@@ -307,13 +308,13 @@ export default function BillActionModal({ studentId, studentName, phone, billId,
             <div className="flex flex-col gap-2">
               {(state === 'confirming-destroy' || state === 'confirming-cancel' || state === 'confirming-reissue' || state === 'confirming-resend') ? (
                 <div className="flex gap-2">
-                  <button
+                  <TButton
                     onClick={() => setState('idle')}
                     className="flex-1 py-3 rounded-xl text-sm font-semibold bg-[var(--bg-elevated)] text-[var(--text-3)] hover:bg-[var(--border-light)]"
                   >
                     돌아가기
-                  </button>
-                  <button
+                  </TButton>
+                  <TButton
                     onClick={() => submit(
                       state === 'confirming-destroy' ? 'destroy' :
                       state === 'confirming-cancel' ? 'cancel' :
@@ -324,49 +325,49 @@ export default function BillActionModal({ studentId, studentName, phone, billId,
                     style={{ background: (state === 'confirming-reissue' || state === 'confirming-resend') ? 'var(--blue)' : 'var(--red)' }}
                   >
                     확인, 진행합니다
-                  </button>
+                  </TButton>
                 </div>
               ) : state === 'configuring-split' ? (
                 <div className="flex gap-2">
-                  <button
+                  <TButton
                     onClick={() => setState('idle')}
                     className="flex-1 py-3 rounded-xl text-sm font-semibold bg-[var(--bg-elevated)] text-[var(--text-3)] hover:bg-[var(--border-light)]"
                   >
                     돌아가기
-                  </button>
-                  <button
+                  </TButton>
+                  <TButton
                     onClick={submitSplit}
                     disabled={!splitValid}
                     className="flex-1 py-3 rounded-xl text-sm font-bold text-white hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
                     style={{ background: 'var(--blue)' }}
                   >
                     {parts}건 분할 결제
-                  </button>
+                  </TButton>
                 </div>
               ) : state === 'submitting' ? (
-                <button disabled className="py-3 rounded-xl text-sm font-bold bg-[var(--blue)] text-white opacity-70 flex items-center justify-center gap-2">
+                <TButton disabled className="py-3 rounded-xl text-sm font-bold bg-[var(--blue)] text-white opacity-70 flex items-center justify-center gap-2">
                   <Loader2 className="w-4 h-4 animate-spin" /> 처리 중...
-                </button>
+                </TButton>
               ) : (
                 <>
                   {canDestroy && (
                     <>
-                      <button
+                      <TButton
                         onClick={() => setState('confirming-resend')}
                         className="w-full py-3 rounded-xl text-sm font-bold bg-[var(--blue)] text-white hover:opacity-90 flex items-center justify-center gap-2"
                       >
                         <Bell className="w-4 h-4" />
                         재발송 (카톡 다시 보내기)
-                      </button>
-                      <button
+                      </TButton>
+                      <TButton
                         onClick={() => setState('confirming-reissue')}
                         className="w-full py-3 rounded-xl text-sm font-bold bg-[var(--bg-elevated)] text-[var(--text-2)] hover:bg-[var(--border-light)] flex items-center justify-center gap-2"
                       >
                         <RefreshCw className="w-4 h-4" />
                         파기 후 재발송 (새 청구서)
-                      </button>
+                      </TButton>
                       {canSplit && (
-                        <button
+                        <TButton
                           onClick={() => {
                             const perPart = Math.floor(amount / 3)
                             const lastAdjust = amount - perPart * 3
@@ -378,37 +379,37 @@ export default function BillActionModal({ studentId, studentName, phone, billId,
                         >
                           <Split className="w-4 h-4" />
                           분할결제로 변경
-                        </button>
+                        </TButton>
                       )}
-                      <button
+                      <TButton
                         onClick={() => setState('confirming-destroy')}
                         className="w-full py-3 rounded-xl text-sm font-bold bg-[var(--red-dim)] text-[var(--red)] hover:opacity-90 flex items-center justify-center gap-2"
                       >
                         <Trash2 className="w-4 h-4" />
                         청구서 파기만 (발송 취소)
-                      </button>
+                      </TButton>
                     </>
                   )}
                   {canCancel && (
-                    <button
+                    <TButton
                       onClick={() => setState('confirming-cancel')}
                       className="w-full py-3 rounded-xl text-sm font-bold bg-[var(--red-dim)] text-[var(--red)] hover:opacity-90 flex items-center justify-center gap-2"
                     >
                       <Undo2 className="w-4 h-4" />
                       결제 취소 (환불)
-                    </button>
+                    </TButton>
                   )}
                   {!canDestroy && !canCancel && (
                     <p className="text-center text-sm text-[var(--text-4)] py-4">
                       현재 상태에서 수행할 수 있는 작업이 없습니다
                     </p>
                   )}
-                  <button
+                  <TButton
                     onClick={onClose}
                     className="w-full py-3 rounded-xl text-sm font-semibold bg-[var(--bg-elevated)] text-[var(--text-3)] hover:bg-[var(--border-light)]"
                   >
                     닫기
-                  </button>
+                  </TButton>
                 </>
               )}
             </div>

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Send, AlertTriangle, Check, Loader2, Search, PhoneOff, ChevronDown } from 'lucide-react'
+import { TButton } from '@/components/motion'
 import type { Student, GradeWithClasses } from '@/types'
 import { getStudentFee } from '@/types'
 import { getRegularTuitionTitle, REGULAR_TUITION_MESSAGE } from '@/lib/billing-title'
@@ -208,13 +209,13 @@ export default function QuickBillSendModal({ students, grades, billingMonth, onC
             청구서 발송
             <span className="text-xs font-normal text-[var(--text-4)]">{formatMonth(billingMonth)}</span>
           </h2>
-          <button
+          <TButton
             onClick={() => { if (state !== 'sending') onClose() }}
             className="p-1.5 text-[var(--text-4)] hover:text-[var(--text-3)] hover:bg-[var(--bg-elevated)] rounded-lg transition-colors"
             disabled={state === 'sending'}
           >
             <X className="w-4 h-4" />
-          </button>
+          </TButton>
         </div>
 
         <div className="flex-1 overflow-y-auto p-5 space-y-4">
@@ -281,7 +282,7 @@ export default function QuickBillSendModal({ students, grades, billingMonth, onC
                             const p = s.parent_phone || s.phone
                             const fee = getStudentFee(s, s.class)
                             return (
-                              <button
+                              <TButton
                                 key={s.id}
                                 onClick={() => setSelectedId(s.id)}
                                 className="w-full flex items-center gap-2 px-3 py-2 hover:bg-[var(--bg-card-hover)] text-left transition-colors"
@@ -294,7 +295,7 @@ export default function QuickBillSendModal({ students, grades, billingMonth, onC
                                   <div className="text-[10px] text-[var(--text-4)] truncate">{s.class?.name}</div>
                                 </div>
                                 <span className="text-[11px] tabular-nums text-[var(--text-3)]">{fee.toLocaleString()}원</span>
-                              </button>
+                              </TButton>
                             )
                           })}
                         </div>
@@ -336,7 +337,7 @@ export default function QuickBillSendModal({ students, grades, billingMonth, onC
                         {subjectList.length === 0 ? (
                           <div className="p-3 text-center text-xs text-[var(--text-4)]">학생이 없습니다</div>
                         ) : subjectList.map(s => (
-                          <button
+                          <TButton
                             key={s}
                             onClick={() => {
                               if (browseSubject !== s) { setBrowseGradeName(null); setBrowseClassName(null) }
@@ -348,7 +349,7 @@ export default function QuickBillSendModal({ students, grades, billingMonth, onC
                                 ? 'bg-[var(--blue)]/15 text-[var(--blue)]'
                                 : 'text-[var(--text-1)] hover:bg-[var(--bg-elevated)]'
                             }`}
-                          >{s}</button>
+                          >{s}</TButton>
                         ))}
                       </div>
                     </PickerPopover>
@@ -359,7 +360,7 @@ export default function QuickBillSendModal({ students, grades, billingMonth, onC
                         {gradeList.length === 0 ? (
                           <div className="p-3 text-center text-xs text-[var(--text-4)]">학년 없음</div>
                         ) : gradeList.map(g => (
-                          <button
+                          <TButton
                             key={g.id}
                             onClick={() => {
                               if (browseGradeName !== g.name) setBrowseClassName(null)
@@ -371,7 +372,7 @@ export default function QuickBillSendModal({ students, grades, billingMonth, onC
                                 ? 'bg-[var(--blue)]/15 text-[var(--blue)]'
                                 : 'text-[var(--text-1)] hover:bg-[var(--bg-elevated)]'
                             }`}
-                          >{g.name}</button>
+                          >{g.name}</TButton>
                         ))}
                       </div>
                     </PickerPopover>
@@ -382,7 +383,7 @@ export default function QuickBillSendModal({ students, grades, billingMonth, onC
                         {classList.length === 0 ? (
                           <div className="p-3 text-center text-xs text-[var(--text-4)]">반 없음</div>
                         ) : classList.map(c => (
-                          <button
+                          <TButton
                             key={c.id}
                             onClick={() => {
                               setBrowseClassName(c.name)
@@ -393,7 +394,7 @@ export default function QuickBillSendModal({ students, grades, billingMonth, onC
                                 ? 'bg-[var(--blue)]/15 text-[var(--blue)]'
                                 : 'text-[var(--text-1)] hover:bg-[var(--bg-elevated)]'
                             }`}
-                          >{c.name}</button>
+                          >{c.name}</TButton>
                         ))}
                       </div>
                     </PickerPopover>
@@ -416,7 +417,7 @@ export default function QuickBillSendModal({ students, grades, billingMonth, onC
                             const p = s.parent_phone || s.phone
                             const fee = getStudentFee(s, s.class)
                             return (
-                              <button
+                              <TButton
                                 key={s.id}
                                 onClick={() => setSelectedId(s.id)}
                                 className="w-full flex items-center gap-2 px-3 py-2 hover:bg-[var(--bg-card-hover)] text-left transition-colors"
@@ -426,7 +427,7 @@ export default function QuickBillSendModal({ students, grades, billingMonth, onC
                                   {!p && <PhoneOff className="w-3 h-3 text-[var(--red)]" />}
                                 </div>
                                 <span className="text-[11px] tabular-nums text-[var(--text-3)]">{fee.toLocaleString()}원</span>
-                              </button>
+                              </TButton>
                             )
                           })}
                         </div>
@@ -447,13 +448,13 @@ export default function QuickBillSendModal({ students, grades, billingMonth, onC
                         <div className="text-[10px] text-[var(--text-4)]">{selected.class?.name}</div>
                       </div>
                     </div>
-                    <button
+                    <TButton
                       onClick={() => { setSelectedId(null); setAmountStr(''); setBillNote(''); setIsRegular(true); setTitle(''); setMessageContent('') }}
                       disabled={state !== 'form'}
                       className="text-xs text-[var(--text-4)] hover:text-[var(--text-3)] px-2 py-1 rounded-lg hover:bg-[var(--bg-card-hover)] disabled:opacity-40"
                     >
                       변경
-                    </button>
+                    </TButton>
                   </div>
 
                   {/* 전화번호 경고 */}
@@ -487,7 +488,7 @@ export default function QuickBillSendModal({ students, grades, billingMonth, onC
 
                   {/* 정규/비정규 토글 */}
                   <div className="flex items-center gap-2">
-                    <button
+                    <TButton
                       onClick={() => setIsRegular(true)}
                       disabled={state !== 'form'}
                       className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-colors disabled:opacity-60 ${
@@ -497,8 +498,8 @@ export default function QuickBillSendModal({ students, grades, billingMonth, onC
                       }`}
                     >
                       정규 수업료
-                    </button>
-                    <button
+                    </TButton>
+                    <TButton
                       onClick={() => setIsRegular(false)}
                       disabled={state !== 'form'}
                       className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-colors disabled:opacity-60 ${
@@ -508,7 +509,7 @@ export default function QuickBillSendModal({ students, grades, billingMonth, onC
                       }`}
                     >
                       비정규 (보충/분할)
-                    </button>
+                    </TButton>
                   </div>
 
                   {/* 제목 (카톡 알림톡 상품명) */}
@@ -591,14 +592,14 @@ export default function QuickBillSendModal({ students, grades, billingMonth, onC
         {state !== 'success' && state !== 'scheduled' && selected && (
           <div className="px-5 py-4 border-t border-[var(--border)] flex gap-2">
             {state === 'confirming' && (
-              <button
+              <TButton
                 onClick={() => setState('form')}
                 className="flex-1 py-3 rounded-xl text-sm font-semibold bg-[var(--bg-elevated)] text-[var(--text-3)] hover:bg-[var(--border-light)] transition-colors"
               >
                 취소
-              </button>
+              </TButton>
             )}
-            <button
+            <TButton
               onClick={handleSend}
               disabled={!readyToSend || state === 'sending'}
               className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${
@@ -620,7 +621,7 @@ export default function QuickBillSendModal({ students, grades, billingMonth, onC
               ) : (
                 <><Send className="w-4 h-4" />청구서 발송</>
               )}
-            </button>
+            </TButton>
           </div>
         )}
       </motion.div>
@@ -641,7 +642,7 @@ interface PillPickerProps {
 
 function PillPicker({ placeholder, value, disabled, open, onToggle, ref }: PillPickerProps) {
   return (
-    <button
+    <TButton
       ref={ref}
       type="button"
       onClick={disabled ? undefined : onToggle}
@@ -660,7 +661,7 @@ function PillPicker({ placeholder, value, disabled, open, onToggle, ref }: PillP
       <ChevronDown
         className={`w-3.5 h-3.5 shrink-0 transition-transform duration-200 ${open && !disabled ? 'rotate-180' : ''}`}
       />
-    </button>
+    </TButton>
   )
 }
 

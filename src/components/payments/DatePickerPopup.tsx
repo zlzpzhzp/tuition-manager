@@ -2,6 +2,7 @@
 
 import { useRef, useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
+import { TButton } from '@/components/motion'
 
 interface Props {
   inlineDate: string
@@ -57,30 +58,30 @@ export default function DatePickerPopup({ inlineDate, onDateChange, onClose, anc
         aria-label="날짜 선택"
       >
         <div className="flex items-center justify-between mb-1.5 px-1">
-          <button
+          <TButton
             type="button"
             onClick={() => navigateMonth(-1)}
             className="text-[var(--text-4)] hover:text-[var(--text-3)] text-xs p-0.5"
             aria-label="이전 달"
           >
             ◀
-          </button>
+          </TButton>
           <span className="text-xs font-medium text-[var(--text-1)]">{year}년 {month + 1}월</span>
-          <button
+          <TButton
             type="button"
             onClick={() => navigateMonth(1)}
             className="text-[var(--text-4)] hover:text-[var(--text-3)] text-xs p-0.5"
             aria-label="다음 달"
           >
             ▶
-          </button>
+          </TButton>
         </div>
         <div className="grid grid-cols-7 gap-0 text-center">
           {['일', '월', '화', '수', '목', '금', '토'].map(d => (
             <span key={d} className="text-[9px] text-[var(--text-4)] py-0.5">{d}</span>
           ))}
           {cells.map((day, i) => (
-            <button
+            <TButton
               key={i}
               type="button"
               disabled={!day}
@@ -98,7 +99,7 @@ export default function DatePickerPopup({ inlineDate, onDateChange, onClose, anc
               aria-label={day ? `${month + 1}월 ${day}일` : undefined}
             >
               {day || ''}
-            </button>
+            </TButton>
           ))}
         </div>
       </div>

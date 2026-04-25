@@ -8,7 +8,7 @@ import { getStudentFee, getPaymentStatus } from '@/types'
 import { getPaymentDueDay, isPaymentScheduled, getActiveStudents, getCurrentMonth, formatMonth, useGrades, usePayments, useTeachers } from '@/lib/utils'
 import { DashboardSkeleton } from '@/components/Skeleton'
 import { motion } from 'framer-motion'
-import { FadeInUp, StaggerContainer, StaggerItem, AnimatedNumber } from '@/components/motion'
+import { FadeInUp, StaggerContainer, StaggerItem, AnimatedNumber, TButton } from '@/components/motion'
 
 type DashStudent = Student & { class: Class; gradeName: string; gradeIndex: number; classIndex: number }
 
@@ -71,7 +71,7 @@ export default function DashboardPage() {
   if (error) return (
     <div className="text-center py-20">
       <p className="text-[var(--red)] mb-4 text-sm">{error?.message}</p>
-      <button onClick={() => window.location.reload()} className="btn btn-primary">다시 시도</button>
+      <TButton onClick={() => window.location.reload()} className="btn btn-primary">다시 시도</TButton>
     </div>
   )
 
