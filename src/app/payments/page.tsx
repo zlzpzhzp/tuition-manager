@@ -1979,29 +1979,56 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                                     const methodLabel = otherMethod || PAYMENT_METHOD_LABELS[p.method as keyof typeof PAYMENT_METHOD_LABELS]
                                     // 회색 접두어는 실제 납부일
                                     const pDate = new Date(p.payment_date)
+                                    const labelText = `${pDate.getMonth() + 1}/${pDate.getDate()} ${methodLabel}`
                                     return (
-                                      <span className="text-[10px] text-[var(--text-4)] whitespace-nowrap">
-                                        {pDate.getMonth() + 1}/{pDate.getDate()} {methodLabel}
-                                      </span>
+                                      <AnimatePresence mode="wait" initial={false}>
+                                        <motion.span
+                                          key={labelText}
+                                          initial={{ opacity: 0, y: -3 }}
+                                          animate={{ opacity: 1, y: 0 }}
+                                          exit={{ opacity: 0, y: 3 }}
+                                          transition={{ duration: 0.18 }}
+                                          className="text-[10px] text-[var(--text-4)] whitespace-nowrap"
+                                        >
+                                          {labelText}
+                                        </motion.span>
+                                      </AnimatePresence>
                                     )
                                   })()}
                                   {status !== 'unpaid' ? (
-                                    <TButton
-                                      onClick={(e) => { e.stopPropagation(); handleOpenModal(student.id, fee) }}
-                                      className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap cursor-pointer hover:opacity-80 transition-opacity"
-                                      style={{ backgroundColor: displayColors.bg, color: displayColors.text }}
-                                      role="status"
-                                    >
-                                      {displayLabel}
-                                    </TButton>
+                                    <AnimatePresence mode="wait" initial={false}>
+                                      <motion.div
+                                        key={`${status}-${displayLabel}`}
+                                        initial={{ opacity: 0, scale: 0.85 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        exit={{ opacity: 0, scale: 0.85 }}
+                                        transition={{ type: 'spring', stiffness: 520, damping: 24 }}
+                                      >
+                                        <TButton
+                                          onClick={(e) => { e.stopPropagation(); handleOpenModal(student.id, fee) }}
+                                          className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap cursor-pointer hover:opacity-80 transition-opacity"
+                                          style={{ backgroundColor: displayColors.bg, color: displayColors.text }}
+                                          role="status"
+                                        >
+                                          {displayLabel}
+                                        </TButton>
+                                      </motion.div>
+                                    </AnimatePresence>
                                   ) : (
-                                    <span
-                                      className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap"
-                                      style={{ backgroundColor: displayColors.bg, color: displayColors.text }}
-                                      role="status"
-                                    >
-                                      {displayLabel}
-                                    </span>
+                                    <AnimatePresence mode="wait" initial={false}>
+                                      <motion.span
+                                        key={displayLabel}
+                                        initial={{ opacity: 0, scale: 0.85 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        exit={{ opacity: 0, scale: 0.85 }}
+                                        transition={{ type: 'spring', stiffness: 520, damping: 24 }}
+                                        className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap inline-block"
+                                        style={{ backgroundColor: displayColors.bg, color: displayColors.text }}
+                                        role="status"
+                                      >
+                                        {displayLabel}
+                                      </motion.span>
+                                    </AnimatePresence>
                                   )}
                                   {!withdrawn && (() => {
                                     // 납부 완료 → 결제수단별 아이콘 (배경 전부 파란색으로 통일, 심볼만 다르게)
@@ -2017,10 +2044,13 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                                       const s = methodSymbol[method] ?? { Icon: Check, title: '납부 완료 — 탭하여 편집' }
                                       const IconComp = s.Icon
                                       return (
+                                        <AnimatePresence mode="wait" initial={false}>
                                         <motion.button
+                                          key={method}
                                           layout
-                                          initial={{ scale: 0.6, opacity: 0 }}
-                                          animate={{ scale: 1, opacity: 1 }}
+                                          initial={{ scale: 0.4, opacity: 0, rotate: -90 }}
+                                          animate={{ scale: 1, opacity: 1, rotate: 0 }}
+                                          exit={{ scale: 0.4, opacity: 0, rotate: 90 }}
                                           transition={{ type: 'spring', stiffness: 520, damping: 22 }}
                                           whileTap={{ scale: 0.92 }}
                                           onClick={(e) => {
@@ -2045,6 +2075,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                                         >
                                           <IconComp className="w-3.5 h-3.5" style={s.rotate ? { transform: `rotate(${s.rotate}deg)` } : undefined} />
                                         </motion.button>
+                                        </AnimatePresence>
                                       )
                                     }
 

@@ -253,7 +253,18 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
                     onClick={() => setEditingMethod(true)}
                     className="font-medium hover:text-[var(--blue)] hover:underline transition-colors"
                   >
-                    {PAYMENT_METHOD_LABELS[editMethod]}
+                    <AnimatePresence mode="wait" initial={false}>
+                      <motion.span
+                        key={editMethod}
+                        initial={{ opacity: 0, y: -4, scale: 0.9 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 4, scale: 0.9 }}
+                        transition={{ type: 'spring', stiffness: 520, damping: 26 }}
+                        className="inline-block"
+                      >
+                        {PAYMENT_METHOD_LABELS[editMethod]}
+                      </motion.span>
+                    </AnimatePresence>
                   </motion.button>
                 )}
               </div>
@@ -295,7 +306,18 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
                     onClick={() => setEditingDate(true)}
                     className="font-medium hover:text-[var(--blue)] hover:underline transition-colors"
                   >
-                    {payment.payment_date}
+                    <AnimatePresence mode="wait" initial={false}>
+                      <motion.span
+                        key={payment.payment_date}
+                        initial={{ opacity: 0, y: -4, scale: 0.9 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 4, scale: 0.9 }}
+                        transition={{ type: 'spring', stiffness: 520, damping: 26 }}
+                        className="inline-block"
+                      >
+                        {payment.payment_date}
+                      </motion.span>
+                    </AnimatePresence>
                   </motion.button>
                 )}
               </div>
