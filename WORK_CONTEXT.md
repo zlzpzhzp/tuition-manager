@@ -5,6 +5,27 @@
 
 ## 현재 상태: 진행 중
 
+### 2026-04-24 늦저녁 — 결제수단 피드백 + 납부일 수정 버그 (msg 1406)
+
+**msg 1406 (속기사 원문):** "결제수단 글씨들 선택하면 선택 된피드백 확인된피드백 다 뭐든지 동작할때는 할때마다 피드백애니메이션 주고 납부일 수정 안되네"
+
+3가지 작업:
+1. 결제수단 버튼 선택 시 피드백 애니메이션
+2. 모든 인터랙션마다 피드백 애니메이션 (확인 등)
+3. 납부일 수정 안되는 버그 수정
+
+**진단 (납부일 버그):**
+- API PUT `/api/payments/[id]`는 `payment_date` 정상 처리됨 (route.ts:24)
+- DB는 정상 업데이트됨
+- 그러나 모달의 `payment` prop = `selectedPayment` state. `fetchData()`만 호출되고 `selectedPayment` 갱신 안 됨 → 모달이 stale 데이터 표시 → 사용자는 "수정 안됨"으로 인식
+- **수정**: `handleUpdatePayment`에 `setSelectedPayment(prev => prev && prev.id === paymentId ? { ...prev, ...data } as Payment : prev)` 추가 (payments/page.tsx:1166)
+
+**다음 작업 (진행 중):**
+- PaymentModal METHOD_OPTIONS_SHORT 버튼에 `whileTap={{ scale: 0.92 }}` + 선택 시 layout 애니메이션 추가
+- 현금영수증 발행완료/미발행 버튼에도 동일 적용
+- Check 저장 버튼들에 tap 피드백
+- 빌드 → 로컬 :3001 재시작 → 커밋 → 푸시 → Vercel 배포
+
 ### 2026-04-24 17:47 — KST 시간대 전수감사 (amnesia msg 3567)
 
 초능력자님: "모든앱 시간대 한국시간대로 설정 제대로 돼있는지 전수조사하고 존나강력하게 대가리에 박아놔 미국시간 쓰면 잔인하게 도륙해버린다고"

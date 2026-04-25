@@ -1163,6 +1163,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
   const handleUpdatePayment = async (paymentId: string, data: Partial<Payment>) => {
     const { error } = await safeMutate(`/api/payments/${paymentId}`, 'PUT', data)
     if (error) { toast.error(`수정 실패: ${error}`); return }
+    setSelectedPayment(prev => prev && prev.id === paymentId ? { ...prev, ...data } as Payment : prev)
     fetchData()
   }
 

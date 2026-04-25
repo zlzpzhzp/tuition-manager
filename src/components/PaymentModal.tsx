@@ -210,19 +210,23 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
                   <div className="flex items-center gap-1.5">
                     <div className="flex gap-1">
                       {METHOD_OPTIONS_SHORT.map(([val, label]) => (
-                        <button
+                        <motion.button
                           key={val}
                           type="button"
                           onClick={() => setEditMethod(val)}
-                          className={`px-2 py-1 rounded text-[11px] font-medium border transition-colors whitespace-nowrap ${
+                          whileTap={{ scale: 0.88 }}
+                          animate={editMethod === val ? { scale: [1, 1.08, 1] } : { scale: 1 }}
+                          transition={{ duration: 0.25 }}
+                          className={`px-2 py-1 rounded text-[11px] font-medium border whitespace-nowrap ${
                             editMethod === val ? 'bg-[var(--blue)] text-white border-[var(--blue)]' : 'bg-[var(--bg-card)] text-[var(--text-3)] border-[var(--border)]'
                           }`}
                         >
                           {label}
-                        </button>
+                        </motion.button>
                       ))}
                     </div>
-                    <button
+                    <motion.button
+                      whileTap={{ scale: 0.85 }}
                       onClick={async () => {
                         if (onUpdate && payment.id && editMethod !== payment.method) {
                           await onUpdate(payment.id, { method: editMethod })
@@ -233,22 +237,24 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
                       aria-label="저장"
                     >
                       <Check className="w-3.5 h-3.5" strokeWidth={3} />
-                    </button>
-                    <button
+                    </motion.button>
+                    <motion.button
+                      whileTap={{ scale: 0.85 }}
                       onClick={() => { setEditingMethod(false); setEditMethod(payment.method as PaymentMethod) }}
                       className="p-1 text-[var(--text-4)] hover:text-[var(--text-3)]"
                       aria-label="취소"
                     >
                       <X className="w-4 h-4" />
-                    </button>
+                    </motion.button>
                   </div>
                 ) : (
-                  <button
+                  <motion.button
+                    whileTap={{ scale: 0.92 }}
                     onClick={() => setEditingMethod(true)}
                     className="font-medium hover:text-[var(--blue)] hover:underline transition-colors"
                   >
                     {PAYMENT_METHOD_LABELS[editMethod]}
-                  </button>
+                  </motion.button>
                 )}
               </div>
               <div className="flex justify-between items-center py-2 border-b">
@@ -261,7 +267,8 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
                       onChange={e => setEditDate(e.target.value)}
                       className="px-2 py-1 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--blue)]"
                     />
-                    <button
+                    <motion.button
+                      whileTap={{ scale: 0.85 }}
                       onClick={async () => {
                         if (onUpdate && payment.id) {
                           await onUpdate(payment.id, { payment_date: editDate })
@@ -272,22 +279,24 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
                       aria-label="저장"
                     >
                       <Check className="w-3.5 h-3.5" strokeWidth={3} />
-                    </button>
-                    <button
+                    </motion.button>
+                    <motion.button
+                      whileTap={{ scale: 0.85 }}
                       onClick={() => { setEditingDate(false); setEditDate(payment.payment_date) }}
                       className="p-1 text-[var(--text-4)] hover:text-[var(--text-3)]"
                       aria-label="취소"
                     >
                       <X className="w-4 h-4" />
-                    </button>
+                    </motion.button>
                   </div>
                 ) : (
-                  <button
+                  <motion.button
+                    whileTap={{ scale: 0.92 }}
                     onClick={() => setEditingDate(true)}
                     className="font-medium hover:text-[var(--blue)] hover:underline transition-colors"
                   >
                     {payment.payment_date}
-                  </button>
+                  </motion.button>
                 )}
               </div>
               <div className="flex justify-between py-2 border-b">
@@ -389,7 +398,8 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
               )}
             </div>
 
-            <button
+            <motion.button
+              whileTap={{ scale: 0.97 }}
               disabled={showConfirmSuccess}
               onClick={async () => {
                 if (editMemo !== (payment.memo ?? '') && onUpdate && payment.id) {
@@ -409,15 +419,16 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
                   <Check className="w-6 h-6" strokeWidth={3} />
                 </span>
               ) : '확인'}
-            </button>
+            </motion.button>
 
-            <button
+            <motion.button
+              whileTap={{ scale: 0.97 }}
               onClick={() => setShowConfirmDelete(true)}
               className="w-full py-2.5 bg-[var(--unpaid-bg)] border border-[var(--red-dim)] text-[var(--unpaid-text)] rounded-lg font-medium text-sm hover:opacity-80 flex items-center justify-center gap-2 transition-opacity"
             >
               <Trash2 className="w-4 h-4" />
               납부 취소
-            </button>
+            </motion.button>
           </div>
         ) : payment && showConfirmDelete ? (
           <div className="p-5 space-y-4">
@@ -426,18 +437,20 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
               <p className="text-[var(--unpaid-text)] text-sm mt-1 opacity-80">이 작업은 되돌릴 수 없습니다</p>
             </div>
             <div className="flex gap-3">
-              <button
+              <motion.button
+                whileTap={{ scale: 0.96 }}
                 onClick={() => setShowConfirmDelete(false)}
                 className="flex-1 py-2.5 border border-[var(--border)] rounded-lg font-medium text-sm text-[var(--text-3)] hover:bg-[var(--bg-card-hover)]"
               >
                 돌아가기
-              </button>
-              <button
+              </motion.button>
+              <motion.button
+                whileTap={{ scale: 0.96 }}
                 onClick={handleDelete}
                 className="flex-1 py-2.5 bg-[var(--unpaid-bg)] border border-[var(--red-dim)] text-[var(--unpaid-text)] rounded-lg font-medium text-sm hover:opacity-80 transition-opacity"
               >
                 삭제
-              </button>
+              </motion.button>
             </div>
           </div>
         ) : (
@@ -471,16 +484,19 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
               <label className="block text-sm font-medium text-[var(--text-2)] mb-1">납부 방법</label>
               <div className="grid grid-cols-5 gap-1.5">
                 {METHOD_OPTIONS_SHORT.map(([val, label]) => (
-                  <button
+                  <motion.button
                     key={val}
                     type="button"
                     onClick={() => setMethod(val)}
-                    className={`py-2 rounded-lg text-xs font-medium border transition-colors whitespace-nowrap ${
+                    whileTap={{ scale: 0.9 }}
+                    animate={method === val ? { scale: [1, 1.1, 1] } : { scale: 1 }}
+                    transition={{ duration: 0.25 }}
+                    className={`py-2 rounded-lg text-xs font-medium border whitespace-nowrap ${
                       method === val ? 'bg-[var(--blue)] text-white border-[var(--blue)]' : 'bg-[var(--bg-card)] text-[var(--text-3)] border-[var(--border)] hover:bg-[var(--bg-card-hover)]'
                     }`}
                   >
                     {label}
-                  </button>
+                  </motion.button>
                 ))}
               </div>
             </div>
@@ -489,24 +505,30 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
               <div>
                 <label className="block text-sm font-medium text-[var(--text-2)] mb-1">현금영수증</label>
                 <div className="flex gap-2">
-                  <button
+                  <motion.button
                     type="button"
                     onClick={() => setCashReceipt('issued')}
-                    className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-colors ${
+                    whileTap={{ scale: 0.95 }}
+                    animate={cashReceipt === 'issued' ? { scale: [1, 1.05, 1] } : { scale: 1 }}
+                    transition={{ duration: 0.25 }}
+                    className={`flex-1 py-2 rounded-lg text-sm font-medium border ${
                       cashReceipt === 'issued' ? 'bg-[var(--paid-bg)] text-[var(--paid-text)] border-[var(--paid-text)]' : 'bg-[var(--bg-card)] text-[var(--text-3)] border-[var(--border)] hover:bg-[var(--bg-card-hover)]'
                     }`}
                   >
                     발행완료
-                  </button>
-                  <button
+                  </motion.button>
+                  <motion.button
                     type="button"
                     onClick={() => setCashReceipt('pending')}
-                    className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-colors ${
+                    whileTap={{ scale: 0.95 }}
+                    animate={cashReceipt === 'pending' ? { scale: [1, 1.05, 1] } : { scale: 1 }}
+                    transition={{ duration: 0.25 }}
+                    className={`flex-1 py-2 rounded-lg text-sm font-medium border ${
                       cashReceipt === 'pending' ? 'bg-[var(--scheduled-bg)] text-[var(--scheduled-text)] border-[var(--scheduled-text)]' : 'bg-[var(--bg-card)] text-[var(--text-3)] border-[var(--border)] hover:bg-[var(--bg-card-hover)]'
                     }`}
                   >
                     미발행
-                  </button>
+                  </motion.button>
                 </div>
               </div>
             )}
@@ -532,8 +554,9 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
               />
             </div>
 
-            <button
+            <motion.button
               type="submit"
+              whileTap={{ scale: 0.97 }}
               disabled={showSuccess}
               className={`w-full py-3 rounded-lg font-medium text-sm transition-all duration-500 flex items-center justify-center gap-2 ${
                 showSuccess
@@ -547,7 +570,7 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
                   <span className="text-base font-bold">완료!</span>
                 </span>
               ) : '납부'}
-            </button>
+            </motion.button>
           </form>
         )}
       </motion.div>
