@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { X, Trash2, AlertTriangle, Check, Camera, ImagePlus, Loader2 } from 'lucide-react'
 import type { Payment, PaymentMethod } from '@/types'
 import { PAYMENT_METHOD_LABELS } from '@/types'
-import { METHOD_OPTIONS } from '@/lib/constants'
+import { METHOD_OPTIONS_SHORT } from '@/lib/constants'
 import { getTodayString } from '@/lib/utils'
 import { compressImage } from '@/lib/compressImage'
 
@@ -209,12 +209,12 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
                 {editingMethod ? (
                   <div className="flex items-center gap-1.5">
                     <div className="flex gap-1">
-                      {METHOD_OPTIONS.map(([val, label]) => (
+                      {METHOD_OPTIONS_SHORT.map(([val, label]) => (
                         <button
                           key={val}
                           type="button"
                           onClick={() => setEditMethod(val)}
-                          className={`px-2 py-1 rounded text-[11px] font-medium border transition-colors ${
+                          className={`px-2 py-1 rounded text-[11px] font-medium border transition-colors whitespace-nowrap ${
                             editMethod === val ? 'bg-[var(--blue)] text-white border-[var(--blue)]' : 'bg-[var(--bg-card)] text-[var(--text-3)] border-[var(--border)]'
                           }`}
                         >
@@ -469,13 +469,13 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
 
             <div>
               <label className="block text-sm font-medium text-[var(--text-2)] mb-1">납부 방법</label>
-              <div className="grid grid-cols-4 gap-1.5">
-                {METHOD_OPTIONS.map(([val, label]) => (
+              <div className="grid grid-cols-5 gap-1.5">
+                {METHOD_OPTIONS_SHORT.map(([val, label]) => (
                   <button
                     key={val}
                     type="button"
                     onClick={() => setMethod(val)}
-                    className={`py-2 rounded-lg text-xs font-medium border transition-colors ${
+                    className={`py-2 rounded-lg text-xs font-medium border transition-colors whitespace-nowrap ${
                       method === val ? 'bg-[var(--blue)] text-white border-[var(--blue)]' : 'bg-[var(--bg-card)] text-[var(--text-3)] border-[var(--border)] hover:bg-[var(--bg-card-hover)]'
                     }`}
                   >
