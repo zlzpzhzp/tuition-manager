@@ -51,9 +51,8 @@ function timeAgo(iso: string, now: number): string {
   if (min < 60) return `${min}분 전`
   const hr = Math.floor(min / 60)
   if (hr < 24) return `${hr}시간 전`
-  const day = Math.floor(hr / 24)
-  if (day < 30) return `${day}일 전`
-  return new Date(iso).toISOString().slice(5, 10)
+  const d = new Date(iso)
+  return `${d.getMonth() + 1}/${d.getDate()}`
 }
 
 export default function BillingPage() {
