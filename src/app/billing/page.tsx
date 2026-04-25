@@ -44,15 +44,15 @@ const FILTER_LABELS: Record<WeekFilter, string> = {
 const WEEK_KEYS: Exclude<WeekFilter, 'all'>[] = ['day1', 'week1', 'week2', 'week3', 'week4']
 
 function timeAgo(iso: string, now: number): string {
-  const then = new Date(iso).getTime()
-  const diff = Math.max(0, now - then)
+  const d = new Date(iso)
+  const n = new Date(now)
+  const sameDay = d.getFullYear() === n.getFullYear() && d.getMonth() === n.getMonth() && d.getDate() === n.getDate()
+  if (!sameDay) return `${d.getMonth() + 1}/${d.getDate()}`
+  const diff = Math.max(0, now - d.getTime())
   const min = Math.floor(diff / 60000)
   if (min < 1) return '방금'
   if (min < 60) return `${min}분 전`
-  const hr = Math.floor(min / 60)
-  if (hr < 24) return `${hr}시간 전`
-  const d = new Date(iso)
-  return `${d.getMonth() + 1}/${d.getDate()}`
+  return `${Math.floor(min / 60)}시간 전`
 }
 
 export default function BillingPage() {
