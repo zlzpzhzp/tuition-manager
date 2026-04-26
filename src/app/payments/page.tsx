@@ -255,6 +255,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
     id: string; el: HTMLElement
     decided: boolean; isHorizontal: boolean
     baseOffset: number; wasOpen: boolean
+    pointerId: number; captured: boolean
   } | null>(null)
   const wasSwiped = useRef(false)
 
@@ -912,8 +913,10 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
       startX: e.clientX, startY: e.clientY, currentX: e.clientX,
       id: studentId, el, decided: false, isHorizontal: false,
       baseOffset, wasOpen: baseOffset !== 0,
+      pointerId: e.pointerId, captured: false,
     }
-    try { el.setPointerCapture(e.pointerId) } catch {}
+    // 포인터 캡처를 즉시 걸면 자식 버튼의 click 이벤트가 row로 redirect되어 데스크탑 클릭이 안 먹힘.
+    // 가로 스와이프로 결정된 시점(handleTouchMove)에만 캡처를 건다.
   }
 
   const handleTouchMove = (e: React.PointerEvent) => {
@@ -926,6 +929,13 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
       if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
         touchRef.current.decided = true
         touchRef.current.isHorizontal = Math.abs(dx) > Math.abs(dy)
+        // 가로 스와이프로 판정된 시점에서만 포인터 캡처 (click 이벤트 보존)
+        if (touchRef.current.isHorizontal && !touchRef.current.captured) {
+          try {
+            touchRef.current.el.setPointerCapture(touchRef.current.pointerId)
+            touchRef.current.captured = true
+          } catch {}
+        }
       }
       return
     }
