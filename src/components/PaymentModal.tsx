@@ -53,11 +53,31 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleReceiptFiles = useCallback(async (files: FileList | null) => {
+    // input 값을 즉시 비워서 같은 파일 재선택 시에도 onChange가 다시 발화하도록 함 (iOS Safari 1회 무반응 방지)
+    if (cameraInputRef.current) cameraInputRef.current.value = ''
+    if (fileInputRef.current) fileInputRef.current.value = ''
     if (!files || files.length === 0 || !payment?.id) return
     setUploading(true)
+    let successCount = 0
     try {
       for (const file of Array.from(files)) {
-        const dataUrl = await compressImage(file, 1200, 0.8)
+        // 0바이트 파일(iOS 카메라 1회차 빈파일 버그) 차단
+        if (file.size === 0) {
+          toast.error('빈 파일입니다. 다시 촬영해주세요.')
+          continue
+        }
+        let dataUrl: string
+        try {
+          dataUrl = await compressImage(file, 1200, 0.8)
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : ''
+          if (msg.includes('image-decode-failed')) {
+            toast.error('이 사진 형식을 읽지 못했습니다(HEIC 등). 카메라 설정에서 "가장 호환 (JPEG)"으로 바꾸거나 갤러리에서 업로드해주세요.')
+          } else {
+            toast.error('사진 처리 실패: 다시 촬영해주세요.')
+          }
+          continue
+        }
         const blob = await (await fetch(dataUrl)).blob()
         const fd = new FormData()
         fd.append('file', new File([blob], `receipt-${Date.now()}.jpg`, { type: 'image/jpeg' }))
@@ -69,11 +89,11 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
         }
         const { receipt_images } = await res.json()
         setReceiptImages(receipt_images)
+        successCount++
       }
+      if (successCount > 0) toast.success(`${successCount}장 업로드 완료`)
     } finally {
       setUploading(false)
-      if (cameraInputRef.current) cameraInputRef.current.value = ''
-      if (fileInputRef.current) fileInputRef.current.value = ''
     }
   }, [payment?.id])
 
@@ -384,7 +404,25 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
                       className="relative aspect-square overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--bg-elevated)] hover:opacity-90 transition-opacity"
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={url} alt="영수증" className="w-full h-full object-cover" />
+                      <img
+                        src={url}
+                        alt="영수증"
+                        loading="lazy"
+                        decoding="async"
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          const t = e.currentTarget
+                          t.style.display = 'none'
+                          const parent = t.parentElement
+                          if (parent && !parent.querySelector('[data-img-fail]')) {
+                            const span = document.createElement('span')
+                            span.dataset.imgFail = '1'
+                            span.className = 'absolute inset-0 flex items-center justify-center text-[10px] text-[var(--red)] px-1 text-center'
+                            span.textContent = '이미지 로드 실패'
+                            parent.appendChild(span)
+                          }
+                        }}
+                      />
                     </button>
                   ))}
                 </div>
