@@ -53,45 +53,22 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleReceiptFiles = useCallback(async (files: FileList | null) => {
-    // input 값을 즉시 비워서 같은 파일 재선택 시에도 onChange가 다시 발화하도록 함 (iOS Safari 1회 무반응 방지)
-    if (cameraInputRef.current) cameraInputRef.current.value = ''
-    if (fileInputRef.current) fileInputRef.current.value = ''
     if (!files || files.length === 0 || !payment?.id) return
     setUploading(true)
-    let successCount = 0
     try {
       for (const file of Array.from(files)) {
-        // 0바이트 파일(iOS 카메라 1회차 빈파일 버그) 차단
-        if (file.size === 0) {
-          toast.error('빈 파일입니다. 다시 촬영해주세요.')
-          continue
-        }
-        let dataUrl: string
         try {
-          dataUrl = await compressImage(file, 1200, 0.8)
-        } catch (err) {
-          const msg = err instanceof Error ? err.message : ''
-          if (msg.includes('image-decode-failed')) {
-            toast.error('이 사진 형식을 읽지 못했습니다(HEIC 등). 카메라 설정에서 "가장 호환 (JPEG)"으로 바꾸거나 갤러리에서 업로드해주세요.')
-          } else {
-            toast.error('사진 처리 실패: 다시 촬영해주세요.')
+          const dataUrl = await compressImage(file, 1200, 0.8)
+          const blob = await (await fetch(dataUrl)).blob()
+          const fd = new FormData()
+          fd.append('file', new File([blob], `receipt-${Date.now()}.jpg`, { type: 'image/jpeg' }))
+          const res = await fetch(`/api/payments/${payment.id}/receipt`, { method: 'POST', body: fd })
+          if (res.ok) {
+            const { receipt_images } = await res.json()
+            setReceiptImages(receipt_images)
           }
-          continue
-        }
-        const blob = await (await fetch(dataUrl)).blob()
-        const fd = new FormData()
-        fd.append('file', new File([blob], `receipt-${Date.now()}.jpg`, { type: 'image/jpeg' }))
-        const res = await fetch(`/api/payments/${payment.id}/receipt`, { method: 'POST', body: fd })
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({ error: '업로드 실패' }))
-          toast.error(err.error || '업로드 실패')
-          continue
-        }
-        const { receipt_images } = await res.json()
-        setReceiptImages(receipt_images)
-        successCount++
+        } catch {}
       }
-      if (successCount > 0) toast.success(`${successCount}장 업로드 완료`)
     } finally {
       setUploading(false)
     }
@@ -380,7 +357,7 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
                 accept="image/*"
                 capture="environment"
                 hidden
-                onChange={e => handleReceiptFiles(e.target.files)}
+                onChange={e => { handleReceiptFiles(e.target.files); e.target.value = '' }}
               />
               <input
                 ref={fileInputRef}
@@ -388,7 +365,7 @@ export default function PaymentModal({ payment, studentId, defaultBillingMonth, 
                 accept="image/*"
                 multiple
                 hidden
-                onChange={e => handleReceiptFiles(e.target.files)}
+                onChange={e => { handleReceiptFiles(e.target.files); e.target.value = '' }}
               />
               {receiptImages.length === 0 ? (
                 <div className="text-center py-4 text-xs text-[var(--text-4)] bg-[var(--bg-elevated)] rounded-lg border border-dashed border-[var(--border)]">
