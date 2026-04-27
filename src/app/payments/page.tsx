@@ -559,7 +559,9 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
     const eligible = classStudents.filter(s => {
       const phone = s.parent_phone || s.phone || ''
       const fee = getStudentFee(s, cls)
-      return phone && fee > 0 && !billByStudent.has(s.id)
+      // 다른 결제수단으로 이미 선결제 완료된 학생은 제외
+      const alreadyPaid = (paymentsByStudentId.get(s.id) ?? []).length > 0
+      return phone && fee > 0 && !billByStudent.has(s.id) && !alreadyPaid
     })
     if (eligible.length === 0) return
     const targets: BulkBillTarget[] = eligible.map(s => ({
@@ -569,7 +571,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
       amount: getStudentFee(s, cls),
     }))
     setBulkBillTarget({ cls, className: cls.name, targets })
-  }, [selectedMonth, passesFilter, billByStudent])
+  }, [selectedMonth, passesFilter, billByStudent, paymentsByStudentId])
 
   const executeBulkSend = useCallback(async () => {
     if (!bulkBillTarget) return
@@ -720,7 +722,9 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
         for (const s of classStudents) {
           const phone = s.parent_phone || s.phone || ''
           const fee = getStudentFee(s, cls as ClassWithStudents)
-          if (!phone || fee <= 0 || billByStudent.has(s.id)) continue
+          // 다른 결제수단으로 이미 선결제 완료된 학생은 제외
+          const alreadyPaid = (paymentsByStudentId.get(s.id) ?? []).length > 0
+          if (!phone || fee <= 0 || billByStudent.has(s.id) || alreadyPaid) continue
           targets.push({
             studentId: s.id,
             studentName: s.name,
@@ -738,7 +742,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
       targets,
       studentClsMap,
     })
-  }, [grades, selectedMonth, passesFilter, billByStudent, paymentFilter])
+  }, [grades, selectedMonth, passesFilter, billByStudent, paymentFilter, paymentsByStudentId])
 
   // ─── Visible sections (스크롤 아코디언용) ───────────────────────
   type SectionRef = { key: string; classIds: string[] }
@@ -1548,7 +1552,8 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                                 for (const s of classStudents) {
                                   const phone = s.parent_phone || s.phone || ''
                                   const fee = getStudentFee(s, cls as ClassWithStudents)
-                                  if (phone && fee > 0 && !billByStudent.has(s.id)) eligibleCount++
+                                  const alreadyPaid = (paymentsByStudentId.get(s.id) ?? []).length > 0
+                                  if (phone && fee > 0 && !billByStudent.has(s.id) && !alreadyPaid) eligibleCount++
                                 }
                               }
                             }
@@ -1696,7 +1701,8 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                         const eligibleCount = students.filter(s => {
                           const phone = s.parent_phone || s.phone || ''
                           const fee = getStudentFee(s, cls)
-                          return phone && fee > 0 && !billByStudent.has(s.id)
+                          const alreadyPaid = (paymentsByStudentId.get(s.id) ?? []).length > 0
+                          return phone && fee > 0 && !billByStudent.has(s.id) && !alreadyPaid
                         }).length
                         const isBatchSending = batchSending === cls.id
                         if (isBatchSending && batchProgress) {

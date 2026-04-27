@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
-import { ChevronDown, Loader2, AlertCircle, Clock, PhoneOff, Lock, Download, FileText, Ban, Send } from 'lucide-react'
+import { ChevronDown, ChevronLeft, ChevronRight, Loader2, AlertCircle, Clock, PhoneOff, Lock, Download, FileText, Ban, Send } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { TButton } from '@/components/motion'
 import Link from 'next/link'
@@ -57,10 +57,16 @@ function timeAgo(iso: string, now: number): string {
 }
 
 export default function BillingPage() {
-  const [selectedMonth] = useState(() => {
+  const [selectedMonth, setSelectedMonth] = useState(() => {
     const now = new Date()
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
   })
+
+  const navigateMonth = useCallback((delta: number) => {
+    const [y, m] = selectedMonth.split('-').map(Number)
+    const d = new Date(y, m - 1 + delta, 1)
+    setSelectedMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`)
+  }, [selectedMonth])
   const [weekFilter] = useState<WeekFilter>('all')
   const [expandedAction, setExpandedAction] = useState<'overdue' | 'cancelled' | 'nophone' | null>(null)
   const [showTools, setShowTools] = useState(false)
@@ -400,17 +406,20 @@ export default function BillingPage() {
       </AnimatePresence>
 
       <div className="pt-2 pb-1">
-        {(() => {
-          const today = new Date()
-          const m = today.getMonth() + 1
-          const d = today.getDate()
-          const weekday = ['일','월','화','수','목','금','토'][today.getDay()]
-          return (
-            <h1 className="text-[3rem] font-extrabold tracking-tight leading-none text-[var(--text-1)] tabular-nums mb-2">
-              {m}월 {d}일 <span className="text-[2.1rem]">{weekday}요일</span>
-            </h1>
-          )
-        })()}
+        <div className="flex items-center justify-center gap-3 mb-2">
+          <TButton onClick={() => navigateMonth(-1)} className="p-2 hover:bg-[var(--bg-elevated)] rounded-lg" aria-label="이전 달">
+            <ChevronLeft className="w-7 h-7" />
+          </TButton>
+          <h1 className="font-extrabold tracking-tight text-center">
+            <span className="text-[2.6rem] sm:text-[3.2rem] leading-none">{selectedMonth.split('-')[0]}</span>
+            <span className="text-[1.8rem] sm:text-[2.2rem] text-[var(--text-3)]">년 </span>
+            <span className="text-5xl sm:text-6xl">{parseInt(selectedMonth.split('-')[1])}</span>
+            <span className="text-[1.8rem] sm:text-[2.2rem] text-[var(--text-3)]">월</span>
+          </h1>
+          <TButton onClick={() => navigateMonth(1)} className="p-2 hover:bg-[var(--bg-elevated)] rounded-lg" aria-label="다음 달">
+            <ChevronRight className="w-7 h-7" />
+          </TButton>
+        </div>
 
         {/* 청구서 발송 — 메인 진입점 */}
         <TButton
