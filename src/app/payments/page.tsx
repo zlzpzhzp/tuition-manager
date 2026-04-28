@@ -1489,13 +1489,61 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
         </motion.div>
       </div>
 
-      {/* 빈 상태 — 학생 리스트 자리에 단순 메시지 한 줄 */}
+      {/* 빈 상태 — 필터바는 학년 헤더와 동일하게 유지하고 그 아래에 메시지 한 줄 */}
       {visibleSections.length === 0 && (customActive || paymentFilter !== 'all') && (
-        <div className="text-center py-12 text-sm text-[var(--text-3)]">
-          {customActive
-            ? `${customLabel} 결제일인 학생은 없습니다`
-            : `${FILTER_LABELS[paymentFilter]} 조건에 맞는 학생은 없습니다`}
-        </div>
+        <>
+          <div
+            className="sticky z-20 bg-[var(--bg)] -mx-4 px-5 pt-1.5 pb-1.5 mb-1 flex items-center justify-end gap-2"
+            style={{ top: 'var(--grade-sticky-top, 140px)' }}
+          >
+            <div className="flex items-center gap-1.5">
+              <div className="relative flex items-center">
+                <TButton
+                  type="button"
+                  onClick={openDayPicker}
+                  aria-label="결제일 선택"
+                  className={`px-3 py-1 rounded-full text-xs font-semibold shadow-sm transition-colors ${
+                    customActive
+                      ? 'bg-[var(--blue-dim)] text-[var(--blue)]'
+                      : 'bg-[var(--bg-elevated)] text-[var(--text-2)] hover:bg-[var(--bg-card-hover)]'
+                  }`}
+                >
+                  {customActive ? customLabel : '결제일'}
+                </TButton>
+                {customActive && (
+                  <TButton
+                    type="button"
+                    onClick={() => { setCustomStart(null); setCustomEnd(null) }}
+                    aria-label="직접 입력 해제"
+                    className="absolute -right-1 -top-1 w-4 h-4 rounded-full bg-[var(--bg-elevated)] text-[var(--text-3)] text-[10px] leading-none flex items-center justify-center shadow-sm hover:text-[var(--text-1)]"
+                  >
+                    ×
+                  </TButton>
+                )}
+              </div>
+              <TButton
+                onClick={(e) => setFilterAnchor(prev => prev === e.currentTarget ? null : e.currentTarget)}
+                disabled={customActive}
+                style={{ width: 112 }}
+                className={`relative flex items-center justify-center px-3 py-1 rounded-full text-xs font-semibold transition-colors shadow-sm disabled:opacity-40 disabled:cursor-not-allowed ${
+                  paymentFilter === 'unpaid'
+                    ? 'bg-[var(--red-dim)] text-[var(--unpaid-text)]'
+                    : paymentFilter !== 'all'
+                      ? 'bg-[var(--blue-dim)] text-[var(--blue)]'
+                      : 'bg-[var(--bg-elevated)] text-[var(--text-2)] hover:bg-[var(--bg-card-hover)]'
+                }`}
+              >
+                <span>{FILTER_LABELS[paymentFilter]}</span>
+                <ChevronDown className={`absolute right-2 w-3 h-3 opacity-60 transition-transform ${filterAnchor ? 'rotate-180' : ''}`} />
+              </TButton>
+            </div>
+          </div>
+          <div className="text-center py-12 text-sm text-[var(--text-3)]">
+            {customActive
+              ? `${customLabel} 결제일인 학생은 없습니다`
+              : `${FILTER_LABELS[paymentFilter]} 조건에 맞는 학생은 없습니다`}
+          </div>
+        </>
       )}
 
       {/* 과목별 → 학년별 납부 현황 */}
