@@ -340,6 +340,44 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
     }
     return `${customStart ?? customEnd ?? ''}일`
   })()
+
+  // 결제일 picker (달력)
+  const [dayPickerOpen, setDayPickerOpen] = useState(false)
+  const [tempStart, setTempStart] = useState<number | null>(null)
+  const [tempEnd, setTempEnd] = useState<number | null>(null)
+  const openDayPicker = useCallback(() => {
+    setTempStart(customStart)
+    setTempEnd(customEnd)
+    setDayPickerOpen(true)
+  }, [customStart, customEnd])
+  const handleDayPick = useCallback((day: number) => {
+    if (tempStart === null || (tempStart !== null && tempEnd !== null)) {
+      setTempStart(day)
+      setTempEnd(null)
+      return
+    }
+    // 시작일은 있고 종료일은 없는 상태
+    if (day === tempStart) {
+      setTempEnd(day)
+    } else {
+      const lo = Math.min(tempStart, day)
+      const hi = Math.max(tempStart, day)
+      setTempStart(lo)
+      setTempEnd(hi)
+    }
+  }, [tempStart, tempEnd])
+  const confirmDayPicker = useCallback(() => {
+    setCustomStart(tempStart)
+    setCustomEnd(tempEnd ?? tempStart)
+    setDayPickerOpen(false)
+  }, [tempStart, tempEnd])
+  const clearDayPicker = useCallback(() => {
+    setTempStart(null)
+    setTempEnd(null)
+    setCustomStart(null)
+    setCustomEnd(null)
+    setDayPickerOpen(false)
+  }, [])
   const [monthMemo, setMonthMemo] = useState('')
 
   // AI 필터 (검색요정)
@@ -1573,54 +1611,25 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                           )}
                         </AnimatePresence>
                         <div className="flex items-center gap-1.5">
-                          <div className="relative flex items-center gap-1">
-                            <input
-                              type="number"
-                              min={1}
-                              max={31}
-                              value={customStart ?? ''}
-                              onChange={(e) => {
-                                const v = e.target.value
-                                if (v === '') { setCustomStart(null); return }
-                                const n = parseInt(v, 10)
-                                if (Number.isNaN(n)) return
-                                setCustomStart(Math.min(31, Math.max(1, n)))
-                              }}
-                              placeholder="일"
-                              aria-label="결제일 시작"
-                              className={`w-12 px-1.5 py-1 rounded-full text-xs font-semibold text-center shadow-sm focus:outline-none focus:ring-1 focus:ring-[var(--blue)] placeholder:text-[var(--text-4)] ${
-                                customStart !== null
+                          <div className="relative flex items-center">
+                            <TButton
+                              type="button"
+                              onClick={openDayPicker}
+                              aria-label="결제일 선택"
+                              className={`px-3 py-1 rounded-full text-xs font-semibold shadow-sm transition-colors ${
+                                customActive
                                   ? 'bg-[var(--blue-dim)] text-[var(--blue)]'
-                                  : 'bg-[var(--bg-elevated)] text-[var(--text-2)]'
+                                  : 'bg-[var(--bg-elevated)] text-[var(--text-2)] hover:bg-[var(--bg-card-hover)]'
                               }`}
-                            />
-                            <span className="text-[10px] text-[var(--text-4)]">~</span>
-                            <input
-                              type="number"
-                              min={1}
-                              max={31}
-                              value={customEnd ?? ''}
-                              onChange={(e) => {
-                                const v = e.target.value
-                                if (v === '') { setCustomEnd(null); return }
-                                const n = parseInt(v, 10)
-                                if (Number.isNaN(n)) return
-                                setCustomEnd(Math.min(31, Math.max(1, n)))
-                              }}
-                              placeholder="일"
-                              aria-label="결제일 종료"
-                              className={`w-12 px-1.5 py-1 rounded-full text-xs font-semibold text-center shadow-sm focus:outline-none focus:ring-1 focus:ring-[var(--blue)] placeholder:text-[var(--text-4)] ${
-                                customEnd !== null
-                                  ? 'bg-[var(--blue-dim)] text-[var(--blue)]'
-                                  : 'bg-[var(--bg-elevated)] text-[var(--text-2)]'
-                              }`}
-                            />
+                            >
+                              {customActive ? customLabel : '결제일'}
+                            </TButton>
                             {customActive && (
                               <TButton
                                 type="button"
                                 onClick={() => { setCustomStart(null); setCustomEnd(null) }}
                                 aria-label="직접 입력 해제"
-                                className="absolute -right-2 -top-1 w-4 h-4 rounded-full bg-[var(--bg-elevated)] text-[var(--text-3)] text-[10px] leading-none flex items-center justify-center shadow-sm hover:text-[var(--text-1)]"
+                                className="absolute -right-1 -top-1 w-4 h-4 rounded-full bg-[var(--bg-elevated)] text-[var(--text-3)] text-[10px] leading-none flex items-center justify-center shadow-sm hover:text-[var(--text-1)]"
                               >
                                 ×
                               </TButton>
@@ -2368,6 +2377,89 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
           onClose={() => setShowMethodPicker(false)}
           anchorRef={methodButtonRef}
         />
+      )}
+
+      {/* 결제일 picker (달력) */}
+      {dayPickerOpen && createPortal(
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[60] flex items-center justify-center p-4"
+          onClick={() => setDayPickerOpen(false)}
+        >
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.95, opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+            className="w-full max-w-xs bg-[var(--bg-card)] rounded-2xl shadow-xl p-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="text-sm font-semibold text-[var(--text-1)]">
+                {tempStart === null
+                  ? '결제일 선택'
+                  : tempEnd === null
+                    ? `${tempStart}일 (한 번 더 누르면 범위)`
+                    : tempStart === tempEnd
+                      ? `${tempStart}일`
+                      : `${tempStart}일 ~ ${tempEnd}일`}
+              </div>
+              <TButton
+                type="button"
+                onClick={() => setDayPickerOpen(false)}
+                aria-label="닫기"
+                className="w-7 h-7 rounded-full flex items-center justify-center text-[var(--text-3)] hover:bg-[var(--bg-elevated)]"
+              >
+                <X className="w-4 h-4" />
+              </TButton>
+            </div>
+            <div className="grid grid-cols-7 gap-1">
+              {Array.from({ length: 31 }, (_, i) => i + 1).map(day => {
+                const isStart = tempStart === day
+                const isEnd = tempEnd === day
+                const inRange = tempStart !== null && tempEnd !== null && day > tempStart && day < tempEnd
+                const selected = isStart || isEnd
+                return (
+                  <TButton
+                    key={day}
+                    type="button"
+                    onClick={() => handleDayPick(day)}
+                    className={`aspect-square rounded-lg text-xs font-semibold transition-colors ${
+                      selected
+                        ? 'bg-[var(--blue)] text-white'
+                        : inRange
+                          ? 'bg-[var(--blue-dim)] text-[var(--blue)]'
+                          : 'text-[var(--text-2)] hover:bg-[var(--bg-elevated)]'
+                    }`}
+                  >
+                    {day}
+                  </TButton>
+                )
+              })}
+            </div>
+            <div className="flex items-center justify-between gap-2 mt-3">
+              <TButton
+                type="button"
+                onClick={clearDayPicker}
+                className="px-3 py-2 rounded-xl text-xs font-semibold text-[var(--text-3)] hover:bg-[var(--bg-elevated)]"
+              >
+                해제
+              </TButton>
+              <TButton
+                type="button"
+                onClick={confirmDayPicker}
+                disabled={tempStart === null}
+                className="flex-1 py-2 rounded-xl text-sm font-bold bg-[var(--blue)] text-white disabled:bg-[var(--bg-card-hover)] disabled:text-[var(--text-4)] flex items-center justify-center gap-1.5"
+              >
+                <Check className="w-4 h-4" />
+                <span>적용</span>
+              </TButton>
+            </div>
+          </motion.div>
+        </motion.div>,
+        document.body
       )}
 
       {/* 필터 드롭다운 — 단일 포탈, 업로더식 텍스트 필 + 스태거 애니메이션 */}
