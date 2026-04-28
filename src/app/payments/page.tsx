@@ -331,7 +331,15 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
   // 통합 필터 (전체/미납/1일/첫째주~넷째주)
   const [paymentFilter, setPaymentFilter] = useState<PaymentFilter>('all')
   const [filterAnchor, setFilterAnchor] = useState<HTMLButtonElement | null>(null)
-  const [customDay, setCustomDay] = useState<number | null>(null)
+  const [customStart, setCustomStart] = useState<number | null>(null)
+  const [customEnd, setCustomEnd] = useState<number | null>(null)
+  const customActive = customStart !== null || customEnd !== null
+  const customLabel = (() => {
+    if (customStart !== null && customEnd !== null && customStart !== customEnd) {
+      return `${Math.min(customStart, customEnd)}일~${Math.max(customStart, customEnd)}일`
+    }
+    return `${customStart ?? customEnd ?? ''}일`
+  })()
   const [monthMemo, setMonthMemo] = useState('')
 
   // AI 필터 (검색요정)
@@ -500,9 +508,12 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
     // AI 필터가 적용중이면 최우선
     if (aiFilterIds !== null && !aiFilterIds.has(s.id)) return false
     // 수동 결제일 입력이 있으면 최우선 — 드롭다운 필터 무시
-    if (customDay !== null) {
+    if (customStart !== null || customEnd !== null) {
       const due = s.payment_due_day ?? getPaymentDueDay(s)
-      return due === customDay
+      if (due == null) return false
+      const lo = customStart ?? customEnd!
+      const hi = customEnd ?? customStart!
+      return due >= Math.min(lo, hi) && due <= Math.max(lo, hi)
     }
     if (paymentFilter === 'all') return true
     if (paymentFilter === 'unpaid') {
@@ -518,7 +529,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
     const [start, end] = weekRanges[paymentFilter]
     if (start > end) return false
     return due >= start && due <= end
-  }, [aiFilterIds, customDay, paymentFilter, paymentsByStudentId, selectedMonth, weekRanges])
+  }, [aiFilterIds, customStart, customEnd, paymentFilter, paymentsByStudentId, selectedMonth, weekRanges])
 
   const sendOneBill = useCallback(async (student: Student, cls: ClassWithStudents): Promise<'sent' | 'scheduled' | 'failed'> => {
     const phone = student.parent_phone || student.phone || ''
@@ -1441,10 +1452,10 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
       </div>
 
       {/* 빈 상태 — 학생 리스트 자리에 단순 메시지 한 줄 */}
-      {visibleSections.length === 0 && (customDay !== null || paymentFilter !== 'all') && (
+      {visibleSections.length === 0 && (customActive || paymentFilter !== 'all') && (
         <div className="text-center py-12 text-sm text-[var(--text-3)]">
-          {customDay !== null
-            ? `${customDay}일 결제일인 학생은 없습니다`
+          {customActive
+            ? `${customLabel} 결제일인 학생은 없습니다`
             : `${FILTER_LABELS[paymentFilter]} 조건에 맞는 학생은 없습니다`}
         </div>
       )}
@@ -1562,33 +1573,54 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                           )}
                         </AnimatePresence>
                         <div className="flex items-center gap-1.5">
-                          <div className="relative flex items-center">
+                          <div className="relative flex items-center gap-1">
                             <input
                               type="number"
                               min={1}
                               max={31}
-                              value={customDay ?? ''}
+                              value={customStart ?? ''}
                               onChange={(e) => {
                                 const v = e.target.value
-                                if (v === '') { setCustomDay(null); return }
+                                if (v === '') { setCustomStart(null); return }
                                 const n = parseInt(v, 10)
                                 if (Number.isNaN(n)) return
-                                setCustomDay(Math.min(31, Math.max(1, n)))
+                                setCustomStart(Math.min(31, Math.max(1, n)))
                               }}
                               placeholder="일"
-                              aria-label="결제일 직접 입력"
-                              className={`w-14 px-2 py-1 rounded-full text-xs font-semibold text-center shadow-sm focus:outline-none focus:ring-1 focus:ring-[var(--blue)] placeholder:text-[var(--text-4)] ${
-                                customDay !== null
+                              aria-label="결제일 시작"
+                              className={`w-12 px-1.5 py-1 rounded-full text-xs font-semibold text-center shadow-sm focus:outline-none focus:ring-1 focus:ring-[var(--blue)] placeholder:text-[var(--text-4)] ${
+                                customStart !== null
                                   ? 'bg-[var(--blue-dim)] text-[var(--blue)]'
                                   : 'bg-[var(--bg-elevated)] text-[var(--text-2)]'
                               }`}
                             />
-                            {customDay !== null && (
+                            <span className="text-[10px] text-[var(--text-4)]">~</span>
+                            <input
+                              type="number"
+                              min={1}
+                              max={31}
+                              value={customEnd ?? ''}
+                              onChange={(e) => {
+                                const v = e.target.value
+                                if (v === '') { setCustomEnd(null); return }
+                                const n = parseInt(v, 10)
+                                if (Number.isNaN(n)) return
+                                setCustomEnd(Math.min(31, Math.max(1, n)))
+                              }}
+                              placeholder="일"
+                              aria-label="결제일 종료"
+                              className={`w-12 px-1.5 py-1 rounded-full text-xs font-semibold text-center shadow-sm focus:outline-none focus:ring-1 focus:ring-[var(--blue)] placeholder:text-[var(--text-4)] ${
+                                customEnd !== null
+                                  ? 'bg-[var(--blue-dim)] text-[var(--blue)]'
+                                  : 'bg-[var(--bg-elevated)] text-[var(--text-2)]'
+                              }`}
+                            />
+                            {customActive && (
                               <TButton
                                 type="button"
-                                onClick={() => setCustomDay(null)}
+                                onClick={() => { setCustomStart(null); setCustomEnd(null) }}
                                 aria-label="직접 입력 해제"
-                                className="absolute -right-1 -top-1 w-4 h-4 rounded-full bg-[var(--bg-elevated)] text-[var(--text-3)] text-[10px] leading-none flex items-center justify-center shadow-sm hover:text-[var(--text-1)]"
+                                className="absolute -right-2 -top-1 w-4 h-4 rounded-full bg-[var(--bg-elevated)] text-[var(--text-3)] text-[10px] leading-none flex items-center justify-center shadow-sm hover:text-[var(--text-1)]"
                               >
                                 ×
                               </TButton>
@@ -1596,7 +1628,7 @@ const [detailStudentId, setDetailStudentId] = useState<string | null>(null)
                           </div>
                           <TButton
                             onClick={(e) => setFilterAnchor(prev => prev === e.currentTarget ? null : e.currentTarget)}
-                            disabled={customDay !== null}
+                            disabled={customActive}
                             style={{ width: 112 }}
                             className={`relative flex items-center justify-center px-3 py-1 rounded-full text-xs font-semibold transition-colors shadow-sm disabled:opacity-40 disabled:cursor-not-allowed ${
                               paymentFilter === 'unpaid'
